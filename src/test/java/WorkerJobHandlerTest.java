@@ -21,7 +21,7 @@ class WorkerJobHandlerTest {
         sutJubHandler.handle(jobClient, activatedJob);
 
         // then
-        assertThat(activatedJob).completed().extractingOutput().containsOnly(entry("message", "Hello Zeebe user!"));
+        assertThat(activatedJob).completed().extractingOutput().containsOnly(entry("src/test/resources/message", "Hello Zeebe user!"));
     }
 
     @Test
@@ -37,6 +37,6 @@ class WorkerJobHandlerTest {
         sutJubHandler.handle(jobClient, activatedJob);
 
         // then
-        assertThat(activatedJob).completed().extractingOutput().containsOnly(entry("message", "Howdy ladies and gentlemen!"));
+        assertThat(activatedJob).completed().extractingOutput().containsOnly(entry("src/test/resources/message", "Howdy ladies and gentlemen!"));
     }
 }
