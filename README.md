@@ -3,16 +3,43 @@
 
 # Vercors project
 
-<<What is it?>>
+The Vercors project is a collection of Workers ready to use for Zeebe.
+Give the information to connect to your Zeebe engine in src/main/resources/application.properties.
+You can give a local Zebee or a Camunda Clound Zeebe.
+
+You can start the Vercors application on a server. This is a SpringBoot application, located here src/main/java/org/camunda/vercors/message/SendMessageWorker.java
+
+This application starts with all workers. There is one thread for the application, which can be changed in the application.properties file (parameter zeebe.client.worker.threads)
+
 
 # How to Use
 
-The main method is in `Worker.java`. It requires a couple of environment variables to run.
+Start the Vercors application.
+The application connects to the Zeebe server and starts to monitor and execute all workers.
+
+Check the different workers. Workers are grouped in a collection. All collections are visible under src/main/java/org/camunda/vercors.
+Each folder is a collection, except for the definition folder.
+
+Reach out to the message folder. A README.md is present here to explain the different workers available in the collection. Each worker declares:
+a type. This is the marker for Zeebe to call the worker. Each task reference a type
+* a list of Input variables, variables need to accomplish the work
+* a list of the Output variable, variables produced by the worker
+
+For example, in your process, to send a message, use the type "v-send-message", set up the different input (messageName as minimum), and that's it.
 
 ## Connection Setup
-<<how to connect to your Zeebe engine? Camunda cloud or on promise Zeebe engine
+The connection to the Zeebe engine is piloted via the application.properties located on src/main/java/resources/application.properties
+
+To connect to a set up a self-manage engine, used the parameter
+zeebe.client.broker.gateway-address=127.0.0.1:26500
+Give the correct IP + port number.
+
+Note:
+For a local installation (without authentication) you only need to set `ZEEBE_ADDRESS`
 
 ### Connect to Cluster Camunda Cloud
+The connection to the Zeebe engine is piloted via the application.properties located on src/main/java/resources/application.properties
+
 
 1. Follow the [Getting Started Guid](https://docs.camunda.io/docs/guides/getting-started/) to create an account, a
    cluster and client credentials
@@ -20,20 +47,15 @@ The main method is in `Worker.java`. It requires a couple of environment variabl
     * `ZEEBE_ADDRESS`: Address where your cluster can be reached.
     * `ZEEBE_CLIENT_ID` and `ZEEBE_CLIENT_SECRET`: Credentials to request a new access token.
     * `ZEEBE_AUTHORIZATION_SERVER_URL`: A new token can be requested at this address, using the credentials.
-3. Run `Worker`
-
-### Connect to local Installation
-
-For a local installation (without authentication) you only need to set `ZEEBE_ADDRESS`
+3. Run the application
 
 ## Example
-
-Either you deploy `process.bpmn` or you design your own process with a service task with the `greet` job type.
+See different examples under src/test/resources/org.camunda.vercors. You have a folder per collection, and processes in the collection.
 
 # How to add a connector
 
 ## Principle
-Let's create a new connector in the Vercors project. In order to keep the project consistent, some view rule has to be followed.
+Let's create a new connector in the Vercors project. In order to keep the project consistent, some view rules has to be followed.
 The model is the collection message (org.camunida.vercors.message), and the worder SendMessageWorker.
 
 - The first level of the Vercors project is the collection name. Your connector must be attached in a collection, and may be under a sub collection.

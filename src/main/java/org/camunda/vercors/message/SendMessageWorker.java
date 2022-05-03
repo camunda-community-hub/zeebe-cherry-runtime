@@ -1,24 +1,29 @@
 package org.camunda.vercors.message;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.zeebe.client.ZeebeClient;
+import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
+import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.WorkerBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.*;
 
 @Component
 @EnableZeebeClient
 public class SendMessageWorker extends WorkerBase {
+
+    public static final String INPUT_MESSAGE_NAME = "messageName";
+    public static final String INPUT_CORRELATION_VARIABLES = "correlationVariables";
+    public static final String INPUT_MESSAGE_VARIABLES = "messageVariables";
+    public static final String INPUT_MESSAGE_ID_VARIABLES = "messageId";
+    public static final String INPUT_MESSAGE_DURATION = "messageDuration";
 
     Logger logger = LoggerFactory.getLogger(SendMessageWorker.class.getName());
 
@@ -26,45 +31,94 @@ public class SendMessageWorker extends WorkerBase {
     public SendMessageWorker() {
         super("v-send-message",
                 Arrays.asList(
-                        WorkerParameter.getInstance("urlMessage", String.class, Level.REQUIRED),
-                        WorkerParameter.getInstance("messageName", String.class, Level.REQUIRED),
-                        WorkerParameter.getInstance("correlationVariables", String.class, Level.OPTIONAL),
-                        WorkerParameter.getInstance("variables", String.class, Level.OPTIONAL)),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_NAME, String.class, Level.REQUIRED),
+                        WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, String.class, Level.OPTIONAL),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_VARIABLES, String.class, Level.OPTIONAL),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, String.class, Level.OPTIONAL),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_DURATION, Object.class, Level.OPTIONAL)),
                 Collections.emptyList());
     }
 
-    @ZeebeWorker(type = "v-send-message",  autoComplete = true, fetchVariables={"urlMessage", "messageName","correlationVariables","variables"})
-    public void handleWorkerExecution(final JobClient client, final ActivatedJob job) {
-        super.handleWorkerExecution(client, job);
+    // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
+    @ZeebeWorker(type = "v-send-message", autoComplete = true)
+    public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
+        super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient client, final ActivatedJob job) {
-
+    public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
+        logger.info("VercorsSendMessage: start");
         try {
-            String urlMessage = getInputStringValue("urlMessage", "http://localhost:8080/engine-rest/message", job);
+            sendMessageViaGrpc(getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob),
+                    getInputStringValue(INPUT_CORRELATION_VARIABLES, null, activatedJob),
+                    getInputStringValue(INPUT_MESSAGE_VARIABLES, null, activatedJob),
+                    getInputStringValue(INPUT_MESSAGE_ID_VARIABLES, null, activatedJob),
+                    getInputDurationValue(INPUT_MESSAGE_DURATION, null, activatedJob),
+                    activatedJob);
 
-            String messageName = getInputStringValue("messageName", null, job);
 
-            String correlationVariableList = getInputStringValue("correlationVariables", null, job);
-
-            String variableList = getInputStringValue("variables", null, job);
-
-            sendMessageViaHttp( urlMessage, messageName, correlationVariableList, variableList,job);
         } catch (Exception e) {
-            logger.error("SendMessage: We got an exception ! Send a BPMN Error " + e.getMessage());
+            logger.error("SendMessage: We got an exception! Send a BPMN Error " + e.getMessage());
+            throw e;
         }
+    }
+
+
+    /**
+     * Send a message
+     * https://docs.camunda.io/docs/apis-clients/grpc/#publishmessage-rpc
+     *
+     * @param messageName              the message name
+     * @param correlationVariablesList List of variable where the value has to be fetched to get the correlation key of the message. Attention: only one variable is expected
+     * @param messageVariableList      the message variables send to the message
+     * @param messageId                the unique ID of the message; can be omitted. only useful to ensure only one message with the given ID will ever be published (during its lifetime)
+     * @param timeToLiveDuration       how long the message should be buffered on the broker
+     * @param activatedJob             information on job to execute
+     */
+    private void sendMessageViaGrpc(String messageName,
+                                    String correlationVariablesList,
+                                    String messageVariableList,
+                                    String messageId,
+                                    Duration timeToLiveDuration,
+                                    final ActivatedJob activatedJob) {
+        Map<String, Object> correlationVariables = extractVariable(correlationVariablesList, activatedJob);
+        Map<String, Object> messageVariables = extractVariable(messageVariableList, activatedJob);
+
+        // At this moment, we expect only one variable for the correlation key
+        if (correlationVariables.size() > 1) {
+            logger.error("VercorsConnector[" + getName() + "] One variable expected for the correction");
+            throw new ZeebeBpmnError("TOO_MANY_CORRELATION_VARIABLE_ERROR", "Worker [" + getName() + "] One variable expected for the correction:[" + correlationVariablesList + "]");
+        }
+        String correlationValue = null;
+        if (!correlationVariables.isEmpty())
+            correlationValue = correlationVariables.values().stream()
+                    .findFirst()
+                    .toString();
+        PublishMessageCommandStep1.PublishMessageCommandStep3 messageCommand = ZeebeClient.newClient()
+                .newPublishMessageCommand()
+                .messageName(messageName)
+                .correlationKey(correlationValue == null ? "" : correlationValue);
+        if (timeToLiveDuration != null)
+            messageCommand = messageCommand.timeToLive(timeToLiveDuration);
+        if (!messageVariables.isEmpty()) {
+            messageCommand = messageCommand.variables(messageVariables);
+        }
+        if (messageId != null)
+            messageCommand = messageCommand.messageId(messageId);
+
+        messageCommand.send().join();
     }
 
     /**
      * Return a Map of variable value, from a list of variable. Variables are separate by a comma.
      * Example firstName,lastName
+     *
      * @param variableList list of variables, separate by a comma
      * @param activatedJob job to call to get values
      * @return map of variable Name / variable value
      */
     private Map<String, Object> extractVariable(String variableList, final ActivatedJob activatedJob) {
-        Map<String,Object> variables = new HashMap<>();
+        Map<String, Object> variables = new HashMap<>();
         StringTokenizer stVariable = new StringTokenizer(variableList, ",");
         while (stVariable.hasMoreTokens()) {
             StringTokenizer stOneVariable = new StringTokenizer(stVariable.nextToken(), "=");
@@ -78,48 +132,5 @@ public class SendMessageWorker extends WorkerBase {
         return variables;
     }
 
-    /**
-     * @param urlMessage url message to call
-     * @param messageName message name
-     * @param businessKey business key (not exist in C8, will be deleted)
-     * @param variableList list of variable to send
-     * @param activatedJob job to call to get values
-     * @throws Exception in case of error
-     */
-    private void sendMessageViaHttp(String urlMessage,
-                                    String messageName,
-                                    String businessKey,
-                                    String variableList,
-                                    ActivatedJob activatedJob)
-            throws Exception {
-        Map<String,Object> jsonMessage = new HashMap<>();
-        jsonMessage.put("messageName", messageName);
 
-        if (businessKey != null)
-            jsonMessage.put("businessKey", businessKey);
-
-        if (variableList != null) {
-            Map<String,Object> variables = extractVariable(variableList, activatedJob);
-            jsonMessage.put("processVariables", variables);
-
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        String postBody = mapper.writeValueAsString(jsonMessage);
-
-        HttpClient httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_2)
-                .build();
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .POST(HttpRequest.BodyPublishers.ofString(postBody))
-                .uri(URI.create(urlMessage))
-                .header("content-type", "application/json") // add request header
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        System.out.println(response.statusCode());
-
-        // print response body
-        System.out.println(response.body());
-    }
 }
