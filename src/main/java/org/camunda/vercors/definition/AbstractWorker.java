@@ -5,7 +5,6 @@
 /*  All workers extends this class. It gives tool to access parameters, */
 /*  and the contract implementation on parameters                       */
 /* ******************************************************************** */
-
 package org.camunda.vercors.definition;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
