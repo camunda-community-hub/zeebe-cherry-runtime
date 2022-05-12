@@ -7,29 +7,33 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.EnableZeebeClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.vercors.definition.WorkerBase;
+import org.camunda.vercors.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.*;
 
 @Component
-@EnableZeebeClient
-public class SendMessageWorker extends WorkerBase {
+public class SendMessageWorker extends AbstractWorker {
 
     public static final String INPUT_MESSAGE_NAME = "messageName";
     public static final String INPUT_CORRELATION_VARIABLES = "correlationVariables";
     public static final String INPUT_MESSAGE_VARIABLES = "messageVariables";
     public static final String INPUT_MESSAGE_ID_VARIABLES = "messageId";
     public static final String INPUT_MESSAGE_DURATION = "messageDuration";
+    public static final String WORKERTYPE_SEND_MESSAGE = "v-send-message";
 
     Logger logger = LoggerFactory.getLogger(SendMessageWorker.class.getName());
 
+    @Autowired
+    private ZeebeClient zeebeClient;
+
 
     public SendMessageWorker() {
-        super("v-send-message",
+        super(WORKERTYPE_SEND_MESSAGE,
                 Arrays.asList(
                         WorkerParameter.getInstance(INPUT_MESSAGE_NAME, String.class, Level.REQUIRED),
                         WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, String.class, Level.OPTIONAL),
@@ -40,7 +44,7 @@ public class SendMessageWorker extends WorkerBase {
     }
 
     // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
-    @ZeebeWorker(type = "v-send-message", autoComplete = true)
+    @ZeebeWorker(type = WORKERTYPE_SEND_MESSAGE, autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
@@ -94,7 +98,7 @@ public class SendMessageWorker extends WorkerBase {
             correlationValue = correlationVariables.values().stream()
                     .findFirst()
                     .toString();
-        PublishMessageCommandStep1.PublishMessageCommandStep3 messageCommand = ZeebeClient.newClient()
+        PublishMessageCommandStep1.PublishMessageCommandStep3 messageCommand = zeebeClient
                 .newPublishMessageCommand()
                 .messageName(messageName)
                 .correlationKey(correlationValue == null ? "" : correlationValue);
