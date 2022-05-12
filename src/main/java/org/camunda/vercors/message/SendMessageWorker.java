@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  SendMessageWorker                                                   */
+/*                                                                      */
+/*  Send a Camunda BPMN Message                                         */
+/* ******************************************************************** */
 package org.camunda.vercors.message;
 
 import io.camunda.zeebe.client.ZeebeClient;
@@ -123,6 +129,8 @@ public class SendMessageWorker extends AbstractWorker {
      */
     private Map<String, Object> extractVariable(String variableList, final ActivatedJob activatedJob) {
         Map<String, Object> variables = new HashMap<>();
+        if (variableList ==null)
+            return Collections.emptyMap();
         StringTokenizer stVariable = new StringTokenizer(variableList, ",");
         while (stVariable.hasMoreTokens()) {
             StringTokenizer stOneVariable = new StringTokenizer(stVariable.nextToken(), "=");
