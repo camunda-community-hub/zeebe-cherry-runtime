@@ -13,6 +13,6 @@ public class WorkerJobHandler implements JobHandler {
 
         final String message = String.format("%s %s!", greeting, name);
 
-        client.newCompleteCommand(job.getKey()).variables(Collections.singletonMap("message", message)).send().join();
+        client.newCompleteCommand(job.getKey()).variables(Collections.singletonMap("src/test/resources/message", message)).send().join();
     }
 }
