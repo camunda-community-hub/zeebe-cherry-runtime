@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  SendMessageWorker                                                   */
+/*                                                                      */
+/*  Send a Camunda BPMN Message                                         */
+/* ******************************************************************** */
 package org.camunda.vercors.message;
 
 import io.camunda.zeebe.client.ZeebeClient;
