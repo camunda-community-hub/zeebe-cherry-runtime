@@ -130,7 +130,7 @@ public abstract class AbstractWorker {
         // second pass: verify that the connector does not provide an unexpected value
         List<String> listExtraVariables = outVariables.keySet()
                 .stream()
-                .filter(outputName::contains)
+                .filter(variable -> ! outputName.contains(variable))
                 .collect(Collectors.toList());
         if (!listExtraVariables.isEmpty())
             listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
@@ -177,12 +177,38 @@ public abstract class AbstractWorker {
     public static class WorkerParameter {
         public String name;
         public Class<?> clazz;
+        public Object defaultValue;
         public Level level;
 
-        public static WorkerParameter getInstance(String name, Class<?> clazz, Level level) {
+        /**
+         * Get an instance without a default value
+         * @param parameterName parameter name
+         * @param clazz class of the expected parameter
+         * @param defaultValue the default value for this parameter, if no value is given. Note: a required parameter may have a null as a value.
+         * @param level level for this parameter
+         * @return a WorkerParameter
+         */
+        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Object defaultValue, Level level) {
             WorkerParameter parameter = new WorkerParameter();
-            parameter.name = name;
+            parameter.name = parameterName;
             parameter.clazz = clazz;
+            parameter.defaultValue=defaultValue;
+            parameter.level = level;
+            return parameter;
+        }
+
+        /**
+         * Get an instance without a default value
+         * @param parameterName parameter name
+         * @param clazz class of the expected parameter
+         * @param level level for this parameter
+         * @return a WorkerParameter
+         */
+        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Level level) {
+            WorkerParameter parameter = new WorkerParameter();
+            parameter.name = parameterName;
+            parameter.clazz = clazz;
+            parameter.defaultValue=null;
             parameter.level = level;
             return parameter;
         }
@@ -199,14 +225,14 @@ public abstract class AbstractWorker {
      * Retrieve a variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
      * The method can return null if the variable exists, but it is a null value.
      *
-     * @param name         name of the variable to load
+     * @param parameterName         name of the variable to load
      * @param defaultValue if the input does not exist, this is the default value.
      * @param activatedJob job passed to the worker
      * @return the value as String
      */
-    public String getInputStringValue(String name, String defaultValue, final ActivatedJob activatedJob) {
+    public String getInputStringValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) {
         if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return defaultValue;
+            return (String) getDefaultValue(parameterName, defaultValue);
         Object value = activatedJob.getVariablesAsMap().get(name);
         return value == null ? null : value.toString();
     }
@@ -214,14 +240,14 @@ public abstract class AbstractWorker {
     /**
      * Return a value as Double
      *
-     * @param name         name of the variable
+     * @param parameterName         name of the variable
      * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob job passed to the worker
      * @return a Double value
      */
-    public Double getInputDoubleValue(String name, Double defaultValue, final ActivatedJob activatedJob) {
+    public Double getInputDoubleValue(String parameterName, Double defaultValue, final ActivatedJob activatedJob) {
         if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return defaultValue;
+            return (Double) getDefaultValue(name,defaultValue);
         Object value = activatedJob.getVariablesAsMap().get(name);
         if (value == null)
             return null;
@@ -237,14 +263,14 @@ public abstract class AbstractWorker {
     /**
      * Return a value as Long
      *
-     * @param name         name of the variable
+     * @param parameterName         name of the variable
      * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob job passed to the worker
      * @return a Double value
      */
-    public Long getInputLongValue(String name, Long defaultValue, final ActivatedJob activatedJob) {
+    public Long getInputLongValue(String parameterName, Long defaultValue, final ActivatedJob activatedJob) {
         if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return defaultValue;
+            return (Long) getDefaultValue(name,defaultValue);
         Object value = activatedJob.getVariablesAsMap().get(name);
         if (value == null)
             return null;
@@ -262,15 +288,15 @@ public abstract class AbstractWorker {
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
      *
-     * @param name         name of the variable
+     * @param parameterName         name of the variable
      * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob job passed to the worker
      * @return a Double value
      */
-    public Duration getInputDurationValue(String name, Duration defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return defaultValue;
-        Object value = activatedJob.getVariablesAsMap().get(name);
+    public Duration getInputDurationValue(String parameterName, Duration defaultValue, final ActivatedJob activatedJob) {
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return (Duration) getDefaultValue(parameterName,defaultValue);
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
         if (value == null)
             return null;
         if (value instanceof Duration)
@@ -287,21 +313,38 @@ public abstract class AbstractWorker {
     /**
      * return a variable value
      *
-     * @param name         name of the input value
+     * @param parameterName         name of the input value
      * @param defaultValue if the input does not exist, this is the default value.
      * @param activatedJob job passed to the worker
      * @return the value as String
      */
-    public Object getValue(String name, Object defaultValue, ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return defaultValue;
+    public Object getValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return getDefaultValue(parameterName,defaultValue);
         try {
-            return activatedJob.getVariablesAsMap().get(name);
+            return activatedJob.getVariablesAsMap().get(parameterName);
         } catch (Exception e) {
             return defaultValue;
         }
     }
 
+    /**
+     * Return the defaultValue for a parameter. If the defaultValue is provided by the softwar, it has the priority.
+     * Else the default value is the one given in the parameter.
+     * @param parameterName name of parameter
+     * @param defaultValue default value given by the software
+     * @return the default value
+     */
+    private Object getDefaultValue(String parameterName, Object defaultValue) {
+        // if the software give a default value, it has the priority
+        if (defaultValue!=null)
+            return defaultValue;
+        List<WorkerParameter> inputFilter= listInput.stream().filter(t->t.name.equals(parameterName)).collect(Collectors.toList());
+        if (!inputFilter.isEmpty())
+            return inputFilter.get(0).defaultValue;
+        // definitively, no default value
+        return null;
+    }
     /**
      * Set the value. Worker must use this method, then the class can verify the output contract is respected
      *
