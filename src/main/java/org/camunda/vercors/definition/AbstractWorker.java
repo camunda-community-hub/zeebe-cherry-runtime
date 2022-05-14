@@ -10,6 +10,8 @@ package org.camunda.vercors.definition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
+import org.camunda.vercors.definition.filevariable.FileVariable;
+import org.camunda.vercors.definition.filevariable.FileVariableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,26 +21,30 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractWorker {
 
-    Logger logger = LoggerFactory.getLogger(AbstractWorker.class.getName());
-
     private final String name;
     private final List<WorkerParameter> listInput;
     private final List<WorkerParameter> listOutput;
-    private final Map<String, String> outVariables = new HashMap<>();
+    private final List<String> listBpmnErrors;
+    private final Map<String, Object> outVariablesValue = new HashMap<>();
+    Logger logger = LoggerFactory.getLogger(AbstractWorker.class.getName());
+
 
     /**
      * Constructor
      *
-     * @param name       name of the worker
-     * @param listInput  list of Input parameters for the worker
-     * @param listOutput list of Output parameters for the worker
+     * @param name           name of the worker
+     * @param listInput      list of Input parameters for the worker
+     * @param listOutput     list of Output parameters for the worker
+     * @param listBpmnErrors list of potential BPMN Error the worker can generate
      */
     public AbstractWorker(String name,
                           List<WorkerParameter> listInput,
-                          List<WorkerParameter> listOutput) {
+                          List<WorkerParameter> listOutput,
+                          List<String> listBpmnErrors) {
         this.name = name;
         this.listInput = listInput;
         this.listOutput = listOutput;
+        this.listBpmnErrors = listBpmnErrors;
     }
 
     /**
@@ -50,6 +56,19 @@ public abstract class AbstractWorker {
         return name;
     }
 
+
+    public List<WorkerParameter> getListInput() {
+        return listInput;
+    }
+
+    public List<WorkerParameter> getListOutput() {
+        return listOutput;
+    }
+
+    public List<String> getListBpmnErrors() {
+        return listBpmnErrors;
+    }
+
     /**
      * The connector must call immediately this method, which is the skeleton for all executions
      *
@@ -58,7 +77,16 @@ public abstract class AbstractWorker {
      */
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         long beginExecution = System.currentTimeMillis();
-        logger.info("Vercors-" + name + ": Start");
+        // log input
+        String logInput = listInput.stream()
+                .map(t -> {
+                    Object value = activatedJob.getVariablesAsMap().get(t.name);
+                    if (value != null && value.toString().length() > 15)
+                        value = value.toString().substring(0, 15) + "...";
+                    return t.name + "=[" + value + "]";
+                })
+                .collect(Collectors.joining(","));
+        logInfo("Start " + logInput);
         // first, see if the process respect the contract for this connector
         checkInput(activatedJob);
 
@@ -67,8 +95,13 @@ public abstract class AbstractWorker {
 
         // let's verify the execution respect the output contract
         checkOutput();
+
+
+        // save the output in the process instance
+        jobClient.newCompleteCommand(activatedJob.getKey()).variables(outVariablesValue).send().join();
+
         long endExecution = System.currentTimeMillis();
-        logger.info("Vercors-" + name + ": End in " + (endExecution - beginExecution));
+        logInfo("End in " + (endExecution - beginExecution) + " ms");
     }
 
     /**
@@ -78,6 +111,31 @@ public abstract class AbstractWorker {
      * @param activatedJob information on job to execute
      */
     public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob);
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Log worker                                             */
+    /*                                                          */
+    /* to normalize the log use these methods
+    /* -------------------------------------------------------- */
+
+    /**
+     * log info
+     *
+     * @param message message to log
+     */
+    public void logInfo(String message) {
+        logger.info("VercorsWorker[" + getName() + "]: " + message);
+    }
+
+    /**
+     * Log an error
+     *
+     * @param message message to log
+     */
+    public void logError(String message) {
+        logger.error("VercorsWorker[" + getName() + "]: " + message);
+    }
 
 
     /* -------------------------------------------------------- */
@@ -106,7 +164,7 @@ public abstract class AbstractWorker {
             }
         }
         if (!listErrors.isEmpty()) {
-            logger.error("VercorsConnector[" + name + "] Errors:" + String.join(",", listErrors));
+            logError("VercorsConnector[" + name + "] Errors:" + String.join(",", listErrors));
             throw new ZeebeBpmnError("INPUT_CONTRACT_ERROR", "Worker [" + name + "] InputContract Exception:" + String.join(",", listErrors));
         }
     }
@@ -123,27 +181,29 @@ public abstract class AbstractWorker {
         for (WorkerParameter parameter : listOutput) {
 
             if (parameter.level == Level.REQUIRED) {
-                if (!outVariables.containsKey(parameter.name))
+                if (!outVariablesValue.containsKey(parameter.name))
                     listErrors.add("Param[" + parameter.name + "] is missing");
             }
             // if the value is given, it must be the correct value
-            if (outVariables.containsKey(parameter.name)) {
-                if (incorrectClassParameter(outVariables.get(parameter.name), parameter.clazz))
+            if (outVariablesValue.containsKey(parameter.name)) {
+                Object value = outVariablesValue.get(parameter.name);
+
+                if (incorrectClassParameter(value == null ? null : value.getClass().getName(), parameter.clazz))
                     listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName()
-                            + "] received[" + outVariables.get(parameter.name).getClass() + "];");
+                            + "] received[" + outVariablesValue.get(parameter.name).getClass() + "];");
             }
         }
         Set<String> outputName = listOutput.stream().map(t -> t.name).collect(Collectors.toSet());
         // second pass: verify that the connector does not provide an unexpected value
-        List<String> listExtraVariables = outVariables.keySet()
+        List<String> listExtraVariables = outVariablesValue.keySet()
                 .stream()
-                .filter(variable -> ! outputName.contains(variable))
+                .filter(variable -> !outputName.contains(variable))
                 .collect(Collectors.toList());
         if (!listExtraVariables.isEmpty())
             listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
 
         if (!listErrors.isEmpty()) {
-            logger.error("VercorsConnector[" + name + "] Errors:" + String.join(",", listErrors));
+            logError("Errors:" + String.join(",", listErrors));
             throw new ZeebeBpmnError("OUTPUT_CONTRACT_ERROR", "Worker[" + name + "] OutputContract Exception:" + String.join(",", listErrors));
         }
     }
@@ -174,88 +234,33 @@ public abstract class AbstractWorker {
     /* -------------------------------------------------------- */
 
     /**
-     * Level on the parameter.
-     */
-    public enum Level {REQUIRED, OPTIONAL}
-
-    /**
-     * class to declare a parameter
-     */
-    public static class WorkerParameter {
-        public String name;
-        public Class<?> clazz;
-        public Object defaultValue;
-        public Level level;
-
-        /**
-         * Get an instance without a default value
-         * @param parameterName parameter name
-         * @param clazz class of the expected parameter
-         * @param defaultValue the default value for this parameter, if no value is given. Note: a required parameter may have a null as a value.
-         * @param level level for this parameter
-         * @return a WorkerParameter
-         */
-        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Object defaultValue, Level level) {
-            WorkerParameter parameter = new WorkerParameter();
-            parameter.name = parameterName;
-            parameter.clazz = clazz;
-            parameter.defaultValue=defaultValue;
-            parameter.level = level;
-            return parameter;
-        }
-
-        /**
-         * Get an instance without a default value
-         * @param parameterName parameter name
-         * @param clazz class of the expected parameter
-         * @param level level for this parameter
-         * @return a WorkerParameter
-         */
-        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Level level) {
-            WorkerParameter parameter = new WorkerParameter();
-            parameter.name = parameterName;
-            parameter.clazz = clazz;
-            parameter.defaultValue=null;
-            parameter.level = level;
-            return parameter;
-        }
-    }
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  getInput/setOutput                                      */
-    /*                                                          */
-    /* method to get variable value                             */
-    /* -------------------------------------------------------- */
-
-    /**
      * Retrieve a variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
      * The method can return null if the variable exists, but it is a null value.
      *
-     * @param parameterName         name of the variable to load
-     * @param defaultValue if the input does not exist, this is the default value.
-     * @param activatedJob job passed to the worker
+     * @param parameterName name of the variable to load
+     * @param defaultValue  if the input does not exist, this is the default value.
+     * @param activatedJob  job passed to the worker
      * @return the value as String
      */
     public String getInputStringValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(name))
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
             return (String) getDefaultValue(parameterName, defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(name);
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
         return value == null ? null : value.toString();
     }
 
     /**
      * Return a value as Double
      *
-     * @param parameterName         name of the variable
-     * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
-     * @param activatedJob job passed to the worker
+     * @param parameterName name of the variable
+     * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
+     * @param activatedJob  job passed to the worker
      * @return a Double value
      */
     public Double getInputDoubleValue(String parameterName, Double defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return (Double) getDefaultValue(name,defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(name);
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return (Double) getDefaultValue(parameterName, defaultValue);
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
         if (value == null)
             return null;
         if (value instanceof Double)
@@ -267,18 +272,26 @@ public abstract class AbstractWorker {
         }
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  getInput/setOutput                                      */
+    /*                                                          */
+    /* method to get variable value                             */
+    /* -------------------------------------------------------- */
+
     /**
      * Return a value as Long
      *
-     * @param parameterName         name of the variable
-     * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
-     * @param activatedJob job passed to the worker
+     * @param parameterName name of the variable
+     * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
+     * @param activatedJob  job passed to the worker
      * @return a Double value
      */
     public Long getInputLongValue(String parameterName, Long defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(name))
-            return (Long) getDefaultValue(name,defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(name);
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return (Long) getDefaultValue(parameterName, defaultValue);
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+
         if (value == null)
             return null;
         if (value instanceof Long)
@@ -295,14 +308,15 @@ public abstract class AbstractWorker {
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
      *
-     * @param parameterName         name of the variable
-     * @param defaultValue default value, if the variable does not exist or any error arrived (can't parse the value)
-     * @param activatedJob job passed to the worker
+
+     * @param parameterName name of the variable
+     * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
+     * @param activatedJob  job passed to the worker
      * @return a Double value
      */
     public Duration getInputDurationValue(String parameterName, Duration defaultValue, final ActivatedJob activatedJob) {
         if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
-            return (Duration) getDefaultValue(parameterName,defaultValue);
+            return (Duration) getDefaultValue(parameterName, defaultValue);
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
         if (value == null)
             return null;
@@ -318,16 +332,40 @@ public abstract class AbstractWorker {
     }
 
     /**
+     * get the FileVariable.
+     * The file variable may be store in multiple storage. The format is given in the parameterStorageDefinition. This is a String which pilot
+     * how to load the file. The value can be saved a JSON, or saved in a specific directory (then the value is an ID)
+     *
+     * @param parameterName     name where the value is stored
+     * @param storageDefinition parameter which pilot the way to retrieve the value
+     * @param activatedJob      job passed to the worker
+     * @return a FileVariable
+     */
+    public FileVariable getFileVariableValue(String parameterName, String storageDefinition, final ActivatedJob activatedJob) {
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return null;
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        if (value == null)
+            return null;
+        try {
+            return FileVariableFactory.getInstance().getFileVariable(storageDefinition, value);
+        } catch (Exception e) {
+            logger.error("VercorsConnector[" + name + "] Error during FileVariable read: " + e);
+        }
+        return null;
+    }
+
+    /**
      * return a variable value
      *
-     * @param parameterName         name of the input value
-     * @param defaultValue if the input does not exist, this is the default value.
-     * @param activatedJob job passed to the worker
+     * @param parameterName name of the input value
+     * @param defaultValue  if the input does not exist, this is the default value.
+     * @param activatedJob  job passed to the worker
      * @return the value as String
      */
     public Object getValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
         if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
-            return getDefaultValue(parameterName,defaultValue);
+            return getDefaultValue(parameterName, defaultValue);
         try {
             return activatedJob.getVariablesAsMap().get(parameterName);
         } catch (Exception e) {
@@ -336,29 +374,101 @@ public abstract class AbstractWorker {
     }
 
     /**
-     * Return the defaultValue for a parameter. If the defaultValue is provided by the softwar, it has the priority.
+     * Return the defaultValue for a parameter. If the defaultValue is provided by the software, it has the priority.
      * Else the default value is the one given in the parameter.
+     *
      * @param parameterName name of parameter
-     * @param defaultValue default value given by the software
+     * @param defaultValue  default value given by the software
      * @return the default value
      */
     private Object getDefaultValue(String parameterName, Object defaultValue) {
         // if the software give a default value, it has the priority
-        if (defaultValue!=null)
+        if (defaultValue != null)
             return defaultValue;
-        List<WorkerParameter> inputFilter= listInput.stream().filter(t->t.name.equals(parameterName)).collect(Collectors.toList());
+        List<WorkerParameter> inputFilter = listInput.stream().filter(t -> t.name.equals(parameterName)).collect(Collectors.toList());
         if (!inputFilter.isEmpty())
             return inputFilter.get(0).defaultValue;
         // definitively, no default value
         return null;
     }
+
     /**
      * Set the value. Worker must use this method, then the class can verify the output contract is respected
      *
-     * @param name  name of the variable
-     * @param value value of the variable
+     * @param parameterName name of the variable
+     * @param value         value of the variable
      */
-    public void setValue(String name, Object value) {
-        outVariables.put(name, value == null ? null : value.getClass().getName());
+    public void setValue(String parameterName, Object value) {
+        outVariablesValue.put(parameterName, value);
+    }
+
+    /**
+     * Set a fileVariable value
+     *
+     * @param parameterName     name to save the fileValue
+     * @param storageDefinition parameter which pilot the way to retrieve the value
+     * @param fileVariableValue fileVariable to save
+     */
+    public void setFileVariableValue(String parameterName, String storageDefinition, FileVariable fileVariableValue) {
+        try {
+            Object fileVariableEncoded = FileVariableFactory.getInstance().setFileVariable(storageDefinition, fileVariableValue);
+            outVariablesValue.put(parameterName, fileVariableEncoded);
+        } catch (Exception e) {
+            logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
+        }
+    }
+
+    /**
+     * Level on the parameter.
+     */
+    public enum Level {REQUIRED, OPTIONAL}
+
+    /**
+     * class to declare a parameter
+     */
+    public static class WorkerParameter {
+        public String name;
+        public Class<?> clazz;
+        public Object defaultValue;
+        public Level level;
+        public String explanation;
+
+        /**
+         * Get an instance without a default value
+         *
+         * @param parameterName parameter name
+         * @param clazz         class of the expected parameter
+         * @param defaultValue  the default value for this parameter, if no value is given. Note: a required parameter may have a null as a value.
+         * @param level         level for this parameter
+         * @param explanation   describe the usage of the parameter
+         * @return a WorkerParameter
+         */
+        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Object defaultValue, Level level, String explanation) {
+            WorkerParameter parameter = new WorkerParameter();
+            parameter.name = parameterName;
+            parameter.clazz = clazz;
+            parameter.defaultValue = defaultValue;
+            parameter.level = level;
+            return parameter;
+        }
+
+        /**
+         * Get an instance without a default value
+         *
+         * @param parameterName parameter name
+         * @param clazz         class of the expected parameter
+         * @param level         level for this parameter
+         * @param explanation   describe the usage of the parameter
+         * @return a WorkerParameter
+         */
+        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Level level, String explanation) {
+            WorkerParameter parameter = new WorkerParameter();
+            parameter.name = parameterName;
+            parameter.clazz = clazz;
+            parameter.defaultValue = null;
+            parameter.level = level;
+            parameter.explanation = explanation;
+            return parameter;
+        }
     }
 }

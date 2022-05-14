@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  PingWorker                                                          */
+/*                                                                      */
+/* Realize a simple ping                                                */
+/* ******************************************************************** */
 package org.camunda.vercors.ping;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
@@ -17,21 +23,23 @@ import java.util.Date;
 @Component
 public class PingWorker extends AbstractWorker {
 
-    Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
 
-    private final static String INPUT_MESSAGE ="message";
-    private final static String INPUT_DELAY ="delay";
-    private final static String OUTPUT_TIMESTAMP ="timestamp";
+    private final static String INPUT_MESSAGE = "message";
+    private final static String INPUT_DELAY = "delay";
+    private final static String OUTPUT_TIMESTAMP = "timestamp";
+    Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
 
     public PingWorker() {
         super("v-ping",
                 Arrays.asList(
-                        WorkerParameter.getInstance(INPUT_MESSAGE, String.class, Level.OPTIONAL),
-                        WorkerParameter.getInstance(INPUT_DELAY, Long.class, Level.OPTIONAL)),
+                        WorkerParameter.getInstance(INPUT_MESSAGE, String.class, Level.OPTIONAL, "Message to log"),
+                        WorkerParameter.getInstance(INPUT_DELAY, Long.class, Level.OPTIONAL, "Delay to sleep")),
 
                 Arrays.asList(
-                        WorkerParameter.getInstance(OUTPUT_TIMESTAMP, String.class, Level.REQUIRED))
-                        );
+                        WorkerParameter.getInstance(OUTPUT_TIMESTAMP, String.class, Level.REQUIRED, "Produce a timestamp")),
+                Collections.emptyList()
+        );
+
     }
 
     @ZeebeWorker(type = "v-ping", autoComplete = true)
@@ -41,10 +49,11 @@ public class PingWorker extends AbstractWorker {
 
 
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
-        String message= getInputStringValue(INPUT_MESSAGE, null, activatedJob);
-        Long delay = getInputLongValue(INPUT_DELAY, null,activatedJob);
-        logger.info("Vercors-Ping ["+message+"]");
-        if (delay!=null) {
+
+        String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
+        Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
+        logInfo(message);
+        if (delay != null) {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
@@ -52,7 +61,8 @@ public class PingWorker extends AbstractWorker {
             }
         }
         DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
-        String formattedDate = formatter.format( new Date());
+
+        String formattedDate = formatter.format(new Date());
         setValue(OUTPUT_TIMESTAMP, formattedDate);
     }
 }

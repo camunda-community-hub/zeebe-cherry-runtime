@@ -10,7 +10,7 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.EnableZeebeClient;
+
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.AbstractWorker;
@@ -32,6 +32,8 @@ public class SendMessageWorker extends AbstractWorker {
     public static final String INPUT_MESSAGE_DURATION = "messageDuration";
     public static final String WORKERTYPE_SEND_MESSAGE = "v-send-message";
 
+    public static final String BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR = "TOO_MANY_CORRELATION_VARIABLE_ERROR";
+
     Logger logger = LoggerFactory.getLogger(SendMessageWorker.class.getName());
 
     @Autowired
@@ -41,12 +43,13 @@ public class SendMessageWorker extends AbstractWorker {
     public SendMessageWorker() {
         super(WORKERTYPE_SEND_MESSAGE,
                 Arrays.asList(
-                        WorkerParameter.getInstance(INPUT_MESSAGE_NAME, String.class, Level.REQUIRED),
-                        WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, String.class, Level.OPTIONAL),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_VARIABLES, String.class, Level.OPTIONAL),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, String.class, Level.OPTIONAL),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_DURATION, Object.class, Level.OPTIONAL)),
-                Collections.emptyList());
+                        WorkerParameter.getInstance(INPUT_MESSAGE_NAME, String.class, Level.REQUIRED, "Message name"),
+                        WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, String.class, Level.OPTIONAL, "Correlation variables. The content of theses variable is used to find the process instance to unfroze"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_VARIABLES, String.class, Level.OPTIONAL, "Variables to copy in the message"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, String.class, Level.OPTIONAL, "Id of the message"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_DURATION, Object.class, Level.OPTIONAL, "Message duration. After this delay, message is deleted if it doesn't fit a process instance")),
+                Collections.emptyList(),
+                Arrays.asList(BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR));
     }
 
     // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
@@ -57,9 +60,9 @@ public class SendMessageWorker extends AbstractWorker {
 
 
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
-        logger.info("VercorsSendMessage: start");
+        String messageName = getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob);
         try {
-            sendMessageViaGrpc(getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob),
+            sendMessageViaGrpc(messageName,
                     getInputStringValue(INPUT_CORRELATION_VARIABLES, null, activatedJob),
                     getInputStringValue(INPUT_MESSAGE_VARIABLES, null, activatedJob),
                     getInputStringValue(INPUT_MESSAGE_ID_VARIABLES, null, activatedJob),
@@ -68,7 +71,7 @@ public class SendMessageWorker extends AbstractWorker {
 
 
         } catch (Exception e) {
-            logger.error("SendMessage: We got an exception! Send a BPMN Error " + e.getMessage());
+            logError("Error during sendMessage [" + messageName + "] :" + e);
             throw e;
         }
     }
@@ -96,8 +99,8 @@ public class SendMessageWorker extends AbstractWorker {
 
         // At this moment, we expect only one variable for the correlation key
         if (correlationVariables.size() > 1) {
-            logger.error("VercorsConnector[" + getName() + "] One variable expected for the correction");
-            throw new ZeebeBpmnError("TOO_MANY_CORRELATION_VARIABLE_ERROR", "Worker [" + getName() + "] One variable expected for the correction:[" + correlationVariablesList + "]");
+            logError("One (and only one) variable is expected for the correction");
+            throw new ZeebeBpmnError(BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR, "Worker [" + getName() + "] One variable expected for the correction:[" + correlationVariablesList + "]");
         }
         String correlationValue = null;
         if (!correlationVariables.isEmpty())
@@ -129,7 +132,8 @@ public class SendMessageWorker extends AbstractWorker {
      */
     private Map<String, Object> extractVariable(String variableList, final ActivatedJob activatedJob) {
         Map<String, Object> variables = new HashMap<>();
-        if (variableList ==null)
+
+        if (variableList == null)
             return Collections.emptyMap();
         StringTokenizer stVariable = new StringTokenizer(variableList, ",");
         while (stVariable.hasMoreTokens()) {
