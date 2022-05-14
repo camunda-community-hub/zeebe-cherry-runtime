@@ -23,6 +23,7 @@ import java.util.Date;
 @Component
 public class PingWorker extends AbstractWorker {
 
+
     private final static String INPUT_MESSAGE = "message";
     private final static String INPUT_DELAY = "delay";
     private final static String OUTPUT_TIMESTAMP = "timestamp";
@@ -38,6 +39,7 @@ public class PingWorker extends AbstractWorker {
                         WorkerParameter.getInstance(OUTPUT_TIMESTAMP, String.class, Level.REQUIRED, "Produce a timestamp")),
                 Collections.emptyList()
         );
+
     }
 
     @ZeebeWorker(type = "v-ping", autoComplete = true)
@@ -47,6 +49,7 @@ public class PingWorker extends AbstractWorker {
 
 
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
+
         String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
         Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
         logInfo(message);
@@ -58,6 +61,7 @@ public class PingWorker extends AbstractWorker {
             }
         }
         DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+
         String formattedDate = formatter.format(new Date());
         setValue(OUTPUT_TIMESTAMP, formattedDate);
     }

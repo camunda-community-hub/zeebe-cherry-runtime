@@ -14,7 +14,6 @@
         <zeebe.version>8.0.1</zeebe.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
         <opensagres.version>2.0.3</opensagres.version>
-
     </properties>
 
     <dependencies>
@@ -36,6 +35,7 @@
             <artifactId>gson</artifactId>
             <version>2.9.0</version>
         </dependency>
+
 
         <!-- Convert to PDF -->
         <!-- https://mvnrepository.com/artifact/fr.opensagres.xdocreport/fr.opensagres.xdocreport.document -->

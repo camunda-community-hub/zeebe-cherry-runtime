@@ -28,6 +28,7 @@ public abstract class AbstractWorker {
     private final Map<String, Object> outVariablesValue = new HashMap<>();
     Logger logger = LoggerFactory.getLogger(AbstractWorker.class.getName());
 
+
     /**
      * Constructor
      *
@@ -54,6 +55,7 @@ public abstract class AbstractWorker {
     public String getName() {
         return name;
     }
+
 
     public List<WorkerParameter> getListInput() {
         return listInput;
@@ -93,6 +95,7 @@ public abstract class AbstractWorker {
 
         // let's verify the execution respect the output contract
         checkOutput();
+
 
         // save the output in the process instance
         jobClient.newCompleteCommand(activatedJob.getKey()).variables(outVariablesValue).send().join();
@@ -288,6 +291,7 @@ public abstract class AbstractWorker {
         if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
             return (Long) getDefaultValue(parameterName, defaultValue);
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
+
         if (value == null)
             return null;
         if (value instanceof Long)
@@ -304,6 +308,7 @@ public abstract class AbstractWorker {
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
      *
+
      * @param parameterName name of the variable
      * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob  job passed to the worker

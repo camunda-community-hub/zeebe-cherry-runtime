@@ -10,6 +10,7 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
+
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.AbstractWorker;
@@ -30,6 +31,7 @@ public class SendMessageWorker extends AbstractWorker {
     public static final String INPUT_MESSAGE_ID_VARIABLES = "messageId";
     public static final String INPUT_MESSAGE_DURATION = "messageDuration";
     public static final String WORKERTYPE_SEND_MESSAGE = "v-send-message";
+
     public static final String BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR = "TOO_MANY_CORRELATION_VARIABLE_ERROR";
 
     Logger logger = LoggerFactory.getLogger(SendMessageWorker.class.getName());
@@ -130,6 +132,7 @@ public class SendMessageWorker extends AbstractWorker {
      */
     private Map<String, Object> extractVariable(String variableList, final ActivatedJob activatedJob) {
         Map<String, Object> variables = new HashMap<>();
+
         if (variableList == null)
             return Collections.emptyMap();
         StringTokenizer stVariable = new StringTokenizer(variableList, ",");
