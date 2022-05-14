@@ -152,7 +152,6 @@
       <bpmn:incoming>Flow_1xjbl6z</bpmn:incoming>
       <bpmn:outgoing>Flow_03399tm</bpmn:outgoing>
     </bpmn:manualTask>
-
     <bpmn:serviceTask id="Activity_0lz5i0z" name="ping">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="v-ping" />
