@@ -40,7 +40,7 @@ public class SaveFileToDiskWorker extends AbstractWorker {
 
 
     public SaveFileToDiskWorker() {
-        super("v-savefile-to-disk",
+        super("v-files-save-to-disk",
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER_TO_SAVE, String.class, AbstractWorker.Level.REQUIRED, "Folder where the file will be save"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILENAME, String.class, Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
@@ -51,7 +51,7 @@ public class SaveFileToDiskWorker extends AbstractWorker {
                 Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR));
     }
 
-    @ZeebeWorker(type = "v-savefile-to-disk", autoComplete = true)
+    @ZeebeWorker(type = "v-files-save-to-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
