@@ -50,7 +50,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
     Logger logger = LoggerFactory.getLogger(LoadFileFromDiskWorker.class.getName());
 
     public LoadFileFromDiskWorker() {
-        super("v-loadfile-from-disk",
+        super("v-files-load-from-disk",
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER, String.class, AbstractWorker.Level.REQUIRED, "Give the folder where the file will be loaded"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILE_NAME, String.class, AbstractWorker.Level.OPTIONAL, "Specify a file name, else the first file in the folder will be loaded"),
@@ -68,7 +68,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
         );
     }
 
-    @ZeebeWorker(type = "v-loadfile-from-disk", autoComplete = true)
+    @ZeebeWorker(type = "v-files-load-from-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
