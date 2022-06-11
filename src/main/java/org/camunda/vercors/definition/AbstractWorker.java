@@ -25,8 +25,7 @@ public abstract class AbstractWorker {
     private final List<WorkerParameter> listInput;
     private final List<WorkerParameter> listOutput;
     private final List<String> listBpmnErrors;
-    private final Map<String, Object> outVariablesValue = new HashMap<>();
-    Logger logger = LoggerFactory.getLogger(AbstractWorker.class.getName());
+    Logger loggerAbstract = LoggerFactory.getLogger(AbstractWorker.class.getName());
 
 
     /**
@@ -37,7 +36,7 @@ public abstract class AbstractWorker {
      * @param listOutput     list of Output parameters for the worker
      * @param listBpmnErrors list of potential BPMN Error the worker can generate
      */
-    public AbstractWorker(String name,
+    protected AbstractWorker(String name,
                           List<WorkerParameter> listInput,
                           List<WorkerParameter> listOutput,
                           List<String> listBpmnErrors) {
@@ -56,27 +55,41 @@ public abstract class AbstractWorker {
         return name;
     }
 
-
+    /**
+     * return the list of Input parameters for this worker
+     * @return list of parameters
+     */
     public List<WorkerParameter> getListInput() {
         return listInput;
     }
 
+    /**
+     * return the list of Output parameters for this worker
+     * @return list of parameters
+     */
     public List<WorkerParameter> getListOutput() {
         return listOutput;
     }
 
+    /**
+     * return the list of BPMN error
+     * @return list of errors
+     */
     public List<String> getListBpmnErrors() {
         return listBpmnErrors;
     }
 
     /**
      * The connector must call immediately this method, which is the skeleton for all executions
+     * Attention: this is a Spring Component, so this is the same object called.
      *
      * @param jobClient    connection to Zeebe
      * @param activatedJob information on job to execute
      */
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-        long beginExecution = System.currentTimeMillis();
+
+        ContextExecution contextExecution = new ContextExecution();
+        contextExecution.beginExecution =System.currentTimeMillis();
         // log input
         String logInput = listInput.stream()
                 .map(t -> {
@@ -91,17 +104,17 @@ public abstract class AbstractWorker {
         checkInput(activatedJob);
 
         // ok, this is correct, execute it now
-        execute(jobClient, activatedJob);
+        execute(jobClient, activatedJob, contextExecution);
 
         // let's verify the execution respect the output contract
-        checkOutput();
+        checkOutput(contextExecution);
 
 
         // save the output in the process instance
-        jobClient.newCompleteCommand(activatedJob.getKey()).variables(outVariablesValue).send().join();
+        jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
 
-        long endExecution = System.currentTimeMillis();
-        logInfo("End in " + (endExecution - beginExecution) + " ms");
+        contextExecution.endExecution = System.currentTimeMillis();
+        logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
     }
 
     /**
@@ -109,8 +122,20 @@ public abstract class AbstractWorker {
      *
      * @param jobClient    connection to Zeebe
      * @param activatedJob information on job to execute
+     * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
      */
-    public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob);
+    public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution);
+
+
+    /**
+     * All executions call the same object. This contains all the context for one execution.
+     */
+    protected class ContextExecution {
+        long beginExecution;
+        long endExecution;
+        public final Map<String, Object> outVariablesValue = new HashMap<>();
+
+    }
 
     /* -------------------------------------------------------- */
     /*                                                          */
@@ -125,7 +150,7 @@ public abstract class AbstractWorker {
      * @param message message to log
      */
     public void logInfo(String message) {
-        logger.info("VercorsWorker[" + getName() + "]: " + message);
+        loggerAbstract.info("VercorsWorker["+getName()+"]:"+ message);
     }
 
     /**
@@ -134,7 +159,7 @@ public abstract class AbstractWorker {
      * @param message message to log
      */
     public void logError(String message) {
-        logger.error("VercorsWorker[" + getName() + "]: " + message);
+        loggerAbstract.error("VercorsWorker["+getName()+"]:"+ message);
     }
 
 
@@ -153,11 +178,15 @@ public abstract class AbstractWorker {
     private void checkInput(final ActivatedJob job) throws RuntimeException {
         List<String> listErrors = new ArrayList<>();
         for (WorkerParameter parameter : listInput) {
+            // if a parameter is a star, then this is not really a name
+            if ("*".equals(parameter.name))
+                continue;
+
             if (job.getVariablesAsMap().containsKey(parameter.name)) {
                 Object value = job.getVariablesAsMap().get(parameter.name);
 
                 if (incorrectClassParameter(value, parameter.clazz)) {
-                    listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
+                    listErrors.add("Param["+parameter.name+"] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
                 }
             } else if (parameter.level == Level.REQUIRED) {
                 listErrors.add("Param[" + parameter.name + "] is missing");
@@ -172,35 +201,43 @@ public abstract class AbstractWorker {
     /**
      * Check the contract at output
      * The connector must use setVariable to set any value. Then, we can verify that all expected information are provided
-     *
+     * @param contextExecution keep the context of this execution
      * @throws RuntimeException when the contract is not respected
      */
-    private void checkOutput() throws RuntimeException {
+    private void checkOutput(ContextExecution contextExecution) throws RuntimeException {
         List<String> listErrors = new ArrayList<>();
 
         for (WorkerParameter parameter : listOutput) {
 
+            // no check on the * parameter
+            if ("*".equals(parameter.name))
+                continue;
+
             if (parameter.level == Level.REQUIRED) {
-                if (!outVariablesValue.containsKey(parameter.name))
+                if (!contextExecution.outVariablesValue.containsKey(parameter.name))
                     listErrors.add("Param[" + parameter.name + "] is missing");
             }
             // if the value is given, it must be the correct value
-            if (outVariablesValue.containsKey(parameter.name)) {
-                Object value = outVariablesValue.get(parameter.name);
+            if (contextExecution.outVariablesValue.containsKey(parameter.name)) {
+                Object value = contextExecution.outVariablesValue.get(parameter.name);
 
                 if (incorrectClassParameter(value == null ? null : value.getClass().getName(), parameter.clazz))
                     listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName()
-                            + "] received[" + outVariablesValue.get(parameter.name).getClass() + "];");
+                            + "] received[" + contextExecution.outVariablesValue.get(parameter.name).getClass() + "];");
             }
         }
         Set<String> outputName = listOutput.stream().map(t -> t.name).collect(Collectors.toSet());
         // second pass: verify that the connector does not provide an unexpected value
-        List<String> listExtraVariables = outVariablesValue.keySet()
-                .stream()
-                .filter(variable -> !outputName.contains(variable))
-                .collect(Collectors.toList());
-        if (!listExtraVariables.isEmpty())
-            listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
+        // if a outputParameter is "*" then the connector allows itself to produce anything
+        long containsStar = listOutput.stream().filter(t->"*".equals(t.name)).count();
+        if (containsStar==0) {
+            List<String> listExtraVariables = contextExecution.outVariablesValue.keySet()
+                    .stream()
+                    .filter(variable -> !outputName.contains(variable))
+                    .collect(Collectors.toList());
+            if (!listExtraVariables.isEmpty())
+                listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
+        }
 
         if (!listErrors.isEmpty()) {
             logError("Errors:" + String.join(",", listErrors));
@@ -252,7 +289,7 @@ public abstract class AbstractWorker {
     /**
      * Return a value as Double
      *
-     * @param parameterName name of the variable
+     * @param parameterName name of the parameter
      * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob  job passed to the worker
      * @return a Double value
@@ -272,6 +309,24 @@ public abstract class AbstractWorker {
         }
     }
 
+    /**
+     * return a value as a Map
+     * @param parameterName name of the parameter
+     * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
+     * @param activatedJob  job passed to the worker
+     * @return a Map value
+     */
+    public Map getInputMapValue(String parameterName, Map defaultValue, final ActivatedJob activatedJob) {
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return (Map) getDefaultValue(parameterName, defaultValue);
+        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        if (value == null)
+            return null;
+        if (value instanceof Map)
+            return (Map) value;
+
+            return defaultValue;
+    }
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  getInput/setOutput                                      */
@@ -350,7 +405,7 @@ public abstract class AbstractWorker {
         try {
             return FileVariableFactory.getInstance().getFileVariable(storageDefinition, value);
         } catch (Exception e) {
-            logger.error("VercorsConnector[" + name + "] Error during FileVariable read: " + e);
+            loggerAbstract.error("VercorsConnector[" + name + "] Error during FileVariable read: " + e);
         }
         return null;
     }
@@ -398,8 +453,8 @@ public abstract class AbstractWorker {
      * @param parameterName name of the variable
      * @param value         value of the variable
      */
-    public void setValue(String parameterName, Object value) {
-        outVariablesValue.put(parameterName, value);
+    public void setValue(String parameterName, Object value, ContextExecution contextExecution) {
+        contextExecution.outVariablesValue.put(parameterName, value);
     }
 
     /**
@@ -409,10 +464,10 @@ public abstract class AbstractWorker {
      * @param storageDefinition parameter which pilot the way to retrieve the value
      * @param fileVariableValue fileVariable to save
      */
-    public void setFileVariableValue(String parameterName, String storageDefinition, FileVariable fileVariableValue) {
+    public void setFileVariableValue(String parameterName, String storageDefinition, FileVariable fileVariableValue, ContextExecution contextExecution) {
         try {
             Object fileVariableEncoded = FileVariableFactory.getInstance().setFileVariable(storageDefinition, fileVariableValue);
-            outVariablesValue.put(parameterName, fileVariableEncoded);
+            contextExecution.outVariablesValue.put(parameterName, fileVariableEncoded);
         } catch (Exception e) {
             logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
         }
