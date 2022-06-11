@@ -68,13 +68,15 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
         );
     }
 
+    @Override
     @ZeebeWorker(type = "v-files-load-from-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient client, final ActivatedJob activatedJob) {
+    @Override
+    public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String folderName = getInputStringValue(INPUT_FOLDER, null, activatedJob);
         String fileName = getInputStringValue(INPUT_FILE_NAME, null, activatedJob);
         String filterFile = getInputStringValue(INPUT_FILTER_FILE, null, activatedJob);
@@ -125,13 +127,13 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
         // output
         if (fileVariable != null) {
-            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable);
-            setValue(OUTPUT_FILE_NAME, fileVariable.name);
-            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType);
+            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable,contextExecution);
+            setValue(OUTPUT_FILE_NAME, fileVariable.name,contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType,contextExecution);
         } else {
-            setValue(OUTPUT_FILE_LOADED, null);
-            setValue(OUTPUT_FILE_NAME, null);
-            setValue(OUTPUT_FILE_MIMETYPE, null);
+            setValue(OUTPUT_FILE_LOADED, null,contextExecution);
+            setValue(OUTPUT_FILE_NAME, null,contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, null,contextExecution);
 
         }
 

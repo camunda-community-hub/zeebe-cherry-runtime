@@ -59,7 +59,14 @@ public class OfficeToPdfWorker extends AbstractWorker {
     }
 
 
-    public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
+    /**
+     *
+     * @param jobClient client
+     * @param activatedJob job activated
+     * @param contextExecution context of this execution
+     */
+    @Override
+    public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String sourceStorageDefinition = getInputStringValue(INPUT_SOURCE_STORAGEDEFINITION, null, activatedJob);
         FileVariable sourceFileVariable = getFileVariableValue(INPUT_SOURCE_FILE, sourceStorageDefinition, activatedJob);
 
@@ -94,7 +101,7 @@ public class OfficeToPdfWorker extends AbstractWorker {
             FileVariable fileVariableOut = new FileVariable();
             fileVariableOut.value = out.toByteArray();
             fileVariableOut.name = destinationFileName;
-            setFileVariableValue(OUTPUT_DESTINATION_FILE, destinationStorageDefinition, fileVariableOut);
+            setFileVariableValue(OUTPUT_DESTINATION_FILE, destinationStorageDefinition, fileVariableOut, contextExecution);
         } catch (Exception e) {
             throw new ZeebeBpmnError(BPMERROR_CONVERSION_ERROR, "Worker [" + getName() + "] cannot convert file[" + sourceFileVariable.name + "] : " + e);
         }

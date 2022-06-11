@@ -51,13 +51,14 @@ public class SaveFileToDiskWorker extends AbstractWorker {
                 Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR));
     }
 
+    @Override
     @ZeebeWorker(type = "v-files-save-to-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
-
-    public void execute(final JobClient client, final ActivatedJob activatedJob) {
+@Override
+    public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String folderToSave = getInputStringValue(INPUT_FOLDER_TO_SAVE, null, activatedJob);
         String sourceStorageDefinition = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);
         FileVariable fileVariable = getFileVariableValue(INPUT_SOURCE_FILE, sourceStorageDefinition, activatedJob);

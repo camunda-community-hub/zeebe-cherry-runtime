@@ -53,13 +53,15 @@ public class SendMessageWorker extends AbstractWorker {
     }
 
     // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
+    @Override
     @ZeebeWorker(type = WORKERTYPE_SEND_MESSAGE, autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
+    @Override
+    public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String messageName = getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob);
         try {
             sendMessageViaGrpc(messageName,
