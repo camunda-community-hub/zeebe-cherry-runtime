@@ -185,7 +185,6 @@
       <bpmndi:BPMNEdge id="Flow_1gclx79_di" bpmnElement="Flow_1gclx79">
         <di:waypoint x="198" y="117" />
         <di:waypoint x="225" y="117" />
-
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Activity_0hpa28l_di" bpmnElement="Activity_01qx4mx">
         <dc:Bounds x="440" y="77" width="100" height="80" />
