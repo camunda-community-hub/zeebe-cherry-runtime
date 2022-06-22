@@ -1,7 +1,5 @@
 package org.camunda.vercors.office;
 
-import fr.opensagres.xdocreport.converter.ConverterTypeTo;
-import fr.opensagres.xdocreport.converter.Options;
 import fr.opensagres.xdocreport.document.IXDocReport;
 import fr.opensagres.xdocreport.document.registry.XDocReportRegistry;
 import fr.opensagres.xdocreport.template.IContext;
@@ -20,7 +18,10 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 @Component
 public class GenerateOfficeWorker extends AbstractWorker {
@@ -49,7 +50,7 @@ public class GenerateOfficeWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_VARIABLES, Map.class, Level.OPTIONAL, "Template document contains place holders. This is the dictionary which contains values for theses place holder"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_VARIABLES_NAMES, String.class, Level.OPTIONAL, "Template document contains place holders. Here the list of variable to add in the dictionary for place holder")
 
-                        ),
+                ),
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(OUTPUT_DESTINATION_FILE, Object.class, Level.REQUIRED, "FileVariable converted")
                 ),
@@ -57,7 +58,7 @@ public class GenerateOfficeWorker extends AbstractWorker {
     }
 
     @Override
-    @ZeebeWorker(type = "v-office-generate", autoComplete = true)
+    @ZeebeWorker(type = "v-office-generation", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
@@ -75,8 +76,8 @@ public class GenerateOfficeWorker extends AbstractWorker {
             throw new ZeebeBpmnError(BPMERROR_LOAD_FILE_ERROR, "Worker [" + getName() + "] cannot read file[" + sourceStorageDefinition + "]");
         }
 
-        Map<String,Object> variables = getInputMapValue( INPUT_VARIABLES, Collections.emptyMap(), activatedJob);
-        String listVariablesToAdd = getInputStringValue( INPUT_VARIABLES_NAMES, "", activatedJob);
+        Map<String, Object> variables = getInputMapValue(INPUT_VARIABLES, Collections.emptyMap(), activatedJob);
+        String listVariablesToAdd = getInputStringValue(INPUT_VARIABLES_NAMES, "", activatedJob);
 
         // get the file
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(sourceFileVariable.value);
@@ -92,11 +93,11 @@ public class GenerateOfficeWorker extends AbstractWorker {
                 context.put(entry.getKey(), entry.getValue());
             }
             // add all the additional information
-            StringTokenizer st = new StringTokenizer(listVariablesToAdd,";");
+            StringTokenizer st = new StringTokenizer(listVariablesToAdd, ";");
             while (st.hasMoreTokens()) {
                 String variableName = st.nextToken();
                 Object variableValue = activatedJob.getVariablesAsMap().get(variableName);
-                if (variableValue!=null)
+                if (variableValue != null)
                     context.put(variableName, variableValue);
             }
 
@@ -107,7 +108,7 @@ public class GenerateOfficeWorker extends AbstractWorker {
             FileVariable fileVariableOut = new FileVariable();
             fileVariableOut.value = outDoc.toByteArray();
             fileVariableOut.name = destinationFileName;
-            setFileVariableValue(OUTPUT_DESTINATION_FILE, destinationStorageDefinition, fileVariableOut,contextExecution);
+            setFileVariableValue(OUTPUT_DESTINATION_FILE, destinationStorageDefinition, fileVariableOut, contextExecution);
         } catch (Exception e) {
             throw new ZeebeBpmnError(BPMERROR_CONVERSION_ERROR, "Worker [" + getName() + "] cannot generate file[" + sourceFileVariable.name + "] : " + e);
         }
