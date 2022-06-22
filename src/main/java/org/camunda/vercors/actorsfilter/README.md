@@ -1,13 +1,13 @@
 # Actors Filter collection
 
-List of actors filter
-On a user task, you may want to calculate dynamicaly the candidates users. For example, for a ticket, the list of users who can access the task depends on the region where the ticket is created:
+List of actors filter On a user task, you may want to calculate dynamicaly the candidates users. For example, for a
+ticket, the list of users who can access the task depends on the region where the ticket is created:
 
-If the ticket is attached to North America, list of users is any users attached to the NorthAmericaSupport group. 
-From Europe? Candidates is any users attached to the EuropeSupport group.
+If the ticket is attached to North America, list of users is any users attached to the NorthAmericaSupport group. From
+Europe? Candidates is any users attached to the EuropeSupport group.
 
-other use case: you want to assign the ticket to the manager of the submitter. For a vacation request, the candidate user is the manager of the user.
-
+other use case: you want to assign the ticket to the manager of the submitter. For a vacation request, the candidate
+user is the manager of the user.
 
 # ActorFilter
 

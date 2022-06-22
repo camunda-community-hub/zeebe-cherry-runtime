@@ -58,7 +58,7 @@ public class SaveFileToDiskWorker extends AbstractWorker {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
-@Override
+    @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String folderToSave = getInputStringValue(INPUT_FOLDER_TO_SAVE, null, activatedJob);
         String sourceStorageDefinition = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);

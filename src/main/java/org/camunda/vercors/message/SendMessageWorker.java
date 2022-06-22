@@ -10,7 +10,6 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.AbstractWorker;

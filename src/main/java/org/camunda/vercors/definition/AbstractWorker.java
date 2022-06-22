@@ -37,9 +37,9 @@ public abstract class AbstractWorker {
      * @param listBpmnErrors list of potential BPMN Error the worker can generate
      */
     protected AbstractWorker(String name,
-                          List<WorkerParameter> listInput,
-                          List<WorkerParameter> listOutput,
-                          List<String> listBpmnErrors) {
+                             List<WorkerParameter> listInput,
+                             List<WorkerParameter> listOutput,
+                             List<String> listBpmnErrors) {
         this.name = name;
         this.listInput = listInput;
         this.listOutput = listOutput;
@@ -57,6 +57,7 @@ public abstract class AbstractWorker {
 
     /**
      * return the list of Input parameters for this worker
+     *
      * @return list of parameters
      */
     public List<WorkerParameter> getListInput() {
@@ -65,6 +66,7 @@ public abstract class AbstractWorker {
 
     /**
      * return the list of Output parameters for this worker
+     *
      * @return list of parameters
      */
     public List<WorkerParameter> getListOutput() {
@@ -73,6 +75,7 @@ public abstract class AbstractWorker {
 
     /**
      * return the list of BPMN error
+     *
      * @return list of errors
      */
     public List<String> getListBpmnErrors() {
@@ -89,7 +92,7 @@ public abstract class AbstractWorker {
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
 
         ContextExecution contextExecution = new ContextExecution();
-        contextExecution.beginExecution =System.currentTimeMillis();
+        contextExecution.beginExecution = System.currentTimeMillis();
         // log input
         String logInput = listInput.stream()
                 .map(t -> {
@@ -120,21 +123,19 @@ public abstract class AbstractWorker {
     /**
      * Worker must implement this method. Real job has to be done here.
      *
-     * @param jobClient    connection to Zeebe
-     * @param activatedJob information on job to execute
+     * @param jobClient        connection to Zeebe
+     * @param activatedJob     information on job to execute
      * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
      */
     public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution);
 
-
     /**
-     * All executions call the same object. This contains all the context for one execution.
+     * log info
+     *
+     * @param message message to log
      */
-    protected class ContextExecution {
-        long beginExecution;
-        long endExecution;
-        public final Map<String, Object> outVariablesValue = new HashMap<>();
-
+    public void logInfo(String message) {
+        loggerAbstract.info("VercorsWorker[" + getName() + "]:" + message);
     }
 
     /* -------------------------------------------------------- */
@@ -145,29 +146,13 @@ public abstract class AbstractWorker {
     /* -------------------------------------------------------- */
 
     /**
-     * log info
-     *
-     * @param message message to log
-     */
-    public void logInfo(String message) {
-        loggerAbstract.info("VercorsWorker["+getName()+"]:"+ message);
-    }
-
-    /**
      * Log an error
      *
      * @param message message to log
      */
     public void logError(String message) {
-        loggerAbstract.error("VercorsWorker["+getName()+"]:"+ message);
+        loggerAbstract.error("VercorsWorker[" + getName() + "]:" + message);
     }
-
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Contracts operation on input/output                     */
-    /*                                                          */
-    /* -------------------------------------------------------- */
 
     /**
      * Check the contract
@@ -186,7 +171,7 @@ public abstract class AbstractWorker {
                 Object value = job.getVariablesAsMap().get(parameter.name);
 
                 if (incorrectClassParameter(value, parameter.clazz)) {
-                    listErrors.add("Param["+parameter.name+"] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
+                    listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
                 }
             } else if (parameter.level == Level.REQUIRED) {
                 listErrors.add("Param[" + parameter.name + "] is missing");
@@ -198,9 +183,17 @@ public abstract class AbstractWorker {
         }
     }
 
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Contracts operation on input/output                     */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
     /**
      * Check the contract at output
      * The connector must use setVariable to set any value. Then, we can verify that all expected information are provided
+     *
      * @param contextExecution keep the context of this execution
      * @throws RuntimeException when the contract is not respected
      */
@@ -229,8 +222,8 @@ public abstract class AbstractWorker {
         Set<String> outputName = listOutput.stream().map(t -> t.name).collect(Collectors.toSet());
         // second pass: verify that the connector does not provide an unexpected value
         // if a outputParameter is "*" then the connector allows itself to produce anything
-        long containsStar = listOutput.stream().filter(t->"*".equals(t.name)).count();
-        if (containsStar==0) {
+        long containsStar = listOutput.stream().filter(t -> "*".equals(t.name)).count();
+        if (containsStar == 0) {
             List<String> listExtraVariables = contextExecution.outVariablesValue.keySet()
                     .stream()
                     .filter(variable -> !outputName.contains(variable))
@@ -263,12 +256,6 @@ public abstract class AbstractWorker {
         }
         return true;
     }
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Worker parameters                                       */
-    /*                                                          */
-    /* Worker must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
 
     /**
      * Retrieve a variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
@@ -285,6 +272,12 @@ public abstract class AbstractWorker {
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
         return value == null ? null : value.toString();
     }
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Worker parameters                                       */
+    /*                                                          */
+    /* Worker must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
 
     /**
      * Return a value as Double
@@ -311,6 +304,7 @@ public abstract class AbstractWorker {
 
     /**
      * return a value as a Map
+     *
      * @param parameterName name of the parameter
      * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob  job passed to the worker
@@ -325,14 +319,8 @@ public abstract class AbstractWorker {
         if (value instanceof Map)
             return (Map) value;
 
-            return defaultValue;
+        return defaultValue;
     }
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  getInput/setOutput                                      */
-    /*                                                          */
-    /* method to get variable value                             */
-    /* -------------------------------------------------------- */
 
     /**
      * Return a value as Long
@@ -357,13 +345,18 @@ public abstract class AbstractWorker {
             return defaultValue;
         }
     }
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  getInput/setOutput                                      */
+    /*                                                          */
+    /* method to get variable value                             */
+    /* -------------------------------------------------------- */
 
     /**
      * Return a value as Duration. The value may be a Duration object, or a time in ms (LONG) or a ISO 8601 String representing the duration
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
      *
-
      * @param parameterName name of the variable
      * @param defaultValue  default value, if the variable does not exist or any error arrived (can't parse the value)
      * @param activatedJob  job passed to the worker
@@ -525,5 +518,15 @@ public abstract class AbstractWorker {
             parameter.explanation = explanation;
             return parameter;
         }
+    }
+
+    /**
+     * All executions call the same object. This contains all the context for one execution.
+     */
+    protected class ContextExecution {
+        public final Map<String, Object> outVariablesValue = new HashMap<>();
+        long beginExecution;
+        long endExecution;
+
     }
 }

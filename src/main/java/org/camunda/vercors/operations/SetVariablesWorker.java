@@ -25,7 +25,7 @@ public class SetVariablesWorker extends AbstractWorker {
 
     public static final String CST_NOW = "now";
     public static final String CST_ISODATE = "yyyy-MM-dd";
-    public static final String CST_ISODATETIME =  "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String CST_ISODATETIME = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static final String CST_FUNCTION_DATE = "date";
     public static final String CST_FUNCTION_DATETIME = "datetime";
     public static final String CST_FUNCTION_LOCALDATE = "localdate";
@@ -121,7 +121,7 @@ public class SetVariablesWorker extends AbstractWorker {
     /**
      * GetValueFunction get the value via a function
      *
-     * @param function function to use to get the value
+     * @param function     function to use to get the value
      * @param activatedJob job activated
      * @return the value by the function
      * @throws Exception any errors arrive during the execution
@@ -138,8 +138,7 @@ public class SetVariablesWorker extends AbstractWorker {
                     throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR, "Worker [" + getName() + "] Can't parse date[" + dateValue + "] pattern [" + CST_ISODATE + "]: " + e);
                 }
             }
-        }
-        else if (function.isFunction(CST_FUNCTION_DATETIME)) {
+        } else if (function.isFunction(CST_FUNCTION_DATETIME)) {
             Object dateValue = getValue(function.getParameter(0), activatedJob);
             if (CST_NOW.equals(dateValue) || dateValue == null)
                 return new Date();
@@ -149,8 +148,7 @@ public class SetVariablesWorker extends AbstractWorker {
                 } catch (Exception e) {
                     throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR, "Worker [" + getName() + "] Can't parse date[" + dateValue + "] pattern [" + CST_ISODATETIME + "]: " + e);
                 }
-        }
-        else if (function.isFunction(CST_FUNCTION_LOCALDATE)) {
+        } else if (function.isFunction(CST_FUNCTION_LOCALDATE)) {
             Object dateValue = getValue(function.getParameter(0), activatedJob);
             if (CST_NOW.equals(dateValue) || dateValue == null)
                 return LocalDate.now();
@@ -160,8 +158,7 @@ public class SetVariablesWorker extends AbstractWorker {
                 } catch (Exception e) {
                     throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR, "Worker [" + getName() + "] Can't parse date[" + dateValue + "] LocalDate pattern [yyyy-MM-dd]: " + e);
                 }
-        }
-        else if (function.isFunction(CST_FUNCTION_LOCAL_TIME)) {
+        } else if (function.isFunction(CST_FUNCTION_LOCAL_TIME)) {
             Object dateValue = getValue(function.getParameter(0), activatedJob);
             if (CST_NOW.equals(dateValue) || dateValue == null)
                 return LocalDate.now();
@@ -171,8 +168,7 @@ public class SetVariablesWorker extends AbstractWorker {
                 } catch (Exception e) {
                     throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR, "Worker [" + getName() + "] Can't parse date[" + dateValue + "] LocalDate pattern [yyyy-MM-dd'T'HH:mm:ss'Z']: " + e);
                 }
-        }
-        else if (function.isFunction(CST_FUNCTION_ZONED_DATE_TIME)) {
+        } else if (function.isFunction(CST_FUNCTION_ZONED_DATE_TIME)) {
             Object dateValue = getValue(function.getParameter(0), activatedJob);
             if (CST_NOW.equals(dateValue) || dateValue == null)
                 return ZonedDateTime.now();
@@ -184,7 +180,7 @@ public class SetVariablesWorker extends AbstractWorker {
                 }
 
         } else {
-            throw new ZeebeBpmnError(BPMERROR_UNKNOWFUNCTION_ERROR, "Worker [" + getName() + "] function["+function.name + "] unknown");
+            throw new ZeebeBpmnError(BPMERROR_UNKNOWFUNCTION_ERROR, "Worker [" + getName() + "] function[" + function.name + "] unknown");
 
         }
     }

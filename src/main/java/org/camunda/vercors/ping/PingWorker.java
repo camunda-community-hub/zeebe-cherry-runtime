@@ -41,6 +41,7 @@ public class PingWorker extends AbstractWorker {
         );
 
     }
+
     @Override
     @ZeebeWorker(type = "v-ping", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {

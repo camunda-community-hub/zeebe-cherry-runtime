@@ -61,9 +61,8 @@ public class OfficeToPdfWorker extends AbstractWorker {
 
 
     /**
-     *
-     * @param jobClient client
-     * @param activatedJob job activated
+     * @param jobClient        client
+     * @param activatedJob     job activated
      * @param contextExecution context of this execution
      */
     @Override

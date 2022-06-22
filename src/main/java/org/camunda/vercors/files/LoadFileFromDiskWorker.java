@@ -127,13 +127,13 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
         // output
         if (fileVariable != null) {
-            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable,contextExecution);
-            setValue(OUTPUT_FILE_NAME, fileVariable.name,contextExecution);
-            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType,contextExecution);
+            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable, contextExecution);
+            setValue(OUTPUT_FILE_NAME, fileVariable.name, contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType, contextExecution);
         } else {
-            setValue(OUTPUT_FILE_LOADED, null,contextExecution);
-            setValue(OUTPUT_FILE_NAME, null,contextExecution);
-            setValue(OUTPUT_FILE_MIMETYPE, null,contextExecution);
+            setValue(OUTPUT_FILE_LOADED, null, contextExecution);
+            setValue(OUTPUT_FILE_NAME, null, contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, null, contextExecution);
 
         }
 
