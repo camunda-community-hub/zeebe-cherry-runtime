@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -24,7 +25,7 @@ public class SetVariablesWorker extends AbstractWorker {
 
     public static final String CST_NOW = "now";
     public static final String CST_ISODATE = "yyyy-MM-dd";
-    public static final String CST_ISODATETIME = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String CST_ISODATETIME =  "yyyy-MM-dd'T'HH:mm:ss'Z'";
     public static final String CST_FUNCTION_DATE = "date";
     public static final String CST_FUNCTION_DATETIME = "datetime";
     public static final String CST_FUNCTION_LOCALDATE = "localdate";
@@ -166,7 +167,7 @@ public class SetVariablesWorker extends AbstractWorker {
                 return LocalDate.now();
             else
                 try {
-                    return LocalDate.parse(dateValue.toString());
+                    return LocalDateTime.parse(dateValue.toString());
                 } catch (Exception e) {
                     throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR, "Worker [" + getName() + "] Can't parse date[" + dateValue + "] LocalDate pattern [yyyy-MM-dd'T'HH:mm:ss'Z']: " + e);
                 }
