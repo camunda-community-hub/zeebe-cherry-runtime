@@ -2,8 +2,6 @@ package org.camunda.vercors.actorsfilter;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.AbstractWorker;
 import org.camunda.vercors.pdf.OfficeToPdfWorker;
 import org.slf4j.Logger;
@@ -12,31 +10,27 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.StringTokenizer;
 
 @Component
 public class ActorFilterUsers extends AbstractWorker {
 
 
+    public static final String BPMERROR_SYNTAXE_OPERATION_ERROR = "SYNTAX_OPERATION_ERROR";
     private final static String INPUT_ACTORFILTER = "actorFilter";
     private final static String INPUT_ACTORFILTER_V_USERS = "users";
-
     private final static String INPUT_USER_CANDIDATE = "userCandidate";
-    private final static String INPUT_ANYTHING= "*";
-
+    private final static String INPUT_ANYTHING = "*";
     private final static String OUTPUT_RESULT = "*";
-    public static final String BPMERROR_SYNTAXE_OPERATION_ERROR = "SYNTAX_OPERATION_ERROR";
-
     Logger logger = LoggerFactory.getLogger(OfficeToPdfWorker.class.getName());
 
     public ActorFilterUsers() {
         super("io.camunda.zeebe:userTask",
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ACTORFILTER, String.class, Level.OPTIONAL, "Give the code for the Actor filter"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_USER_CANDIDATE, String.class, Level.OPTIONAL, "For the actor filter ["+INPUT_ACTORFILTER_V_USERS+"] name of candidates"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_USER_CANDIDATE, String.class, Level.OPTIONAL, "For the actor filter [" + INPUT_ACTORFILTER_V_USERS + "] name of candidates"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, Object.class, Level.OPTIONAL, "Any variables can be accessed")
                 ),
-               Collections.emptyList(),
+                Collections.emptyList(),
                 Arrays.asList(BPMERROR_SYNTAXE_OPERATION_ERROR));
     }
 
@@ -51,7 +45,7 @@ public class ActorFilterUsers extends AbstractWorker {
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String actorFilter = getInputStringValue(INPUT_ACTORFILTER, null, activatedJob);
         if (INPUT_ACTORFILTER_V_USERS.equals(actorFilter)) {
-            assignActorFilter( jobClient, activatedJob);
+            assignActorFilter(jobClient, activatedJob);
         }
     }
 
