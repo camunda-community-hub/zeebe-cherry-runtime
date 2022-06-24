@@ -7,6 +7,7 @@ The Vercors project is a collection of Workers ready to use for Zeebe.
 
 The project is delivered as a Springboot application. 
 
+
 A Zeebe server must be started (in CamundaCloud, or onPremise), and the Vercors application will connect to the Zeebe engine.
 
 1. set up the Zeebe connection 
@@ -28,6 +29,7 @@ zeebe.client.broker.gateway-address=127.0.0.1:26500
 zeebe.client.security.plaintext=true
 ````
 
+
 2. Compile the application 
 ````
 mvn install
@@ -38,6 +40,7 @@ The application is located under `src/main/java/org/camunda/vercors/VercorsAppli
 
 This application starts all workers. There is one thread for the application, which can be changed in the application.properties file (parameter zeebe.client.worker.threads)
 
+
 # How to Use
 
 After starting, all workers in the Vercors project begin to monitor the Zeebe server.
@@ -47,6 +50,7 @@ Check the different available workers. Workers are grouped by collection. All co
 Each folder is a collection, except for the definition folder.
 
 Each collection/folder contains a README to explain all workers available in a collection in detail.
+
 
 Each worker follows the same pattern:
 * it declares a type. This type must be used in your process to specify the worker.
@@ -68,6 +72,7 @@ If the conversion to a PDF document fails, a BPMN Error is thrown.
 Check out the definition. Creates a service task and uses the type.
 
 Check the input data. Use the Input facility in Camunda to map the required Input and your process.
+
 
 For example, the LoadFilesFromDisk worker required a folder and a filename to load a file. Input are "folder" and "fileName" (1).
 If you don't have these variables in your process or with a different name (for example, the file name you want to load is under the process variable "ContractDocument"), then an Input is the solution.

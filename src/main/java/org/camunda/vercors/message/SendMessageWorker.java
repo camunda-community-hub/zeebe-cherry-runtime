@@ -61,6 +61,7 @@ public class SendMessageWorker extends AbstractWorker {
 
     @Override
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+
         String messageName = getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob);
         try {
             sendMessageViaGrpc(messageName,

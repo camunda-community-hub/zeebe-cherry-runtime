@@ -47,12 +47,14 @@ public class SaveFileToDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILENAME, String.class, Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable used to save"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL, "Storage Definition use to access the file")
+
                 ),
                 Collections.emptyList(),
                 Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR));
     }
 
     @Override
+
     @ZeebeWorker(type = "v-files-save-to-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
@@ -60,6 +62,7 @@ public class SaveFileToDiskWorker extends AbstractWorker {
 
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+
         String folderToSave = getInputStringValue(INPUT_FOLDER_TO_SAVE, null, activatedJob);
         String sourceStorageDefinition = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);
         FileVariable fileVariable = getFileVariableValue(INPUT_SOURCE_FILE, sourceStorageDefinition, activatedJob);

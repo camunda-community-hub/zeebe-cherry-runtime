@@ -51,7 +51,6 @@ public class PingWorker extends AbstractWorker {
 
     @Override
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
-
         String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
         Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
         logInfo(message);
@@ -66,5 +65,6 @@ public class PingWorker extends AbstractWorker {
 
         String formattedDate = formatter.format(new Date());
         setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
+
     }
 }

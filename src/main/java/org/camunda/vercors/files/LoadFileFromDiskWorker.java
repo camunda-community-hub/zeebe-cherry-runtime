@@ -58,6 +58,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_POLICY, String.class, AbstractWorker.Level.OPTIONAL,
                                 "Policy to manipulate the file after loading. Policy are " + POLICY_V_DELETE + ", " + POLICY_V_ARCHIVE + " (then specify the folder archive), " + POLICY_V_UNCHANGE),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL, "How to saved the FileVariable"),
+
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ARCHIVE_FOLDER, String.class, AbstractWorker.Level.OPTIONAL, "Folder used with policy " + POLICY_V_ARCHIVE)),
 
                 Arrays.asList(
@@ -69,6 +70,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
     }
 
     @Override
+
     @ZeebeWorker(type = "v-files-load-from-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
@@ -77,6 +79,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+
         String folderName = getInputStringValue(INPUT_FOLDER, null, activatedJob);
         String fileName = getInputStringValue(INPUT_FILE_NAME, null, activatedJob);
         String filterFile = getInputStringValue(INPUT_FILTER_FILE, null, activatedJob);

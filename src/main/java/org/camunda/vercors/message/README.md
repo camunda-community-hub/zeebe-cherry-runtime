@@ -20,6 +20,7 @@ type: v-send-message
 | messageId            | String  | Optional                   | the unique ID of the message; can be omitted. only useful to ensure only one message with the given ID will ever be published (during its lifetime) ||     |
 | messageDuration      | Optinal | Duration or Long or String | how long the message should be buffered on the broker. Long is a value in millisecond, String follow the ISO8601 Notification (3)                   | "PT5M" for 5 minutes |
 
+
 (1): Camunda 8 accept only one correlation value. The list must contains only one item, and the value must be a
 String.||
 

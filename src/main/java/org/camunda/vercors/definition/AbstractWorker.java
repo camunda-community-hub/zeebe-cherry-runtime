@@ -25,6 +25,7 @@ public abstract class AbstractWorker {
     private final List<WorkerParameter> listInput;
     private final List<WorkerParameter> listOutput;
     private final List<String> listBpmnErrors;
+
     Logger loggerAbstract = LoggerFactory.getLogger(AbstractWorker.class.getName());
 
 
@@ -36,10 +37,12 @@ public abstract class AbstractWorker {
      * @param listOutput     list of Output parameters for the worker
      * @param listBpmnErrors list of potential BPMN Error the worker can generate
      */
+
     protected AbstractWorker(String name,
                              List<WorkerParameter> listInput,
                              List<WorkerParameter> listOutput,
                              List<String> listBpmnErrors) {
+
         this.name = name;
         this.listInput = listInput;
         this.listOutput = listOutput;
@@ -53,6 +56,19 @@ public abstract class AbstractWorker {
      */
     public String getName() {
         return name;
+    }
+
+
+    public List<WorkerParameter> getListInput() {
+        return listInput;
+    }
+
+    public List<WorkerParameter> getListOutput() {
+        return listOutput;
+    }
+
+    public List<String> getListBpmnErrors() {
+        return listBpmnErrors;
     }
 
     /**
@@ -93,6 +109,7 @@ public abstract class AbstractWorker {
 
         ContextExecution contextExecution = new ContextExecution();
         contextExecution.beginExecution = System.currentTimeMillis();
+
         // log input
         String logInput = listInput.stream()
                 .map(t -> {
@@ -118,6 +135,7 @@ public abstract class AbstractWorker {
 
         contextExecution.endExecution = System.currentTimeMillis();
         logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
+
     }
 
     /**
@@ -129,6 +147,15 @@ public abstract class AbstractWorker {
      */
     public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution);
 
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Log worker                                             */
+    /*                                                          */
+    /* to normalize the log use these methods
+    /* -------------------------------------------------------- */
+
+
     /**
      * log info
      *
@@ -138,12 +165,6 @@ public abstract class AbstractWorker {
         loggerAbstract.info("VercorsWorker[" + getName() + "]:" + message);
     }
 
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Log worker                                             */
-    /*                                                          */
-    /* to normalize the log use these methods
-    /* -------------------------------------------------------- */
 
     /**
      * Log an error
@@ -151,8 +172,15 @@ public abstract class AbstractWorker {
      * @param message message to log
      */
     public void logError(String message) {
-        loggerAbstract.error("VercorsWorker[" + getName() + "]:" + message);
+        loggerAbstract.error("VercorsWorker[" + getName() + "]: " + message);
     }
+
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Contracts operation on input/output                     */
+    /*                                                          */
+    /* -------------------------------------------------------- */
 
     /**
      * Check the contract
@@ -183,13 +211,6 @@ public abstract class AbstractWorker {
         }
     }
 
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Contracts operation on input/output                     */
-    /*                                                          */
-    /* -------------------------------------------------------- */
-
     /**
      * Check the contract at output
      * The connector must use setVariable to set any value. Then, we can verify that all expected information are provided
@@ -217,6 +238,7 @@ public abstract class AbstractWorker {
                 if (incorrectClassParameter(value == null ? null : value.getClass().getName(), parameter.clazz))
                     listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName()
                             + "] received[" + contextExecution.outVariablesValue.get(parameter.name).getClass() + "];");
+
             }
         }
         Set<String> outputName = listOutput.stream().map(t -> t.name).collect(Collectors.toSet());
@@ -231,6 +253,7 @@ public abstract class AbstractWorker {
             if (!listExtraVariables.isEmpty())
                 listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
         }
+
 
         if (!listErrors.isEmpty()) {
             logError("Errors:" + String.join(",", listErrors));
@@ -257,6 +280,13 @@ public abstract class AbstractWorker {
         return true;
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Worker parameters                                       */
+    /*                                                          */
+    /* Worker must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
+
     /**
      * Retrieve a variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
      * The method can return null if the variable exists, but it is a null value.
@@ -272,13 +302,7 @@ public abstract class AbstractWorker {
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
         return value == null ? null : value.toString();
     }
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Worker parameters                                       */
-    /*                                                          */
-    /* Worker must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
-
+ 
     /**
      * Return a value as Double
      *
@@ -301,6 +325,13 @@ public abstract class AbstractWorker {
             return defaultValue;
         }
     }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  getInput/setOutput                                      */
+    /*                                                          */
+    /* method to get variable value                             */
+    /* -------------------------------------------------------- */
 
     /**
      * return a value as a Map
@@ -527,6 +558,7 @@ public abstract class AbstractWorker {
         public final Map<String, Object> outVariablesValue = new HashMap<>();
         long beginExecution;
         long endExecution;
+
 
     }
 }
