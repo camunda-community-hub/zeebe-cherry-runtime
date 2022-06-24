@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  Vercors application                                                 */
+/*                                                                      */
+/*  Spring boot application                                             */
+/* ******************************************************************** */
 package org.camunda.vercors;
 
 
@@ -13,6 +19,8 @@ public class VercorsApplication {
     private final Logger logger = LoggerFactory.getLogger(VercorsApplication.class.getName());
 
     public static void main(String[] args) {
+
+
         SpringApplication.run(VercorsApplication.class, args);
 
     }

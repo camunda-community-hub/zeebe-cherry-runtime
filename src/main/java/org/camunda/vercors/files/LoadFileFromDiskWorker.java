@@ -57,7 +57,8 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILTER_FILE, String.class, AbstractWorker.Level.OPTIONAL, "If you didn't specify a fileName, a filter to select only part of files present in the directory"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_POLICY, String.class, AbstractWorker.Level.OPTIONAL,
                                 "Policy to manipulate the file after loading. Policy are " + POLICY_V_DELETE + ", " + POLICY_V_ARCHIVE + " (then specify the folder archive), " + POLICY_V_UNCHANGE),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON, Level.REQUIRED, "How to saved the FileVariable"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL, "How to saved the FileVariable"),
+
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ARCHIVE_FOLDER, String.class, AbstractWorker.Level.OPTIONAL, "Folder used with policy " + POLICY_V_ARCHIVE)),
 
                 Arrays.asList(
@@ -68,13 +69,17 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
         );
     }
 
+    @Override
+
     @ZeebeWorker(type = "v-files-load-from-disk", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient client, final ActivatedJob activatedJob) {
+    @Override
+    public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+
         String folderName = getInputStringValue(INPUT_FOLDER, null, activatedJob);
         String fileName = getInputStringValue(INPUT_FILE_NAME, null, activatedJob);
         String filterFile = getInputStringValue(INPUT_FILTER_FILE, null, activatedJob);
@@ -125,13 +130,13 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
         // output
         if (fileVariable != null) {
-            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable);
-            setValue(OUTPUT_FILE_NAME, fileVariable.name);
-            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType);
+            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable, contextExecution);
+            setValue(OUTPUT_FILE_NAME, fileVariable.name, contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType, contextExecution);
         } else {
-            setValue(OUTPUT_FILE_LOADED, null);
-            setValue(OUTPUT_FILE_NAME, null);
-            setValue(OUTPUT_FILE_MIMETYPE, null);
+            setValue(OUTPUT_FILE_LOADED, null, contextExecution);
+            setValue(OUTPUT_FILE_NAME, null, contextExecution);
+            setValue(OUTPUT_FILE_MIMETYPE, null, contextExecution);
 
         }
 

@@ -42,14 +42,15 @@ public class PingWorker extends AbstractWorker {
 
     }
 
+    @Override
     @ZeebeWorker(type = "v-ping", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
-
+    @Override
+    public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
         String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
         Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
         logInfo(message);
@@ -63,6 +64,7 @@ public class PingWorker extends AbstractWorker {
         DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 
         String formattedDate = formatter.format(new Date());
-        setValue(OUTPUT_TIMESTAMP, formattedDate);
+        setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
+
     }
 }

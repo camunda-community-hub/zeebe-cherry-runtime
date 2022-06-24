@@ -10,7 +10,6 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.vercors.definition.AbstractWorker;
@@ -53,13 +52,16 @@ public class SendMessageWorker extends AbstractWorker {
     }
 
     // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
+    @Override
     @ZeebeWorker(type = WORKERTYPE_SEND_MESSAGE, autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
-    public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
+    @Override
+    public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+
         String messageName = getInputStringValue(INPUT_MESSAGE_NAME, null, activatedJob);
         try {
             sendMessageViaGrpc(messageName,
