@@ -5,7 +5,7 @@
 /*  Save a file variable in the temporary folder of the host            */
 /*  Attention, this is the temporary folder where the worker is running */
 /* ******************************************************************** */
-package org.camunda.vercors.definition.filevariable;
+package org.camunda.cherry.definition.filevariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class FileVariableTempFolder {
             Files.write(tempPath, fileVariable.value);
             return tempPath.getFileName().toString();
         } catch (Exception e) {
-            logger.error("Vercors.FileVariableTempFolder: exception " + e + " During write fileVariable on tempFolder[" + tempPath + "]");
+            logger.error("Cherry.FileVariableTempFolder: exception " + e + " During write fileVariable on tempFolder[" + tempPath + "]");
             throw e;
         }
     }
@@ -65,7 +65,7 @@ public class FileVariableTempFolder {
             return fileVariable;
 
         } catch (Exception e) {
-            logger.error("Vercors.FileVariableTempFolder: exception " + e + " During read file[" + tempFileName + "] in temporaryPath[" + tempFileName + "]");
+            logger.error("Cherry.FileVariableTempFolder: exception " + e + " During read file[" + tempFileName + "] in temporaryPath[" + tempFileName + "]");
             throw e;
         }
     }

@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  Send a Camunda BPMN Message                                         */
 /* ******************************************************************** */
-package org.camunda.vercors.message;
+package org.camunda.cherry.message;
 
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.api.command.PublishMessageCommandStep1;
@@ -12,7 +12,7 @@ import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.vercors.definition.AbstractWorker;
+import org.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +24,18 @@ import java.util.*;
 @Component
 public class SendMessageWorker extends AbstractWorker {
 
-    public static final String INPUT_MESSAGE_NAME = "messageName";
-    public static final String INPUT_CORRELATION_VARIABLES = "correlationVariables";
-    public static final String INPUT_MESSAGE_VARIABLES = "messageVariables";
-    public static final String INPUT_MESSAGE_ID_VARIABLES = "messageId";
-    public static final String INPUT_MESSAGE_DURATION = "messageDuration";
-    public static final String WORKERTYPE_SEND_MESSAGE = "v-send-message";
+    /**
+     * Worker type
+     */
+    private static final String WORKERTYPE_SEND_MESSAGE = "c-send-message";
 
-    public static final String BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR = "TOO_MANY_CORRELATION_VARIABLE_ERROR";
+    private static final String INPUT_MESSAGE_NAME = "messageName";
+    private static final String INPUT_CORRELATION_VARIABLES = "correlationVariables";
+    private static final String INPUT_MESSAGE_VARIABLES = "messageVariables";
+    private static final String INPUT_MESSAGE_ID_VARIABLES = "messageId";
+    private static final String INPUT_MESSAGE_DURATION = "messageDuration";
 
-    Logger logger = LoggerFactory.getLogger(SendMessageWorker.class.getName());
+    private static final String BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR = "TOO_MANY_CORRELATION_VARIABLE_ERROR";
 
     @Autowired
     private ZeebeClient zeebeClient;

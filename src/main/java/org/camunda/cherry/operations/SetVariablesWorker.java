@@ -1,10 +1,10 @@
-package org.camunda.vercors.operations;
+package org.camunda.cherry.operations;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.vercors.definition.AbstractWorker;
+import org.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -18,26 +18,30 @@ import java.util.*;
 @Component
 public class SetVariablesWorker extends AbstractWorker {
 
+    /**
+     * Worker type
+     */
+    private static final String WORKERTYPE_SET_VARIABLES = "c-set-variables";
 
-    public static final String BPMERROR_SYNTAXE_OPERATION_ERROR = "SYNTAX_OPERATION_ERROR";
-    public static final String BPMERROR_DATEPARSE_OPERATION_ERROR = "DATEPARSE_OPERATION_ERROR";
-    public static final String BPMERROR_UNKNOWFUNCTION_ERROR = "UNKNOWN_FUNCTION_ERROR";
 
-    public static final String CST_NOW = "now";
-    public static final String CST_ISODATE = "yyyy-MM-dd";
-    public static final String CST_ISODATETIME = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    public static final String CST_FUNCTION_DATE = "date";
-    public static final String CST_FUNCTION_DATETIME = "datetime";
-    public static final String CST_FUNCTION_LOCALDATE = "localdate";
-    public static final String CST_FUNCTION_LOCAL_TIME = "LocalTime";
-    public static final String CST_FUNCTION_ZONED_DATE_TIME = "ZonedDateTime";
-    private final static String INPUT_OPERATIONS = "operations";
-    private final static String INPUT_ANYTHING = "*";
-    private final static String OUTPUT_RESULT = "*";
-    Logger logger = LoggerFactory.getLogger(SetVariablesWorker.class.getName());
+    private static final String BPMERROR_SYNTAXE_OPERATION_ERROR = "SYNTAX_OPERATION_ERROR";
+    private static final String BPMERROR_DATEPARSE_OPERATION_ERROR = "DATEPARSE_OPERATION_ERROR";
+    private static final String BPMERROR_UNKNOWFUNCTION_ERROR = "UNKNOWN_FUNCTION_ERROR";
+
+    private static final String CST_NOW = "now";
+    private static final String CST_ISODATE = "yyyy-MM-dd";
+    private static final String CST_ISODATETIME = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    private static final String CST_FUNCTION_DATE = "date";
+    private static final String CST_FUNCTION_DATETIME = "datetime";
+    private static final String CST_FUNCTION_LOCALDATE = "localdate";
+    private static final String CST_FUNCTION_LOCAL_TIME = "LocalTime";
+    private static final String CST_FUNCTION_ZONED_DATE_TIME = "ZonedDateTime";
+    private static final String INPUT_OPERATIONS = "operations";
+    private static final String INPUT_ANYTHING = "*";
+    private static final String OUTPUT_RESULT = "*";
 
     public SetVariablesWorker() {
-        super("v-set-variables",
+        super(WORKERTYPE_SET_VARIABLES,
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(INPUT_OPERATIONS, String.class, Level.REQUIRED, "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, Object.class, Level.OPTIONAL, "Any variables can be accessed")
@@ -49,7 +53,7 @@ public class SetVariablesWorker extends AbstractWorker {
     }
 
     @Override
-    @ZeebeWorker(type = "v-set-variables", autoComplete = true)
+    @ZeebeWorker(type = WORKERTYPE_SET_VARIABLES, autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }

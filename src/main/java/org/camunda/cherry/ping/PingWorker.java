@@ -4,12 +4,12 @@
 /*                                                                      */
 /* Realize a simple ping                                                */
 /* ******************************************************************** */
-package org.camunda.vercors.ping;
+package org.camunda.cherry.ping;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
-import org.camunda.vercors.definition.AbstractWorker;
+import org.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,10 +24,11 @@ import java.util.Date;
 public class PingWorker extends AbstractWorker {
 
 
-    private final static String INPUT_MESSAGE = "message";
-    private final static String INPUT_DELAY = "delay";
-    private final static String OUTPUT_TIMESTAMP = "timestamp";
-    Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
+    private static final String INPUT_MESSAGE = "message";
+    private static final String INPUT_DELAY = "delay";
+    private static final String OUTPUT_TIMESTAMP = "timestamp";
+
+    private final Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
 
     public PingWorker() {
         super("v-ping",
@@ -58,7 +59,8 @@ public class PingWorker extends AbstractWorker {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
-                // Nothing to do here
+                // Restore interrupted state...
+                Thread.currentThread().interrupt();
             }
         }
         DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");

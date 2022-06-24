@@ -1,9 +1,8 @@
-package org.camunda.vercors.actorsfilter;
+package org.camunda.cherry.actorsfilter;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import org.camunda.vercors.definition.AbstractWorker;
-import org.camunda.vercors.pdf.OfficeToPdfWorker;
+import org.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,7 @@ public class ActorFilterUsers extends AbstractWorker {
     private final static String INPUT_USER_CANDIDATE = "userCandidate";
     private final static String INPUT_ANYTHING = "*";
     private final static String OUTPUT_RESULT = "*";
-    Logger logger = LoggerFactory.getLogger(OfficeToPdfWorker.class.getName());
+    Logger logger = LoggerFactory.getLogger(ActorFilterUsers.class.getName());
 
     public ActorFilterUsers() {
         super("io.camunda.zeebe:userTask",

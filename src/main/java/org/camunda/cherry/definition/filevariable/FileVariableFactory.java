@@ -6,7 +6,7 @@
 /*  files are possible, and the factory give access to the different    */
 /* formats                                                              */
 /* ******************************************************************** */
-package org.camunda.vercors.definition.filevariable;
+package org.camunda.cherry.definition.filevariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,28 +32,27 @@ public class FileVariableFactory {
      * "JSON" : the value is a JSON information, to be unSerialize
      * "TEMPORARYDISK:<path>", and the value is a file name in this directory.
      *
-     * @param storageDefinition is the storage definition
-     * @param value             value where the fileVariable information is stored
+     * @param fileContainer information to access the file
      * @return a fileVariable
      * @throws Exception can't load the fileVariable
      */
-    public FileVariable getFileVariable(String storageDefinition, Object value) throws Exception {
-        if (value == null)
+    public FileVariable getFileVariable(FileVariableReference fileContainer) throws Exception {
+        if (fileContainer == null || fileContainer.content == null)
             return null;
 
-        FileVariableStorage storageType = extractStorageType(storageDefinition);
+        FileVariableStorage storageType = extractStorageType(fileContainer.storageDefinition);
         if (storageType == null)
             return null;
         switch (storageType) {
             case FOLDER:
-                return new FileVariableFolder().fromFolder(storageDefinition, value.toString());
+                return new FileVariableFolder().fromFolder(fileContainer.storageDefinition, fileContainer.content.toString());
 
             case TEMPFOLDER:
-                return new FileVariableTempFolder().fromTempFolder(value.toString());
+                return new FileVariableTempFolder().fromTempFolder(fileContainer.content.toString());
 
             case JSON:
             default:
-                return new FileVariableJSON().fromJson(value.toString());
+                return new FileVariableJSON().fromJson(fileContainer.content.toString());
         }
 
     }
@@ -63,28 +62,31 @@ public class FileVariableFactory {
      *
      * @param storageDefinition storage Definition to pilot the way to save the value
      * @param fileVariableValue file Variable to save
-     * @return the object (depends on the storageDefinition code)
+     * @return the FileContainer (depends on the storageDefinition code)
      * @throws Exception if an error arrive
      */
-    public Object setFileVariable(String storageDefinition, FileVariable fileVariableValue) throws Exception {
+    public FileVariableReference setFileVariable(String storageDefinition, FileVariable fileVariableValue) throws Exception {
         if (fileVariableValue == null)
             return null;
 
         FileVariableStorage storageType = extractStorageType(storageDefinition);
         if (storageType == null)
             return null;
+        FileVariableReference fileContainer = new FileVariableReference();
+        fileContainer.storageDefinition = storageDefinition;
 
         switch (storageType) {
             case FOLDER:
-                return new FileVariableFolder().toFolder(storageDefinition, fileVariableValue);
-
+                fileContainer.content = new FileVariableFolder().toFolder(storageDefinition, fileVariableValue);
+                break;
             case TEMPFOLDER:
-                return new FileVariableTempFolder().toTempFolder(fileVariableValue);
-
+                fileContainer.content = new FileVariableTempFolder().toTempFolder(fileVariableValue);
+                break;
             case JSON:
             default:
-                return new FileVariableJSON().toJson(fileVariableValue);
+                fileContainer.content = new FileVariableJSON().toJson(fileVariableValue);
         }
+        return fileContainer;
     }
 
     /**
@@ -100,7 +102,7 @@ public class FileVariableFactory {
             String storageTypeSt = st.hasMoreTokens() ? st.nextToken() : null;
             return FileVariableStorage.valueOf(storageTypeSt);
         } catch (Exception e) {
-            logger.error("Vercors.FileVariableFactory: can't decode storageDefinition [" + storageDefinition + "]. Format should be "
+            logger.error("Cherry.FileVariableFactory: can't decode storageDefinition [" + storageDefinition + "]. Format should be "
                     + FileVariableStorage.JSON + "|" + FileVariableStorage.TEMPFOLDER);
             return null;
         }

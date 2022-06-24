@@ -6,7 +6,7 @@
 /* syntax is FOLDER:<Path>                                              */
 /*  Attention, the folder must be accessible where the worker is running*/
 /* ******************************************************************** */
-package org.camunda.vercors.definition.filevariable;
+package org.camunda.cherry.definition.filevariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class FileVariableFolder {
             Files.write(file, fileVariable.value);
             return file.getFileName().toString();
         } catch (Exception e) {
-            logger.error("Vercors.FileVariableTempFolder: exception " + e + " During write fileVariable on tempFolder[" + tempPath + "]");
+            logger.error("Cherry.FileVariableFolder: exception " + e + " During write fileVariable on tempFolder[" + tempPath + "]");
             throw e;
         }
     }
@@ -59,7 +59,7 @@ public class FileVariableFolder {
             return fileVariable;
 
         } catch (Exception e) {
-            logger.error("Vercors.FileVariableTempFolder: exception " + e + " During read file[" + fileName + "] in temporaryPath[" + pathFolder + "]");
+            logger.error("Cherry.FileVariableTempFolder: exception " + e + " During read file[" + fileName + "] in temporaryPath[" + pathFolder + "]");
             throw e;
         }
     }
