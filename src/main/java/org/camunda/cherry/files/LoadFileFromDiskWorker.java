@@ -6,15 +6,15 @@
 /* C8 does not manage a file type, so there is different implementation */
 /* @see FileVariableFactory                                             */
 /* ******************************************************************** */
-package org.camunda.vercors.files;
+package org.camunda.cherry.files;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.vercors.definition.AbstractWorker;
-import org.camunda.vercors.definition.filevariable.FileVariable;
-import org.camunda.vercors.definition.filevariable.FileVariableFactory;
+import org.camunda.cherry.definition.AbstractWorker;
+import org.camunda.cherry.definition.filevariable.FileVariable;
+import org.camunda.cherry.definition.filevariable.FileVariableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -32,25 +32,31 @@ import java.util.stream.Collectors;
 @Component
 public class LoadFileFromDiskWorker extends AbstractWorker {
 
-    public static final String BPMNERROR_FOLDER_NOT_EXIST_ERROR = "FOLDER_NOT_EXIST_ERROR";
-    public static final String BPMNERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
-    public static final String BPMNERROR_MOVE_FILE_ERROR = "MOVE_FILE_ERROR";
-    public static final String POLICY_V_DELETE = "DELETE";
-    public static final String POLICY_V_ARCHIVE = "ARCHIVE";
-    public static final String POLICY_V_UNCHANGE = "UNCHANGE";
-    private final static String INPUT_FOLDER = "folder";
-    private final static String INPUT_FILTER_FILE = "filterFile";
-    private final static String INPUT_FILE_NAME = "fileName";
-    private final static String INPUT_POLICY = "policy";
-    private final static String INPUT_STORAGEDEFINITION = "storageDefinition";
-    private final static String INPUT_ARCHIVE_FOLDER = "archiveFolder";
-    private final static String OUTPUT_FILE_LOADED = "fileLoaded";
-    private final static String OUTPUT_FILE_NAME = "fileNameLoaded";
-    private final static String OUTPUT_FILE_MIMETYPE = "fileMimeType";
-    Logger logger = LoggerFactory.getLogger(LoadFileFromDiskWorker.class.getName());
+    /**
+     * Worker type
+     */
+    private static final String WORKERTYPE_FILES_LOAD_FROM_DISK = "c-files-load-from-disk";
+
+
+    private static final String BPMNERROR_FOLDER_NOT_EXIST_ERROR = "FOLDER_NOT_EXIST_ERROR";
+    private static final String BPMNERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
+    private static final String BPMNERROR_MOVE_FILE_ERROR = "MOVE_FILE_ERROR";
+    private static final String POLICY_V_DELETE = "DELETE";
+    private static final String POLICY_V_ARCHIVE = "ARCHIVE";
+    private static final String POLICY_V_UNCHANGE = "UNCHANGE";
+    private static final String INPUT_FOLDER = "folder";
+    private static final String INPUT_FILTER_FILE = "filterFile";
+    private static final String INPUT_FILE_NAME = "fileName";
+    private static final String INPUT_POLICY = "policy";
+    private static final String INPUT_STORAGEDEFINITION = "storageDefinition";
+    private static final String INPUT_ARCHIVE_FOLDER = "archiveFolder";
+    private static final String OUTPUT_FILE_LOADED = "fileLoaded";
+    private static final String OUTPUT_FILE_NAME = "fileNameLoaded";
+    private static final String OUTPUT_FILE_MIMETYPE = "fileMimeType";
+    private final Logger logger = LoggerFactory.getLogger(LoadFileFromDiskWorker.class.getName());
 
     public LoadFileFromDiskWorker() {
-        super("v-files-load-from-disk",
+        super(WORKERTYPE_FILES_LOAD_FROM_DISK,
                 Arrays.asList(
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER, String.class, AbstractWorker.Level.REQUIRED, "Give the folder where the file will be loaded"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILE_NAME, String.class, AbstractWorker.Level.OPTIONAL, "Specify a file name, else the first file in the folder will be loaded"),
@@ -71,7 +77,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
     @Override
 
-    @ZeebeWorker(type = "v-files-load-from-disk", autoComplete = true)
+    @ZeebeWorker(type = WORKERTYPE_FILES_LOAD_FROM_DISK, autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }

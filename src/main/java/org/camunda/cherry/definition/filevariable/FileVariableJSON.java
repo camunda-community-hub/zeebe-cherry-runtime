@@ -5,7 +5,7 @@
 /*  Save a file variable in JSON, in the Camunda Engine                 */
 /*  File are encoded in JSON                                            */
 /* ******************************************************************** */
-package org.camunda.vercors.definition.filevariable;
+package org.camunda.cherry.definition.filevariable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +24,7 @@ public class FileVariableJSON {
         try {
             return new ObjectMapper().writeValueAsString(fileVariable);
         } catch (JsonProcessingException e) {
-            logger.error("Vercors.FileVariableJSON: exception " + e + " During serialize fileVariable");
+            logger.error("Cherry.FileVariableJSON: exception " + e + " During serialize fileVariable");
             throw e;
         }
     }
@@ -40,7 +40,7 @@ public class FileVariableJSON {
         try {
             return new ObjectMapper().readValue(fileVariableJson, FileVariable.class);
         } catch (JsonProcessingException e) {
-            logger.error("Vercors.FileVariableJSON: exception " + e + " During unserialize fileVariable");
+            logger.error("Cherry.FileVariableJSON: exception " + e + " During unserialize fileVariable");
             throw e;
         }
     }

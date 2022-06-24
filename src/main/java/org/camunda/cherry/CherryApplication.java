@@ -1,10 +1,10 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  Vercors application                                                 */
+/*  Cherry application                                                 */
 /*                                                                      */
 /*  Spring boot application                                             */
 /* ******************************************************************** */
-package org.camunda.vercors;
+package org.camunda.cherry;
 
 
 import io.camunda.zeebe.spring.client.EnableZeebeClient;
@@ -15,14 +15,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @EnableZeebeClient
-public class VercorsApplication {
-    private final Logger logger = LoggerFactory.getLogger(VercorsApplication.class.getName());
+public class CherryApplication {
 
     public static void main(String[] args) {
-
-
-        SpringApplication.run(VercorsApplication.class, args);
-
+        SpringApplication.run(CherryApplication.class, args);
     }
     // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 

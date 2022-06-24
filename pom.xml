@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.camunda.community</groupId>
-    <artifactId>zeebe-worker-java-template</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>zeebe-cherry-framework</artifactId>
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>

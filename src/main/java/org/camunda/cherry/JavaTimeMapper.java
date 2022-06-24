@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  To serialize JDK 8 Date, this mapper is required                    */
 /* ******************************************************************** */
-package org.camunda.vercors;
+package org.camunda.cherry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

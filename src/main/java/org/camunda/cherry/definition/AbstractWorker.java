@@ -5,13 +5,14 @@
 /*  All workers extends this class. It gives tool to access parameters, */
 /*  and the contract implementation on parameters                       */
 /* ******************************************************************** */
-package org.camunda.vercors.definition;
+package org.camunda.cherry.definition;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.vercors.definition.filevariable.FileVariable;
-import org.camunda.vercors.definition.filevariable.FileVariableFactory;
+import org.camunda.cherry.definition.filevariable.FileVariable;
+import org.camunda.cherry.definition.filevariable.FileVariableFactory;
+import org.camunda.cherry.definition.filevariable.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +22,13 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractWorker {
 
+    public final static String BPMNERROR_ACCESS_FILEVARIABLE = "ACCESS_FILEVARIABLE";
+    public final static String BPMNERROR_SAVE_FILEVARIABLE = "SAVE_FILEVARIABLE";
     private final String name;
     private final List<WorkerParameter> listInput;
     private final List<WorkerParameter> listOutput;
     private final List<String> listBpmnErrors;
-
     Logger loggerAbstract = LoggerFactory.getLogger(AbstractWorker.class.getName());
-
 
     /**
      * Constructor
@@ -56,19 +57,6 @@ public abstract class AbstractWorker {
      */
     public String getName() {
         return name;
-    }
-
-
-    public List<WorkerParameter> getListInput() {
-        return listInput;
-    }
-
-    public List<WorkerParameter> getListOutput() {
-        return listOutput;
-    }
-
-    public List<String> getListBpmnErrors() {
-        return listBpmnErrors;
     }
 
     /**
@@ -162,7 +150,7 @@ public abstract class AbstractWorker {
      * @param message message to log
      */
     public void logInfo(String message) {
-        loggerAbstract.info("VercorsWorker[" + getName() + "]:" + message);
+        loggerAbstract.info("CherryWorker[" + getName() + "]:" + message);
     }
 
 
@@ -172,7 +160,7 @@ public abstract class AbstractWorker {
      * @param message message to log
      */
     public void logError(String message) {
-        loggerAbstract.error("VercorsWorker[" + getName() + "]: " + message);
+        loggerAbstract.error("CherryWorker[" + getName() + "]: " + message);
     }
 
 
@@ -206,7 +194,7 @@ public abstract class AbstractWorker {
             }
         }
         if (!listErrors.isEmpty()) {
-            logError("VercorsConnector[" + name + "] Errors:" + String.join(",", listErrors));
+            logError("CherryConnector[" + name + "] Errors:" + String.join(",", listErrors));
             throw new ZeebeBpmnError("INPUT_CONTRACT_ERROR", "Worker [" + name + "] InputContract Exception:" + String.join(",", listErrors));
         }
     }
@@ -302,7 +290,7 @@ public abstract class AbstractWorker {
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
         return value == null ? null : value.toString();
     }
- 
+
     /**
      * Return a value as Double
      *
@@ -342,8 +330,9 @@ public abstract class AbstractWorker {
      * @return a Map value
      */
     public Map getInputMapValue(String parameterName, Map defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!activatedJob.getVariablesAsMap().containsKey(parameterName)) {
             return (Map) getDefaultValue(parameterName, defaultValue);
+        }
         Object value = activatedJob.getVariablesAsMap().get(parameterName);
         if (value == null)
             return null;
@@ -415,23 +404,24 @@ public abstract class AbstractWorker {
      * The file variable may be store in multiple storage. The format is given in the parameterStorageDefinition. This is a String which pilot
      * how to load the file. The value can be saved a JSON, or saved in a specific directory (then the value is an ID)
      *
-     * @param parameterName     name where the value is stored
-     * @param storageDefinition parameter which pilot the way to retrieve the value
-     * @param activatedJob      job passed to the worker
+     * @param parameterName name where the value is stored
+     * @param activatedJob  job passed to the worker
      * @return a FileVariable
      */
-    public FileVariable getFileVariableValue(String parameterName, String storageDefinition, final ActivatedJob activatedJob) {
+    public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
         if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
             return null;
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
-        if (value == null)
-            return null;
+        Object fileVariableReferenceValue = activatedJob.getVariablesAsMap().get(parameterName);
         try {
-            return FileVariableFactory.getInstance().getFileVariable(storageDefinition, value);
+            FileVariableReference fileVariableReference = FileVariableReference.fromJson(fileVariableReferenceValue.toString());
+
+            if (fileVariableReference == null)
+                return null;
+
+            return FileVariableFactory.getInstance().getFileVariable(fileVariableReference);
         } catch (Exception e) {
-            loggerAbstract.error("VercorsConnector[" + name + "] Error during FileVariable read: " + e);
+            throw new ZeebeBpmnError(BPMNERROR_ACCESS_FILEVARIABLE, "Worker [" + getName() + "] error during access fileVariableReference[" + fileVariableReferenceValue + "] :" + e);
         }
-        return null;
     }
 
     /**
@@ -490,10 +480,11 @@ public abstract class AbstractWorker {
      */
     public void setFileVariableValue(String parameterName, String storageDefinition, FileVariable fileVariableValue, ContextExecution contextExecution) {
         try {
-            Object fileVariableEncoded = FileVariableFactory.getInstance().setFileVariable(storageDefinition, fileVariableValue);
-            contextExecution.outVariablesValue.put(parameterName, fileVariableEncoded);
+            FileVariableReference fileVariableReference = FileVariableFactory.getInstance().setFileVariable(storageDefinition, fileVariableValue);
+            contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
         } catch (Exception e) {
             logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
+            throw new ZeebeBpmnError(BPMNERROR_SAVE_FILEVARIABLE, "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
         }
     }
 
