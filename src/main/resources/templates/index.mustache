@@ -37,14 +37,24 @@
 </nav>
 <section class="section">
     <div class="container">
-        <h1 class="title">Zeebe Cherry Framework</h1>
-        <p class="subtitle">
-            Welcome!
-        </p>
+        <h1 class="title">Zeebe Workers</h1>
+
+        <div class="block">
+            {{>_beansTable}}
+        </div>
     </div>
+
 </section>
 
 {{>_js}}
+{{>_customJs}}
+<script>
+    $(document).ready( function () {
+        initNavBar();
+        initBeansTable();
+        console.log("index initialized. Last update: 2022-06-25 5:46pm");
+    } );
+</script>
 </body>
 
 </html>
