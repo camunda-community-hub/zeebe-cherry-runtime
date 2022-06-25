@@ -6,7 +6,7 @@
 
     <groupId>org.camunda.community</groupId>
     <artifactId>zeebe-cherry-framework</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
