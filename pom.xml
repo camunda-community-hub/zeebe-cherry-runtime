@@ -12,12 +12,10 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <zeebe.version>8.0.3</zeebe.version>
-        <spring.boot.version>2.7.0</spring.boot.version>
         <junit.jupiter.version>5.8.2</junit.jupiter.version>
         <opensagres.version>2.0.3</opensagres.version>
         <spring.boot.version>2.7.0</spring.boot.version>
     </properties>
-
 
     <dependencyManagement>
         <dependencies>
@@ -31,19 +29,8 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <dependencies>
-
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>5.3.20</version>
-        </dependency>
-
         <dependency>
             <groupId>io.camunda</groupId>
             <artifactId>spring-zeebe-starter</artifactId>
@@ -78,7 +65,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mustache</artifactId>
-            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <!-- Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <!-- Webjars -->
@@ -97,7 +89,6 @@
             <artifactId>font-awesome</artifactId>
             <version>4.7.0</version>
         </dependency>
-
 
         <!-- Convert to PDF -->
         <!-- https://mvnrepository.com/artifact/fr.opensagres.xdocreport/fr.opensagres.xdocreport.document -->
