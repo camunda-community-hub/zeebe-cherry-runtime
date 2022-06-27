@@ -186,10 +186,12 @@ When a task is ready to be executed by one of the workers, it is processed.
 
 ## Access the Web Application
 
-Access the URL http://localhost:8080
+> **Note** As of June 2022, the web application is a work in progress!
 
-(WIP)
-This website returns monitoring and documentation on workers available in the project.
+Access the webapp here: http://localhost:8080. Currently, there is just a single welcome page that lists the workers found in
+system: 
+
+![Web Page Welcome Screen Shot](src/main/resources/static/img/welcomeScreenShot.png?raw=true)
 
 The workers section describes all workers available in the project. For each worker, you have a list of Inputs 
 expected and Outputs produced by the worker.
