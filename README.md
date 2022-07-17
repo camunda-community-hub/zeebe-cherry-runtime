@@ -186,15 +186,19 @@ When a task is ready to be executed by one of the workers, it is processed.
 
 ## Access the Web Application
 
-> **Note** As of June 2022, the web application is a work in progress!
+Access the webapp here: http://localhost:8080. 
 
-Access the webapp here: http://localhost:8080. Currently, there is just a single welcome page that lists the workers found in
-system: 
+Currently, there is just a single welcome page that calls the `/cherry/api/workers/list` to show
+workers found in system:  
 
 ![Web Page Welcome Screen Shot](src/main/resources/static/img/welcomeScreenShot.png?raw=true)
 
 The workers section describes all workers available in the project. For each worker, you have a list of Inputs 
 expected and Outputs produced by the worker.
+
+Click on one of the rows in the table to see more details. For example, here are details about the "PingWorker": 
+
+![Worker Detail Screen Shot](src/main/resources/static/img/workerDetailScreenShot.png?raw=true)
 
 Each worker follows the same pattern:
 * it declares a type. This type must be used in your process to specify the worker.
