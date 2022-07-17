@@ -1,6 +1,7 @@
 {{>_ajaxHelpers}}
 
 <script>
+
     function initNavBar() {
         $(".navbar-burger").click(function() {
             // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
@@ -13,30 +14,49 @@
         return getAjax('/cherry/api/worker/list', {}, {})
     }
 
+    function getWorker(workerName) {
+        return getAjax(`/cherry/api/worker/detail?workerName=${workerName}`, {}, {})
+    }
+
+    function getTemplate(templateName) {
+        return getAjax(`/templates/${templateName}`, "", {contentType: 'text/plain', dataType: "html"})
+    }
+
+    function onWorkerClick(table) {
+        return function(e) {
+            let workerName = table.row(this).data().workerName;
+            getWorker(workerName).then(function (worker) {
+                getTemplate("_workerDetail.mustache").then(function(template){
+                    let html = Mustache.render(template, {worker: worker});
+                    $('#workerModal .modal-content').html(html);
+                    $('#workerModal').addClass("is-active");
+                });
+            });
+        }
+    }
+
     function initWorkersTable() {
         let data = [];
         getWorkers().then(function(result) {
             if(result) {
                 for(const k in result) {
                     let worker = result[k];
-                    console.log(worker);
                     data.push ({
                         workerName: worker.name,
                         workerType: worker.className
                     })
                 }
 
-                console.log(data);
-
-                $('#workersTable').DataTable({
+                let table = $('#workersTable').DataTable({
                     data: data,
                     columns: [
                         {data: 'workerName'},
                         {data: 'workerType'}
                     ]
                 });
-            }
 
+                $('.dataTable').on('click', 'tbody tr', onWorkerClick(table));
+            }
 
         });
     }

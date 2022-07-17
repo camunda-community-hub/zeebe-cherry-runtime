@@ -34,6 +34,7 @@ public class WorkerInformation {
     public String getName() {
         return worker.getName();
     }
+
     public boolean isActive() {
         return true;
     }
@@ -45,4 +46,7 @@ public class WorkerInformation {
     public List<AbstractWorker.WorkerParameter> getListOutput() { return worker.getListOutput();}
     public List<String> getListBpmnErrors() { return worker.getListBpmnErrors();}
 
+    public String getClassName() {
+        return worker.getClass().getName();
+    }
 }

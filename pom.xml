@@ -94,6 +94,11 @@
             <artifactId>datatables</artifactId>
             <version>1.11.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>mustache</artifactId>
+            <version>4.2.0</version>
+        </dependency>
 
         <!-- Convert to PDF -->
         <!-- https://mvnrepository.com/artifact/fr.opensagres.xdocreport/fr.opensagres.xdocreport.document -->
