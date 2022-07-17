@@ -1,0 +1,43 @@
+{{>_ajaxHelpers}}
+
+<script>
+    function initNavBar() {
+        $(".navbar-burger").click(function() {
+            // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+            $(".navbar-burger").toggleClass("is-active");
+            $(".navbar-menu").toggleClass("is-active");
+        });
+    }
+
+    function getWorkers() {
+        return getAjax('/cherry/api/worker/list', {}, {})
+    }
+
+    function initWorkersTable() {
+        let data = [];
+        getWorkers().then(function(result) {
+            if(result) {
+                for(const k in result) {
+                    let worker = result[k];
+                    console.log(worker);
+                    data.push ({
+                        workerName: worker.name,
+                        workerType: worker.className
+                    })
+                }
+
+                console.log(data);
+
+                $('#workersTable').DataTable({
+                    data: data,
+                    columns: [
+                        {data: 'workerName'},
+                        {data: 'workerType'}
+                    ]
+                });
+            }
+
+
+        });
+    }
+</script>
