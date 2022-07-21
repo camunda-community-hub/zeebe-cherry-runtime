@@ -1,0 +1,50 @@
+<div class="box">
+    <h1 class="title">{{worker.name}}</h1>
+    <h2 class="subtitle">{{worker.className}}</h2>
+    <h3 class="title is-3">Inputs</h3>
+    <table id="workerInputsTable" class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Class</th>
+            <th>Default</th>
+            <th>Level</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#worker.listInput}}
+            <tr>
+                <td>{{name}}</td>
+                <td>{{explanation}}</td>
+                <td>{{clazz}}</td>
+                <td>{{defaultValue}}</td>
+                <td>{{level}}</td>
+            </tr>
+        {{/worker.listInput}}
+        </tbody>
+    </table>
+    <h3 class="title is-3">Outputs</h3>
+    <table id="workerInputsTable" class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Class</th>
+            <th>Default</th>
+            <th>Level</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#worker.listOutput}}
+            <tr>
+                <td>{{name}}</td>
+                <td>{{explanation}}</td>
+                <td>{{clazz}}</td>
+                <td>{{defaultValue}}</td>
+                <td>{{level}}</td>
+            </tr>
+        {{/worker.listOutput}}
+        </tbody>
+    </table>
+</div>

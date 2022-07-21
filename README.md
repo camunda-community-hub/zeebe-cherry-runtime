@@ -7,9 +7,10 @@ This project is a framework to build workers for Zeebe.
 
 The framework offers a library for your project and a set of administrative pages.
 
-# Developper guide
+# Developer guide
 
-# Step-by-step guide
+## Step-by-step guide
+
 Create your new Spring Boot Maven project.
 Include in your pom.xml the library
 
@@ -19,7 +20,8 @@ Include in your pom.xml the library
     <version>1.0.0</version>
 </dependency>
 
-## develop your own worker
+## Develop your own worker
+
 Create a new Java class for your worker. Extends the class AbstractWorker.
 In doing that, you have to respect some rules:
 Define the input and output of your worker. Which input does it need? Which output will it produce? This information is used to help the designer to understand how to use your worker and provide you comfort: if you declare that an input LONG is mandatory, then the framework checks for you its existence. When your code is called, you can be sure to have all you need.
@@ -57,10 +59,12 @@ The model is the collection message (**"org.camunida.cherry.message"**), and the
     - Errors the connector can throw.
 
 
-## tests
-Java class test follows the same architecture, test/java/org.camunda.cherry.<CollectionName>.
 
-Process test should be saved under test/resources/<collectionName>. For example, the SendMessage.bpmn test process is saved under main/resources/message
+## Tests
+Java class test follows the same architecture, `test/java/org.camunda.cherry.<CollectionName>`.
+
+Process test should be saved under test/resources/<collectionName>. For example, the `SendMessage.bpmn` test process is saved under `main/resources/message`
+
 
 
 
@@ -85,7 +89,8 @@ So, when the method execution is called, implementation is sure that all require
 public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
 ````
 
-On the opposite, the worker declares the list of Output variables it will be created. The abstract class checks that all output variables is correctly produced by the worker, no more, no less. Suppose the output contract is not respected (you forgot one variable, or you provided an undeclared variable, a BPMN error is thrown.
+On the opposite, the worker declares the list of Output variables it will be created. The abstract class checks that all output variables is correctly produced by the worker, no more, no less. Suppose the output contract is not respected (you forgot one variable, or you provided an undeclared variable), a BPMN error is thrown.
+
 
 A contract is very useful:
 * As a developer, you don't need to worry about the existence of the variable. If you ask it, you will have it during the execution.
@@ -94,17 +99,19 @@ A contract is very useful:
 This implied the implementation declare Inputs and Outputs
 ````
 public OfficeToPdfWorker() {
-super("v-pdf-convert-to",
-Arrays.asList(
-AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable for the file to convert"),
-AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to access the file"),
-AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_FILE_NAME, String.class, Level.REQUIRED, "Destination file name"),
-AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to describe how to save the file")
-),
-Arrays.asList(
-AbstractWorker.WorkerParameter.getInstance(OUTPUT_DESTINATION_FILE, Object.class, Level.REQUIRED, "FileVariable converted")
-),
-Arrays.asList(BPMERROR_CONVERSION_ERROR, BPMERROR_LOAD_FILE_ERROR));
+
+  super("c-pdf-convert-to",
+  Arrays.asList(
+    AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable for the file to convert"),
+    AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to access the file"),
+    AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_FILE_NAME, String.class, Level.REQUIRED, "Destination file name"),
+    AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to describe how to save the file")
+  ),
+  Arrays.asList(
+    AbstractWorker.WorkerParameter.getInstance(OUTPUT_DESTINATION_FILE, Object.class, Level.REQUIRED, "FileVariable converted")
+  ),
+  Arrays.asList(BPMERROR_CONVERSION_ERROR, BPMERROR_LOAD_FILE_ERROR));
+
 }
 ````
 
@@ -184,12 +191,22 @@ Execute start.sh or start.bat  available on the framework.
 After starting, all workers in the project begin to monitor the Zeebe server.
 When a task is ready to be executed by one of the workers, it is processed.
 
-## Access the webapplication
-Access the URL http://localhost:8080/cherry"
-This website return monitoring and documentation on workers available in the project.
+## Access the Web Application
 
-The Workers section describes all workers available in the project. For each worker, you have a list of Inputs expected and Outputs produced by the worker.
+Access the webapp here: http://localhost:8080. 
 
+Currently, there is just a single welcome page that calls the `/cherry/api/workers/list` to show
+workers found in system:  
+
+![Web Page Welcome Screen Shot](src/main/resources/static/img/welcomeScreenShot.png?raw=true)
+
+The workers section describes all workers available in the project. For each worker, you have a list of Inputs 
+expected and Outputs produced by the worker.
+
+Click on one of the rows in the table to see more details. For example, here are details about the "PingWorker": 
+
+
+![Worker Detail Screen Shot](src/main/resources/static/img/workerDetailScreenShot.png?raw=true)
 
 Each worker follows the same pattern:
 * it declares a type. This type must be used in your process to specify the worker.
@@ -286,29 +303,5 @@ Note: the temporary folder is accessible only on one host, and each host has a d
 
 ## Example of usages
 See different examples under src/test/resources/org.camunda.cherry. You have a folder per collection, and processes in the collection.
-
-
-
-
-# TODO
-
-## Administration (UI)
-* Build the UI
-* 
-* Monitoring page:
-    First graph, same as Operate, number of active worker / number of stopped worker?
-    Second graph, in the last 24 hours, number of correct execution, number of errors?
-  List of workers, for each worker, status (actif/not actif), number of threads, number of execution in the last 24 hours, average time execution, longuest execution
-  List of errors : display errors in the last 24 hours
-
-* Dashboard page
-  for each worker, start/stop it
-* documentation page
-  for each worker, page which display the description, input, output, BMPN Error, examples? 
-    
-## Library
- Add a function to build a ZeebeBpmnError, instead to let each workers built its own object
-
- add functions to support the administration page
 
 
