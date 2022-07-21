@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -38,6 +39,14 @@ public class AdminRestController {
                 .map(WorkerInformation::getWorkerInformation)
                 .collect(Collectors.toList());
 
+    }
+
+    @GetMapping(value = "/api/worker/detail", produces = "application/json")
+    public Optional<WorkerInformation> getWorker(@RequestParam(name = "workerName") String workerName) {
+        return listWorkers.stream()
+                .map(WorkerInformation::getWorkerInformation)
+                .filter(worker -> worker.getName().equals(workerName))
+                .findFirst();
     }
 
     /**

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zeebe Cherry Framework</title>
+    {{>_css}}
+</head>
+
+<body>
+{{>_nav}}
+<section class="section">
+    <div class="container">
+        <h1 class="title">{{workerName}}</h1>
+    </div>
+
+</section>
+
+{{>_js}}
+{{>_customJs}}
+
+<script>
+    $(document).ready( function () {
+        initNavBar();
+        initWorkersTable();
+        console.log("index initialized. Last update: 2022-07-16 5:46pm");
+    } );
+</script>
+</body>
+
+</html>
