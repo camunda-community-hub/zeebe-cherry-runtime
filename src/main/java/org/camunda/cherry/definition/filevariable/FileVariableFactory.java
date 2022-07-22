@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package org.camunda.cherry.definition.filevariable;
 
+import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,8 @@ import java.util.StringTokenizer;
 
 public class FileVariableFactory {
     Logger logger = LoggerFactory.getLogger(FileVariableFactory.class.getName());
+
+    public final static String BPMNERROR_INCORRECT_STORAGEDEFINITION = "INCORRECT_STORAGEDEFINITION";
 
     /**
      * Use the getInstance() method
@@ -41,8 +44,7 @@ public class FileVariableFactory {
             return null;
 
         FileVariableStorage storageType = extractStorageType(fileContainer.storageDefinition);
-        if (storageType == null)
-            return null;
+
         switch (storageType) {
             case FOLDER:
                 return new FileVariableFolder().fromFolder(fileContainer.storageDefinition, fileContainer.content.toString());
@@ -71,7 +73,8 @@ public class FileVariableFactory {
 
         FileVariableStorage storageType = extractStorageType(storageDefinition);
         if (storageType == null)
-            return null;
+            throw new ZeebeBpmnError(BPMNERROR_INCORRECT_STORAGEDEFINITION, "Error during storageDefinition[" + storageDefinition + "]");
+
         FileVariableReference fileContainer = new FileVariableReference();
         fileContainer.storageDefinition = storageDefinition;
 
@@ -102,9 +105,12 @@ public class FileVariableFactory {
             String storageTypeSt = st.hasMoreTokens() ? st.nextToken() : null;
             return FileVariableStorage.valueOf(storageTypeSt);
         } catch (Exception e) {
-            logger.error("Cherry.FileVariableFactory: can't decode storageDefinition [" + storageDefinition + "]. Format should be "
-                    + FileVariableStorage.JSON + "|" + FileVariableStorage.TEMPFOLDER);
-            return null;
+            String message="Can't decode storageDefinition [" + storageDefinition + "]. Format should be ["
+                    + FileVariableStorage.JSON.toString()
+                    + "|" + FileVariableStorage.TEMPFOLDER.toString()
+                    +  "|" +FileVariableStorage.FOLDER.toString()+"]";
+            logger.error("Cherry.FileVariableFactory: "+message);
+            throw new ZeebeBpmnError(BPMNERROR_INCORRECT_STORAGEDEFINITION, message);
         }
     }
 

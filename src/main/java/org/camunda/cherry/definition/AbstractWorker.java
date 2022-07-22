@@ -107,7 +107,8 @@ public abstract class AbstractWorker {
                     return t.name + "=[" + value + "]";
                 })
                 .collect(Collectors.joining(","));
-        logInfo("Start " + logInput);
+        if (isLog())
+            logInfo("Start " + logInput);
         // first, see if the process respect the contract for this connector
         checkInput(activatedJob);
 
@@ -122,9 +123,13 @@ public abstract class AbstractWorker {
         jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
 
         contextExecution.endExecution = System.currentTimeMillis();
-        logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
-
+        if (isLog())
+            logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
+        else if (contextExecution.endExecution - contextExecution.beginExecution > 2000)
+            logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
     }
+
+
 
     /**
      * Worker must implement this method. Real job has to be done here.
@@ -365,14 +370,7 @@ public abstract class AbstractWorker {
             return defaultValue;
         }
     }
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  getInput/setOutput                                      */
-    /*                                                          */
-    /* method to get variable value                             */
-    /* -------------------------------------------------------- */
-
-    /**
+      /**
      * Return a value as Duration. The value may be a Duration object, or a time in ms (LONG) or a ISO 8601 String representing the duration
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
@@ -552,4 +550,23 @@ public abstract class AbstractWorker {
 
 
     }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Administration                                          */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+    private boolean isLogWorker = false;
+
+    /* isLog
+     * return if the  worker will log
+     */
+    public boolean isLog() {
+        return isLogWorker;
+    }
+
+    public void setLog( boolean logWorker) {
+        isLogWorker=logWorker;
+    }
+
 }

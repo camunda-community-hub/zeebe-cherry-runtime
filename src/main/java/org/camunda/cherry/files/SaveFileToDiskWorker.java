@@ -14,6 +14,7 @@ import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.filevariable.FileVariable;
+import org.camunda.cherry.definition.filevariable.FileVariableFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -51,7 +52,7 @@ public class SaveFileToDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable used to save")
                 ),
                 Collections.emptyList(),
-                Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR));
+                Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR, FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION));
     }
 
     @Override
