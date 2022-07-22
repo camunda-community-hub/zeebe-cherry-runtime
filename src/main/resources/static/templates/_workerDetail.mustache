@@ -25,7 +25,7 @@
         </tbody>
     </table>
     <h3 class="title is-3">Outputs</h3>
-    <table id="workerInputsTable" class="table">
+    <table id="workerOutputsTable" class="table">
         <thead>
         <tr>
             <th>Name</th>
@@ -47,4 +47,12 @@
         {{/worker.listOutput}}
         </tbody>
     </table>
+    <h3 class="title is-3">Types of Errors</h3>
+    <div class="content">
+        <ul>
+            {{#worker.listBpmnErrors}}
+                <li>{{.}}</li>
+            {{/worker.listBpmnErrors}}
+        </ul>
+    </div>
 </div>
