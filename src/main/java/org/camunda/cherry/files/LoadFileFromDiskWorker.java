@@ -63,7 +63,12 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(INPUT_FILTER_FILE, String.class, AbstractWorker.Level.OPTIONAL, "If you didn't specify a fileName, a filter to select only part of files present in the directory"),
                         AbstractWorker.WorkerParameter.getInstance(INPUT_POLICY, String.class, AbstractWorker.Level.OPTIONAL,
                                 "Policy to manipulate the file after loading. Policy are " + POLICY_V_DELETE + ", " + POLICY_V_ARCHIVE + " (then specify the folder archive), " + POLICY_V_UNCHANGE),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL, "How to saved the FileVariable"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL,
+                                "How to saved the FileVariable. "
+                                        +FileVariableFactory.FileVariableStorage.JSON.toString()+" to save in the engine (size is linited), "
+                        +FileVariableFactory.FileVariableStorage.TEMPFOLDER+ " to use the temporary folder of THIS machine"
+                                        +FileVariableFactory.FileVariableStorage.FOLDER+" to specify a folder to save it (to be accessible by multiple machine if you ruin it in a cluster"
+                        ),
 
                         AbstractWorker.WorkerParameter.getInstance(INPUT_ARCHIVE_FOLDER, String.class, AbstractWorker.Level.OPTIONAL, "Folder used with policy " + POLICY_V_ARCHIVE)),
 
@@ -71,7 +76,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_LOADED, Object.class, Level.REQUIRED, "Name of fileVariable where the file is saved"),
                         AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_NAME, String.class, Level.REQUIRED, "File Name"),
                         AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_MIMETYPE, String.class, AbstractWorker.Level.REQUIRED, "MimeType of the loaded file")),
-                Arrays.asList(BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_MOVE_FILE_ERROR)
+                Arrays.asList(BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_MOVE_FILE_ERROR, FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION)
         );
     }
 
