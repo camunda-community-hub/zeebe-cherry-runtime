@@ -27,8 +27,14 @@ public abstract class AbstractWorker {
     private final String name;
     private final List<WorkerParameter> listInput;
     private final List<WorkerParameter> listOutput;
-    private final List<String> listBpmnErrors;
+    private final List<BpmnError> listBpmnErrors;
     Logger loggerAbstract = LoggerFactory.getLogger(AbstractWorker.class.getName());
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Administration                                          */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+    private boolean isLogWorker = false;
 
     /**
      * Constructor
@@ -42,7 +48,7 @@ public abstract class AbstractWorker {
     protected AbstractWorker(String name,
                              List<WorkerParameter> listInput,
                              List<WorkerParameter> listOutput,
-                             List<String> listBpmnErrors) {
+                             List<BpmnError> listBpmnErrors) {
 
         this.name = name;
         this.listInput = listInput;
@@ -82,7 +88,7 @@ public abstract class AbstractWorker {
      *
      * @return list of errors
      */
-    public List<String> getListBpmnErrors() {
+    public List<BpmnError> getListBpmnErrors() {
         return listBpmnErrors;
     }
 
@@ -101,7 +107,8 @@ public abstract class AbstractWorker {
         // log input
         String logInput = listInput.stream()
                 .map(t -> {
-                    Object value = activatedJob.getVariablesAsMap().get(t.name);
+
+                    Object value = getValueFromJob(t.name, activatedJob);
                     if (value != null && value.toString().length() > 15)
                         value = value.toString().substring(0, 15) + "...";
                     return t.name + "=[" + value + "]";
@@ -126,19 +133,8 @@ public abstract class AbstractWorker {
         if (isLog())
             logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
         else if (contextExecution.endExecution - contextExecution.beginExecution > 2000)
-            logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
+            logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms (long)");
     }
-
-
-
-    /**
-     * Worker must implement this method. Real job has to be done here.
-     *
-     * @param jobClient        connection to Zeebe
-     * @param activatedJob     information on job to execute
-     * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
-     */
-    public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution);
 
 
     /* -------------------------------------------------------- */
@@ -148,6 +144,14 @@ public abstract class AbstractWorker {
     /* to normalize the log use these methods
     /* -------------------------------------------------------- */
 
+    /**
+     * Worker must implement this method. Real job has to be done here.
+     *
+     * @param jobClient        connection to Zeebe
+     * @param activatedJob     information on job to execute
+     * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
+     */
+    public abstract void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution);
 
     /**
      * log info
@@ -159,6 +163,12 @@ public abstract class AbstractWorker {
     }
 
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Contracts operation on input/output                     */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
     /**
      * Log an error
      *
@@ -167,13 +177,6 @@ public abstract class AbstractWorker {
     public void logError(String message) {
         loggerAbstract.error("CherryWorker[" + getName() + "]: " + message);
     }
-
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Contracts operation on input/output                     */
-    /*                                                          */
-    /* -------------------------------------------------------- */
 
     /**
      * Check the contract
@@ -188,13 +191,18 @@ public abstract class AbstractWorker {
             if ("*".equals(parameter.name))
                 continue;
 
-            if (job.getVariablesAsMap().containsKey(parameter.name)) {
-                Object value = job.getVariablesAsMap().get(parameter.name);
+            // value is in Variables if the designer map Input and Output manually
+            // or may be in the custom headers if the designer use a template
+            Object value = getValueFromJob(parameter.name, job);
 
-                if (incorrectClassParameter(value, parameter.clazz)) {
-                    listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
-                }
-            } else if (parameter.level == Level.REQUIRED) {
+            // check type
+            if (value != null && incorrectClassParameter(value, parameter.clazz)) {
+                listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
+            }
+
+
+            // check REQUIRED parameters
+            if ((value == null || value.toString().trim().length() == 0) && parameter.level == Level.REQUIRED) {
                 listErrors.add("Param[" + parameter.name + "] is missing");
             }
         }
@@ -220,8 +228,7 @@ public abstract class AbstractWorker {
             if ("*".equals(parameter.name))
                 continue;
 
-            if (parameter.level == Level.REQUIRED) {
-                if (!contextExecution.outVariablesValue.containsKey(parameter.name))
+            if (parameter.level == Level.REQUIRED && !contextExecution.outVariablesValue.containsKey(parameter.name)) {
                     listErrors.add("Param[" + parameter.name + "] is missing");
             }
             // if the value is given, it must be the correct value
@@ -254,6 +261,13 @@ public abstract class AbstractWorker {
         }
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Worker parameters                                       */
+    /*                                                          */
+    /* Worker must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
+
     /**
      * Check the object versus the expected parameter
      *
@@ -273,12 +287,24 @@ public abstract class AbstractWorker {
         return true;
     }
 
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Worker parameters                                       */
-    /*                                                          */
-    /* Worker must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
+    private boolean containsKeyInJob(String parameterName, final ActivatedJob activatedJob) {
+        return (activatedJob.getVariablesAsMap().containsKey(parameterName)
+                || activatedJob.getCustomHeaders().containsKey(parameterName));
+    }
+
+    /**
+     * Value is in Variables if the designer map Input and Output manually,
+     * or may be in the custom headers if the designer use a template
+     *
+     * @param parameterName parameter to get the value
+     * @param activatedJob  activated job
+     * @return
+     */
+    private Object getValueFromJob(String parameterName, final ActivatedJob activatedJob) {
+        if (activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return activatedJob.getVariablesAsMap().get(parameterName);
+        return activatedJob.getCustomHeaders().get(parameterName);
+    }
 
     /**
      * Retrieve a variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
@@ -290,11 +316,18 @@ public abstract class AbstractWorker {
      * @return the value as String
      */
     public String getInputStringValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return (String) getDefaultValue(parameterName, defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        Object value = getValueFromJob(parameterName, activatedJob);
         return value == null ? null : value.toString();
     }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  getInput/setOutput                                      */
+    /*                                                          */
+    /* method to get variable value                             */
+    /* -------------------------------------------------------- */
 
     /**
      * Return a value as Double
@@ -305,9 +338,9 @@ public abstract class AbstractWorker {
      * @return a Double value
      */
     public Double getInputDoubleValue(String parameterName, Double defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return (Double) getDefaultValue(parameterName, defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        Object value = getValueFromJob(parameterName, activatedJob);
         if (value == null)
             return null;
         if (value instanceof Double)
@@ -319,13 +352,6 @@ public abstract class AbstractWorker {
         }
     }
 
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  getInput/setOutput                                      */
-    /*                                                          */
-    /* method to get variable value                             */
-    /* -------------------------------------------------------- */
-
     /**
      * return a value as a Map
      *
@@ -335,10 +361,10 @@ public abstract class AbstractWorker {
      * @return a Map value
      */
     public Map getInputMapValue(String parameterName, Map defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName)) {
+        if (!containsKeyInJob(parameterName, activatedJob))
             return (Map) getDefaultValue(parameterName, defaultValue);
-        }
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+
+        Object value = getValueFromJob(parameterName, activatedJob);
         if (value == null)
             return null;
         if (value instanceof Map)
@@ -356,9 +382,9 @@ public abstract class AbstractWorker {
      * @return a Double value
      */
     public Long getInputLongValue(String parameterName, Long defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return (Long) getDefaultValue(parameterName, defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        Object value = getValueFromJob(parameterName, activatedJob);
 
         if (value == null)
             return null;
@@ -370,7 +396,8 @@ public abstract class AbstractWorker {
             return defaultValue;
         }
     }
-      /**
+
+    /**
      * Return a value as Duration. The value may be a Duration object, or a time in ms (LONG) or a ISO 8601 String representing the duration
      * https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-
      * https://fr.wikipedia.org/wiki/ISO_8601
@@ -381,9 +408,9 @@ public abstract class AbstractWorker {
      * @return a Double value
      */
     public Duration getInputDurationValue(String parameterName, Duration defaultValue, final ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return (Duration) getDefaultValue(parameterName, defaultValue);
-        Object value = activatedJob.getVariablesAsMap().get(parameterName);
+        Object value = getValueFromJob(parameterName, activatedJob);
         if (value == null)
             return null;
         if (value instanceof Duration)
@@ -407,9 +434,9 @@ public abstract class AbstractWorker {
      * @return a FileVariable
      */
     public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return null;
-        Object fileVariableReferenceValue = activatedJob.getVariablesAsMap().get(parameterName);
+        Object fileVariableReferenceValue = getValueFromJob(parameterName, activatedJob);
         try {
             FileVariableReference fileVariableReference = FileVariableReference.fromJson(fileVariableReferenceValue.toString());
 
@@ -431,10 +458,10 @@ public abstract class AbstractWorker {
      * @return the value as String
      */
     public Object getValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
-        if (!activatedJob.getVariablesAsMap().containsKey(parameterName))
+        if (!containsKeyInJob(parameterName, activatedJob))
             return getDefaultValue(parameterName, defaultValue);
         try {
-            return activatedJob.getVariablesAsMap().get(parameterName);
+            return getValueFromJob(parameterName, activatedJob);
         } catch (Exception e) {
             return defaultValue;
         }
@@ -486,20 +513,56 @@ public abstract class AbstractWorker {
         }
     }
 
+    /* isLog
+     * return if the  worker will log
+     */
+    public boolean isLog() {
+        return isLogWorker;
+    }
+
+    public void setLog(boolean logWorker) {
+        isLogWorker = logWorker;
+    }
+
+
     /**
      * Level on the parameter.
      */
     public enum Level {REQUIRED, OPTIONAL}
 
     /**
+     * Parameter may define a list of choice.
+     */
+    public static class WorkerParameterChoice {
+        public String name;
+        public String label;
+
+        public WorkerParameterChoice(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
+    }
+
+    /**
      * class to declare a parameter
      */
     public static class WorkerParameter {
         public String name;
+        public String label;
         public Class<?> clazz;
         public Object defaultValue;
         public Level level;
         public String explanation;
+
+
+        /**
+         * Declare a condition on the parameters
+         */
+        public String conditionPropertie;
+        public List<String> conditionOneOf;
+
+
+        public List<WorkerParameterChoice> workerParameterChoiceList;
 
         /**
          * Get an instance without a default value
@@ -511,33 +574,82 @@ public abstract class AbstractWorker {
          * @param explanation   describe the usage of the parameter
          * @return a WorkerParameter
          */
-        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Object defaultValue, Level level, String explanation) {
+        public static WorkerParameter getInstance(String parameterName, String parameterLabel, Class<?> clazz, Object defaultValue, Level level, String explanation) {
             WorkerParameter parameter = new WorkerParameter();
             parameter.name = parameterName;
+            parameter.label = parameterLabel;
             parameter.clazz = clazz;
             parameter.defaultValue = defaultValue;
             parameter.level = level;
+            parameter.explanation = explanation;
             return parameter;
         }
 
         /**
          * Get an instance without a default value
          *
-         * @param parameterName parameter name
-         * @param clazz         class of the expected parameter
-         * @param level         level for this parameter
-         * @param explanation   describe the usage of the parameter
+         * @param parameterName  parameter name
+         * @param parameterLabel label to display in the template
+         * @param clazz          class of the expected parameter
+         * @param level          level for this parameter
+         * @param explanation    describe the usage of the parameter
          * @return a WorkerParameter
          */
-        public static WorkerParameter getInstance(String parameterName, Class<?> clazz, Level level, String explanation) {
+        public static WorkerParameter getInstance(String parameterName, String parameterLabel, Class<?> clazz, Level level, String explanation) {
             WorkerParameter parameter = new WorkerParameter();
             parameter.name = parameterName;
+            parameter.label = parameterLabel;
             parameter.clazz = clazz;
             parameter.defaultValue = null;
             parameter.level = level;
             parameter.explanation = explanation;
             return parameter;
         }
+
+        public WorkerParameter addCondition(String propertie, List<String> oneOf) {
+            this.conditionPropertie = propertie;
+            this.conditionOneOf = oneOf;
+            return this;
+        }
+
+        /**
+         * Worker can define a list of choice. Add a new choice in the list
+         *
+         * @param name
+         * @param label
+         * @return
+         */
+        public WorkerParameter addChoice(String name, String label) {
+            if (workerParameterChoiceList == null)
+                workerParameterChoiceList = new ArrayList<>();
+            workerParameterChoiceList.add(new WorkerParameterChoice(name, label));
+            return this;
+        }
+
+
+    }
+
+    /**
+     * Describe a BPMNError : code and explanation
+     */
+    public static class BpmnError {
+        public String code;
+        public String explanation;
+
+        /**
+         * Create a Bpmn Error explanation
+         *
+         * @param code
+         * @param explanation
+         * @return
+         */
+        public static BpmnError getInstance(String code, String explanation) {
+            BpmnError bpmnError = new BpmnError();
+            bpmnError.code = code;
+            bpmnError.explanation = explanation;
+            return bpmnError;
+        }
+
     }
 
     /**
@@ -549,24 +661,6 @@ public abstract class AbstractWorker {
         long endExecution;
 
 
-    }
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Administration                                          */
-    /*                                                          */
-    /* -------------------------------------------------------- */
-    private boolean isLogWorker = false;
-
-    /* isLog
-     * return if the  worker will log
-     */
-    public boolean isLog() {
-        return isLogWorker;
-    }
-
-    public void setLog( boolean logWorker) {
-        isLogWorker=logWorker;
     }
 
 }

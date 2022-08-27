@@ -51,6 +51,7 @@ public class AdminRestController {
 
     /**
      * Ask to stop a specific worker
+     *
      * @param workerName worker to stop
      * @return NOTFOUND or the worker information on this worker
      */
@@ -70,6 +71,7 @@ public class AdminRestController {
 
     /**
      * Ask to start a specific worker
+     *
      * @param workerName worker to start
      * @return NOTFOUND or the worker information on this worker
      */

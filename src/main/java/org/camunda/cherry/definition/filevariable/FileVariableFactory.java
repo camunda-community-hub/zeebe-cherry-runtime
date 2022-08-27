@@ -15,9 +15,8 @@ import org.slf4j.LoggerFactory;
 import java.util.StringTokenizer;
 
 public class FileVariableFactory {
-    Logger logger = LoggerFactory.getLogger(FileVariableFactory.class.getName());
-
     public final static String BPMNERROR_INCORRECT_STORAGEDEFINITION = "INCORRECT_STORAGEDEFINITION";
+    Logger logger = LoggerFactory.getLogger(FileVariableFactory.class.getName());
 
     /**
      * Use the getInstance() method
@@ -105,11 +104,11 @@ public class FileVariableFactory {
             String storageTypeSt = st.hasMoreTokens() ? st.nextToken() : null;
             return FileVariableStorage.valueOf(storageTypeSt);
         } catch (Exception e) {
-            String message="Can't decode storageDefinition [" + storageDefinition + "]. Format should be ["
-                    + FileVariableStorage.JSON.toString()
-                    + "|" + FileVariableStorage.TEMPFOLDER.toString()
-                    +  "|" +FileVariableStorage.FOLDER.toString()+"]";
-            logger.error("Cherry.FileVariableFactory: "+message);
+            String message = "Can't decode storageDefinition [" + storageDefinition + "]. Format should be ["
+                    + FileVariableStorage.JSON
+                    + "|" + FileVariableStorage.TEMPFOLDER
+                    + "|" + FileVariableStorage.FOLDER + "]";
+            logger.error("Cherry.FileVariableFactory: " + message);
             throw new ZeebeBpmnError(BPMNERROR_INCORRECT_STORAGEDEFINITION, message);
         }
     }

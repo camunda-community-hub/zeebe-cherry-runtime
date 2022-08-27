@@ -15,8 +15,6 @@ import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -47,12 +45,16 @@ public class SaveFileToDiskWorker extends AbstractWorker {
     public SaveFileToDiskWorker() {
         super(WORKERTYPE_FILES_SAVE_TO_DISK,
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER_TO_SAVE, String.class, AbstractWorker.Level.REQUIRED, "Folder where the file will be save"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FILENAME, String.class, Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable used to save")
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER_TO_SAVE, "Folder to save", String.class, AbstractWorker.Level.REQUIRED, "Folder where the file will be save"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_FILENAME, "File name", String.class, Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, "Source file", Object.class, Level.REQUIRED, "FileVariable used to save")
                 ),
                 Collections.emptyList(),
-                Arrays.asList(BPMNERROR_LOAD_FILE_ERROR, BPMNERROR_FOLDER_NOT_EXIST_ERROR, BPMNERROR_WRITE_FILE_ERROR, FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION));
+                Arrays.asList(
+                        AbstractWorker.BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Load file error"),
+                        AbstractWorker.BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
+                        AbstractWorker.BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
+                        AbstractWorker.BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
     }
 
     @Override

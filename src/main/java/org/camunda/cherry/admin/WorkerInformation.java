@@ -19,6 +19,7 @@ public class WorkerInformation {
 
     /**
      * Keep the worker in the class. This class is a facade
+     *
      * @param worker
      * @return
      */
@@ -38,13 +39,22 @@ public class WorkerInformation {
     public boolean isActive() {
         return true;
     }
+
     public int getNbThreads() {
         return 1;
     }
 
-    public List<AbstractWorker.WorkerParameter> getListInput() { return worker.getListInput();}
-    public List<AbstractWorker.WorkerParameter> getListOutput() { return worker.getListOutput();}
-    public List<String> getListBpmnErrors() { return worker.getListBpmnErrors();}
+    public List<AbstractWorker.WorkerParameter> getListInput() {
+        return worker.getListInput();
+    }
+
+    public List<AbstractWorker.WorkerParameter> getListOutput() {
+        return worker.getListOutput();
+    }
+
+    public List<AbstractWorker.BpmnError> getListBpmnErrors() {
+        return worker.getListBpmnErrors();
+    }
 
     public String getClassName() {
         return worker.getClass().getName();

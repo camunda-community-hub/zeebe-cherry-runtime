@@ -5,8 +5,6 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -43,13 +41,13 @@ public class SetVariablesWorker extends AbstractWorker {
     public SetVariablesWorker() {
         super(WORKERTYPE_SET_VARIABLES,
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_OPERATIONS, String.class, Level.REQUIRED, "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, Object.class, Level.OPTIONAL, "Any variables can be accessed")
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_OPERATIONS, "Operation", String.class, Level.REQUIRED, "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, "Input Anything",Object.class, Level.OPTIONAL, "Any variables can be accessed")
                 ),
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_RESULT, Object.class, Level.REQUIRED, "Result of operations. Multiple variables are updated")
+                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_RESULT, "Result", Object.class, Level.REQUIRED, "Result of operations. Multiple variables are updated")
                 ),
-                Arrays.asList(BPMERROR_SYNTAXE_OPERATION_ERROR));
+                Arrays.asList( AbstractWorker.BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR, "Operation error")));
     }
 
     @Override

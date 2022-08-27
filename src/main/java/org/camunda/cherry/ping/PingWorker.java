@@ -31,20 +31,20 @@ public class PingWorker extends AbstractWorker {
     private final Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
 
     public PingWorker() {
-        super("v-ping",
+        super("c-ping",
                 Arrays.asList(
-                        WorkerParameter.getInstance(INPUT_MESSAGE, String.class, Level.OPTIONAL, "Message to log"),
-                        WorkerParameter.getInstance(INPUT_DELAY, Long.class, Level.OPTIONAL, "Delay to sleep")),
+                        WorkerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, Level.OPTIONAL, "Message to log"),
+                        WorkerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, Level.OPTIONAL, "Delay to sleep")),
 
                 Arrays.asList(
-                        WorkerParameter.getInstance(OUTPUT_TIMESTAMP, String.class, Level.REQUIRED, "Produce a timestamp")),
+                        WorkerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, Level.REQUIRED, "Produce a timestamp")),
                 Collections.emptyList()
         );
 
     }
 
     @Override
-    @ZeebeWorker(type = "v-ping", autoComplete = true)
+    @ZeebeWorker(type = "c-ping", autoComplete = true)
     public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
         super.handleWorkerExecution(jobClient, activatedJob);
     }
