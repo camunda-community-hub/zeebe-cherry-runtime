@@ -25,12 +25,12 @@ public class ActorFilterUsers extends AbstractWorker {
     public ActorFilterUsers() {
         super("io.camunda.zeebe:userTask",
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_ACTORFILTER, String.class, Level.OPTIONAL, "Give the code for the Actor filter"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_USER_CANDIDATE, String.class, Level.OPTIONAL, "For the actor filter [" + INPUT_ACTORFILTER_V_USERS + "] name of candidates"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, Object.class, Level.OPTIONAL, "Any variables can be accessed")
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_ACTORFILTER, "Actor filter", String.class, Level.OPTIONAL, "Give the code for the Actor filter"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_USER_CANDIDATE, "User candidate", String.class, Level.OPTIONAL, "For the actor filter [" + INPUT_ACTORFILTER_V_USERS + "] name of candidates"),
+                        AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, "Input anything", Object.class, Level.OPTIONAL, "Any variables can be accessed")
                 ),
                 Collections.emptyList(),
-                Arrays.asList(BPMERROR_SYNTAXE_OPERATION_ERROR));
+                Arrays.asList(AbstractWorker.BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR,"Operation error")));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class ActorFilterUsers extends AbstractWorker {
         // elementId is the taskName
         String elementId = activatedJob.getElementId();
         if (candidates instanceof String) {
-
+            // to be define
         }
     }
 }

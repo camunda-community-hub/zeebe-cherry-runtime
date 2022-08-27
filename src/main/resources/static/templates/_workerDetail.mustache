@@ -47,10 +47,21 @@
     </table>
     <h3 class="title is-3">Types of Errors</h3>
     <div class="content">
-        <ul>
+        <table id="workerOutputsTable" class="table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Explanation</th>
+            </tr>
+            </thead>
+            <tbody>
             {{#worker.listBpmnErrors}}
-                <li>{{.}}</li>
+                <tr>
+                    <td>{{code}}</td>
+                    <td>{{explanation}}</td>
+                </tr>
             {{/worker.listBpmnErrors}}
-        </ul>
+            </tbody>
+        </table>
     </div>
 </div>

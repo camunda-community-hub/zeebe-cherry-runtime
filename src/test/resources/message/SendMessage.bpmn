@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_08xgl1j" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_08xgl1j" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
   <bpmn:collaboration id="Collaboration_11c6vyy">
     <bpmn:participant id="Participant_05i591r" name="ParticipantMain" processRef="MessageMain" />
     <bpmn:participant id="Participant_1nu77d7" name="Message Secondary" processRef="MessageSecondary" />
@@ -14,7 +14,7 @@
       "label": "Request Id",
       "type": "textfield",
       "id": "Field_0j3hzfb",
-      "key": "RequestId",
+      "key": "requestId",
       "defaultValue": "123"
     },
     {
@@ -123,7 +123,7 @@
     </bpmn:intermediateCatchEvent>
     <bpmn:intermediateThrowEvent id="Event_SendMessage" name="Pay employee">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="v-send-message" />
+        <zeebe:taskDefinition type="c-send-message" />
         <zeebe:ioMapping>
           <zeebe:input source="= &#34;amount,accountFrom,accountTo,requestId&#34;" target="variables" />
           <zeebe:input source="= &#34;v-message-starttransfer&#34;" target="messageName" />
@@ -154,13 +154,23 @@
     </bpmn:manualTask>
     <bpmn:serviceTask id="Activity_0lz5i0z" name="ping">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="v-ping" />
+        <zeebe:taskDefinition type="c-ping" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1foqaef</bpmn:incoming>
       <bpmn:outgoing>Flow_016fpqo</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_1foqaef" sourceRef="StartEvent_1" targetRef="Activity_0lz5i0z" />
     <bpmn:sequenceFlow id="Flow_016fpqo" sourceRef="Activity_0lz5i0z" targetRef="Activity_06ge2yt" />
+    <bpmn:boundaryEvent id="Event_14ybo76" name="2mn" attachedToRef="Activity_15zskfc">
+      <bpmn:outgoing>Flow_1aops5s</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0g3c7v1">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT2M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="Event_1trfigf" name="To long">
+      <bpmn:incoming>Flow_1aops5s</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1aops5s" sourceRef="Event_14ybo76" targetRef="Event_1trfigf" />
   </bpmn:process>
   <bpmn:process id="MessageSecondary" name="Message secondary " isExecutable="true">
     <bpmn:extensionElements>
@@ -170,7 +180,7 @@
       "label": "Request Id",
       "type": "textfield",
       "id": "Field_0j3hzfb",
-      "key": "RequestId",
+      "key": "requestId",
       "defaultValue": "123"
     },
     {
@@ -221,7 +231,7 @@
     </bpmn:startEvent>
     <bpmn:endEvent id="Event_MsgTransferDone" name="Transfer done">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="v-send-message" />
+        <zeebe:taskDefinition type="c-send-message" />
         <zeebe:ioMapping>
           <zeebe:input source="= &#34;v-message-transfertdone&#34;" target="messageName" />
           <zeebe:input source="= &#34;requestId&#34;" target="correlationVariables" />
@@ -229,6 +239,7 @@
         </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_13me9xw</bpmn:incoming>
+      <bpmn:incoming>Flow_15t6cdx</bpmn:incoming>
       <bpmn:messageEventDefinition id="MessageEventDefinition_1cfx52a" />
     </bpmn:endEvent>
     <bpmn:userTask id="Activity_1iiidob" name="Do the transfer">
@@ -238,6 +249,13 @@
       <bpmn:incoming>Flow_1of3d6n</bpmn:incoming>
       <bpmn:outgoing>Flow_13me9xw</bpmn:outgoing>
     </bpmn:userTask>
+    <bpmn:boundaryEvent id="Event_0ykeb7f" name="30s" attachedToRef="Activity_1iiidob">
+      <bpmn:outgoing>Flow_15t6cdx</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_1654s4m">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_15t6cdx" sourceRef="Event_0ykeb7f" targetRef="Event_MsgTransferDone" />
   </bpmn:process>
   <bpmn:message id="Message_041n67b" name="v-message-starttransfer" />
   <bpmn:message id="Message_2mip8ad" name="v-message-transfertdone">
@@ -251,6 +269,14 @@
         <dc:Bounds x="129" y="70" width="1009" height="250" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_016fpqo_di" bpmnElement="Flow_016fpqo">
+        <di:waypoint x="330" y="177" />
+        <di:waypoint x="360" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1foqaef_di" bpmnElement="Flow_1foqaef">
+        <di:waypoint x="198" y="177" />
+        <di:waypoint x="230" y="177" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0au8r49_di" bpmnElement="Flow_0au8r49">
         <di:waypoint x="460" y="177" />
         <di:waypoint x="482" y="177" />
@@ -271,13 +297,10 @@
         <di:waypoint x="518" y="177" />
         <di:waypoint x="580" y="177" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1foqaef_di" bpmnElement="Flow_1foqaef">
-        <di:waypoint x="198" y="177" />
-        <di:waypoint x="230" y="177" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_016fpqo_di" bpmnElement="Flow_016fpqo">
-        <di:waypoint x="330" y="177" />
-        <di:waypoint x="360" y="177" />
+      <bpmndi:BPMNEdge id="Flow_1aops5s_di" bpmnElement="Flow_1aops5s">
+        <di:waypoint x="890" y="235" />
+        <di:waypoint x="890" y="270" />
+        <di:waypoint x="972" y="270" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="162" y="159" width="36" height="36" />
@@ -315,6 +338,18 @@
       <bpmndi:BPMNShape id="Activity_12jfcdc_di" bpmnElement="Activity_0lz5i0z">
         <dc:Bounds x="230" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1trfigf_di" bpmnElement="Event_1trfigf">
+        <dc:Bounds x="972" y="252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="973" y="295" width="35" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1240ibq_di" bpmnElement="Event_14ybo76">
+        <dc:Bounds x="872" y="199" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="869" y="233" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_1nu77d7_di" bpmnElement="Participant_1nu77d7" isHorizontal="true">
         <dc:Bounds x="120" y="350" width="810" height="160" />
         <bpmndi:BPMNLabel />
@@ -327,6 +362,13 @@
         <di:waypoint x="680" y="420" />
         <di:waypoint x="742" y="420" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15t6cdx_di" bpmnElement="Flow_15t6cdx">
+        <di:waypoint x="620" y="478" />
+        <di:waypoint x="620" y="498" />
+        <di:waypoint x="720" y="498" />
+        <di:waypoint x="720" y="430" />
+        <di:waypoint x="745" y="430" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Event_0vmlhwi_di" bpmnElement="Event_ReceivedTransferRequest">
         <dc:Bounds x="202" y="402" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -336,11 +378,17 @@
       <bpmndi:BPMNShape id="Event_19tj280_di" bpmnElement="Event_MsgTransferDone">
         <dc:Bounds x="742" y="402" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="727" y="445" width="68" height="14" />
+          <dc:Bounds x="788" y="413" width="68" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_11ymcg6_di" bpmnElement="Activity_1iiidob">
         <dc:Bounds x="580" y="380" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ejucju_di" bpmnElement="Event_0ykeb7f">
+        <dc:Bounds x="602" y="442" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="600" y="483" width="19" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_15usxus_di" bpmnElement="Flow_15usxus">
         <di:waypoint x="500" y="195" />

@@ -13,8 +13,6 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,13 +42,13 @@ public class SendMessageWorker extends AbstractWorker {
     public SendMessageWorker() {
         super(WORKERTYPE_SEND_MESSAGE,
                 Arrays.asList(
-                        WorkerParameter.getInstance(INPUT_MESSAGE_NAME, String.class, Level.REQUIRED, "Message name"),
-                        WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, String.class, Level.OPTIONAL, "Correlation variables. The content of theses variable is used to find the process instance to unfroze"),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_VARIABLES, String.class, Level.OPTIONAL, "Variables to copy in the message"),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, String.class, Level.OPTIONAL, "Id of the message"),
-                        WorkerParameter.getInstance(INPUT_MESSAGE_DURATION, Object.class, Level.OPTIONAL, "Message duration. After this delay, message is deleted if it doesn't fit a process instance")),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_NAME, "Message name", String.class, Level.REQUIRED, "Message name"),
+                        WorkerParameter.getInstance(INPUT_CORRELATION_VARIABLES, "Correlation variables", String.class, Level.OPTIONAL, "Correlation variables. The content of theses variable is used to find the process instance to unfroze"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_VARIABLES, "Message variables", String.class, Level.OPTIONAL, "Variables to copy in the message"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, "ID message", String.class, Level.OPTIONAL, "Id of the message"),
+                        WorkerParameter.getInstance(INPUT_MESSAGE_DURATION, "Duratino (in ms)", Object.class, Level.OPTIONAL, "Message duration. After this delay, message is deleted if it doesn't fit a process instance")),
                 Collections.emptyList(),
-                Arrays.asList(BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR));
+                Arrays.asList(AbstractWorker.BpmnError.getInstance(BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR, "Correlation error")));
     }
 
     // , fetchVariables={"urlMessage", "messageName","correlationVariables","variables"}
@@ -107,10 +105,10 @@ public class SendMessageWorker extends AbstractWorker {
             throw new ZeebeBpmnError(BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR, "Worker [" + getName() + "] One variable expected for the correction:[" + correlationVariablesList + "]");
         }
         String correlationValue = null;
-        if (!correlationVariables.isEmpty())
-            correlationValue = correlationVariables.values().stream()
-                    .findFirst()
-                    .toString();
+        if (!correlationVariables.isEmpty()) {
+            Map.Entry<String, Object> entry = correlationVariables.entrySet().iterator().next();
+            correlationValue= entry.getValue()==null? null : entry.getValue().toString();
+        }
         PublishMessageCommandStep1.PublishMessageCommandStep3 messageCommand = zeebeClient
                 .newPublishMessageCommand()
                 .messageName(messageName)
