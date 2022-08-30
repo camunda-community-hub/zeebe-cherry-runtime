@@ -49,6 +49,15 @@
             <version>2.9.0</version>
         </dependency>
 
+
+        <!-- Accept Camunda Connector -->
+        <dependency>
+            <groupId>io.camunda.connector</groupId>
+            <artifactId>connector-core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
+
         <!-- JSON LocalDateTime -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
