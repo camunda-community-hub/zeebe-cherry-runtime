@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class AbstractWorker {
@@ -268,6 +269,24 @@ public abstract class AbstractWorker {
     /* Worker must declare the input/output parameters          */
     /* -------------------------------------------------------- */
 
+    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
+    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
+
+    // This idea was inspired by: https://stackoverflow.com/questions/40402756/check-if-a-string-is-parsable-as-another-java-type
+    static Map<Class<?>, Predicate<String>> canParsePredicates = new HashMap<>();
+    static {
+        canParsePredicates.put(java.lang.Integer.class, s -> {try {Integer.parseInt(s); return true;} catch(Exception e) {return false;}});
+        canParsePredicates.put(java.lang.Long.class, s -> {try {Long.parseLong(s); return true;} catch(Exception e) {return false;}});
+    }
+
+    static Boolean canParse(Class<?> clazz, Object value) {
+        if(value != null) {
+            return canParsePredicates.get(clazz).test(value.toString());
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Check the object versus the expected parameter
      *
@@ -275,12 +294,15 @@ public abstract class AbstractWorker {
      * @param isInstanceOf expected class
      * @return false if the value is on the class, else true
      */
-    private boolean incorrectClassParameter(Object value, Class<?> isInstanceOf) {
+    boolean incorrectClassParameter(Object value, Class<?> isInstanceOf) {
         if (value == null)
             return false;
         try {
-            if (Class.forName(isInstanceOf.getName()).isInstance(value))
+            if (Class.forName(isInstanceOf.getName()).isInstance(value)) {
                 return false;
+            } else {
+                return !canParse(isInstanceOf, value.toString());
+            }
         } catch (Exception e) {
             // do nothing, we return true
         }
