@@ -2,15 +2,22 @@ package org.camunda.cherry.ping;
 
 
 import io.camunda.connector.api.ConnectorContext;
-import io.camunda.connector.api.ConnectorFunction;
 import org.camunda.cherry.definition.AbstractConnector;
+import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 
 
-public class PingConnector extends AbstractConnector implements ConnectorFunction {
+@Component
+public class PingConnector extends AbstractConnector {
 
-    PingConnector() {
-        super("c-pingconnector");
+    protected PingConnector() {
+        super("c-pingconnector",
+                PingConnectorInput.class,
+                PingConnectorOutput.class,
+                 Collections.emptyList());
     }
+
     @Override
     public Object execute(ConnectorContext context) throws Exception {
 

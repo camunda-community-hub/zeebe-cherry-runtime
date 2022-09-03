@@ -34,17 +34,17 @@ public class AdminRestController {
     private List<AbstractWorker> listWorkers;
 
     @GetMapping(value = "/api/worker/list", produces = "application/json")
-    public List<WorkerInformation> getWorkersList() {
+    public List<RunnerInformation> getWorkersList() {
         return listWorkers.stream()
-                .map(WorkerInformation::getWorkerInformation)
-                .collect(Collectors.toList());
+                .map(RunnerInformation::getWorkerInformation)
+                .toList();
 
     }
 
     @GetMapping(value = "/api/worker/detail", produces = "application/json")
-    public Optional<WorkerInformation> getWorker(@RequestParam(name = "workerName") String workerName) {
+    public Optional<RunnerInformation> getWorker(@RequestParam(name = "workerName") String workerName) {
         return listWorkers.stream()
-                .map(WorkerInformation::getWorkerInformation)
+                .map(RunnerInformation::getWorkerInformation)
                 .filter(worker -> worker.getName().equals(workerName))
                 .findFirst();
     }
@@ -56,13 +56,13 @@ public class AdminRestController {
      * @return NOTFOUND or the worker information on this worker
      */
     @PutMapping(value = "/api/worker/{workerName}/stop", produces = "application/json")
-    public WorkerInformation stopWorker(@PathVariable String workerName) {
+    public RunnerInformation stopWorker(@PathVariable String workerName) {
         logger.info("Stop requested for [" + workerName + "]");
 
         // at this moment, just retrieve the worker
-        List<WorkerInformation> listFiltered = listWorkers.stream().filter(w -> w.getName().equals(workerName))
-                .map(WorkerInformation::getWorkerInformation)
-                .collect(Collectors.toList());
+        List<RunnerInformation> listFiltered = listWorkers.stream().filter(w -> w.getName().equals(workerName))
+                .map(RunnerInformation::getWorkerInformation)
+                .toList();
         if (listFiltered.size() != 1)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + workerName + "] not found");
         return listFiltered.get(0);
@@ -76,13 +76,13 @@ public class AdminRestController {
      * @return NOTFOUND or the worker information on this worker
      */
     @PutMapping(value = "/api/worker/{workerName}/start", produces = "application/json")
-    public WorkerInformation startWorker(@PathVariable String workerName) {
+    public RunnerInformation startWorker(@PathVariable String workerName) {
         logger.info("Start requested for [" + workerName + "]");
 
         // at this moment, just retrieve the worker
-        List<WorkerInformation> listFiltered = listWorkers.stream().filter(w -> w.getName().equals(workerName))
-                .map(WorkerInformation::getWorkerInformation)
-                .collect(Collectors.toList());
+        List<RunnerInformation> listFiltered = listWorkers.stream().filter(w -> w.getName().equals(workerName))
+                .map(RunnerInformation::getWorkerInformation)
+                .toList();
 
         if (listFiltered.size() != 1)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + workerName + "] not found");

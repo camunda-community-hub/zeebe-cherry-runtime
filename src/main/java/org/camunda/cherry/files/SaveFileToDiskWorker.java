@@ -10,9 +10,10 @@ package org.camunda.cherry.files;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
+import org.camunda.cherry.definition.BpmnError;
+import org.camunda.cherry.definition.RunnerParameter;
 import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
 import org.springframework.stereotype.Component;
@@ -45,24 +46,19 @@ public class SaveFileToDiskWorker extends AbstractWorker {
     public SaveFileToDiskWorker() {
         super(WORKERTYPE_FILES_SAVE_TO_DISK,
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER_TO_SAVE, "Folder to save", String.class, AbstractWorker.Level.REQUIRED, "Folder where the file will be save"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FILENAME, "File name", String.class, Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, "Source file", Object.class, Level.REQUIRED, "FileVariable used to save")
+                        RunnerParameter.getInstance(INPUT_FOLDER_TO_SAVE, "Folder to save", String.class, RunnerParameter.Level.REQUIRED, "Folder where the file will be save"),
+                        RunnerParameter.getInstance(INPUT_FILENAME, "File name", String.class, RunnerParameter.Level.OPTIONAL, "File name used to save the file. If not provided, fileVariable name is used"),
+                        RunnerParameter.getInstance(INPUT_SOURCE_FILE, "Source file", Object.class, RunnerParameter.Level.REQUIRED, "FileVariable used to save")
                 ),
                 Collections.emptyList(),
                 Arrays.asList(
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Load file error"),
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
-                        AbstractWorker.BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
+                        BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Load file error"),
+                        BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
+                        BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
+                        BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
     }
 
-    @Override
 
-    @ZeebeWorker(type = WORKERTYPE_FILES_SAVE_TO_DISK, autoComplete = true)
-    public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-        super.handleWorkerExecution(jobClient, activatedJob);
-    }
 
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {

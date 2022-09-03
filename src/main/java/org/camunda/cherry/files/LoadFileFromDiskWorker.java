@@ -10,9 +10,10 @@ package org.camunda.cherry.files;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
+import org.camunda.cherry.definition.BpmnError;
+import org.camunda.cherry.definition.RunnerParameter;
 import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
 import org.slf4j.Logger;
@@ -59,18 +60,19 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
     public LoadFileFromDiskWorker() {
         super(WORKERTYPE_FILES_LOAD_FROM_DISK,
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FOLDER, "Folder", String.class, AbstractWorker.Level.REQUIRED, "Specify the folder where the file will be loaded. Must be visible from the server."),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FILE_NAME, "File name", String.class, AbstractWorker.Level.OPTIONAL, "Specify a file name, else the first file in the folder will be loaded"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_FILTER_FILE, "Filter file", String.class, AbstractWorker.Level.OPTIONAL, "If you didn't specify a fileName, a filter to select only part of files present in the folder"),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_POLICY, "Policy", String.class, AbstractWorker.Level.OPTIONAL,
+                        RunnerParameter.getInstance(INPUT_FOLDER, "Folder", String.class, RunnerParameter.Level.REQUIRED, "Specify the folder where the file will be loaded. Must be visible from the server."),
+                        RunnerParameter.getInstance(INPUT_FILE_NAME, "File name", String.class, RunnerParameter.Level.OPTIONAL, "Specify a file name, else the first file in the folder will be loaded"),
+                        RunnerParameter.getInstance(INPUT_FILTER_FILE, "Filter file", String.class, RunnerParameter.Level.OPTIONAL, "If you didn't specify a fileName, a filter to select only part of files present in the folder"),
+                        RunnerParameter.getInstance(INPUT_POLICY, "Policy", String.class, RunnerParameter.Level.OPTIONAL,
                                         "Policy to manipulate the file after loading. With " + POLICY_V_ARCHIVE + ", the folder archive must be specify")
                                 .addChoice("DELETE", POLICY_V_DELETE)
                                 .addChoice("ARCHIVE", POLICY_V_ARCHIVE)
                                 .addChoice("UNCHANGE", POLICY_V_UNCHANGE)
                         ,
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_ARCHIVE_FOLDER, "Archive folder", String.class, AbstractWorker.Level.OPTIONAL, "With the policy " + POLICY_V_ARCHIVE + ". File is moved in this folder.")
+                        RunnerParameter.getInstance(INPUT_ARCHIVE_FOLDER, "Archive folder", String.class, RunnerParameter.Level.OPTIONAL, "With the policy " + POLICY_V_ARCHIVE + ". File is moved in this folder.")
                                 .addCondition(INPUT_POLICY, Arrays.asList(POLICY_V_ARCHIVE)),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION, "Storage definition", String.class, FileVariableFactory.FileVariableStorage.JSON.toString(), Level.OPTIONAL,
+                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION, "Storage definition", String.class, FileVariableFactory.FileVariableStorage.JSON.toString(),
+                                        RunnerParameter.Level.OPTIONAL,
                                         "How to saved the FileVariable. "
                                                 + FileVariableFactory.FileVariableStorage.JSON + " to save in the engine (size is linited), "
                                                 + FileVariableFactory.FileVariableStorage.TEMPFOLDER + " to use the temporary folder of THIS machine"
@@ -80,29 +82,25 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                                 .addChoice("TEMPFOLDER", FileVariableFactory.FileVariableStorage.TEMPFOLDER.toString())
                                 .addChoice("FOLDER", FileVariableFactory.FileVariableStorage.FOLDER.toString())
                         ,
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_STORAGEDEFINITION_COMPLEMENT, "Storage defintion Complement", String.class, AbstractWorker.Level.OPTIONAL, "Complement to the Storage definition, if needed. " + FileVariableFactory.FileVariableStorage.FOLDER + ": please provide the folder to save the file")
+                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION_COMPLEMENT, "Storage defintion Complement", String.class, RunnerParameter.Level.OPTIONAL, "Complement to the Storage definition, if needed. " + FileVariableFactory.FileVariableStorage.FOLDER + ": please provide the folder to save the file")
                                 .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(FileVariableFactory.FileVariableStorage.FOLDER.toString()))
                 ),
 
 
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_LOADED, "File loaded", Object.class, Level.REQUIRED, "Content of the file, according the storage definition"),
-                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_NAME, "File name", String.class, Level.REQUIRED, "Name of the file"),
-                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_FILE_MIMETYPE, "File Mime type", String.class, AbstractWorker.Level.REQUIRED, "MimeType of the loaded file")),
+                        RunnerParameter.getInstance(OUTPUT_FILE_LOADED, "File loaded", Object.class, RunnerParameter.Level.REQUIRED, "Content of the file, according the storage definition"),
+                        RunnerParameter.getInstance(OUTPUT_FILE_NAME, "File name", String.class, RunnerParameter.Level.REQUIRED, "Name of the file"),
+                        RunnerParameter.getInstance(OUTPUT_FILE_MIMETYPE, "File Mime type", String.class, RunnerParameter.Level.REQUIRED, "MimeType of the loaded file")),
                 Arrays.asList(
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
-                        AbstractWorker.BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "Error when the file is moved to the archive directory"),
-                        AbstractWorker.BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"))
+                        BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
+                        BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
+                        BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "Error when the file is moved to the archive directory"),
+                        BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"))
         );
     }
 
-    @Override
 
-    @ZeebeWorker(type = WORKERTYPE_FILES_LOAD_FROM_DISK, autoComplete = true)
-    public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-        super.handleWorkerExecution(jobClient, activatedJob);
-    }
+
 
 
     @Override
@@ -141,7 +139,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                             return true;
                         return t.getName().matches(filterFile);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
         }
         if (listFilesFiltered.isEmpty()) {
             logger.info(getName() + ": folder [" + folder.getAbsolutePath() + "] does not have any matching file "
