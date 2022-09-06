@@ -35,6 +35,8 @@ public abstract class AbstractRunner {
 
 
     private final String type;
+    private final List<BpmnError> listBpmnErrors;
+    Logger loggerAbstract = LoggerFactory.getLogger(AbstractRunner.class.getName());
     /**
      * For the Connector class, this information is calculated after the constructor
      */
@@ -43,17 +45,11 @@ public abstract class AbstractRunner {
      * For the Connector class, this information is calculated after the constructor
      */
     private List<RunnerParameter> listOutput;
-
-
-    private final List<BpmnError> listBpmnErrors;
-
     private String name;
-
     private String description;
     private String logo;
     private boolean isLogWorker = false;
 
-    Logger loggerAbstract = LoggerFactory.getLogger(AbstractRunner.class.getName());
     /**
      * Constructor
      *
@@ -441,8 +437,6 @@ public abstract class AbstractRunner {
     }
 
 
-
-
     public String getType() {
         return type;
     }
@@ -451,34 +445,34 @@ public abstract class AbstractRunner {
         return listInput;
     }
 
-    public List<RunnerParameter> getListOutput() {
-        return listOutput;
-    }
-
-    public List<BpmnError> getListBpmnErrors() {
-        return listBpmnErrors;
-    }
-
     public void setListInput(List<RunnerParameter> listInput) {
         this.listInput = listInput;
+    }
+
+    public List<RunnerParameter> getListOutput() {
+        return listOutput;
     }
 
     public void setListOutput(List<RunnerParameter> listOutput) {
         this.listOutput = listOutput;
     }
 
+    public List<BpmnError> getListBpmnErrors() {
+        return listBpmnErrors;
+    }
 
     /**
      * Return the list of variable to fetch if this is possible, else null.
      * To calculate the list:
-     *  - the listInput must not be null (it may be empty)
-     *  - any input must be a STAR. A star in the input means the worker/connector ask to retrieve any information
+     * - the listInput must not be null (it may be empty)
+     * - any input must be a STAR. A star in the input means the worker/connector ask to retrieve any information
+     *
      * @return null if this is not possible to fetch variable, else the list of variable to fetch
      */
     public List<String> getListFetchVariables() {
-        if (listInput==null)
+        if (listInput == null)
             return null;
-        boolean isStarPresent = listInput.stream().anyMatch(t->t.name.equals("*"));
+        boolean isStarPresent = listInput.stream().anyMatch(t -> t.name.equals("*"));
         if (isStarPresent)
             return null;
         return listInput.stream().map(RunnerParameter::getName).toList();
@@ -490,30 +484,38 @@ public abstract class AbstractRunner {
     /*                                                          */
     /* -------------------------------------------------------- */
 
+    public String getName() {
+        return name;
+    }
+
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setLogo(String logo) {
-        this.logo = logo;
-    }
-
-    public String getName() {
-        return name;
+    /**
+     * Return the identification for the worker: it is the name or, if this not exist, the type
+     *
+     * @return the identification
+     */
+    public String getIdentification() {
+        return name == null ? type : name;
     }
 
     public String getDescription() {
         return description;
     }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getLogo() {
         return logo;
     }
 
+    public void setLogo(String logo) {
+        this.logo = logo;
+    }
 
 
 }

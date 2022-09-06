@@ -10,16 +10,17 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
 
     private long timeStamp;
 
-    PingConnectorOutput(){
+    public PingConnectorOutput() {
         super();
     }
-    PingConnectorOutput(long currentTimestamp) {
+
+    public PingConnectorOutput(long currentTimestamp) {
         super();
         this.timeStamp = currentTimestamp;
     }
 
     @Override
-    public List<RunnerParameter> getOutputParameters() {
+    public List<RunnerParameter> getListOutput() {
         return Arrays.asList(RunnerParameter.getInstance("timestamp", "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp"));
     }
 

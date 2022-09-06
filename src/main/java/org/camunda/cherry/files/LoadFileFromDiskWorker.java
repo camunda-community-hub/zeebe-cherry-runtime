@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class LoadFileFromDiskWorker extends AbstractWorker {
@@ -98,9 +97,6 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"))
         );
     }
-
-
-
 
 
     @Override

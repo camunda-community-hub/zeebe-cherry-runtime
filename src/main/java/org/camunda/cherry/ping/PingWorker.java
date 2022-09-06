@@ -30,7 +30,7 @@ public class PingWorker extends AbstractWorker {
         super("c-ping",
                 Arrays.asList(
                         RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
-                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class,RunnerParameter. Level.OPTIONAL, "Delay to sleep")),
+                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")),
 
                 Arrays.asList(
                         RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")),
@@ -59,4 +59,10 @@ public class PingWorker extends AbstractWorker {
         setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
         logInfo("Executed Ping Worker");
     }
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
+    }
+
 }

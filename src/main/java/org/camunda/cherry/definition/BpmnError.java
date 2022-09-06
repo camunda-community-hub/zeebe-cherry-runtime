@@ -19,6 +19,7 @@ public class BpmnError {
         this.code = code;
         this.explanation = explanation;
     }
+
     /**
      * Create a Bpmn Error explanation
      *

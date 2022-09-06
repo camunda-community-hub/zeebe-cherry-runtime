@@ -80,11 +80,6 @@
             <artifactId>spring-boot-starter-mustache</artifactId>
         </dependency>
 
-        <!-- Actuator -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
 
         <!-- Process the configuration file -->
         <dependency>

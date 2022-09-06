@@ -109,7 +109,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
      * @param message message to log
      */
     public void logInfo(String message) {
-        loggerAbstractWorker.info("CherryWorker[" + getName() + "]:" + message);
+        loggerAbstractWorker.info("CherryWorker[" + getIdentification() + "]:" + message);
     }
 
 

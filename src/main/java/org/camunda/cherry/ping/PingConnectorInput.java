@@ -37,15 +37,15 @@ public class PingConnectorInput extends AbstractConnectorInput {
         return message;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     public int getDelay() {
         return delay;
     }
 
     public void setDelay(int delay) {
         this.delay = delay;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 }

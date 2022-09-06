@@ -137,7 +137,7 @@ These methods exploit the storageDefinition and save or retrieve the file for th
 
 
 
-# User and designer usage
+# BPMN Designer
 
 ## Introduction
 
@@ -175,7 +175,6 @@ Use this information in the application.properties, and provide the IP address t
 ````
 # use a onPremise Zeebe engine
 zeebe.client.broker.gateway-address=127.0.0.1:26500
-zeebe.client.security.plaintext=true
 ````
 
 ## Start the application
@@ -188,7 +187,7 @@ When a task is ready to be executed by one of the workers, it is processed.
 
 Access the webapp here: http://localhost:9081. 
 
-Currently, there is just a single welcome page that calls the `/cherry/api/workers/list` to show
+Currently, there is just a single welcome page that calls the `/cherry/api/runner/list` to show
 workers found in system:  
 
 ![Web Page Welcome Screen Shot](src/main/resources/static/img/welcomeScreenShot.png?raw=true)

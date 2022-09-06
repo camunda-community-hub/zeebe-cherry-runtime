@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public abstract class AbstractConnector extends AbstractRunner implements Connec
                 listBpmnErrors);
         // Create class ConnectorInput/ConnectorOutput to get parameters
         try {
-            Object inputClass =  connectorInputClass.getConstructors()[0].newInstance();
+            Object inputClass = connectorInputClass.getConstructors()[0].newInstance();
             if (inputClass instanceof AbstractConnectorInput abstractConnectorInput) {
                 setListInput(abstractConnectorInput.getInputParameters());
             } else {
@@ -43,10 +42,10 @@ public abstract class AbstractConnector extends AbstractRunner implements Connec
         }
         try {
             for (Constructor constructor : connectorOutputClass.getConstructors()) {
-                if (constructor.getParameterCount()==0) {
+                if (constructor.getParameterCount() == 0) {
                     Object outputClass = constructor.newInstance();
                     if (outputClass instanceof AbstractConnectorOutput abstractConnectorOutput) {
-                        setListOutput( abstractConnectorOutput.getOutputParameters());
+                        setListOutput(abstractConnectorOutput.getListOutput());
                     } else {
                         logger.error("AbstractConnector: connectorOutputClass must extends AbstractConnectorOutput");
                     }

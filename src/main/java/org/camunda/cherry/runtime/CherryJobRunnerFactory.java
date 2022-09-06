@@ -20,13 +20,16 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
 @Component
 public class CherryJobRunnerFactory {
+    public static final String WORKER_NOT_FOUND = "WorkerNotFound";
+    public static final String UNKNOWN_WORKER_CLASS = "UnknownWorkerClass";
+
+
     Logger logger = LoggerFactory.getLogger(CherryJobRunnerFactory.class.getName());
 
 
@@ -38,7 +41,7 @@ public class CherryJobRunnerFactory {
 
     @Autowired
     ZeebeContainer zeebeContainer;
-    List<Running> listJobRunning = new ArrayList<>();
+    List<Running> listRunnerRunning = new ArrayList<>();
 
     @PostConstruct
     public void startAll() {
@@ -55,15 +58,31 @@ public class CherryJobRunnerFactory {
             try {
                 jobWorkerBuild = createJobWorker(runner);
             } catch (Exception e) {
-                logger.error("Can't start runner " + runner.getName() + " : " + e);
+                logger.error("Can't start runner " + runner.getIdentification() + " : " + e);
             }
-            if (jobWorkerBuild !=null) {
+            if (jobWorkerBuild != null) {
                 logger.info("CherryJobRunnerFactory: start [" + runner.getType()
                         + (runner.getName() != null ? " (" + runner.getName() + ")" : "")
                         + "]");
-                listJobRunning.add(new Running(runner, new ContainerJobWorker(jobWorkerBuild.open())));
+                listRunnerRunning.add(new Running(runner, new ContainerJobWorker(jobWorkerBuild.open())));
             }
         }
+    }
+
+    public void stopAll() {
+        for (Running running : listRunnerRunning) {
+            if (running.runner != null) {
+                try {
+                    stopRunner(running.runner.getIdentification());
+                } catch (OperationException e) {
+                    logger.error("Error on worker [" + running.runner.getIdentification() + "]");
+
+                } catch (Exception e) {
+                    logger.error("Error on worker [" + running.runner.getIdentification() + "]");
+                }
+            }
+        }
+        zeebeContainer.stopZeebeeClient();
 
     }
 
@@ -73,14 +92,15 @@ public class CherryJobRunnerFactory {
      * @param runnerName name of the runner (connector/worker)
      * @return true if the runner is stopped
      */
-    public boolean stopRunner(String runnerName) {
-        for (Running running : listJobRunning) {
-            if (running.runner().getName().equals(runnerName)) {
+    public boolean stopRunner(String runnerName) throws OperationException {
+        for (Running running : listRunnerRunning) {
+            if (running.runner().getIdentification().equals(runnerName)) {
                 closeJobWorker(running.containerJobWorker.jobWorker);
+                running.containerJobWorker.jobWorker = null;
                 return true;
             }
         }
-        return false;
+        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
     }
 
     /**
@@ -90,21 +110,39 @@ public class CherryJobRunnerFactory {
      * @return true if the runner started
      * @throws Exception
      */
-    public boolean startRunner(String runnerName) throws Exception {
-        for (Running running : listJobRunning) {
-            if (running.runner().getName().equals(runnerName)) {
+    public boolean startRunner(String runnerName) throws OperationException {
+        for (Running running : listRunnerRunning) {
+            if (running.runner().getIdentification().equals(runnerName)) {
                 closeJobWorker(running.containerJobWorker.jobWorker);
-
+                running.containerJobWorker.jobWorker = null;
                 JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild = createJobWorker(running.runner);
                 running.containerJobWorker.jobWorker = jobWorkerBuild.open();
                 return true;
             }
         }
-        return false;
+        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
+    }
+
+    public boolean isRunnerActive(String runnerName) throws OperationException {
+        for (Running running : listRunnerRunning) {
+            if (running.runner().getIdentification().equals(runnerName)) {
+                return running.containerJobWorker.jobWorker != null;
+            }
+        }
+        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
     }
 
 
+    public int getNumberOfThreads() {
+        return zeebeContainer.getNumberOfhreads();
+    }
 
+    public void setNumberOfThreads(int numberOfThreadsRequired) {
+        zeebeContainer.setNumberOfThreadsRequired(numberOfThreadsRequired);
+
+        stopAll();
+        startAll();
+    }
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Administration on Runner (stop,start)                   */
@@ -127,7 +165,7 @@ public class CherryJobRunnerFactory {
         }
     }
 
-    private JobWorkerBuilderStep1.JobWorkerBuilderStep3 createJobWorker(AbstractRunner runner) throws Exception {
+    private JobWorkerBuilderStep1.JobWorkerBuilderStep3 createJobWorker(AbstractRunner runner) throws OperationException {
         JobWorkerBuilderStep1.JobWorkerBuilderStep2 jobWorkerBuild2 = zeebeContainer.getZeebeClient().newWorker()
                 .jobType(runner.getType());
 
@@ -137,12 +175,13 @@ public class CherryJobRunnerFactory {
         else if (runner instanceof AbstractConnector abstractConnector)
             jobWorkerBuild3 = jobWorkerBuild2.handler(new ConnectorJobHandler(abstractConnector));
         else
-            throw new Exception("Unknown AbstractRunner class");
+            throw new OperationException(UNKNOWN_WORKER_CLASS, "Unknown AbstractRunner class");
         jobWorkerBuild3.name(runner.getName() == null ? runner.getType() : runner.getName());
 
         List<String> listVariablesInput = runner.getListFetchVariables();
         if (listVariablesInput != null)
             jobWorkerBuild3.fetchVariables(listVariablesInput);
+
         return jobWorkerBuild3;
     }
 
@@ -158,5 +197,19 @@ public class CherryJobRunnerFactory {
     }
 
     record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
+    }
+
+
+    /**
+     * Declare an exception on an operation
+     */
+    public class OperationException extends Exception {
+        public String exceptionCode;
+        public String explanation;
+
+        OperationException(String exceptionCode, String explanation) {
+            this.exceptionCode = exceptionCode;
+            this.explanation = explanation;
+        }
     }
 }

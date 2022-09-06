@@ -59,7 +59,6 @@ public class SaveFileToDiskWorker extends AbstractWorker {
     }
 
 
-
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
 

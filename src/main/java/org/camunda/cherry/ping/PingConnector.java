@@ -15,7 +15,7 @@ public class PingConnector extends AbstractConnector {
         super("c-pingconnector",
                 PingConnectorInput.class,
                 PingConnectorOutput.class,
-                 Collections.emptyList());
+                Collections.emptyList());
     }
 
     @Override
@@ -25,7 +25,12 @@ public class PingConnector extends AbstractConnector {
 
         context.validate(request);
 
-        return new PingConnectorOutput( System.currentTimeMillis());
+        return new PingConnectorOutput(System.currentTimeMillis());
+    }
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a connector, and return a timestamp. A Delay can be set as parameter";
     }
 }
 

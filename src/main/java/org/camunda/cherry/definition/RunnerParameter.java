@@ -12,24 +12,6 @@ import java.util.List;
 public class RunnerParameter {
 
     /**
-     * Level on the parameter.
-     */
-    public enum Level {REQUIRED, OPTIONAL}
-
-    /**
-     * Parameter may define a list of choice.
-     */
-    public static class WorkerParameterChoice {
-        public String name;
-        public String label;
-
-        public WorkerParameterChoice(String name, String label) {
-            this.name = name;
-            this.label = label;
-        }
-    }
-
-    /**
      * class to declare a parameter
      */
     public String name;
@@ -38,15 +20,11 @@ public class RunnerParameter {
     public Object defaultValue;
     public Level level;
     public String explanation;
-
-
     /**
      * Declare a condition on the parameters
      */
     public String conditionProperty;
     public List<String> conditionOneOf;
-
-
     public List<WorkerParameterChoice> workerParameterChoiceList;
 
     /**
@@ -108,7 +86,7 @@ public class RunnerParameter {
     /**
      * Worker can define a list of choice. Add a new choice in the list
      *
-     * @param name name of the choice
+     * @param name  name of the choice
      * @param label label to display to an user
      * @return Runner Parameter
      */
@@ -121,6 +99,24 @@ public class RunnerParameter {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * Level on the parameter.
+     */
+    public enum Level {REQUIRED, OPTIONAL}
+
+    /**
+     * Parameter may define a list of choice.
+     */
+    public static class WorkerParameterChoice {
+        public String name;
+        public String label;
+
+        public WorkerParameterChoice(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
     }
 
 }

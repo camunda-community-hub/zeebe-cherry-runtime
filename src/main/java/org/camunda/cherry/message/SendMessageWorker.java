@@ -100,7 +100,7 @@ public class SendMessageWorker extends AbstractWorker {
         String correlationValue = null;
         if (!correlationVariables.isEmpty()) {
             Map.Entry<String, Object> entry = correlationVariables.entrySet().iterator().next();
-            correlationValue= entry.getValue()==null? null : entry.getValue().toString();
+            correlationValue = entry.getValue() == null ? null : entry.getValue().toString();
         }
         PublishMessageCommandStep1.PublishMessageCommandStep3 messageCommand = zeebeContainer.getZeebeClient()
                 .newPublishMessageCommand()

@@ -9,15 +9,20 @@
 package org.camunda.cherry.admin;
 
 import org.camunda.cherry.definition.AbstractRunner;
+import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.BpmnError;
 import org.camunda.cherry.definition.RunnerParameter;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class RunnerInformation {
 
 
-    private AbstractRunner runner;
+    public AbstractRunner runner;
+
+    private boolean active;
 
     /**
      * Keep the worker in the class. This class is a facade
@@ -35,11 +40,19 @@ public class RunnerInformation {
      * Get all information on runner
      */
     public String getName() {
-        return runner.getName();
+        return runner.getIdentification();
+    }
+
+    public String getType() {
+        return runner.getType();
     }
 
     public boolean isActive() {
-        return true;
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public List<RunnerParameter> getListInput() {
@@ -65,5 +78,12 @@ public class RunnerInformation {
     public String getLogo() {
         return runner.getLogo();
     }
+
+    public TYPE_RUNNER getTypeRunner() {
+        return runner instanceof AbstractWorker ? TYPE_RUNNER.WORKER : TYPE_RUNNER.CONNECTOR;
+    }
+
+    public enum TYPE_RUNNER {WORKER, CONNECTOR}
+
 
 }
