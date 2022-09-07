@@ -2,9 +2,10 @@ package org.camunda.cherry.operations;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
+import org.camunda.cherry.definition.BpmnError;
+import org.camunda.cherry.definition.RunnerParameter;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -41,19 +42,13 @@ public class SetVariablesWorker extends AbstractWorker {
     public SetVariablesWorker() {
         super(WORKERTYPE_SET_VARIABLES,
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_OPERATIONS, "Operation", String.class, Level.REQUIRED, "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
-                        AbstractWorker.WorkerParameter.getInstance(INPUT_ANYTHING, "Input Anything",Object.class, Level.OPTIONAL, "Any variables can be accessed")
+                        RunnerParameter.getInstance(INPUT_OPERATIONS, "Operation", String.class, RunnerParameter.Level.REQUIRED, "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
+                        RunnerParameter.getInstance(INPUT_ANYTHING, "Input Anything", Object.class, RunnerParameter.Level.OPTIONAL, "Any variables can be accessed")
                 ),
                 Arrays.asList(
-                        AbstractWorker.WorkerParameter.getInstance(OUTPUT_RESULT, "Result", Object.class, Level.REQUIRED, "Result of operations. Multiple variables are updated")
+                        RunnerParameter.getInstance(OUTPUT_RESULT, "Result", Object.class, RunnerParameter.Level.REQUIRED, "Result of operations. Multiple variables are updated")
                 ),
-                Arrays.asList( AbstractWorker.BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR, "Operation error")));
-    }
-
-    @Override
-    @ZeebeWorker(type = WORKERTYPE_SET_VARIABLES, autoComplete = true)
-    public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-        super.handleWorkerExecution(jobClient, activatedJob);
+                Arrays.asList(BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR, "Operation error")));
     }
 
 

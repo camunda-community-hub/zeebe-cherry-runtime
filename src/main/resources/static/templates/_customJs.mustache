@@ -11,11 +11,11 @@
     }
 
     function getWorkers() {
-        return getAjax('/cherry/api/worker/list', {}, {})
+        return getAjax('/cherry/api/runner/list', {}, {})
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/worker/detail?workerName=${workerName}`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?runnerName=${workerName}`, {}, {})
     }
 
     function getTemplate(templateName) {
@@ -24,7 +24,7 @@
 
     function onWorkerClick(table) {
         return function(e) {
-            let workerName = table.row(this).data().workerName;
+            let workerName = table.row(this).data().runnerName;
             getWorker(workerName).then(function (worker) {
                 getTemplate("_workerDetail.mustache").then(function(template){
                     let html = Mustache.render(template, {worker: worker});
@@ -42,18 +42,25 @@
         getWorkers().then(function(result) {
             if(result) {
                 for(const k in result) {
+                    console.log("worker detected");
                     let worker = result[k];
                     data.push ({
-                        workerName: worker.name,
-                        workerType: worker.className
+                        runnerName: worker.name,
+                        runnerType: worker.type,
+                        runnerTypeRunner: worker.typeRunner,
+                        runnerClassName: worker.className,
+                        runnerActive: worker.active
                     })
                 }
 
-                let table = $('#workersTable').DataTable({
+                let table = $('#runnersTable').DataTable({
                     data: data,
                     columns: [
-                        {data: 'workerName'},
-                        {data: 'workerType'}
+                        {data: 'runnerName'},
+                        {data: 'runnerType'},
+                        {data: 'runnerTypeRunner'},
+                        {data: 'runnerClassName'},
+                        {data: 'runnerActive'}
                     ]
                 });
 

@@ -8,10 +8,8 @@ package org.camunda.cherry.ping;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.annotation.ZeebeWorker;
 import org.camunda.cherry.definition.AbstractWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.camunda.cherry.definition.RunnerParameter;
 import org.springframework.stereotype.Component;
 
 import java.text.DateFormat;
@@ -28,25 +26,17 @@ public class PingWorker extends AbstractWorker {
     private static final String INPUT_DELAY = "delay";
     private static final String OUTPUT_TIMESTAMP = "timestamp";
 
-    private final Logger logger = LoggerFactory.getLogger(PingWorker.class.getName());
-
     public PingWorker() {
         super("c-ping",
                 Arrays.asList(
-                        WorkerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, Level.OPTIONAL, "Message to log"),
-                        WorkerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, Level.OPTIONAL, "Delay to sleep")),
+                        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
+                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")),
 
                 Arrays.asList(
-                        WorkerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, Level.REQUIRED, "Produce a timestamp")),
+                        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")),
                 Collections.emptyList()
         );
 
-    }
-
-    @Override
-    @ZeebeWorker(type = "c-ping", autoComplete = true)
-    public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-        super.handleWorkerExecution(jobClient, activatedJob);
     }
 
 
@@ -67,6 +57,12 @@ public class PingWorker extends AbstractWorker {
 
         String formattedDate = formatter.format(new Date());
         setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
-
+        logInfo("Executed Ping Worker");
     }
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
+    }
+
 }
