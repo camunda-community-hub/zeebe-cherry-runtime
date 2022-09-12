@@ -1,0 +1,18 @@
+<div>
+    <table id="runnerOutputsTable" class="table is-fullwidth">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Explanation</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#listBpmnErrors}}
+            <tr>
+                <td>{{code}}</td>
+                <td>{{explanation}}</td>
+            </tr>
+        {{/listBpmnErrors}}
+        </tbody>
+    </table>
+</div>

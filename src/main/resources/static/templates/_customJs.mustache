@@ -23,6 +23,12 @@
     }
 
     function onWorkerClick(table) {
+
+        return function(e) {
+            let runnerName = table.row(this).data().runnerName;
+            window.location = "/worker?runnerName="+runnerName;
+        }
+        /* Old code for displaying in modal popup
         return function(e) {
             let workerName = table.row(this).data().runnerName;
             getWorker(workerName).then(function (worker) {
@@ -34,7 +40,7 @@
                     $('#workerModal').addClass("is-active");
                 });
             });
-        }
+        }*/
     }
 
     function initWorkersTable() {

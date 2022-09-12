@@ -1,0 +1,24 @@
+<div>
+    <table id="runnerInputsTable" class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Class</th>
+            <th>Default</th>
+            <th>Level</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#listInput}}
+            <tr>
+                <td>{{name}}</td>
+                <td>{{explanation}}</td>
+                <td>{{clazz}}</td>
+                <td>{{defaultValue}}</td>
+                <td>{{level}}</td>
+            </tr>
+        {{/listInput}}
+        </tbody>
+    </table>
+</div>

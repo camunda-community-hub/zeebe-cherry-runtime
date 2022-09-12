@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zeebe Cherry Framework</title>
+    {{>_css}}
+</head>
+
+<body>
+{{>_nav}}
+<section class="section">
+    <div class="container">
+        <div class="box">
+            <h1 class="title is-5">100 Total Runs of 6 Worker/Connector Types</h1>
+            <div class="columns">
+                <div class="column">
+                    <h1 class="title is-4 has-text-primary">90 Successful</h1>
+                </div>
+                <div class="column">
+                    <h1 class="title is-4 has-text-danger">10 Failed</h1>
+                </div>
+            </div>
+
+            <progress class="progress is-large is-primary" value="90" max="100">90%</progress>
+        </div>
+        <div class="box">
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-files-load-from-disk, 10 total, 10 successful, 0 failed</h1>
+                    <progress class="progress is-small is-primary" value="10" max="10">10</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-files-save-to-disk, 20 total, 15 successful, 5 failed</h1>
+                    <progress class="progress is-small is-primary" value="15" max="20">10</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-ping, 24 total, 23 successful, 1 failed</h1>
+                    <progress class="progress is-small is-primary" value="23" max="24">10</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-ping</h1>
+                    <progress class="progress is-small is-primary" value="95" max="100">10</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-pingconnector, 0 total, 0 successful, 0 failed</h1>
+                    <progress class="progress is-small is-info" value="1" max="1">0</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-send-message, 36 total, 24 successful, 12 failed</h1>
+                    <progress class="progress is-small is-primary" value="24" max="36">24</progress>
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-5">c-set-variables, 19 total, 19 successful, 0 failed</h1>
+                    <progress class="progress is-small is-primary" value="19" max="19">19</progress>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+{{>_js}}
+{{>_customJs}}
+
+<script>
+    $(document).ready( function () {
+        initNavBar();
+        console.log("dashboard initialized. Last update: 2022-07-16 01");
+    } );
+</script>
+</body>
+
+</html>

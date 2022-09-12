@@ -11,19 +11,61 @@
 {{>_nav}}
 <section class="section">
     <div class="container">
-        <h1 class="title">{{workerName}}</h1>
+        <div class="tabs">
+            <ul>
+                <li class="is-active"><a data-tpl="runner/_overview.mustache">Overview</a></li>
+                <li><a data-tpl="runner/_inputs.mustache">Inputs</a></li>
+                <li><a data-tpl="runner/_outputs.mustache">Outputs</a></li>
+                <li><a data-tpl="runner/_errortypes.mustache">Types of Errors</a></li>
+            </ul>
+        </div>
+        <div id="tab-content"></div>
     </div>
-
 </section>
 
 {{>_js}}
 {{>_customJs}}
 
 <script>
+
+    function showTab(runner, templateName, tab) {
+        getTemplate(templateName).then(function(template){
+            let html = Mustache.render(template, runner);
+            $('#tab-content').html(html);
+            if(tab) {
+                $('.tabs li').removeClass("is-active");
+                tab.addClass("is-active");
+            }
+        });
+    }
+
+    function getWorkerId() {
+        const urlParams = new URLSearchParams(location.search);
+        let runnerName = urlParams.get('runnerName');
+
+        if(runnerName) {
+            getWorker(runnerName).then(function(runner){
+                initTabs(runner);
+                showTab(runner, "runner/_overview.mustache");
+            });
+        } else {
+          console.error("Unable to find runner from query parameter?! Make sure to pass a valid '?runnerName=<runnerName>'");
+        }
+    }
+
+    function initTabs(runner) {
+      $(".tabs a").on('click', function(e) {
+        e.preventDefault();
+        let tpl = $(e.target).data('tpl');
+        let tab = $(e.target).parent();
+        showTab(runner, tpl, tab);
+      })
+    }
+
     $(document).ready( function () {
         initNavBar();
-        initWorkersTable();
-        console.log("index initialized. Last update: 2022-07-16 5:46pm");
+        getWorkerId();
+        console.log("worker initialized. Last update: 2022-07-16 01");
     } );
 </script>
 </body>

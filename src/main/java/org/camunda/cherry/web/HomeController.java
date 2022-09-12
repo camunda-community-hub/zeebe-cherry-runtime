@@ -13,4 +13,19 @@ public class HomeController {
         return "index";
     }
 
+    @GetMapping("/workers")
+    String workers() {
+        return "workers";
+    }
+
+    @GetMapping("/dashboard")
+    String dashboard() {
+        return "dashboard";
+    }
+
+    @GetMapping("/worker")
+    String worker() {
+        return "worker";
+    }
+
 }
