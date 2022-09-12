@@ -12,7 +12,7 @@
 <section class="section">
     <div class="container">
         <div class="box">
-            <h1 class="title is-5">100 Total Runs of 6 Worker/Connector Types</h1>
+            <h1 class="title is-5">124 total jobs in last 24 hours of 6 Worker/Connector Types</h1>
             <div class="columns">
                 <div class="column">
                     <h1 class="title is-4 has-text-primary">90 Successful</h1>
@@ -25,7 +25,7 @@
             <progress class="progress is-large is-primary" value="90" max="100">90%</progress>
         </div>
         <div class="box">
-            <div class="columns">
+            <div class="job-type columns">
                 <div class="column is-two-thirds">
                     <h1 class="title is-5">c-files-load-from-disk, 10 total, 10 successful, 0 failed</h1>
                     <progress class="progress is-small is-primary" value="10" max="10">10</progress>
@@ -78,6 +78,9 @@
 <script>
     $(document).ready( function () {
         initNavBar();
+        $('.job-type').on('click', function(e){
+          window.location = "/worker?runnerName=c-files-load-from-disk";
+        });
         console.log("dashboard initialized. Last update: 2022-07-16 01");
     } );
 </script>
