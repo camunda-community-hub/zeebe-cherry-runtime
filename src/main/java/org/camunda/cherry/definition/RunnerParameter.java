@@ -97,6 +97,9 @@ public class RunnerParameter {
         return this;
     }
 
+    public boolean hasChoice() {
+        return workerParameterChoiceList!=null && ! workerParameterChoiceList.isEmpty();
+    }
     public String getName() {
         return name;
     }
@@ -110,12 +113,12 @@ public class RunnerParameter {
      * Parameter may define a list of choice.
      */
     public static class WorkerParameterChoice {
-        public String name;
-        public String label;
+        public String code;
+        public String displayName;
 
-        public WorkerParameterChoice(String name, String label) {
-            this.name = name;
-            this.label = label;
+        public WorkerParameterChoice(String code, String displayName) {
+            this.code = code;
+            this.displayName = displayName;
         }
     }
 

@@ -12,6 +12,7 @@
 /* ******************************************************************** */
 package org.camunda.cherry.definition;
 
+import com.google.gson.Gson;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.filevariable.FileVariable;
@@ -364,18 +365,34 @@ public abstract class AbstractRunner {
 
     // This idea was inspired by: https://stackoverflow.com/questions/40402756/check-if-a-string-is-parsable-as-another-java-type
     static Map<Class<?>, Predicate<String>> canParsePredicates = new HashMap<>();
+
     static {
-        canParsePredicates.put(java.lang.Integer.class, s -> {try {Integer.parseInt(s); return true;} catch(Exception e) {return false;}});
-        canParsePredicates.put(java.lang.Long.class, s -> {try {Long.parseLong(s); return true;} catch(Exception e) {return false;}});
+        canParsePredicates.put(java.lang.Integer.class, s -> {
+            try {
+                Integer.parseInt(s);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        canParsePredicates.put(java.lang.Long.class, s -> {
+            try {
+                Long.parseLong(s);
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        });
     }
 
     static Boolean canParse(Class<?> clazz, Object value) {
-        if(value != null) {
+        if (value != null) {
             return canParsePredicates.get(clazz).test(value.toString());
         } else {
             return false;
         }
     }
+
     /**
      * Check the object versus the expected parameter
      *
@@ -495,6 +512,8 @@ public abstract class AbstractRunner {
         return listInput.stream().map(RunnerParameter::getName).toList();
     }
 
+
+
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Additional optional information                        */
@@ -526,6 +545,12 @@ public abstract class AbstractRunner {
         this.description = description;
     }
 
+    /**
+     * Image must be a string like
+     * "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18.0' viewBox='0 0 18 18.0' %3E%3Cg id='XMLID_238_'%3E %3Cpath id='XMLID_239_' d='m 14.708846 10.342394 c -1.122852 0.0,-2.528071 0.195852,-2.987768 0.264774 C 9.818362 8.6202,9.277026 7.4907875,9.155265 7.189665 C 9.320285 6.765678,9.894426 5.155026,9.976007 3.0864196 C 10.016246 2.0507226,9.797459 1.2768387,9.325568 ....   -0.00373,0.03951 0.00969,0.0425 0.030567 z'/%3E%3C/svg%3E";
+     *
+     * @return
+     */
     public String getLogo() {
         return logo;
     }
@@ -534,5 +559,93 @@ public abstract class AbstractRunner {
         this.logo = logo;
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Definition information                                  */
+    /*                                                          */
+    /* -------------------------------------------------------- */
 
+    /**
+     * produce a JSON string containing the definition for the template
+     * https://docs.camunda.io/docs/components/modeler/desktop-modeler/element-templates/defining-templates/
+     *
+     * @return
+     */
+    public String getTemplate() {
+        Map<String, Object> templateContent = new HashMap<>();
+        templateContent.put("$schema", "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json");
+        templateContent.put("name", getIdentification());
+        templateContent.put("id", getClass().getName());
+        templateContent.put("description", getDescription());
+        templateContent.put("documentationRef", "https://docs.camunda.io/docs/components/modeler/web-modeler/connectors/available-connectors/template/");
+        if (getLogo() != null)
+            templateContent.put("icon", Map.of("contents", getLogo()));
+        templateContent.put("category", Map.of("id", "connectors", "name", "connectors"));
+        templateContent.put("appliesTo", List.of("bpmn:Task"));
+        templateContent.put("elementType", Map.of("value", "bpmn:ServiceTask"));
+        // no groups at this moment
+        List<Map<String, Object>> listProperties = new ArrayList<>();
+        templateContent.put("properties", listProperties);
+        listProperties.add(
+                Map.of("type", "Hidden",
+                        "value", getType(),
+                        "binding", Map.of("type", "zeebe:taskDefinition:type")));
+
+        listProperties.addAll(listInput.stream().map(p -> getParameterTemplate(p, true)).toList());
+        listProperties.addAll(listOutput.stream().map(p -> getParameterTemplate(p, false)).toList());
+
+        // transform the result in JSON
+        Gson gson = new Gson();
+
+        return gson.toJson(templateContent);
+    }
+
+
+    /**
+     * Get the template from a runnerParameter
+     *
+     * @param runnerParameter runner parameter to get the description
+     * @param isInput         true if this is an input parameter
+     * @return a template description
+     */
+    private Map<String, Object> getParameterTemplate(RunnerParameter runnerParameter, boolean isInput) {
+        Map<String, Object> onePropertie = new HashMap<>();
+        onePropertie.put("id", runnerParameter.name);
+        onePropertie.put("label", runnerParameter.label);
+        // don't have the group at this moment
+        onePropertie.put("description", runnerParameter.explanation);
+        String typeParameter = "String";
+        // String, Text, Boolean, Dropdown or Hidden)
+        if (Boolean.class.equals(runnerParameter.clazz))
+            typeParameter = "Boolean";
+        else if (runnerParameter.hasChoice()) {
+            typeParameter = "Dropdown";
+            // add choices
+            List<Map<String, String>> listChoices = new ArrayList<>();
+            for (RunnerParameter.WorkerParameterChoice oneChoice : runnerParameter.workerParameterChoiceList) {
+                listChoices.add(Map.of("name", oneChoice.displayName,
+                        "value", oneChoice.code));
+            }
+            onePropertie.put("choices", listChoices);
+        }
+        onePropertie.put("type", typeParameter);
+        if (isInput) {
+            onePropertie.put("binding",
+                    Map.of("type", "zeebe:input",
+                            "name", runnerParameter.name));
+        } else {
+            onePropertie.put("binding",
+                    Map.of("type", "zeebe:output",
+                            "source", "= "+runnerParameter.name));
+
+        }
+
+        Map<String, Object> constraints = new HashMap<>();
+        if (runnerParameter.level == RunnerParameter.Level.REQUIRED)
+            constraints.put("notEmpty", Boolean.TRUE);
+
+        if (!constraints.isEmpty())
+            onePropertie.put("constraints", constraints);
+        return onePropertie;
+    }
 }

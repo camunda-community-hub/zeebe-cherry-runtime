@@ -95,6 +95,22 @@ public class RunnerRestController {
         }
     }
 
+    /**
+     * Download the Template for a runner
+     *
+     * @param runnerName worker to start
+     * @return NOTFOUND or the worker information on this worker
+     */
+    @PutMapping(value = "/api/runner/{runnerName}/template", produces = "application/json")
+    public String downloadTemplate(@PathVariable String runnerName) {
+        logger.info("Download template requested for [" + runnerName + "]");
+        AbstractRunner runner = getRunnerByName(runnerName);
+        if (runner == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
+        String templateContentJson = runner.getTemplate();
+        return templateContentJson;
+    }
+
     private AbstractRunner getRunnerByName(String runnerName) {
         List<AbstractRunner> listFiltered = listRunner.stream().filter(w -> w.getIdentification().equals(runnerName)).toList();
         if (listFiltered.size() != 1)
