@@ -179,9 +179,9 @@ public class CherryJobRunnerFactory {
         jobWorkerBuild3.name(runner.getName() == null ? runner.getType() : runner.getName());
 
         List<String> listVariablesInput = runner.getListFetchVariables();
-        if (listVariablesInput != null)
-            jobWorkerBuild3.fetchVariables(listVariablesInput);
-
+        if (listVariablesInput != null) {
+             jobWorkerBuild3.fetchVariables(listVariablesInput);
+        }
         return jobWorkerBuild3;
     }
 
