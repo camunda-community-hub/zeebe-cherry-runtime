@@ -63,14 +63,25 @@
                         runnerType: worker.type,
                         runnerTypeRunner: worker.typeRunner,
                         runnerClassName: worker.className,
-                        runnerActive: worker.active
+                        runnerActive: worker.active,
+                        runnerLogo: worker.logo
                     })
                 }
 
                 let table = $('#runnersTable').DataTable({
                     data: data,
                     columns: [
-                        {data: 'runnerName'},
+                        {
+                            data: 'runnerName',
+                            render: function (data, type, row) {
+                              if(row.runnerLogo) {
+                                  return '<img src="' + row.runnerLogo +'"></img>&nbsp;&nbsp; ' + data;
+                              } else {
+                                return data;
+                              }
+
+                            }
+                        },
                         {data: 'runnerType'},
                         {data: 'runnerTypeRunner'},
                         {data: 'runnerClassName'},
