@@ -69,6 +69,11 @@
                 .catch(onAjaxError);
     }
 
+    function putAjax(endPoint, data, options) {
+        return customAjax(endPoint, data, $.extend({}, {type:'PUT'}, options || {}))
+                .catch(onAjaxError);
+    }
+
     function postAjax(endPoint, data, options) {
         return customAjax(endPoint, data, $.extend({}, {type:'POST'}, options || {}))
                 .catch(onAjaxError);

@@ -28,6 +28,21 @@
 
 <script>
 
+    function initStartStopWorker() {
+        $('.start-runner').on('click', function(e){
+            let runnerName = $(e.target).data('runner-name');
+            startRunner(runnerName).then(function(){
+                window.location = "/worker?runnerName="+runnerName;
+            });
+        });
+        $('.stop-runner').on('click', function(e){
+            let runnerName = $(e.target).data('runner-name');
+            stopRunner(runnerName).then(function(){
+                window.location = "/worker?runnerName="+runnerName;
+            });
+        });
+    }
+
     function showTab(runner, templateName, tab) {
         getTemplate(templateName).then(function(template){
             let html = Mustache.render(template, runner);
@@ -36,6 +51,7 @@
                 $('.tabs li').removeClass("is-active");
                 tab.addClass("is-active");
             }
+            initStartStopWorker();
         });
     }
 
@@ -55,8 +71,8 @@
 
     function initTabs(runner) {
       $(".tabs a").on('click', function(e) {
-        e.preventDefault();
-        let tpl = $(e.target).data('tpl');
+          e.preventDefault();
+          let tpl = $(e.target).data('tpl');
         let tab = $(e.target).parent();
         showTab(runner, tpl, tab);
       })
