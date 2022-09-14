@@ -20,19 +20,21 @@ import java.util.List;
 public class RunnerInformation {
 
 
-    public AbstractRunner runner;
+    private AbstractRunner runner;
 
     private boolean active;
 
+    private boolean displayLogo = true;
+
     /**
-     * Keep the worker in the class. This class is a facade
+     * Keep the runner in the class. This class is a facade
      *
-     * @param worker
+     * @param runner
      * @return
      */
-    public static RunnerInformation getWorkerInformation(AbstractRunner worker) {
+    public static RunnerInformation getRunnerInformation(AbstractRunner runner) {
         RunnerInformation workerInformation = new RunnerInformation();
-        workerInformation.runner = worker;
+        workerInformation.runner = runner;
         return workerInformation;
     }
 
@@ -41,6 +43,14 @@ public class RunnerInformation {
      */
     public String getName() {
         return runner.getIdentification();
+    }
+
+    public String getLabel() {
+        return runner.getLabel();
+    }
+
+    public String getDisplayLabel() {
+        return runner.getDisplayLabel();
     }
 
     public String getType() {
@@ -76,14 +86,26 @@ public class RunnerInformation {
     }
 
     public String getLogo() {
-        return runner.getLogo();
+        return displayLogo ? runner.getLogo() : null;
     }
 
     public TYPE_RUNNER getTypeRunner() {
         return runner instanceof AbstractWorker ? TYPE_RUNNER.WORKER : TYPE_RUNNER.CONNECTOR;
     }
 
-    public enum TYPE_RUNNER {WORKER, CONNECTOR}
+    public void setDisplayLogo(boolean displayLogo) {
+        this.displayLogo = displayLogo;
+    }
 
+    /**
+     * If the runner has definition error, is will not be possible to start it
+     *
+     * @return the list of errors
+     */
+    public String getDefinitionErrors() {
+        return String.join(", ", runner.getDefinitionErrors());
+    }
+
+    public enum TYPE_RUNNER {WORKER, CONNECTOR}
 
 }

@@ -11,6 +11,7 @@ import java.util.List;
 
 public class RunnerParameter {
 
+    public static final String ACCESS_ALL_VARIABLES = "*";
     /**
      * class to declare a parameter
      */
@@ -26,6 +27,8 @@ public class RunnerParameter {
     public String conditionProperty;
     public List<String> conditionOneOf;
     public List<WorkerParameterChoice> workerParameterChoiceList;
+    public boolean visibleInTemplate = false;
+    public Group group;
 
     /**
      * Get an instance without a default value
@@ -38,7 +41,8 @@ public class RunnerParameter {
      * @return a WorkerParameter
      */
     public static RunnerParameter getInstance(String parameterName,
-                                              String parameterLabel, Class<?> clazz,
+                                              String parameterLabel,
+                                              Class<?> clazz,
                                               Object defaultValue,
                                               Level level,
                                               String explanation) {
@@ -51,6 +55,12 @@ public class RunnerParameter {
         parameter.explanation = explanation;
         return parameter;
     }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  main information                                        */
+    /*                                                          */
+    /* -------------------------------------------------------- */
 
     /**
      * Get an instance without a default value
@@ -77,11 +87,68 @@ public class RunnerParameter {
         return parameter;
     }
 
+    /**
+     * The worker/connector wants to access all variables
+     *
+     * @param explanation why do you need this access?
+     * @return
+     */
+    public static RunnerParameter getAccessAllVariables(String explanation) {
+        RunnerParameter parameter = new RunnerParameter();
+        parameter.name = ACCESS_ALL_VARIABLES;
+        parameter.label = "Access All Variables";
+        parameter.clazz = String.class;
+        parameter.defaultValue = null;
+        parameter.level = Level.OPTIONAL;
+        parameter.explanation = explanation;
+        return parameter;
+
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Level getLevel() {
+        return level;
+    }
+
+    public boolean isAccessAllVariables() {
+        return ACCESS_ALL_VARIABLES.equals(name);
+    }
+
+    /**
+     * A Optional field may be systematically visible in the Template, to simplify the definition
+     *
+     * @return
+     */
+    public RunnerParameter setVisibleInTemplate() {
+        this.visibleInTemplate = true;
+        return this;
+    }
+
+    public RunnerParameter setDefaultValue(Object defaultValue) {
+        this.defaultValue = defaultValue;
+        return this;
+    }
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Conditions                                              */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
     public RunnerParameter addCondition(String property, List<String> oneOf) {
         this.conditionProperty = property;
         this.conditionOneOf = oneOf;
         return this;
     }
+
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Choice                                                  */
+    /*                                                          */
+    /* -------------------------------------------------------- */
 
     /**
      * Worker can define a list of choice. Add a new choice in the list
@@ -98,11 +165,25 @@ public class RunnerParameter {
     }
 
     public boolean hasChoice() {
-        return workerParameterChoiceList!=null && ! workerParameterChoiceList.isEmpty();
+        return workerParameterChoiceList != null && !workerParameterChoiceList.isEmpty();
     }
-    public String getName() {
-        return name;
+
+    /*
+     * set the group to add in the template
+     */
+    public RunnerParameter setGroup(String label) {
+        String groupId = label.toLowerCase().replace(" ", "_");
+
+        this.group = new Group(groupId, label);
+        return this;
     }
+
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Group                                                   */
+    /*                                                          */
+    /* -------------------------------------------------------- */
 
     /**
      * Level on the parameter.
@@ -121,5 +202,17 @@ public class RunnerParameter {
             this.displayName = displayName;
         }
     }
+
+    public record Group(String id, String label) {
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof Group objGroup)
+                return this.id.equals(objGroup.id);
+            return false;
+
+        }
+    }
+
 
 }
