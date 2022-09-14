@@ -35,7 +35,7 @@ For your information, the framework comes with some generic workers. It should b
 
 ## Principle
 Let's create a new worker in your project. In order to keep the project consistent, some view rules has to be followed.
-The model is the collection message (**"org.camunida.cherry.message"**), and the worker **"SendMessageWorker"**.
+The model is the collection message (**"org.camunda.cherry.message"**), and the worker **"SendMessageWorker"**.
 
 - The first level of the Cherry project is the collection name. Your connector must be attached in a collection, and may be under a sub collection.
   A collection is a package. For example, the worker **"SendMessage"** is under the collection **"message"**.
