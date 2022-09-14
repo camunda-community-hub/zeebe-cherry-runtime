@@ -53,7 +53,13 @@ public class RunnerDecorationTemplate {
                 Map.of("type", "Hidden",
                         "value", runner.getType(),
                         "binding", Map.of("type", "zeebe:taskDefinition:type")));
-
+        if(runner instanceof AbstractConnector connector){
+            listProperties.add(Map.of(
+                "type", "Hidden",
+                "value", connector.getResponseVariable(),
+                "binding", Map.of("type", "zeebe:taskHeader","key","resultVariable")
+        ));
+        }
         // Identify all groups
         List<RunnerParameter.Group> listGroups = new ArrayList<>();
         listGroups.addAll(runner.getListInput().stream()

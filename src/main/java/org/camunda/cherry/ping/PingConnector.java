@@ -32,5 +32,10 @@ public class PingConnector extends AbstractConnector {
     public String getDescription() {
         return "Do a simple ping as a connector, and return a timestamp. A Delay can be set as parameter";
     }
+
+    @Override
+    public String getResponseVariable() {
+        return "response";
+    }
 }
 
