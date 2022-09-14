@@ -114,7 +114,7 @@ public class RunnerRestController {
      */
     @GetMapping(value = "/api/runner/template", produces = "application/json")
     public String getTemplate(@RequestParam(name = "name", required = false) String runnerName) {
-        logger.info("Download template requested for [" + runnerName + "]");
+        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]"));
         if (runnerName == null) {
             // generate for ALL runners
             List<Map<String, Object>> listTemplate = listRunners.stream()
@@ -134,7 +134,7 @@ public class RunnerRestController {
             produces = MediaType.TEXT_PLAIN_VALUE)
     public @ResponseBody
     byte[] downloadTemplate(@RequestParam(name = "name", required = false) String runnerName) throws IOException {
-        logger.info("Download template requested for [" + runnerName + "]");
+        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]"));
         String content = null;
         if (runnerName == null) {
             // generate for ALL runners
