@@ -41,8 +41,7 @@ public class RunnerParameter {
      * @return a WorkerParameter
      */
     public static RunnerParameter getInstance(String parameterName,
-                                              String parameterLabel,
-                                              Class<?> clazz,
+                                              String parameterLabel, Class<?> clazz,
                                               Object defaultValue,
                                               Level level,
                                               String explanation) {
