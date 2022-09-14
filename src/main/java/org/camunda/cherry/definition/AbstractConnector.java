@@ -58,5 +58,5 @@ public abstract class AbstractConnector extends AbstractRunner implements Connec
 
     }
 
-
+    public abstract String getResponseVariable();
 }
