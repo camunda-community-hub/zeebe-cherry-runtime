@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 public class CherryJobRunnerFactory {
     public static final String WORKER_NOT_FOUND = "WorkerNotFound";
     public static final String UNKNOWN_WORKER_CLASS = "UnknownWorkerClass";
+    public static final String WORKER_INVALID_DEFINITION = "WORKER_INVALID_DEFINITION";
 
 
     Logger logger = LoggerFactory.getLogger(CherryJobRunnerFactory.class.getName());
@@ -53,7 +54,15 @@ public class CherryJobRunnerFactory {
 
         List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream()).toList();
 
+
         for (AbstractRunner runner : listRunners) {
+            String errors = String.join(", ", runner.getDefinitionErrors());
+            if (!errors.isEmpty()) {
+                logger.error("Runner [" + runner.getIdentification() + "] can't start, errors " + errors);
+                continue;
+            }
+
+
             JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild = null;
             try {
                 jobWorkerBuild = createJobWorker(runner);
@@ -113,6 +122,10 @@ public class CherryJobRunnerFactory {
     public boolean startRunner(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
+                if (!running.runner.isValidDefinition())
+                    throw new OperationException(WORKER_INVALID_DEFINITION, "Worker has error in the definition : "
+                            + String.join(";", running.runner.getDefinitionErrors()));
+
                 closeJobWorker(running.containerJobWorker.jobWorker);
                 running.containerJobWorker.jobWorker = null;
                 JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild = createJobWorker(running.runner);
@@ -180,7 +193,7 @@ public class CherryJobRunnerFactory {
 
         List<String> listVariablesInput = runner.getListFetchVariables();
         if (listVariablesInput != null) {
-             jobWorkerBuild3.fetchVariables(listVariablesInput);
+            jobWorkerBuild3.fetchVariables(listVariablesInput);
         }
         return jobWorkerBuild3;
     }

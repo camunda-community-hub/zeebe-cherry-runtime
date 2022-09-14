@@ -5,10 +5,10 @@
       <bpmn:outgoing>Flow_1nnq1jg</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_1nnq1jg" sourceRef="StartEvent_1" targetRef="Gateway_0s9o9cb" />
-    <bpmn:sequenceFlow id="Flow_1to73yt" sourceRef="Gateway_0s9o9cb" targetRef="Activity_1gh41eh" />
-    <bpmn:sequenceFlow id="Flow_01qsz74" sourceRef="Gateway_0s9o9cb" targetRef="Activity_0xf5mj5" />
-    <bpmn:sequenceFlow id="Flow_09h8vir" sourceRef="Activity_1gh41eh" targetRef="Activity_0q93stx" />
-    <bpmn:sequenceFlow id="Flow_0138zrx" sourceRef="Activity_0xf5mj5" targetRef="Activity_1vkib8b" />
+    <bpmn:sequenceFlow id="Flow_1to73yt" sourceRef="Gateway_0s9o9cb" targetRef="Activity_loadFileFromDiskFolder" />
+    <bpmn:sequenceFlow id="Flow_01qsz74" sourceRef="Gateway_0s9o9cb" targetRef="Activity_loadFileFromDiskTemp" />
+    <bpmn:sequenceFlow id="Flow_09h8vir" sourceRef="Activity_loadFileFromDiskFolder" targetRef="Activity_0q93stx" />
+    <bpmn:sequenceFlow id="Flow_0138zrx" sourceRef="Activity_loadFileFromDiskTemp" targetRef="Activity_1vkib8b" />
     <bpmn:sequenceFlow id="Flow_19rlt2s" sourceRef="Activity_1ght823" targetRef="Gateway_041copw" />
     <bpmn:sequenceFlow id="Flow_0zqvsyj" sourceRef="Activity_0q93stx" targetRef="Gateway_041copw" />
     <bpmn:sequenceFlow id="Flow_0jpppew" sourceRef="Activity_1vkib8b" targetRef="Gateway_041copw" />
@@ -21,7 +21,7 @@
       <bpmn:incoming>Flow_0l6tyx2</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_0l6tyx2" sourceRef="Activity_0zix0ht" targetRef="Event_108zy0v" />
-    <bpmn:serviceTask id="Activity_1gh41eh" name="loadFileFromDisk/Folder">
+    <bpmn:serviceTask id="Activity_loadFileFromDiskFolder" name="loadFileFromDisk/Folder">
       <bpmn:extensionElements>
         <zeebe:ioMapping>
           <zeebe:input source="= &#34;Cherry.jpg&#34;" target="fileName" />
@@ -35,7 +35,7 @@
       <bpmn:incoming>Flow_1to73yt</bpmn:incoming>
       <bpmn:outgoing>Flow_09h8vir</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="Activity_0xf5mj5" name="loadFileFromDisk/Temp">
+    <bpmn:serviceTask id="Activity_loadFileFromDiskTemp" name="loadFileFromDisk/Temp">
       <bpmn:extensionElements>
         <zeebe:ioMapping>
           <zeebe:input source="= &#34;Cherry.jpg&#34;" target="fileName" />
@@ -91,28 +91,8 @@
       <bpmn:incoming>Flow_0jpppew</bpmn:incoming>
       <bpmn:outgoing>Flow_00f2b4m</bpmn:outgoing>
     </bpmn:parallelGateway>
-    <bpmn:sequenceFlow id="Flow_0xfznew" sourceRef="Gateway_0s9o9cb" targetRef="Activity_Template" />
-    <bpmn:sequenceFlow id="Flow_1vdzcj7" sourceRef="Activity_Template" targetRef="Activity_1ght823" />
-    <bpmn:serviceTask id="Activity_Template" name="loadFileFromDisk/JSON" zeebe:modelerTemplate="io.camunda.connector.Template.v1" zeebe:modelerTemplateIcon="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;18&#39; height=&#39;18.0&#39; viewBox=&#39;0 0 18 18.0&#39; %3E%3Cpath d=&#39;M 16.7328 13.29858 c -0.14760001 1.8864,-1.6524001 2.7918003,-1.9584001 2.9574 c -1.6290001 0.88920003,-4.3704004 0.57960004,-5.6952 -1.2852 c -0.73080003 -1.026,-1.098 -2.6586,-0.38700002 -3.789 l 0.009000001 -0.018000001 c 0.2556 -0.4158,0.8478 -1.1178,1.9404 -1.1412001 h 0.0396 c 0.39060003 0.0,0.8406001 0.11880001,1.2384001 0.22320001 c 0.279 0.073800005,0.5202 0.1368,0.7002 0.1494 c 0.113400005 0.0072000003,0.2754 -0.0216,0.48060003 -0.057600003 c 0.61380005 -0.10800001,1.6380001 -0.28800002,2.5344 0.3456 C 16.8552 11.548981,16.74 13.22838,16.7328 13.29858 z&#39; fill=&#39;%23AA0000&#39;/%3E%3Cpath d=&#39;M 9.2718 10.287181 c -0.351 0.2484,-0.58320004 0.5562,-0.72360003 0.783 l -0.009000001 0.014400001 c -0.36360002 0.57960004,-0.4644 1.2528001,-0.39600003 1.9116 c -0.0072000003 0.0036000002,-0.014400001 0.0072000003,-0.0198 0.012600001 c -1.3338001 1.0890001,-2.8404 0.8082,-3.4254003 0.6372 l -0.0342 -0.009000001 c -1.8630002 -0.4644,-3.7026 -2.4768002,-3.3642 -4.6206 c 0.1872 -1.1808001,1.08 -2.538,2.4264 -2.8476 c 0.2322 -0.054000005,1.4454 -0.279,2.421 0.5382 c 0.2988 0.252,0.5202 0.61920005,0.7146 0.9432 c 0.1386 0.234,0.2592 0.43380004,0.39060003 0.56520003 c 0.0846 0.0846,0.2322 0.1674,0.4194 0.2736 c 0.549 0.30780002,1.3770001 0.77400005,1.5930002 1.7784001 C 9.2664 10.274581,9.268201 10.28178,9.2718 10.287181 z&#39; fill=&#39;%23AA0000&#39;/%3E%3Cpath d=&#39;M 12.9294 10.18638 c -0.1062 0.018000001,-0.19980001 0.030600002,-0.2664 0.030600002 c -0.0108 0.0,-0.0216 -0.0018000001,-0.030600002 -0.0018000001 c -0.050400004 -0.0036000002,-0.1098 -0.0108,-0.1728 -0.0234 c 0.5526 -1.4112,0.78120005 -3.6684,-1.1394 -6.5268 c -0.0036000002 -0.0072000003,-0.009000001 -0.012600001,-0.0162 -0.018000001 c 0.111600004 -0.44280002,0.1494 -0.7524,0.1584 -0.828 c 0.0054 -0.050400004,-0.030600002 -0.0936,-0.0792 -0.09900001 c -0.050400004 -0.0072000003,-0.0936 0.030600002,-0.09900001 0.0792 c -0.0216 0.19260001,-0.23760001 1.9296001,-1.4490001 3.4722004 c -0.75780004 0.96480006,-1.9512001 1.6830001,-2.3634002 1.8882 c -0.0378 -0.025200002,-0.0702 -0.050400004,-0.091800004 -0.072000004 c -0.059400003 -0.059400003,-0.117 -0.1368,-0.1764 -0.22860001 c 0.0342 -0.018000001,0.0702 -0.0378,0.10800001 -0.057600003 c 0.43020004 -0.23040001,1.1502 -0.61380005,2.0286002 -1.5336001 c 1.0386001 -1.0872,1.2366 -2.7522001,0.94500005 -3.2058 c -0.1404 -0.2196,-0.36540002 -0.24120001,-0.5454 -0.2574 c -0.2358 -0.0198,-0.378 -0.0342,-0.40320003 -0.3546 c -0.0234 -0.279,0.10800001 -0.5256,0.36900002 -0.6912 c 0.351 -0.22500001,0.97920007 -0.29700002,1.5876 0.048600003 c 0.3798 0.21420002,0.3762 0.57960004,0.3744 0.9324 c -0.0018000001 0.2358,-0.0036000002 0.45900002,0.113400005 0.61920005 l 0.050400004 0.0684 c 0.28800002 0.39060003,0.96120006 1.3014001,1.3644 2.8908 C 13.626 8.01918,13.219201 9.56898,12.9294 10.18638 z&#39; fill=&#39;%23502D16&#39; /%3E%3Cpath d=&#39;M 7.6338 2.8045802 c -0.014400001 0.0072000003,-0.028800001 0.0108,-0.0432 0.0108 c -0.0324 0.0,-0.063 -0.018000001,-0.0792 -0.0468 c -0.0018000001 -0.0018000001,-0.1278 -0.22680001,-0.3546 -0.43380004 c -0.0378 -0.0324,-0.0396 -0.09,-0.0072000003 -0.126 c 0.0342 -0.0378,0.09 -0.0396,0.1278 -0.0072000003 c 0.2502 0.22680001,0.38520002 0.4698,0.39060003 0.48060003 C 7.6932006 2.7253802,7.6770005 2.77938,7.6338 2.8045802 z&#39;/%3E%3Cpath d=&#39;M 7.8156 4.51998 c -0.1872 0.22140001,-0.28440002 0.261,-0.43200004 0.3204 l -0.0468 0.0198 c -0.0108 0.0054,-0.0234 0.0072000003,-0.0342 0.0072000003 c -0.036000002 0.0,-0.0684 -0.0216,-0.08280001 -0.055800002 c -0.0198 -0.045,0.0018000001 -0.09900001,0.048600003 -0.117 l 0.0468 -0.0198 c 0.135 -0.055800002,0.2034 -0.0846,0.36360002 -0.27 c 0.0324 -0.0396,0.09 -0.0432,0.1278 -0.0108 C 7.8444004 4.42638,7.848 4.48218,7.8156 4.51998 z&#39;/%3E%3Cpath d=&#39;M 10.134 3.1591802 c -0.0468 -0.073800005,-0.10800001 -0.113400005,-0.1764 -0.135 c -0.23940001 0.3222,-1.0818001 0.81,-1.9278 0.81 c -0.22500001 0.0,-0.45180002 -0.0342,-0.666 -0.115200005 c -0.57600003 -0.2196,-0.9702 -0.5256,-1.3518001 -0.8208 c -0.3024 -0.2358,-0.58860004 -0.45720002,-0.93780005 -0.60840005 c -0.0468 -0.0216,-0.0666 -0.073800005,-0.0468 -0.11880001 c 0.0198 -0.0468,0.072000004 -0.0666,0.11880001 -0.0468 c 0.36900002 0.162,0.6642 0.38880002,0.97560006 0.6318 c 0.37080002 0.28800002,0.756 0.58500004,1.3050001 0.7938 c 0.5598 0.2124,1.1880001 0.073800005,1.6650001 -0.1404 c -0.2052 -0.6336,-1.5318002 -2.5614,-3.7188 -2.0700002 c -0.3384 0.0756,-0.6336 0.14580001,-0.89280003 0.207 c -1.098 0.2574,-1.5678 0.36720002,-2.0556002 0.23760001 c 0.045 0.22680001,0.16380002 0.4194,0.3528 0.57420003 c 0.378 0.30420002,0.92700005 0.3798,1.1880001 0.38340002 c -0.1332 -0.1512,-0.2754 -0.2484,-0.45000002 -0.30960003 c -0.0468 -0.0162,-0.072000004 -0.0666,-0.055800002 -0.113400005 c 0.0162 -0.048600003,0.0684 -0.072000004,0.115200005 -0.055800002 c 0.56700003 0.19980001,0.828 0.7074,1.2492001 1.7424002 c 0.441 1.0836,1.9836001 2.0934,3.2346 1.7190001 c 1.2744 -0.3816,1.2528001 -1.7244,1.251 -1.7388 c 0.0 -0.036000002,0.0216 -0.0702,0.054000005 -0.0846 c 0.0846 -0.0378,0.5184 -0.2358,0.8244 -0.5238 c 0.0054 -0.0054,0.0108 -0.009000001,0.0162 -0.009000001 v -0.0018000001 C 10.1898 3.27798,10.1646 3.20778,10.134 3.1591802 M 7.1496005 2.20878 c 0.0342 -0.0378,0.09 -0.0396,0.1278 -0.0072000003 c 0.2502 0.22680001,0.38520002 0.4698,0.39060003 0.48060003 c 0.025200002 0.0432,0.009000001 0.097200006,-0.0342 0.12240001 c -0.014400001 0.0072000003,-0.028800001 0.0108,-0.0432 0.0108 c -0.0324 0.0,-0.063 -0.018000001,-0.0792 -0.0468 c -0.0018000001 -0.0018000001,-0.1278 -0.22680001,-0.3546 -0.43380004 C 7.119 2.30238,7.1172004 2.24478,7.1496005 2.20878 M 5.6340003 3.43458 c -0.0036000002 0.0,-0.055800002 0.009000001,-0.1584 0.009000001 c -0.081 0.0,-0.1908 -0.0054,-0.33120003 -0.0234 c -0.050400004 -0.0054,-0.0846 -0.050400004,-0.07740001 -0.10080001 c 0.0054 -0.048600003,0.050400004 -0.08280001,0.10080001 -0.07740001 c 0.29160002 0.0378,0.43380004 0.0162,0.43560004 0.0162 c 0.048600003 -0.009000001,0.0954 0.0234,0.1026 0.073800005 C 5.715 3.3805802,5.6826 3.4255803,5.6340003 3.43458 M 7.8156 4.51998 c -0.1872 0.22140001,-0.28440002 0.261,-0.43200004 0.3204 l -0.0468 0.0198 c -0.0108 0.0054,-0.0234 0.0072000003,-0.0342 0.0072000003 c -0.036000002 0.0,-0.0684 -0.0216,-0.08280001 -0.055800002 c -0.0198 -0.045,0.0018000001 -0.09900001,0.048600003 -0.117 l 0.0468 -0.0198 c 0.135 -0.055800002,0.2034 -0.0846,0.36360002 -0.27 c 0.0324 -0.0396,0.09 -0.0432,0.1278 -0.0108 C 7.8444004 4.42638,7.848 4.48218,7.8156 4.51998 z&#39; fill=&#39;%23008000&#39; /%3E%3Cpath d=&#39;M 5.7060003 3.33198 c 0.009000001 0.048600003,-0.0234 0.0936,-0.072000004 0.1026 c -0.0036000002 0.0,-0.055800002 0.009000001,-0.1584 0.009000001 c -0.081 0.0,-0.1908 -0.0054,-0.33120003 -0.0234 c -0.050400004 -0.0054,-0.0846 -0.050400004,-0.07740001 -0.10080001 c 0.0054 -0.048600003,0.050400004 -0.08280001,0.10080001 -0.07740001 c 0.29160002 0.0378,0.43380004 0.0162,0.43560004 0.0162 C 5.652 3.2491803,5.6988 3.2815802,5.7060003 3.33198 z&#39;/%3E%3C/svg%3E">
-      <bpmn:extensionElements>
-        <zeebe:taskDefinition type="c-files-load-from-disk" />
-        <zeebe:ioMapping>
-          <zeebe:output source="=fileLoaded" target="CherryInJson" />
-          <zeebe:output source="=fileNameLoaded" target="MyFileName" />
-          <zeebe:output source="=fileMimeType" target="MyFileType" />
-        </zeebe:ioMapping>
-        <zeebe:taskHeaders>
-          <zeebe:header key="filterFile" />
-          <zeebe:header key="archiveFolder" />
-          <zeebe:header key="storageDefinition" />
-          <zeebe:header key="policy" value="UNCHANGE" />
-          <zeebe:header key="folder" value="./src/test/resources/files/" />
-          <zeebe:header key="fileName" value="Cherry.jpg" />
-        </zeebe:taskHeaders>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0xfznew</bpmn:incoming>
-      <bpmn:outgoing>Flow_1vdzcj7</bpmn:outgoing>
-    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0xfznew" sourceRef="Gateway_0s9o9cb" targetRef="Activity_loadFileFromJson" />
+    <bpmn:sequenceFlow id="Flow_1vdzcj7" sourceRef="Activity_loadFileFromJson" targetRef="Activity_1ght823" />
     <bpmn:parallelGateway id="Gateway_0s9o9cb">
       <bpmn:incoming>Flow_1nnq1jg</bpmn:incoming>
       <bpmn:outgoing>Flow_1to73yt</bpmn:outgoing>
@@ -129,9 +109,32 @@
       <bpmn:incoming>Flow_025k97x</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_025k97x" sourceRef="Event_1oc9eu0" targetRef="Event_1a9ikni" />
+    <bpmn:serviceTask id="Activity_loadFileFromJson" name="loadFileFromDisk/JSON">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="c-files-load-from-disk" />
+        <zeebe:ioMapping>
+          <zeebe:input source="= &#34;Cherry.jpg&#34;" target="fileName" />
+          <zeebe:input source="= &#34;UNCHANGE&#34;" target="policy" />
+          <zeebe:input source="=&#34;JSON&#34;" target="storageDefinition" />
+          <zeebe:input source="=&#34;./src/test/resources/files/&#34;" target="folder" />
+          <zeebe:output source="= fileLoaded" target="CherryInJson" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xfznew</bpmn:incoming>
+      <bpmn:outgoing>Flow_1vdzcj7</bpmn:outgoing>
+    </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="LoadSaveFiles">
+      <bpmndi:BPMNEdge id="Flow_025k97x_di" bpmnElement="Flow_025k97x">
+        <di:waypoint x="930" y="175" />
+        <di:waypoint x="930" y="250" />
+        <di:waypoint x="1032" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vdzcj7_di" bpmnElement="Flow_1vdzcj7">
+        <di:waypoint x="480" y="117" />
+        <di:waypoint x="570" y="117" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0xfznew_di" bpmnElement="Flow_0xfznew">
         <di:waypoint x="305" y="117" />
         <di:waypoint x="380" y="117" />
@@ -180,15 +183,6 @@
         <di:waypoint x="198" y="117" />
         <di:waypoint x="255" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1vdzcj7_di" bpmnElement="Flow_1vdzcj7">
-        <di:waypoint x="480" y="117" />
-        <di:waypoint x="570" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_025k97x_di" bpmnElement="Flow_025k97x">
-        <di:waypoint x="930" y="175" />
-        <di:waypoint x="930" y="250" />
-        <di:waypoint x="1032" y="250" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="162" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
@@ -201,10 +195,10 @@
           <dc:Bounds x="1077" y="142" width="47" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1pv3lbh_di" bpmnElement="Activity_1gh41eh">
+      <bpmndi:BPMNShape id="Activity_1pv3lbh_di" bpmnElement="Activity_loadFileFromDiskFolder">
         <dc:Bounds x="390" y="210" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1dcirc0_di" bpmnElement="Activity_0xf5mj5">
+      <bpmndi:BPMNShape id="Activity_1dcirc0_di" bpmnElement="Activity_loadFileFromDiskTemp">
         <dc:Bounds x="390" y="330" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0vv2ir5_di" bpmnElement="Activity_1ght823">
@@ -219,10 +213,6 @@
       <bpmndi:BPMNShape id="Gateway_110lc7o_di" bpmnElement="Gateway_041copw">
         <dc:Bounds x="755" y="92" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0exdjbm_di" bpmnElement="Activity_Template">
-        <dc:Bounds x="380" y="77" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0g08cz6_di" bpmnElement="Gateway_0s9o9cb">
         <dc:Bounds x="255" y="92" width="50" height="50" />
       </bpmndi:BPMNShape>
@@ -231,6 +221,9 @@
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1030" y="275" width="41" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1s7yf7j_di" bpmnElement="Activity_loadFileFromJson">
+        <dc:Bounds x="380" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1ofhvwr_di" bpmnElement="Event_1oc9eu0">
         <dc:Bounds x="912" y="139" width="36" height="36" />
