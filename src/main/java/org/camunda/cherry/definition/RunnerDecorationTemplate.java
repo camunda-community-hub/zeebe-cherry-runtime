@@ -17,6 +17,9 @@ public class RunnerDecorationTemplate {
 
     private final AbstractRunner runner;
 
+    public static final String GROUP_RESULT = "Result";
+
+
     public RunnerDecorationTemplate(AbstractRunner runner) {
         this.runner = runner;
     }
@@ -66,10 +69,11 @@ public class RunnerDecorationTemplate {
                 .filter(w -> w.group != null)
                 .map(w -> w.group)
                 .toList());
-        listGroups.addAll(runner.getListOutput().stream()
-                .filter(w -> w.group != null)
-                .map(w -> w.group)
-                .toList());
+        // We group all result in a Group result
+        if (!runner.getListOutput().isEmpty())
+            listGroups.add(new RunnerParameter.Group(GROUP_RESULT, "Result"));
+
+
         if (listGroups != null) {
             templateContent.put("groups",
                     listGroups.stream()
@@ -118,13 +122,19 @@ public class RunnerDecorationTemplate {
 
         if (runnerParameter.visibleInTemplate)
             addConditionCheckbox = false;
+        // Add the condition for all output
+        if (! isInput)
+            addConditionCheckbox = true;
 
         // is the parameter is optional? Add a checkbox first
         if (addConditionCheckbox) {
             Map<String, Object> propertyCheckbox = new HashMap<>();
             listProperties.add(propertyCheckbox);
             propertyCheckbox.put("id", runnerParameter.name + "_optional");
-            propertyCheckbox.put("label", "Provide " + runnerParameter.label + "?");
+            if (isInput)
+                propertyCheckbox.put("label", "Provide " + runnerParameter.label + "?");
+            else
+                propertyCheckbox.put("label", "Saved " + runnerParameter.label + "?");
             // don't have the group at this moment
             propertyCheckbox.put("description", runnerParameter.explanation);
             propertyCheckbox.put("type", "Dropdown");
@@ -142,6 +152,8 @@ public class RunnerDecorationTemplate {
                 propertyCheckbox.put("condition", condition);
             if (runnerParameter.group != null)
                 propertyCheckbox.put("group", runnerParameter.group.id());
+            if (!isInput)
+                propertyCheckbox.put("group", GROUP_RESULT);
         }
 
         Map<String, Object> propertyParameter = new HashMap<>();
@@ -180,9 +192,15 @@ public class RunnerDecorationTemplate {
         }
         if (runnerParameter.group != null)
             propertyParameter.put("group", runnerParameter.group.id());
+        if (!isInput)
+            propertyParameter.put("group", GROUP_RESULT);
 
         Map<String, Object> constraints = new HashMap<>();
-        if (runnerParameter.level == RunnerParameter.Level.REQUIRED)
+        // if the designer decide to show this property, then it is mandatory
+        if (! isInput)
+            constraints.put("notEmpty", Boolean.TRUE);
+
+        if (RunnerParameter.Level.REQUIRED.equals(runnerParameter.level))
             constraints.put("notEmpty", Boolean.TRUE);
 
         if (!constraints.isEmpty())
