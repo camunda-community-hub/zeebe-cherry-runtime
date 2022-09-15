@@ -9,6 +9,7 @@
 package org.camunda.cherry.admin;
 
 import org.camunda.cherry.definition.AbstractRunner;
+import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.camunda.cherry.definition.RunnerDecorationTemplate;
 import org.camunda.cherry.runtime.CherryJobRunnerFactory;
 import org.slf4j.Logger;
@@ -38,6 +39,14 @@ public class RunnerRestController {
      */
     @Autowired
     private List<AbstractRunner> listRunners;
+
+    /**
+     * Spring populate this list with runner marked at Framework
+     */
+    @Autowired
+    private List<IntFrameworkRunner> listFrameworkRunners;
+
+
 
     @GetMapping(value = "/api/runner/list", produces = "application/json")
     public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo) {
@@ -109,15 +118,17 @@ public class RunnerRestController {
     /**
      * Download the Template for a runner
      *
-     * @param runnerName worker to start
+     * @param runnerName worker to start. If not present, all runners are part of the result
+     * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
      * @return NOTFOUND or the worker information on this worker
      */
     @GetMapping(value = "/api/runner/template", produces = "application/json")
-    public String getTemplate(@RequestParam(name = "name", required = false) String runnerName) {
-        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]"));
+    public String getTemplate(@RequestParam(name = "name", required = false) String runnerName, @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) {
+        boolean withFrameworkRunnersIncluded = (withFrameworkRunners==null? false: withFrameworkRunners);
+        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]")+" FrameworkIncluded["+withFrameworkRunnersIncluded+"]");
         if (runnerName == null) {
             // generate for ALL runners
-            List<Map<String, Object>> listTemplate = listRunners.stream()
+            List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
                     .map(runner -> new RunnerDecorationTemplate(runner).getTemplate())
                     .toList();
             return RunnerDecorationTemplate.getJsonFromList(listTemplate);
@@ -130,15 +141,24 @@ public class RunnerRestController {
         return RunnerDecorationTemplate.getJsonFromList(List.of(templateContent));
     }
 
+    /**
+     *
+     * @param runnerName worker to start. If not present, all runners are part of the result
+     * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
+     * @return a File to download
+     * @throws IOException can't write the content to the HTTP response
+     */
     @GetMapping(value = "/api/runner/templatefile",
             produces = MediaType.TEXT_PLAIN_VALUE)
     public @ResponseBody
-    byte[] downloadTemplate(@RequestParam(name = "name", required = false) String runnerName) throws IOException {
-        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]"));
+    byte[] downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
+                            @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) throws IOException{
+        boolean withFrameworkRunnersIncluded = (withFrameworkRunners==null? false: withFrameworkRunners);
+        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]")+" FrameworkIncluded["+withFrameworkRunnersIncluded+"]");
         String content = null;
         if (runnerName == null) {
             // generate for ALL runners
-            List<Map<String, Object>> listTemplate = listRunners.stream()
+            List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
                     .map(runner -> new RunnerDecorationTemplate(runner).getTemplate())
                     .toList();
             content = RunnerDecorationTemplate.getJsonFromList(listTemplate);
@@ -169,4 +189,22 @@ public class RunnerRestController {
         }
         return runnerInformation;
     }
+
+
+    private List<AbstractRunner> getListRunners(boolean withFrameworkRunnersIncluded) {
+        // get the list of running, with the framework runner or not.
+
+        // If runners contains ONLY framework runners, then this application is the Cherry framework, and we will return it
+        if (listRunners.size() == listFrameworkRunners.size())
+            return listRunners;
+
+        if (withFrameworkRunnersIncluded)
+            return listRunners;
+
+        List<AbstractRunner> listRunnersWithoutFramework = listRunners.stream()
+                .filter( runner -> ! listFrameworkRunners.contains(runner))
+                .toList();
+        return listRunnersWithoutFramework;
+    }
+
 }

@@ -13,6 +13,7 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.BpmnError;
+import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.camunda.cherry.definition.RunnerParameter;
 import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
@@ -31,12 +32,11 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
-public class LoadFileFromDiskWorker extends AbstractWorker {
+public class LoadFileFromDiskWorker extends AbstractWorker implements IntFrameworkRunner {
 
     public static final String GROUP_SOURCE = "Source";
     public static final String GROUP_PROCESS_FILE = "Process file";
     public static final String GROUP_STORAGE_DEFINITION = "Storage definition";
-    public static final String GROUP_RESULT = "Result";
     /**
      * Worker type
      */
@@ -106,12 +106,9 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
 
 
                 Arrays.asList(
-                        RunnerParameter.getInstance(OUTPUT_FILE_LOADED, "File loaded", Object.class, RunnerParameter.Level.REQUIRED, "Name of the variable to save the file loaded.Content depend of the storage definition")
-                                .setGroup(GROUP_RESULT),
-                        RunnerParameter.getInstance(OUTPUT_FILE_NAME, "File name", String.class, RunnerParameter.Level.OPTIONAL, "Name of the file")
-                                .setGroup(GROUP_RESULT),
-                        RunnerParameter.getInstance(OUTPUT_FILE_MIMETYPE, "File Mime type", String.class, RunnerParameter.Level.OPTIONAL, "MimeType of the loaded file")
-                                .setGroup(GROUP_RESULT)),
+                        RunnerParameter.getInstance(OUTPUT_FILE_LOADED, "File loaded", Object.class, RunnerParameter.Level.REQUIRED, "Name of the variable to save the file loaded.Content depend of the storage definition"),
+                        RunnerParameter.getInstance(OUTPUT_FILE_NAME, "File name", String.class, RunnerParameter.Level.OPTIONAL, "Name of the file"),
+                        RunnerParameter.getInstance(OUTPUT_FILE_MIMETYPE, "File Mime type", String.class, RunnerParameter.Level.OPTIONAL, "MimeType of the loaded file")),
                 Arrays.asList(
                         BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
                         BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
@@ -119,6 +116,16 @@ public class LoadFileFromDiskWorker extends AbstractWorker {
                         BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"))
         );
     }
+
+    /**
+     * mark this worker as a Framework runner
+     * @return
+     */
+    @Override
+    public boolean isFrameworkRunner() {
+        return true;
+    }
+
 
     @Override
     public String getName() {

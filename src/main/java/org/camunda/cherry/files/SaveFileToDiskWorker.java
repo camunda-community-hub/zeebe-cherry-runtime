@@ -13,6 +13,7 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.BpmnError;
+import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.camunda.cherry.definition.RunnerParameter;
 import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
@@ -27,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @Component
-public class SaveFileToDiskWorker extends AbstractWorker {
+public class SaveFileToDiskWorker extends AbstractWorker implements IntFrameworkRunner {
 
     /**
      * Worker type
@@ -57,6 +58,14 @@ public class SaveFileToDiskWorker extends AbstractWorker {
                         BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
                         BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
                         BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
+    }
+    /**
+     * mark this worker as a Framework runner
+     * @return
+     */
+    @Override
+    public boolean isFrameworkRunner() {
+        return true;
     }
 
     @Override
