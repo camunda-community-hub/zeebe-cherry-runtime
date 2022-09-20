@@ -10,6 +10,7 @@ package org.camunda.cherry.definition.filevariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,5 +69,18 @@ public class FileVariableTempFolder {
             logger.error("Cherry.FileVariableTempFolder: exception " + e + " During read file[" + tempFileName + "] in temporaryPath[" + tempFileName + "]");
             throw e;
         }
+    }
+
+    /**
+     * Delete the file
+     * @param fileName file to delete
+     * @return true if the file is correctly delete, or if the file does not exist
+     */
+    public boolean removeFile( String fileName) {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        File file = new File(tmpDir + FileSystems.getDefault().getSeparator() +fileName);
+        if (file.exists())
+            return file.delete();
+        return true;
     }
 }

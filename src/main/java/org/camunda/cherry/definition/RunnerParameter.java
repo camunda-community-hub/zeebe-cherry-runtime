@@ -21,6 +21,7 @@ public class RunnerParameter {
     public Object defaultValue;
     public Level level;
     public String explanation;
+    public String gsonTemplate;
     /**
      * Declare a condition on the parameters
      */
@@ -83,6 +84,31 @@ public class RunnerParameter {
         parameter.defaultValue = null;
         parameter.level = level;
         parameter.explanation = explanation;
+        return parameter;
+    }
+
+    /**
+     * A Gson Parameter can be given as a String or at a Object?
+     * @param parameterName  parameter name
+     * @param parameterLabel label to display in the template
+     * @param level          level for this parameter
+     * @param explanation    describe the usage of the parameter
+     * @param gsonTemplate Give an example of the format, to verify that the parameters meet the requirement. Format is <Parameter>:<Class>/Example {"host":"String", "Port": "Integer"}
+     * @return
+     */
+    public static RunnerParameter getGsonInstance(String parameterName,
+                                              String parameterLabel,
+                                              Level level,
+                                              String explanation,
+                                                  String gsonTemplate) {
+        RunnerParameter parameter = new RunnerParameter();
+        parameter.name = parameterName;
+        parameter.label = parameterLabel;
+        parameter.clazz = Object.class;
+        parameter.defaultValue = null;
+        parameter.level = level;
+        parameter.explanation = explanation;
+        parameter.gsonTemplate = gsonTemplate;
         return parameter;
     }
 

@@ -47,7 +47,6 @@ public class RunnerRestController {
     private List<IntFrameworkRunner> listFrameworkRunners;
 
 
-
     @GetMapping(value = "/api/runner/list", produces = "application/json")
     public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo) {
 
@@ -118,14 +117,14 @@ public class RunnerRestController {
     /**
      * Download the Template for a runner
      *
-     * @param runnerName worker to start. If not present, all runners are part of the result
+     * @param runnerName           worker to start. If not present, all runners are part of the result
      * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
      * @return NOTFOUND or the worker information on this worker
      */
     @GetMapping(value = "/api/runner/template", produces = "application/json")
     public String getTemplate(@RequestParam(name = "name", required = false) String runnerName, @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) {
-        boolean withFrameworkRunnersIncluded = (withFrameworkRunners==null? false: withFrameworkRunners);
-        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]")+" FrameworkIncluded["+withFrameworkRunnersIncluded+"]");
+        boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
+        logger.info("Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
         if (runnerName == null) {
             // generate for ALL runners
             List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
@@ -142,8 +141,7 @@ public class RunnerRestController {
     }
 
     /**
-     *
-     * @param runnerName worker to start. If not present, all runners are part of the result
+     * @param runnerName           worker to start. If not present, all runners are part of the result
      * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
      * @return a File to download
      * @throws IOException can't write the content to the HTTP response
@@ -152,9 +150,9 @@ public class RunnerRestController {
             produces = MediaType.TEXT_PLAIN_VALUE)
     public @ResponseBody
     byte[] downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
-                            @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) throws IOException{
-        boolean withFrameworkRunnersIncluded = (withFrameworkRunners==null? false: withFrameworkRunners);
-        logger.info("Download template requested for " + (runnerName==null ? "Complete collection": "["+runnerName+"]")+" FrameworkIncluded["+withFrameworkRunnersIncluded+"]");
+                            @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) throws IOException {
+        boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
+        logger.info("Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
         String content = null;
         if (runnerName == null) {
             // generate for ALL runners
@@ -202,7 +200,7 @@ public class RunnerRestController {
             return listRunners;
 
         List<AbstractRunner> listRunnersWithoutFramework = listRunners.stream()
-                .filter( runner -> ! listFrameworkRunners.contains(runner))
+                .filter(runner -> !listFrameworkRunners.contains(runner))
                 .toList();
         return listRunnersWithoutFramework;
     }

@@ -15,9 +15,8 @@ import java.util.Map;
 
 public class RunnerDecorationTemplate {
 
-    private final AbstractRunner runner;
-
     public static final String GROUP_RESULT = "Result";
+    private final AbstractRunner runner;
 
 
     public RunnerDecorationTemplate(AbstractRunner runner) {
@@ -56,12 +55,12 @@ public class RunnerDecorationTemplate {
                 Map.of("type", "Hidden",
                         "value", runner.getType(),
                         "binding", Map.of("type", "zeebe:taskDefinition:type")));
-        if(runner instanceof AbstractConnector connector){
+        if (runner instanceof AbstractConnector connector) {
             listProperties.add(Map.of(
-                "type", "Hidden",
-                "value", connector.getResponseVariable(),
-                "binding", Map.of("type", "zeebe:taskHeader","key","resultVariable")
-        ));
+                    "type", "Hidden",
+                    "value", connector.getResponseVariable(),
+                    "binding", Map.of("type", "zeebe:taskHeader", "key", "resultVariable")
+            ));
         }
         // Identify all groups
         List<RunnerParameter.Group> listGroups = new ArrayList<>();
@@ -123,13 +122,14 @@ public class RunnerDecorationTemplate {
         if (runnerParameter.visibleInTemplate)
             addConditionCheckbox = false;
         // Add the condition for all output
-        if (! isInput)
+        if (!isInput)
             addConditionCheckbox = true;
 
         // is the parameter is optional? Add a checkbox first
         if (addConditionCheckbox) {
             Map<String, Object> propertyCheckbox = new HashMap<>();
             listProperties.add(propertyCheckbox);
+            // the ID property is the value to link with the conditional
             propertyCheckbox.put("id", runnerParameter.name + "_optional");
             if (isInput)
                 propertyCheckbox.put("label", "Provide " + runnerParameter.label + "?");
@@ -197,7 +197,7 @@ public class RunnerDecorationTemplate {
 
         Map<String, Object> constraints = new HashMap<>();
         // if the designer decide to show this property, then it is mandatory
-        if (! isInput)
+        if (!isInput)
             constraints.put("notEmpty", Boolean.TRUE);
 
         if (RunnerParameter.Level.REQUIRED.equals(runnerParameter.level))

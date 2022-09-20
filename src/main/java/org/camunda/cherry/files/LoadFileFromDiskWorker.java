@@ -11,12 +11,13 @@ package org.camunda.cherry.files;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
+import org.camunda.cherry.connection.cmis.CmisParameters;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.BpmnError;
 import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.camunda.cherry.definition.RunnerParameter;
 import org.camunda.cherry.definition.filevariable.FileVariable;
-import org.camunda.cherry.definition.filevariable.FileVariableFactory;
+import org.camunda.cherry.definition.filevariable.StorageDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,8 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
     private static final String BPMNERROR_FOLDER_NOT_EXIST_ERROR = "FOLDER_NOT_EXIST_ERROR";
     private static final String BPMNERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
     private static final String BPMNERROR_MOVE_FILE_ERROR = "MOVE_FILE_ERROR";
+    private static final String BPMNERROR_INCORRECT_CMIS_PARAMETERS = "Incorrect CMIS Parameters";
+
     private static final String POLICY_V_DELETE = "DELETE";
     private static final String POLICY_V_ARCHIVE = "ARCHIVE";
     private static final String POLICY_V_UNCHANGE = "UNCHANGE";
@@ -52,7 +55,8 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
     private static final String INPUT_FILE_NAME = "fileName";
     private static final String INPUT_POLICY = "policy";
     private static final String INPUT_STORAGEDEFINITION = "storageDefinition";
-    private static final String INPUT_STORAGEDEFINITION_COMPLEMENT = "storageDefinitionComplement";
+    private static final String INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT = "storageDefinitionComplement";
+    private static final String INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT = "storageDefinitionCmisComplement";
     private static final String INPUT_ARCHIVE_FOLDER = "archiveFolder";
     private static final String OUTPUT_FILE_LOADED = "fileLoaded";
     private static final String OUTPUT_FILE_NAME = "fileNameLoaded";
@@ -85,22 +89,31 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                                 .addCondition(INPUT_POLICY, Arrays.asList(POLICY_V_ARCHIVE))
                                 .setGroup(GROUP_PROCESS_FILE),
 
-                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION, "Storage definition", String.class, FileVariableFactory.FileVariableStorage.JSON.toString(),
+                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION, "Storage definition", String.class, StorageDefinition.StorageDefinitionType.JSON.toString(),
                                         RunnerParameter.Level.OPTIONAL,
                                         "How to saved the FileVariable. "
-                                                + FileVariableFactory.FileVariableStorage.JSON + " to save in the engine (size is linited), "
-                                                + FileVariableFactory.FileVariableStorage.TEMPFOLDER + " to use the temporary folder of THIS machine"
-                                                + FileVariableFactory.FileVariableStorage.FOLDER + " to specify a folder to save it (to be accessible by multiple machine if you ruin it in a cluster"
+                                                + StorageDefinition.StorageDefinitionType.JSON + " to save in the engine (size is linited), "
+                                                + StorageDefinition.StorageDefinitionType.TEMPFOLDER + " to use the temporary folder of THIS machine"
+                                                + StorageDefinition.StorageDefinitionType.FOLDER + " to specify a folder to save it (to be accessible by multiple machine if you ruin it in a cluster"
+                                                + StorageDefinition.StorageDefinitionType.CMIS + " to specify a CMIS connection"
                                 )
-                                .addChoice("JSON", FileVariableFactory.FileVariableStorage.JSON.toString())
-                                .addChoice("TEMPFOLDER", FileVariableFactory.FileVariableStorage.TEMPFOLDER.toString())
-                                .addChoice("FOLDER", FileVariableFactory.FileVariableStorage.FOLDER.toString())
+                                .addChoice("JSON", StorageDefinition.StorageDefinitionType.JSON.toString())
+                                .addChoice("TEMPFOLDER", StorageDefinition.StorageDefinitionType.TEMPFOLDER.toString())
+                                .addChoice("FOLDER", StorageDefinition.StorageDefinitionType.FOLDER.toString())
+                                .addChoice("CMIS", StorageDefinition.StorageDefinitionType.CMIS.toString())
                                 .setVisibleInTemplate()
-                                .setDefaultValue(FileVariableFactory.FileVariableStorage.JSON.toString())
+                                .setDefaultValue(StorageDefinition.StorageDefinitionType.JSON.toString())
                                 .setGroup(GROUP_STORAGE_DEFINITION)
                         ,
-                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION_COMPLEMENT, "Storage defintion Complement", String.class, RunnerParameter.Level.OPTIONAL, "Complement to the Storage definition, if needed. " + FileVariableFactory.FileVariableStorage.FOLDER + ": please provide the folder to save the file")
-                                .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(FileVariableFactory.FileVariableStorage.FOLDER.toString()))
+                        RunnerParameter.getInstance(INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT, "Folder Storage definition Complement",
+                                        String.class, RunnerParameter.Level.OPTIONAL, "Complement to the Storage definition, if needed. " + StorageDefinition.StorageDefinitionType.FOLDER + ": please provide the folder to save the file")
+                                .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(StorageDefinition.StorageDefinitionType.FOLDER.toString()))
+                                .setGroup(GROUP_STORAGE_DEFINITION),
+                        RunnerParameter.getGsonInstance(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, "CMIS Storage definition Complement",
+                                        RunnerParameter.Level.OPTIONAL,
+                                        "Complement to the Storage definition, if needed. " + StorageDefinition.StorageDefinitionType.FOLDER + ": please provide the folder to save the file",
+                                        CmisParameters.getGsonTemplate())
+                                .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(StorageDefinition.StorageDefinitionType.CMIS.toString()))
                                 .setGroup(GROUP_STORAGE_DEFINITION)
                 ),
 
@@ -113,12 +126,14 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                         BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
                         BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
                         BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "Error when the file is moved to the archive directory"),
-                        BpmnError.getInstance(FileVariableFactory.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"))
+                        BpmnError.getInstance(StorageDefinition.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"),
+                        BpmnError.getInstance(BPMNERROR_INCORRECT_CMIS_PARAMETERS, "GSON expected to get information to connect the repository"))
         );
     }
 
     /**
      * mark this worker as a Framework runner
+     *
      * @return
      */
     @Override
@@ -129,12 +144,12 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getName() {
-        return "LoadFileFromDisk";
+        return "CherryLoadFileFromDisk";
     }
 
     @Override
     public String getLabel() {
-        return "Load file from disk";
+        return "Cherry:Load file from disk";
     }
 
     @Override
@@ -154,12 +169,23 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
         String fileName = getInputStringValue(INPUT_FILE_NAME, null, activatedJob);
         String filterFile = getInputStringValue(INPUT_FILTER_FILE, null, activatedJob);
         String policy = getInputStringValue(INPUT_POLICY, null, activatedJob);
-        String storageDefinition = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);
+        String storageDefinitionSt = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);
 
-        // with a template, the storage defitinion is just the droptdown value, so add the complement if present
-        String storageDefinitionComplement = getInputStringValue(INPUT_STORAGEDEFINITION_COMPLEMENT, null, activatedJob);
-        if (storageDefinitionComplement != null && !storageDefinitionComplement.trim().isEmpty())
-            storageDefinition = storageDefinition + ":" + storageDefinitionComplement;
+        // with a template, the storage definition is just the droptdown value, so add the complement if present
+        StorageDefinition storageDefinition = StorageDefinition.getFromString(storageDefinitionSt);
+        String storageDefinitionFolderComplement = getInputStringValue(INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT, null, activatedJob);
+        if (storageDefinitionFolderComplement != null && !storageDefinitionFolderComplement.trim().isEmpty())
+            storageDefinition.complement = storageDefinitionFolderComplement;
+
+        try {
+            storageDefinition.complementInObject = getInputGsonValue(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, null, activatedJob);
+        } catch (Exception e) {
+            String cmisComplementSt = getInputStringValue(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, null, activatedJob);
+
+            logger.error("Can't get the CMIS information- bad Gson value :" + cmisComplementSt);
+            throw new ZeebeBpmnError(BPMNERROR_INCORRECT_CMIS_PARAMETERS, "Worker [" + getName() + "] Cmis information" + cmisComplementSt);
+
+        }
 
         File archiveFolder = getInputFolderValue(INPUT_ARCHIVE_FOLDER, null, activatedJob);
 

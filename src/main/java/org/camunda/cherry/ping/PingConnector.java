@@ -21,11 +21,27 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
     /**
      * mark this Connector as a Framework runner
+     *
      * @return
      */
     @Override
     public boolean isFrameworkRunner() {
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return "Cherry:Ping connector";
+    }
+
+    @Override
+    public String getLabel() {
+        return "Cherry: Ping using the ConnectorSDK pattern";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a connector, and return a timestamp. A Delay can be set as parameter";
     }
 
     @Override
@@ -38,10 +54,6 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
         return new PingConnectorOutput(System.currentTimeMillis());
     }
 
-    @Override
-    public String getDescription() {
-        return "Do a simple ping as a connector, and return a timestamp. A Delay can be set as parameter";
-    }
 
     @Override
     public String getResponseVariable() {
