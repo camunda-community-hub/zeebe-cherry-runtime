@@ -12,6 +12,7 @@ import org.camunda.cherry.definition.AbstractRunner;
 import org.camunda.cherry.definition.AbstractWorker;
 import org.camunda.cherry.definition.BpmnError;
 import org.camunda.cherry.definition.RunnerParameter;
+import org.camunda.cherry.runtime.CherryHistoricFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,11 +27,17 @@ public class RunnerInformation {
 
     private boolean displayLogo = true;
 
+    private CherryHistoricFactory.Statistic statistic;
+
+    private CherryHistoricFactory.Performance performance;
+
+
+
     /**
      * Keep the runner in the class. This class is a facade
      *
      * @param runner
-     * @return
+     * @return runner information for a runner
      */
     public static RunnerInformation getRunnerInformation(AbstractRunner runner) {
         RunnerInformation workerInformation = new RunnerInformation();
@@ -108,4 +115,19 @@ public class RunnerInformation {
 
     public enum TYPE_RUNNER {WORKER, CONNECTOR}
 
+    public void setStatistic(CherryHistoricFactory.Statistic statistic) {
+        this.statistic = statistic;
+    }
+
+    public void setPerformance(CherryHistoricFactory.Performance performance) {
+        this.performance = performance;
+    }
+
+    public CherryHistoricFactory.Statistic getStatistic() {
+        return statistic;
+    }
+
+    public CherryHistoricFactory.Performance getPerformance() {
+        return performance;
+    }
 }

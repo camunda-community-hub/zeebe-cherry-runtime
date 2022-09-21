@@ -11,6 +11,7 @@ package org.camunda.cherry.admin;
 import org.camunda.cherry.definition.AbstractRunner;
 import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.camunda.cherry.definition.RunnerDecorationTemplate;
+import org.camunda.cherry.runtime.CherryHistoricFactory;
 import org.camunda.cherry.runtime.CherryJobRunnerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,10 @@ public class RunnerRestController {
     Logger logger = LoggerFactory.getLogger(org.camunda.cherry.admin.RunnerRestController.class.getName());
     @Autowired
     CherryJobRunnerFactory cherryJobRunnerFactory;
+
+    @Autowired
+    CherryHistoricFactory cherryHistoricFactory;
+
     /**
      * Spring populate the list of all workers
      */
@@ -47,26 +52,44 @@ public class RunnerRestController {
     private List<IntFrameworkRunner> listFrameworkRunners;
 
 
+    /**
+     * Get list of worker. Multiple result is possibles
+     * /api/runner/list?logo=true&stats=true&delaysstatsinhour=24
+     *
+     * @param logo              if true, logo is returned
+     * @param stats             if true, execution on statistics is returned
+     * @param delayStatsInHours give the delay in hour to collect data
+     * @return
+     */
     @GetMapping(value = "/api/runner/list", produces = "application/json")
-    public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo) {
+    public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo,
+                                                  @RequestParam(name = "stats", required = false) Boolean stats,
+                                                  @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
 
         return listRunners.stream()
                 .map(RunnerInformation::getRunnerInformation)
                 .map(w -> {
-                    return this.completeRunnerInformation(w, logo == null || logo);
+                    return this.completeRunnerInformation(w,
+                            logo == null || logo,
+                            stats == null ? false : stats,
+                            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
                 })
                 .toList();
     }
 
     @GetMapping(value = "/api/runner/detail", produces = "application/json")
     public Optional<RunnerInformation> getWorker(@RequestParam(name = "name") String runnerName,
-                                                 @RequestParam(name = "logo", required = false) Boolean logo) {
+                                                 @RequestParam(name = "logo", required = false) Boolean logo,
+                                                 @RequestParam(name = "stats", required = false) Boolean stats,
+                                                 @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
         return listRunners.stream()
                 .filter(worker -> worker.getIdentification().equals(runnerName))
                 .map(RunnerInformation::getRunnerInformation)
-                .map(w -> {
-                    return this.completeRunnerInformation(w, logo == null || logo);
-                })
+                .map(w -> this.completeRunnerInformation(w,
+                        logo == null || logo,
+                        stats == null ? false : stats,
+                        delayStatsInHours)
+                )
                 .findFirst();
     }
 
@@ -84,7 +107,7 @@ public class RunnerRestController {
             logger.info("Stop executed for [" + runnerName + "]: " + isStopped);
             AbstractRunner runner = getRunnerByName(runnerName);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
-            return completeRunnerInformation(runnerInfo, false);
+            return completeRunnerInformation(runnerInfo, false, false, null);
         } catch (CherryJobRunnerFactory.OperationException e) {
             if (e.exceptionCode.equals(CherryJobRunnerFactory.WORKER_NOT_FOUND))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
@@ -106,7 +129,7 @@ public class RunnerRestController {
             logger.info("Start executed for [" + runnerName + "]: " + isStarted);
             AbstractRunner runner = getRunnerByName(runnerName);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
-            return completeRunnerInformation(runnerInfo, false);
+            return completeRunnerInformation(runnerInfo, false, false, null);
         } catch (CherryJobRunnerFactory.OperationException e) {
             if (e.exceptionCode.equals(CherryJobRunnerFactory.WORKER_NOT_FOUND))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
@@ -178,10 +201,17 @@ public class RunnerRestController {
 
     }
 
-    private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation, boolean withLogo) {
+    private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation, boolean withLogo, boolean withStats, Integer delayStatInHour) {
         try {
             runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getName()));
             runnerInformation.setDisplayLogo(withLogo);
+
+            if (withStats) {
+                runnerInformation.setStatistic(cherryHistoricFactory.getStatistic(runnerInformation.getName(), delayStatInHour));
+                runnerInformation.setPerformance(cherryHistoricFactory.getPerformance(runnerInformation.getName(), delayStatInHour));
+            }
+
+
         } catch (CherryJobRunnerFactory.OperationException e) {
             // definitively not expected
         }
@@ -199,10 +229,10 @@ public class RunnerRestController {
         if (withFrameworkRunnersIncluded)
             return listRunners;
 
-        List<AbstractRunner> listRunnersWithoutFramework = listRunners.stream()
+        // listRunnersWithoutFramework
+        return  listRunners.stream()
                 .filter(runner -> !listFrameworkRunners.contains(runner))
                 .toList();
-        return listRunnersWithoutFramework;
     }
 
 }
