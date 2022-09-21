@@ -15,7 +15,7 @@ import org.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
-@Component
+@Service
 public class CherryJobRunnerFactory {
     public static final String WORKER_NOT_FOUND = "WorkerNotFound";
     public static final String UNKNOWN_WORKER_CLASS = "UnknownWorkerClass";

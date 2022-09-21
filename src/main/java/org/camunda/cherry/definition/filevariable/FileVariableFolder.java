@@ -11,26 +11,33 @@ package org.camunda.cherry.definition.filevariable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.StringTokenizer;
 
 public class FileVariableFolder {
     Logger logger = LoggerFactory.getLogger(FileVariableFolder.class.getName());
 
+
+    private FileVariableFactory fileVariableFactory;
+
+    public FileVariableFolder(FileVariableFactory fileVariableFactory) {
+        this.fileVariableFactory =fileVariableFactory;
+    }
     /**
      * Save the file Variable structure in the temporary folder
      *
      * @param storageDefinition storageDefinition to get the path
      * @param fileVariable      fileVariable to save it
      */
-    public String toFolder(String storageDefinition, FileVariable fileVariable) throws Exception {
+    public String toFolder(StorageDefinition storageDefinition, FileVariable fileVariable) throws Exception {
         Path tempPath = null;
         try {
+            String uniqId = fileVariableFactory.generateUniqId();
             Path pathFolder = extractPath(storageDefinition);
-            Path file = Paths.get(pathFolder + FileSystems.getDefault().getSeparator() + fileVariable.name);
+            Path file = Paths.get(pathFolder + FileSystems.getDefault().getSeparator() + fileVariable.name + uniqId);
             Files.write(file, fileVariable.value);
             return file.getFileName().toString();
         } catch (Exception e) {
@@ -47,7 +54,7 @@ public class FileVariableFolder {
      * @return the fileVariable object
      * @throws Exception during the writing
      */
-    public FileVariable fromFolder(String storageDefinition, String fileName) throws Exception {
+    public FileVariable fromFolder(StorageDefinition storageDefinition, String fileName) throws Exception {
         Path pathFolder = null;
         try {
             pathFolder = extractPath(storageDefinition);
@@ -65,20 +72,28 @@ public class FileVariableFolder {
     }
 
     /**
+     * Remove a file in the directory
+     * @param storageDefinition
+     * @param fileName
+     * @return
+     */
+    public boolean removeFile(StorageDefinition storageDefinition, String fileName) {
+       Path pathFolder = extractPath(storageDefinition);
+
+       File file = new File(pathFolder + FileSystems.getDefault().getSeparator()+fileName);
+       if (file.exists())
+         return file.delete();
+       return true;
+    }
+    /**
      * Extract the path from the storage definition
      * convention is FOLDER:<path>
      *
      * @param storageDefinition the storage definition
      * @return the folder path
      */
-    private Path extractPath(String storageDefinition) {
-        StringTokenizer st = new StringTokenizer(storageDefinition, ":");
-        if (st.hasMoreTokens())
-            st.nextToken();
-        String path = st.hasMoreTokens() ? st.nextToken() : null;
-        if (path == null)
-            return null;
-        return Paths.get(path);
+    private Path extractPath(StorageDefinition storageDefinition) {
+        return Paths.get(storageDefinition.complement);
     }
 
 }

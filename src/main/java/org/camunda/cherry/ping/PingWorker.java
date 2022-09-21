@@ -42,12 +42,30 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
     /**
      * mark this worker as a Framework runner
+     *
      * @return
      */
     @Override
     public boolean isFrameworkRunner() {
         return true;
     }
+
+    @Override
+    public String getName() {
+        return "Cherry:Ping worker";
+    }
+
+    @Override
+    public String getLabel() {
+        return "Cherry: Ping using the worker pattern";
+    }
+
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
+    }
+
 
     @Override
     public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
@@ -67,11 +85,6 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
         String formattedDate = formatter.format(new Date());
         setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
         logInfo("Executed Ping Worker");
-    }
-
-    @Override
-    public String getDescription() {
-        return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
     }
 
 
