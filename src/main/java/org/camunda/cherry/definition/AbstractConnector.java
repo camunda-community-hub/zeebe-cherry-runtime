@@ -10,7 +10,7 @@
 /* ******************************************************************** */
 package org.camunda.cherry.definition;
 
-import io.camunda.connector.api.ConnectorFunction;
+import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import java.lang.reflect.Constructor;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractConnector extends AbstractRunner implements ConnectorFunction {
+public abstract class AbstractConnector extends AbstractRunner implements OutboundConnectorFunction {
     Logger logger = LoggerFactory.getLogger(AbstractConnector.class.getName());
 
     protected AbstractConnector(String type,

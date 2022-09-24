@@ -8,12 +8,10 @@
 /* ******************************************************************** */
 package org.camunda.cherry.definition;
 
-import io.camunda.connector.api.ConnectorInput;
-
 import java.util.Collections;
 import java.util.List;
 
-public class AbstractConnectorInput implements ConnectorInput {
+public class AbstractConnectorInput {
 
     /**
      * Return the list of Parameters used by the connector

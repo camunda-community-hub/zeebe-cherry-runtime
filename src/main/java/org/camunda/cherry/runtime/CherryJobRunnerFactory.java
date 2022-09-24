@@ -6,7 +6,7 @@
 /* ******************************************************************** */
 package org.camunda.cherry.runtime;
 
-import io.camunda.connector.runtime.jobworker.ConnectorJobHandler;
+import io.camunda.connector.runtime.jobworker.api.outbound.ConnectorJobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
 import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
 import org.camunda.cherry.definition.AbstractConnector;

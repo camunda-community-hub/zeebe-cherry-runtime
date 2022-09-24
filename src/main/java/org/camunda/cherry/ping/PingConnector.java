@@ -1,7 +1,7 @@
 package org.camunda.cherry.ping;
 
 
-import io.camunda.connector.api.ConnectorContext;
+import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import org.camunda.cherry.definition.AbstractConnector;
 import org.camunda.cherry.definition.IntFrameworkRunner;
 import org.springframework.stereotype.Component;
@@ -45,7 +45,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
     }
 
     @Override
-    public Object execute(ConnectorContext context) throws Exception {
+    public Object execute(OutboundConnectorContext context) throws Exception {
 
         var request = context.getVariablesAsType(PingConnectorInput.class);
 
