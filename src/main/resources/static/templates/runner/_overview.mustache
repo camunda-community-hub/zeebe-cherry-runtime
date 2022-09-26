@@ -1,9 +1,10 @@
 <div class="container">
     <h1 class="runner-name title is-size-1">{{#logo}}<img width="50px" style="padding-right:10px" src="{{logo}}"/>{{/logo}}{{name}}</h1>
+    <h1 class="runner-name title is-size-3">Task Definition type: {{type}} </h1>
     <h1 class="runner-description title is-size-3">{{description}}</h1>
     <h1 class="runner-class title is-size-4">{{className}}</h1>
     <div class="buttons has-addons">
-        <button data-runner-name="{{type}}" class="start-runner button {{#active}}is-selected is-primary{{/active}}">{{#active}}Started{{/active}}{{^active}}Start{{/active}}</button>
+        <button data-runner-name="{{type}}" class="start-runner button {{#active}}is-selected is-primary{{/active}}">{{#active}}Active{{/active}}{{^active}}Start{{/active}}</button>
         <button data-runner-name="{{type}}" class="stop-runner button {{^active}}is-selected is-danger{{/active}}">{{^active}}Stopped{{/active}}{{#active}}Stop{{/active}}</button>
     </div>
 </div>

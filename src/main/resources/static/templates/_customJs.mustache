@@ -15,7 +15,7 @@
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/runner/detail?runnerName=${workerName}`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
     }
 
     function getTemplate(templateName) {
@@ -75,7 +75,7 @@
                             data: 'runnerName',
                             render: function (data, type, row) {
                               if(row.runnerLogo) {
-                                  return '<img src="' + row.runnerLogo +'"></img>&nbsp;&nbsp; ' + data;
+                                  return '<img width="30px" src="' + row.runnerLogo +'"></img>&nbsp;&nbsp; ' + data;
                               } else {
                                 return data;
                               }
