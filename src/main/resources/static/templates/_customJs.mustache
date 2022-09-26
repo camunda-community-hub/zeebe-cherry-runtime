@@ -15,7 +15,7 @@
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/runner/detail?runnerName=${workerName}`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
     }
 
     function getTemplate(templateName) {
