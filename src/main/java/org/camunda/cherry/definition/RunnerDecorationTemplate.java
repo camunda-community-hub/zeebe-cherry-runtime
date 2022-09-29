@@ -15,7 +15,15 @@ import java.util.Map;
 
 public class RunnerDecorationTemplate {
 
-    public static final String GROUP_RESULT = "Result";
+    /*    We want to keep the Output parameter at the end.
+    * when a field has a group in the list, it is placed in top.
+    * When a field does not have a group, it is placed after in a group "custom properties"
+    * so, we assign a Input group or an Output group by default to each field.
+    * */
+
+    public static final String GROUP_OUTPUT = "Output";
+    public static final String GROUP_INPUT = "Input";
+
     private final AbstractRunner runner;
 
 
@@ -68,9 +76,14 @@ public class RunnerDecorationTemplate {
                 .filter(w -> w.group != null)
                 .map(w -> w.group)
                 .toList());
-        // We group all result in a Group result
+
+        // We group all result in a Group Input
+        if (!runner.getListInput().isEmpty())
+            listGroups.add(new RunnerParameter.Group(GROUP_INPUT, "Input"));
+
+        // We group all result in a Group Output
         if (!runner.getListOutput().isEmpty())
-            listGroups.add(new RunnerParameter.Group(GROUP_RESULT, "Result"));
+            listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, "Output"));
 
 
         if (listGroups != null) {
@@ -137,23 +150,22 @@ public class RunnerDecorationTemplate {
                 propertyCheckbox.put("label", "Saved " + runnerParameter.label + "?");
             // don't have the group at this moment
             propertyCheckbox.put("description", runnerParameter.explanation);
-            propertyCheckbox.put("type", "Dropdown");
             propertyCheckbox.put("value", "false");
             propertyCheckbox.put("binding", Map.of("type", "zeebe:input",
                     "name", runnerParameter.name + "_optional"));
 
+            propertyCheckbox.put("type", "Dropdown");
             List<Map<String, String>> listYesNoChoices = new ArrayList<>();
             listYesNoChoices.add(Map.of("name", "Yes", "value", "true"));
             listYesNoChoices.add(Map.of("name", "No", "value", "false"));
-
             propertyCheckbox.put("choices", listYesNoChoices);
+
             // if the parameters has a condition, add it here
             if (condition != null)
                 propertyCheckbox.put("condition", condition);
             if (runnerParameter.group != null)
                 propertyCheckbox.put("group", runnerParameter.group.id());
-            if (!isInput)
-                propertyCheckbox.put("group", GROUP_RESULT);
+            propertyCheckbox.put("group", isInput? GROUP_INPUT:GROUP_OUTPUT);
         }
 
         Map<String, Object> propertyParameter = new HashMap<>();
@@ -167,9 +179,13 @@ public class RunnerDecorationTemplate {
         }
         String typeParameter = "String";
         // String, Text, Boolean, Dropdown or Hidden)
-        if (Boolean.class.equals(runnerParameter.clazz))
-            typeParameter = "Boolean";
-        else if (runnerParameter.hasChoice()) {
+        if (Boolean.class.equals(runnerParameter.clazz)) {
+            typeParameter = "Dropdown";
+            List<Map<String, String>> listYesNoChoices = new ArrayList<>();
+            listYesNoChoices.add(Map.of("name", "Yes", "value", "true"));
+            listYesNoChoices.add(Map.of("name", "No", "value", "false"));
+            propertyParameter.put("choices", listYesNoChoices);
+        } else if (runnerParameter.hasChoice()) {
             typeParameter = "Dropdown";
             // add choices
             List<Map<String, String>> listChoices = new ArrayList<>();
@@ -192,8 +208,8 @@ public class RunnerDecorationTemplate {
         }
         if (runnerParameter.group != null)
             propertyParameter.put("group", runnerParameter.group.id());
-        if (!isInput)
-            propertyParameter.put("group", GROUP_RESULT);
+        else
+            propertyParameter.put("group", isInput? GROUP_INPUT : GROUP_OUTPUT);
 
         Map<String, Object> constraints = new HashMap<>();
         // if the designer decide to show this property, then it is mandatory

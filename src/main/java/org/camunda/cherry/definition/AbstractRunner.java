@@ -570,6 +570,27 @@ public abstract class AbstractRunner {
         }
         return folder;
     }
+
+    /**
+     * return a boolean value
+     *
+     * @param parameterName name of the variable to load
+     * @param defaultValue  if the input does not exist, this is the default value.
+     * @param activatedJob  job passed to the worker
+     * @return
+     */
+    public Boolean getInputBooleanValue(String parameterName, Boolean defaultValue, final ActivatedJob activatedJob) {
+        if (!containsKeyInJob(parameterName, activatedJob))
+            return (Boolean) getDefaultValue(parameterName, defaultValue);
+        Object value = getValueFromJob(parameterName, activatedJob);
+        if (value == null)
+            return null;
+        if ("TRUE".equalsIgnoreCase(value.toString())
+                || "YES".equalsIgnoreCase(value.toString()))
+            return Boolean.TRUE;
+        return Boolean.FALSE;
+    }
+
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Getter/Setter                                           */
