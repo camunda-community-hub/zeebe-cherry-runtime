@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0xro57b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.2.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0xro57b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.3.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
   <bpmn:process id="PingConnectorAndWorkerProcess" name="PingConnectorAndWorker" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_00mgsl9</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_0nqorhv" sourceRef="PingWorkerTask" targetRef="Activity_0924qig" />
+    <bpmn:sequenceFlow id="Flow_0nqorhv" sourceRef="PingWorkerTask" targetRef="Activity_0pnfhtm" />
     <bpmn:endEvent id="Event_1y8cr79">
       <bpmn:incoming>Flow_1kq0q02</bpmn:incoming>
     </bpmn:endEvent>
@@ -24,6 +24,7 @@
         <zeebe:taskDefinition type="c-ping" />
         <zeebe:ioMapping>
           <zeebe:input source="=&#34;Hello worker&#34;" target="message" />
+          <zeebe:output source="=timestamp" target="timeStampPing" />
         </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_00mgsl9</bpmn:incoming>
@@ -54,75 +55,93 @@
           <zeebe:input source="false" target="delay_optional" />
           <zeebe:input source="true" target="message_optional" />
           <zeebe:input source="Good day" target="message" />
-          <zeebe:output source="= timestamp" target="timeStampConnectorTemplate" />
+          <zeebe:input source="true" target="timestamp_optional" />
+          <zeebe:output source="= timestamp" target="timeStampConnector" />
+          <zeebe:output source="= timeStampMS" target="timeStampConnector" />
         </zeebe:ioMapping>
         <zeebe:taskHeaders>
           <zeebe:header key="resultVariable" value="response" />
         </zeebe:taskHeaders>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0nqorhv</bpmn:incoming>
+      <bpmn:incoming>Flow_1rxnkak</bpmn:incoming>
       <bpmn:outgoing>Flow_0m145eg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1rxnkak" sourceRef="Activity_0pnfhtm" targetRef="Activity_0924qig" />
+    <bpmn:serviceTask id="Activity_0pnfhtm" name="pingWorker">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="c-ping" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=&#34;Second ping&#34;" target="message" />
+          <zeebe:input source="=timeStampPing" target="timestamp" />
+          <zeebe:output source="= timestamp" target="timestampPing2" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0nqorhv</bpmn:incoming>
+      <bpmn:outgoing>Flow_1rxnkak</bpmn:outgoing>
     </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="PingConnectorAndWorkerProcess">
-      <bpmndi:BPMNEdge id="Flow_180pa5c_di" bpmnElement="Flow_180pa5c">
-        <di:waypoint x="520" y="117" />
-        <di:waypoint x="590" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_00mgsl9_di" bpmnElement="Flow_00mgsl9">
-        <di:waypoint x="215" y="117" />
-        <di:waypoint x="270" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0q2l7az_di" bpmnElement="Flow_0q2l7az">
-        <di:waypoint x="640" y="175" />
-        <di:waypoint x="640" y="240" />
-        <di:waypoint x="712" y="240" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1kq0q02_di" bpmnElement="Flow_1kq0q02">
-        <di:waypoint x="690" y="117" />
-        <di:waypoint x="752" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0nqorhv_di" bpmnElement="Flow_0nqorhv">
-        <di:waypoint x="320" y="157" />
-        <di:waypoint x="320" y="174" />
-        <di:waypoint x="370" y="174" />
-        <di:waypoint x="370" y="190" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0m145eg_di" bpmnElement="Flow_0m145eg">
-        <di:waypoint x="390" y="190" />
-        <di:waypoint x="390" y="174" />
-        <di:waypoint x="470" y="174" />
-        <di:waypoint x="470" y="157" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1y8cr79_di" bpmnElement="Event_1y8cr79">
-        <dc:Bounds x="752" y="99" width="36" height="36" />
+        <dc:Bounds x="1022" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_18mcdva_di" bpmnElement="Event_18mcdva">
-        <dc:Bounds x="712" y="222" width="36" height="36" />
+        <dc:Bounds x="982" y="222" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1w7l5wc_di" bpmnElement="PingWorkerTask">
         <dc:Bounds x="270" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_14s3adt_di" bpmnElement="PingConnectorTask">
-        <dc:Bounds x="420" y="77" width="100" height="80" />
+        <dc:Bounds x="690" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1gnl3wk_di" bpmnElement="ReviewTask">
-        <dc:Bounds x="590" y="77" width="100" height="80" />
+        <dc:Bounds x="860" y="77" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0ghvpw8_di" bpmnElement="Activity_0924qig">
-        <dc:Bounds x="340" y="190" width="100" height="80" />
+        <dc:Bounds x="565" y="77" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_13zoqbq_di" bpmnElement="Activity_0pnfhtm">
+        <dc:Bounds x="390" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_140nrvk_di" bpmnElement="N2mnBoundaryEvent">
-        <dc:Bounds x="622" y="139" width="36" height="36" />
+        <dc:Bounds x="892" y="139" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="659" y="173" width="22" height="14" />
+          <dc:Bounds x="929" y="173" width="22" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0nqorhv_di" bpmnElement="Flow_0nqorhv">
+        <di:waypoint x="370" y="117" />
+        <di:waypoint x="390" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kq0q02_di" bpmnElement="Flow_1kq0q02">
+        <di:waypoint x="960" y="117" />
+        <di:waypoint x="1022" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q2l7az_di" bpmnElement="Flow_0q2l7az">
+        <di:waypoint x="910" y="175" />
+        <di:waypoint x="910" y="240" />
+        <di:waypoint x="982" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00mgsl9_di" bpmnElement="Flow_00mgsl9">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="270" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_180pa5c_di" bpmnElement="Flow_180pa5c">
+        <di:waypoint x="790" y="117" />
+        <di:waypoint x="860" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m145eg_di" bpmnElement="Flow_0m145eg">
+        <di:waypoint x="665" y="117" />
+        <di:waypoint x="690" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rxnkak_di" bpmnElement="Flow_1rxnkak">
+        <di:waypoint x="490" y="117" />
+        <di:waypoint x="565" y="117" />
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

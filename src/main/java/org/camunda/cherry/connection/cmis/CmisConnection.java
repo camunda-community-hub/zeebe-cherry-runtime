@@ -83,7 +83,23 @@ public class CmisConnection {
      * @return the folder object
      */
     public Folder getFolderByPath(final String path) {
-        return (Folder) session.getObjectByPath(path);
+        CmisObject cmisObject= session.getObjectByPath(path);
+        if (cmisObject instanceof Folder cmisFolder)
+            return cmisFolder;
+        return null;
+    }
+
+    public CmisObject getObjectByPath(final String path) {
+        return session.getObjectByPath(path);
+    }
+
+    /**
+     * Return an object by it's ID
+     * @param objectId
+     * @return
+     */
+    public CmisObject getObjectById(final String objectId) {
+        return session.getObject(objectId);
     }
 
     /**
@@ -228,5 +244,13 @@ public class CmisConnection {
         if (existingDocument != null)
             session.delete(existingDocument);
         return false;
+    }
+
+    /**
+     * Access the CMIS session for any advance usage
+     * @return
+     */
+    public Session getSession() {
+        return session;
     }
 }

@@ -6,8 +6,13 @@ import org.camunda.cherry.definition.RunnerParameter;
 import java.util.Arrays;
 import java.util.List;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public class PingConnectorInput extends AbstractConnectorInput {
-    private String message;
+
+    // see https://docs.camunda.io/docs/components/integration-framework/connectors/custom-built-connectors/connector-sdk/#validation
+
+    @NotEmpty private String message;
     private int delay;
 
 
