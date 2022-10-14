@@ -176,11 +176,8 @@
                     <target>17</target>
                 </configuration>
             </plugin>
-        </plugins>
 
-
-        <!-- allo mvn run -->
-        <plugins>
+            <!-- allow mvn run -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -188,6 +185,7 @@
                     <mainClass>org.camunda.cherry.CherryApplication</mainClass>
                 </configuration>
             </plugin>
+
         </plugins>
 
 
