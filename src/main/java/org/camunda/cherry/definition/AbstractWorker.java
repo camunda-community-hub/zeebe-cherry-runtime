@@ -69,8 +69,12 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
         // first, see if the process respect the contract for this connector
         checkInput(activatedJob);
 
+        validateInput();
+
         // ok, this is correct, execute it now
         execute(jobClient, activatedJob, contextExecution);
+
+        validateOutput();
 
         // let's verify the execution respect the output contract
         checkOutput(contextExecution);
@@ -120,15 +124,6 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
     /* -------------------------------------------------------- */
 
 
-    /**
-     * All executions call the same object. This contains all the context for one execution.
-     */
-    protected class ContextExecution {
-        public final Map<String, Object> outVariablesValue = new HashMap<>();
-        long beginExecution;
-        long endExecution;
 
-
-    }
 
 }

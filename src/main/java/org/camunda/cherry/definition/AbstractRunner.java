@@ -19,6 +19,7 @@ import org.camunda.cherry.definition.filevariable.FileVariable;
 import org.camunda.cherry.definition.filevariable.FileVariableFactory;
 import org.camunda.cherry.definition.filevariable.FileVariableReference;
 import org.camunda.cherry.definition.filevariable.StorageDefinition;
+import org.camunda.cherry.runtime.ZeebeContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,15 @@ public abstract class AbstractRunner {
 
     public final static String BPMNERROR_ACCESS_FILEVARIABLE = "ACCESS_FILEVARIABLE";
     public final static String BPMNERROR_SAVE_FILEVARIABLE = "SAVE_FILEVARIABLE";
+    public static final String BOOLEAN_V_TRUE = "TRUE";
+    public static final String BOOLEAN_V_YES = "YES";
+    public static final String BOOLEAN_V_FALSE = "FALSE";
+    public static final String BOOLEAN_V_NO = "NO";
     // This idea was inspired by: https://stackoverflow.com/questions/40402756/check-if-a-string-is-parsable-as-another-java-type
     static Map<Class<?>, Predicate<String>> canParsePredicates = new HashMap<>();
+
+    @Autowired
+    ZeebeContainer zeebeContainer;
 
     static {
         canParsePredicates.put(java.lang.Integer.class, s -> {
@@ -120,6 +128,17 @@ public abstract class AbstractRunner {
         }
     }
 
+
+
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Runner Input/Output                                     */
+    /*                                                          */
+    /* Access Input value, set Output value                     */
+    /* -------------------------------------------------------- */
+
+
     /**
      * Return a value as Double
      *
@@ -151,14 +170,14 @@ public abstract class AbstractRunner {
      * @param activatedJob  job passed to the worker
      * @return a Map value
      */
-    public Map getInputMapValue(String parameterName, Map defaultValue, final ActivatedJob activatedJob) {
+    public Map<?,?> getInputMapValue(String parameterName, Map<?,?> defaultValue, final ActivatedJob activatedJob) {
         if (!containsKeyInJob(parameterName, activatedJob))
-            return (Map) getDefaultValue(parameterName, defaultValue);
+            return (Map<?,?>) getDefaultValue(parameterName, defaultValue);
 
         Object value = getValueFromJob(parameterName, activatedJob);
         if (value == null)
             return null;
-        if (value instanceof Map valueMap)
+        if (value instanceof Map<?,?> valueMap)
             return valueMap;
 
         return defaultValue;
@@ -224,9 +243,10 @@ public abstract class AbstractRunner {
      * @param activatedJob  job passed to the worker
      * @return a FileVariable
      */
-    public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
-        try{
-            FileVariableReference fileVariableReference = getFileVariableReferenceValue(parameterName,activatedJob);
+    public FileVariable getInputFileVariableValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
+
+        try {
+            FileVariableReference fileVariableReference = getFileVariableReferenceValue(parameterName, activatedJob);
             if (fileVariableReference == null)
                 return null;
 
@@ -237,248 +257,40 @@ public abstract class AbstractRunner {
     }
 
     /**
+     * get the FileVariable.
+     * The file variable may be store in multiple storage. The format is given in the parameterStorageDefinition. This is a String which pilot
+     * how to load the file. The value can be saved a JSON, or saved in a specific directory (then the value is an ID)
+     *
+     * @param parameterName name where the value is stored
+     * @param activatedJob  job passed to the worker
+     * @return a FileVariable
+     * @throws ZeebeBpmnError if the file variable cannot be load
+     * @deprecated use getInputFileVariableValue()
+     */
+    @Deprecated
+    public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
+        return getInputFileVariableValue(parameterName, activatedJob);
+    }
+
+    /**
      * Return the FileVariableReferenceValue. This information is needed to get access to the file
+     *
      * @param parameterName name where the value is stored
      * @param activatedJob  job passed to the worker
      * @return a FileVariableReference
-     * @throws ZeebeBpmnError
+     * @throws ZeebeBpmnError if the fileVariableReference cannot be load
      */
     public FileVariableReference getFileVariableReferenceValue(String parameterName, final ActivatedJob activatedJob) throws ZeebeBpmnError {
         if (!containsKeyInJob(parameterName, activatedJob))
             return null;
         Object fileVariableReferenceValue = getValueFromJob(parameterName, activatedJob);
         try {
-            FileVariableReference fileVariableReference = FileVariableReference.fromJson(fileVariableReferenceValue.toString());
+            // result may be null
+            return FileVariableReference.fromJson(fileVariableReferenceValue.toString());
 
-            if (fileVariableReference == null)
-                return null;
-
-            return fileVariableReference;
         } catch (Exception e) {
             throw new ZeebeBpmnError(BPMNERROR_ACCESS_FILEVARIABLE, "Worker [" + getName() + "] error during access fileVariableReference[" + fileVariableReferenceValue + "] :" + e);
         }
-    }
-    /**
-     * return a variable value
-     *
-     * @param parameterName name of the input value
-     * @param defaultValue  if the input does not exist, this is the default value.
-     * @param activatedJob  job passed to the worker
-     * @return the value as String
-     */
-    public Object getValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
-        if (!containsKeyInJob(parameterName, activatedJob))
-            return getDefaultValue(parameterName, defaultValue);
-        try {
-            return getValueFromJob(parameterName, activatedJob);
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
-
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Runner parameters                                       */
-    /*                                                          */
-    /* Runner must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
-    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
-    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
-
-    /**
-     * Return the defaultValue for a parameter. If the defaultValue is provided by the software, it has the priority.
-     * Else the default value is the one given in the parameter.
-     *
-     * @param parameterName name of parameter
-     * @param defaultValue  default value given by the software
-     * @return the default value
-     */
-    private Object getDefaultValue(String parameterName, Object defaultValue) {
-        // if the software give a default value, it has the priority
-        if (defaultValue != null)
-            return defaultValue;
-        List<RunnerParameter> inputFilter = listInput.stream().filter(t -> t.name.equals(parameterName)).toList();
-        if (!inputFilter.isEmpty())
-            return inputFilter.get(0).defaultValue;
-        // definitively, no default value
-        return null;
-    }
-
-    /**
-     * Set the value. Worker must use this method, then the class can verify the output contract is respected
-     *
-     * @param parameterName name of the variable
-     * @param value         value of the variable
-     */
-    public void setValue(String parameterName, Object value, AbstractWorker.ContextExecution contextExecution) {
-        contextExecution.outVariablesValue.put(parameterName, value);
-    }
-
-    /**
-     * Set a fileVariable value
-     *
-     * @param parameterName     name to save the fileValue
-     * @param storageDefinition parameter which pilot the way to retrieve the value
-     * @param fileVariableValue fileVariable to save
-     * @param contextExecution  context execution
-     */
-    public void setFileVariableValue(String parameterName, StorageDefinition storageDefinition, FileVariable fileVariableValue, AbstractWorker.ContextExecution contextExecution) {
-        try {
-            FileVariableReference fileVariableReference = fileVariableFactory.setFileVariable(storageDefinition, fileVariableValue);
-            contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
-        } catch (Exception e) {
-            logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
-            throw new ZeebeBpmnError(BPMNERROR_SAVE_FILEVARIABLE, "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
-        }
-    }
-
-
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Runner parameters                                       */
-    /*                                                          */
-    /* Runner must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
-    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
-    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
-
-    /**
-     * Log an error
-     *
-     * @param message message to log
-     */
-    public void logError(String message) {
-        loggerAbstract.error("CherryWorker[" + getName() + "]: " + message);
-    }
-
-    /**
-     * Check the contract
-     * Each connector must and return a contract for what it needs for the execution
-     *
-     * @throws RuntimeException if the input is incorrect, contract not respected
-     */
-    protected void checkInput(final ActivatedJob job) throws RuntimeException {
-        List<String> listErrors = new ArrayList<>();
-        for (RunnerParameter parameter : getListInput()) {
-            // if a parameter is a star, then this is not really a name
-            if (parameter.isAccessAllVariables())
-                continue;
-
-            // value is in Variables if the designer map Input and Output manually
-            // or may be in the custom headers if the designer use a template
-            Object value = getValueFromJob(parameter.name, job);
-
-            // check type
-            if (value != null && incorrectClassParameter(value, parameter.clazz)) {
-                listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
-            }
-
-
-            // check REQUIRED parameters
-            if ((value == null || value.toString().trim().length() == 0) && parameter.level == RunnerParameter.Level.REQUIRED) {
-                listErrors.add("Param[" + parameter.name + "] is missing");
-            }
-        }
-        if (!listErrors.isEmpty()) {
-            logError("CherryConnector[" + getType() + "] Errors:" + String.join(",", listErrors));
-            throw new ZeebeBpmnError("INPUT_CONTRACT_ERROR", "Worker [" + getType() + "] InputContract Exception:" + String.join(",", listErrors));
-        }
-    }
-
-    /**
-     * Check the contract at output
-     * The connector must use setVariable to set any value. Then, we can verify that all expected information are provided
-     *
-     * @param contextExecution keep the context of this execution
-     * @throws RuntimeException when the contract is not respected
-     */
-    protected void checkOutput(AbstractWorker.ContextExecution contextExecution) throws RuntimeException {
-        List<String> listErrors = new ArrayList<>();
-
-        for (RunnerParameter parameter : getListOutput()) {
-
-            // no check on the * parameter
-            if (parameter.isAccessAllVariables())
-                continue;
-
-            if (parameter.level == RunnerParameter.Level.REQUIRED && !contextExecution.outVariablesValue.containsKey(parameter.name)) {
-                listErrors.add("Param[" + parameter.name + "] is missing");
-            }
-            // if the value is given, it must be the correct value
-            if (contextExecution.outVariablesValue.containsKey(parameter.name)) {
-                Object value = contextExecution.outVariablesValue.get(parameter.name);
-
-                if (incorrectClassParameter(value == null ? null : value.getClass().getName(), parameter.clazz))
-                    listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName()
-                            + "] received[" + contextExecution.outVariablesValue.get(parameter.name).getClass() + "];");
-
-            }
-        }
-        Set<String> outputName = getListOutput().stream().map(t -> t.name).collect(Collectors.toSet());
-        // second pass: verify that the connector does not provide an unexpected value
-        // if a outputParameter is the accessAllVariable then the connector allows itself to produce anything
-        long containsStar = getListOutput().stream()
-                .filter(RunnerParameter::isAccessAllVariables)
-                .count();
-        if (containsStar == 0) {
-            List<String> listExtraVariables = contextExecution.outVariablesValue.keySet()
-                    .stream()
-                    .filter(variable -> !outputName.contains(variable))
-                    .toList();
-            if (!listExtraVariables.isEmpty())
-                listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
-        }
-
-
-        if (!listErrors.isEmpty()) {
-            logError("Errors:" + String.join(",", listErrors));
-            throw new ZeebeBpmnError("OUTPUT_CONTRACT_ERROR", "Worker[" + getType() + "] OutputContract Exception:" + String.join(",", listErrors));
-        }
-    }
-
-    /**
-     * Check the object versus the expected parameter
-     *
-     * @param value        object value to check
-     * @param isInstanceOf expected class
-     * @return false if the value is on the class, else true
-     */
-    boolean incorrectClassParameter(Object value, Class<?> isInstanceOf) {
-        if (value == null)
-            return false;
-        try {
-            if (Class.forName(isInstanceOf.getName()).isInstance(value)) {
-                return false;
-            } else {
-                return !canParse(isInstanceOf, value.toString());
-            }
-        } catch (Exception e) {
-            // do nothing, we return true
-        }
-        return true;
-    }
-
-
-    private boolean containsKeyInJob(String parameterName, final ActivatedJob activatedJob) {
-        return (activatedJob.getVariablesAsMap().containsKey(parameterName)
-                || activatedJob.getCustomHeaders().containsKey(parameterName));
-    }
-
-    /**
-     * Value is in Variables if the designer map Input and Output manually,
-     * or may be in the custom headers if the designer use a template
-     *
-     * @param parameterName parameter to get the value
-     * @param activatedJob  activated job
-     * @return
-     */
-    protected Object getValueFromJob(String parameterName, final ActivatedJob activatedJob) {
-        if (activatedJob.getVariablesAsMap().containsKey(parameterName))
-            return activatedJob.getVariablesAsMap().get(parameterName);
-        return activatedJob.getCustomHeaders().get(parameterName);
     }
 
     /**
@@ -496,6 +308,7 @@ public abstract class AbstractRunner {
         Object value = getValueFromJob(parameterName, activatedJob);
         return value == null ? null : value.toString();
     }
+
     /**
      * Retrieve a Gson variable, and return the string representation. If the variable is not a String, then a toString() is returned. If the value does not exist, then defaultValue is returned
      * The method can return null if the variable exists, but it is a null value.
@@ -506,29 +319,27 @@ public abstract class AbstractRunner {
      * @return the value as an object, decoded
      */
     public Object getInputGsonValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) throws Exception {
-        String valueInJson=null;
         Object value;
         if (!containsKeyInJob(parameterName, activatedJob))
             value = getDefaultValue(parameterName, defaultValue);
         else
             value = getValueFromJob(parameterName, activatedJob);
-        if (value==null)
+        if (value == null)
             return null;
-        if (! (value instanceof String))
+        if (!(value instanceof String))
             return value;
-        valueInJson=value.toString();
+        String valueInJson = value.toString();
         // if the value is a constant parameters, all string will be \" instead of "
         // {\"repository\":\"http://localhost:8099/lightweightcmis/browser\",\"userName\":\"cmisaccess\",\"password\":\"demo\",\"storageDefinitionFolder\":\"/cherry\"}
         valueInJson = valueInJson.replace("\\\"", "\"");
         try {
             Gson gson = new Gson();
-            Object valueInObject = gson.fromJson(valueInJson, Object.class);
-            return valueInObject;
-        }
-        catch( Exception e) {
-            throw new Exception("Can't decode the GSON on "+valueInJson);
+            return gson.fromJson(valueInJson, Object.class);
+        } catch (Exception e) {
+            throw new Exception("Can't decode the GSON on " + valueInJson);
         }
     }
+
     /**
      * Return a Folder file (not a file, but the folder)
      *
@@ -577,7 +388,7 @@ public abstract class AbstractRunner {
      * @param parameterName name of the variable to load
      * @param defaultValue  if the input does not exist, this is the default value.
      * @param activatedJob  job passed to the worker
-     * @return
+     * @return a Boolean value, null if the value is null
      */
     public Boolean getInputBooleanValue(String parameterName, Boolean defaultValue, final ActivatedJob activatedJob) {
         if (!containsKeyInJob(parameterName, activatedJob))
@@ -585,11 +396,296 @@ public abstract class AbstractRunner {
         Object value = getValueFromJob(parameterName, activatedJob);
         if (value == null)
             return null;
-        if ("TRUE".equalsIgnoreCase(value.toString())
-                || "YES".equalsIgnoreCase(value.toString()))
+        if (BOOLEAN_V_TRUE.equalsIgnoreCase(value.toString())
+                || BOOLEAN_V_YES.equalsIgnoreCase(value.toString()))
             return Boolean.TRUE;
         return Boolean.FALSE;
     }
+
+    /**
+     * return a variable value
+     *
+     * @param parameterName name of the input value
+     * @param defaultValue  if the input does not exist, this is the default value.
+     * @param activatedJob  job passed to the worker
+     * @return the value as an object
+     */
+    public Object getInputValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
+
+        if (!containsKeyInJob(parameterName, activatedJob))
+            return getDefaultValue(parameterName, defaultValue);
+        try {
+            return getValueFromJob(parameterName, activatedJob);
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * @param parameterName name of the input value
+     * @param defaultValue  if the input does not exist, this is the default value.
+     * @param activatedJob  job passed to the worker
+     * @return the value as an object
+     * @deprecated use getInputValue()
+     */
+    @Deprecated
+    public Object getValue(String parameterName, Object defaultValue, ActivatedJob activatedJob) {
+        return getInputValue(parameterName, defaultValue, activatedJob);
+    }
+
+    /**
+     * Return the defaultValue for a parameter. If the defaultValue is provided by the software, it has the priority.
+     * Else the default value is the one given in the parameter.
+     *
+     * @param parameterName name of parameter
+     * @param defaultValue  default value given by the software
+     * @return the default value
+     */
+    private Object getDefaultValue(String parameterName, Object defaultValue) {
+        // if the software give a default value, it has the priority
+        if (defaultValue != null)
+            return defaultValue;
+        List<RunnerParameter> inputFilter = listInput.stream().filter(t -> t.name.equals(parameterName)).toList();
+        if (!inputFilter.isEmpty())
+            return inputFilter.get(0).defaultValue;
+        // definitively, no default value
+        return null;
+    }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Runner parameters                                       */
+    /*                                                          */
+    /* Runner must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
+    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
+    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
+
+
+    /**
+     * Set an Output value. Worker must use this method, then the class can verify the output contract is respected
+     *
+     * @param parameterName    name of the variable
+     * @param value            value of the variable
+     * @param contextExecution context of execution.
+     */
+    public void setOutputValue(String parameterName, Object value, AbstractWorker.ContextExecution contextExecution) {
+        contextExecution.outVariablesValue.put(parameterName, value);
+    }
+
+    /**
+     * Set the value. Worker must use this method, then the class can verify the output contract is respected
+     *
+     * @param parameterName name of the variable
+     * @param value         value of the variable
+     * @deprecated use setOutputValue() instead
+     */
+    @Deprecated
+    public void setValue(String parameterName, Object value, AbstractWorker.ContextExecution contextExecution) {
+        setOutputValue(parameterName, value, contextExecution);
+    }
+
+    /**
+     * Set a fileVariable value
+     *
+     * @param parameterName     name to save the fileValue
+     * @param storageDefinition parameter which pilot the way to retrieve the value
+     * @param fileVariableValue fileVariable to save
+     * @param contextExecution  context execution
+     */
+    public void setOutputFileVariableValue(String parameterName, StorageDefinition storageDefinition, FileVariable fileVariableValue, AbstractWorker.ContextExecution contextExecution) {
+        try {
+            FileVariableReference fileVariableReference = fileVariableFactory.setFileVariable(storageDefinition, fileVariableValue);
+            contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
+        } catch (Exception e) {
+            logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
+            throw new ZeebeBpmnError(BPMNERROR_SAVE_FILEVARIABLE, "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
+        }
+    }
+
+    /**
+     * Set a fileVariable value
+     *
+     * @param parameterName     name to save the fileValue
+     * @param storageDefinition parameter which pilot the way to retrieve the value
+     * @param fileVariableValue fileVariable to save
+     * @param contextExecution  context execution
+     * @deprecated use setOuputFileVariableValue()
+     */
+    @Deprecated
+    public void setFileVariableValue(String parameterName, StorageDefinition storageDefinition, FileVariable fileVariableValue, AbstractWorker.ContextExecution contextExecution) {
+        setOutputFileVariableValue(parameterName, storageDefinition, fileVariableValue, contextExecution);
+    }
+
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Runner parameters                                       */
+    /*                                                          */
+    /* Runner must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
+    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
+    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
+
+    /**
+     * Log an error
+     *
+     * @param message message to log
+     */
+    public void logError(String message) {
+        loggerAbstract.error("CherryWorker[" + getName() + "]: " + message);
+    }
+
+    /**
+     * Check the contract
+     * Each connector must and return a contract for what it needs for the execution
+     *
+     * @throws RuntimeException if the input is incorrect, contract not respected
+     */
+    protected void checkInput(final ActivatedJob job) throws RuntimeException {
+        List<String> listErrors = new ArrayList<>();
+        for (RunnerParameter parameter : getListInput()) {
+            // if a parameter is a star, then this is not really a name
+            if (parameter.isAccessAllVariables())
+                continue;
+
+            // value is in Variables if the designer map Input and Output manually
+            // or may be in the custom headers if the designer use a template
+            Object value = getValueFromJob(parameter.name, job);
+
+            // check type
+            if (value != null && !isCorrectClassParameter(value, parameter.clazz)) {
+                listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName() + "] received[" + value.getClass() + "];");
+            }
+
+
+            // check REQUIRED parameters
+            if ((value == null || value.toString().trim().length() == 0) && parameter.level == RunnerParameter.Level.REQUIRED) {
+                listErrors.add("Param[" + parameter.name + "] is missing");
+            }
+        }
+        if (!listErrors.isEmpty()) {
+            logError("CherryConnector[" + getType() + "] Errors:" + String.join(",", listErrors));
+            throw new ZeebeBpmnError("INPUT_CONTRACT_ERROR", "Worker [" + getType() + "] InputContract Exception:" + String.join(",", listErrors));
+        }
+    }
+
+    /**
+     * Runner can implement a validateInput method, to code advance verification
+     */
+    public void validateInput() throws ZeebeBpmnError {
+    }
+
+    /**
+     * Runner can implement a validateOutput method, to code advance verification on output
+     */
+    public void validateOutput() throws ZeebeBpmnError {
+    }
+
+    /**
+     * Check the contract at output
+     * The connector must use setVariable to set any value. Then, we can verify that all expected information are provided
+     *
+     * @param contextExecution keep the context of this execution
+     * @throws RuntimeException when the contract is not respected
+     */
+    protected void checkOutput(AbstractWorker.ContextExecution contextExecution) throws RuntimeException {
+        List<String> listErrors = new ArrayList<>();
+
+        for (RunnerParameter parameter : getListOutput()) {
+
+            // no check on the * parameter
+            if (parameter.isAccessAllVariables())
+                continue;
+
+            if (parameter.level == RunnerParameter.Level.REQUIRED && !contextExecution.outVariablesValue.containsKey(parameter.name)) {
+                listErrors.add("Param[" + parameter.name + "] is missing");
+            }
+            // if the value is given, it must be the correct value
+            if (contextExecution.outVariablesValue.containsKey(parameter.name)) {
+                Object value = contextExecution.outVariablesValue.get(parameter.name);
+
+                if (!isCorrectClassParameter(value, parameter.clazz))
+                    listErrors.add("Param[" + parameter.name + "] expect class[" + parameter.clazz.getName()
+                            + "] received[" + contextExecution.outVariablesValue.get(parameter.name).getClass() + "];");
+
+            }
+        }
+        Set<String> outputName = getListOutput().stream().map(t -> t.name).collect(Collectors.toSet());
+        // second pass: verify that the connector does not provide an unexpected value
+        // if a outputParameter is the accessAllVariable then the connector allows itself to produce anything
+        long containsStar = getListOutput().stream()
+                .filter(RunnerParameter::isAccessAllVariables)
+                .count();
+        if (containsStar == 0) {
+            List<String> listExtraVariables = contextExecution.outVariablesValue.keySet()
+                    .stream()
+                    .filter(variable -> !outputName.contains(variable))
+                    .toList();
+            if (!listExtraVariables.isEmpty())
+                listErrors.add("Output not defined in the contract[" + String.join(",", listExtraVariables) + "]");
+        }
+
+
+        if (!listErrors.isEmpty()) {
+            logError("Errors:" + String.join(",", listErrors));
+            throw new ZeebeBpmnError("OUTPUT_CONTRACT_ERROR", "Worker[" + getType() + "] OutputContract Exception:" + String.join(",", listErrors));
+        }
+    }
+
+    /**
+     * Check the object versus the expected parameter
+     *
+     * @param value        object value to check
+     * @param isInstanceOf expected class
+     * @return true if the value is correct, false else
+     */
+    private boolean isCorrectClassParameter(Object value, Class<?> isInstanceOf) {
+        if (value == null)
+            return true; // by default, a null value respect any class
+        try {
+            if (Boolean.class.getName().equals(isInstanceOf.getName())) {
+                if (value instanceof Boolean)
+                    return true;
+                // Accept this kind of value for a boolean
+                if (BOOLEAN_V_TRUE.equalsIgnoreCase(value.toString())
+                        || BOOLEAN_V_YES.equalsIgnoreCase(value.toString())
+                        || BOOLEAN_V_FALSE.equalsIgnoreCase(value.toString())
+                        || BOOLEAN_V_NO.equalsIgnoreCase(value.toString()))
+                    return true;
+            }
+
+            if (isInstanceOf.isInstance(value))
+                return true;
+
+            return canParse(isInstanceOf, value.toString());
+
+        } catch (Exception e) {
+            // do nothing, we return true
+        }
+        return false;
+    }
+
+
+    private boolean containsKeyInJob(String parameterName, final ActivatedJob activatedJob) {
+        return (activatedJob.getVariablesAsMap().containsKey(parameterName)
+                || activatedJob.getCustomHeaders().containsKey(parameterName));
+    }
+
+    /**
+     * Value is in Variables if the designer map Input and Output manually,
+     * or may be in the custom headers if the designer use a template
+     *
+     * @param parameterName parameter to get the value
+     * @param activatedJob  activated job
+     * @return
+     */
+    protected Object getValueFromJob(String parameterName, final ActivatedJob activatedJob) {
+        if (activatedJob.getVariablesAsMap().containsKey(parameterName))
+            return activatedJob.getVariablesAsMap().get(parameterName);
+        return activatedJob.getCustomHeaders().get(parameterName);
+    }
+
 
     /* -------------------------------------------------------- */
     /*                                                          */
@@ -633,6 +729,17 @@ public abstract class AbstractRunner {
         return listBpmnErrors;
     }
 
+    /**
+     * Check parameters. If something is not correct in the definition, then throw an error
+     *
+     * @return a list of errors
+     */
+    public List<String> getDefinitionErrors() {
+        List<String> listOfErrors = new ArrayList<>();
+        listOfErrors.addAll(checkListParameters(listInput));
+        listOfErrors.addAll(checkListParameters(listOutput));
+        return listOfErrors;
+    }
     /**
      * Return the list of variable to fetch if this is possible, else null.
      * To calculate the list:
@@ -737,17 +844,7 @@ public abstract class AbstractRunner {
         return (getIdentification().isEmpty());
     }
 
-    /**
-     * Check parameters. If something is not correct in the definition, then throw an error
-     *
-     * @return a list of errors
-     */
-    public List<String> getDefinitionErrors() {
-        List<String> listOfErrors = new ArrayList<>();
-        listOfErrors.addAll(checkListParameters(listInput));
-        listOfErrors.addAll(checkListParameters(listOutput));
-        return listOfErrors;
-    }
+
 
     private List<String> checkListParameters(List<RunnerParameter> listParameters) {
         List<String> listOfErrors = new ArrayList<>();
@@ -770,6 +867,16 @@ public abstract class AbstractRunner {
             }
         }
         return listOfErrors;
+    }
+
+    /**
+     * All executions call the same object. This contains all the context for one execution.
+     */
+    protected class ContextExecution {
+        public final Map<String, Object> outVariablesValue = new HashMap<>();
+        long beginExecution;
+        long endExecution;
+
 
     }
 }
