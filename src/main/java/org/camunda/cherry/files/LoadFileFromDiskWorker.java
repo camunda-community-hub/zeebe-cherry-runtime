@@ -240,13 +240,13 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
         // output
         if (fileVariable != null) {
-            setFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable, contextExecution);
-            setValue(OUTPUT_FILE_NAME, fileVariable.name, contextExecution);
-            setValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType, contextExecution);
+            setOutputFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable, contextExecution);
+            setOutputValue(OUTPUT_FILE_NAME, fileVariable.name, contextExecution);
+            setOutputValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType, contextExecution);
         } else {
-            setValue(OUTPUT_FILE_LOADED, null, contextExecution);
-            setValue(OUTPUT_FILE_NAME, null, contextExecution);
-            setValue(OUTPUT_FILE_MIMETYPE, null, contextExecution);
+            setOutputValue(OUTPUT_FILE_LOADED, null, contextExecution);
+            setOutputValue(OUTPUT_FILE_NAME, null, contextExecution);
+            setOutputValue(OUTPUT_FILE_MIMETYPE, null, contextExecution);
 
         }
 

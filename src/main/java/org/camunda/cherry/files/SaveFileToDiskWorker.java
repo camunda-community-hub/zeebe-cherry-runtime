@@ -89,7 +89,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
 
         String folderToSave = getInputStringValue(INPUT_FOLDER_TO_SAVE, null, activatedJob);
-        FileVariable fileVariable = getFileVariableValue(INPUT_SOURCE_FILE, activatedJob);
+        FileVariable fileVariable = getInputFileVariableValue(INPUT_SOURCE_FILE, activatedJob);
 
         String fileName = getInputStringValue(INPUT_FILENAME, null, activatedJob);
 

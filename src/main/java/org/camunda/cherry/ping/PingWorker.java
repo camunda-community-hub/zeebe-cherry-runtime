@@ -31,10 +31,11 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
         super("c-ping",
                 Arrays.asList(
                         RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
-                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")),
-
+                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")
+                ),
                 Arrays.asList(
-                        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")),
+                        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")
+                ),
                 Collections.emptyList()
         );
 
@@ -83,8 +84,8 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
         DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 
         String formattedDate = formatter.format(new Date());
-        setValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
-        logInfo("Executed Ping Worker");
+        setOutputValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
+
     }
 
 

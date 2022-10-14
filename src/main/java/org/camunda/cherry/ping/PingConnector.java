@@ -47,9 +47,9 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
     @Override
     public Object execute(OutboundConnectorContext context) throws Exception {
 
-        var request = context.getVariablesAsType(PingConnectorInput.class);
+        var pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
 
-        context.validate(request);
+        // context.validate(pingConnectorInput);
 
         return new PingConnectorOutput(System.currentTimeMillis());
     }

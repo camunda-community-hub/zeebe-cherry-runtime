@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PingConnectorOutput extends AbstractConnectorOutput {
 
-    private long timeStamp;
+    private long timeStampMS;
 
     public PingConnectorOutput() {
         super();
@@ -16,16 +16,16 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
 
     public PingConnectorOutput(long currentTimestamp) {
         super();
-        this.timeStamp = currentTimestamp;
+        this.timeStampMS = currentTimestamp;
     }
 
     @Override
     public List<RunnerParameter> getListOutput() {
-        return Arrays.asList(RunnerParameter.getInstance("timestamp", "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp"));
+        return Arrays.asList(RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp"));
     }
 
-    public long getTimeStamp() {
-        return timeStamp;
+    public long getTimeStampMS() {
+        return timeStampMS;
     }
 
 }
