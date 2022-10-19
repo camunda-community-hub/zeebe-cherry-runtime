@@ -23,11 +23,11 @@
     }
 
     function stopRunner(runnerName) {
-        return putAjax(`/cherry/api/runner/${runnerName}/stop`, "", {contentType: 'text/plain', dataType: "html"})
+        return putAjax(`/cherry/api/runner/stop?name=${runnerName}`, "", {contentType: 'text/plain', dataType: "html"})
     }
 
     function startRunner(runnerName) {
-        return putAjax(`/cherry/api/runner/${runnerName}/start`, "", {contentType: 'text/plain', dataType: "html"})
+        return putAjax(`/cherry/api/runner/start?name=${runnerName}`, "", {contentType: 'text/plain', dataType: "html"})
     }
 
     function onWorkerClick(table) {
