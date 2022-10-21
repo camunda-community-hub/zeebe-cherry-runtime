@@ -20,8 +20,7 @@ import java.nio.file.Paths;
 public class FileVariableFolder {
     Logger logger = LoggerFactory.getLogger(FileVariableFolder.class.getName());
 
-
-    private FileVariableFactory fileVariableFactory;
+    private final FileVariableFactory fileVariableFactory;
 
     public FileVariableFolder(FileVariableFactory fileVariableFactory) {
         this.fileVariableFactory =fileVariableFactory;
@@ -62,6 +61,7 @@ public class FileVariableFolder {
             FileVariable fileVariable = new FileVariable();
             fileVariable.name = fileName;
             fileVariable.mimeType = FileVariable.getMimeTypeFromName(fileName);
+            fileVariable.storageDefinition=storageDefinition;
             fileVariable.value = Files.readAllBytes(Paths.get(pathFolder + FileSystems.getDefault().getSeparator() + fileName));
             return fileVariable;
 
@@ -73,9 +73,9 @@ public class FileVariableFolder {
 
     /**
      * Remove a file in the directory
-     * @param storageDefinition
-     * @param fileName
-     * @return
+     * @param storageDefinition storage definition used to remove the file
+     * @param fileName file name to delete
+     * @return true if the operation was successful
      */
     public boolean removeFile(StorageDefinition storageDefinition, String fileName) {
        Path pathFolder = extractPath(storageDefinition);

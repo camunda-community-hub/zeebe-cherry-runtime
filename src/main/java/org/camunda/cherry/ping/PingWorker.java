@@ -33,7 +33,7 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
                         RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
                         RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")
                 ),
-                Arrays.asList(
+                Collections.singletonList(
                         RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")
                 ),
                 Collections.emptyList()
@@ -44,7 +44,7 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
     /**
      * mark this worker as a Framework runner
      *
-     * @return
+     * @return true because this worker is part of the Cherry framework
      */
     @Override
     public boolean isFrameworkRunner() {
@@ -53,12 +53,12 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
     @Override
     public String getName() {
-        return "Cherry:Ping worker";
+        return "Ping worker";
     }
 
     @Override
     public String getLabel() {
-        return "Cherry: Ping using the worker pattern";
+        return "Ping using the worker pattern";
     }
 
 

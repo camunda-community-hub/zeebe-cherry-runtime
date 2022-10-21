@@ -37,8 +37,8 @@ public class FileVariableFactory {
         return switch (storageDefinition.type) {
             case FOLDER -> new FileVariableFolder(this).fromFolder(storageDefinition, fileContainer.content.toString());
             case CMIS -> new FileVariableCMIS(this).fromCmis(storageDefinition, fileContainer.content.toString());
-            case TEMPFOLDER -> new FileVariableTempFolder().fromTempFolder(fileContainer.content.toString());
-            case JSON -> new FileVariableJSON().fromJson(fileContainer.content.toString());
+            case TEMPFOLDER -> new FileVariableTempFolder(this).fromTempFolder(storageDefinition, fileContainer.content.toString());
+            case JSON -> new FileVariableJSON().fromJson(storageDefinition, fileContainer.content.toString());
         };
 
     }
@@ -70,7 +70,7 @@ public class FileVariableFactory {
                 break;
 
             case TEMPFOLDER:
-                fileContainer.content = new FileVariableTempFolder().toTempFolder(fileVariableValue);
+                fileContainer.content = new FileVariableTempFolder(this).toTempFolder(fileVariableValue);
                 break;
 
             case JSON:
@@ -88,6 +88,10 @@ public class FileVariableFactory {
         StorageDefinition storageDefinition = StorageDefinition.getFromString(fileContainer.storageDefinition);
 
         switch (storageDefinition.type) {
+            case JSON:
+                // nothing to do for JSON
+                break;
+
             case FOLDER:
                 return new FileVariableFolder(this).removeFile(storageDefinition, fileContainer.content.toString());
 
@@ -96,7 +100,7 @@ public class FileVariableFactory {
                 return true;
 
             case TEMPFOLDER:
-                return new FileVariableTempFolder().removeFile(fileContainer.content.toString());
+                return new FileVariableTempFolder(this).removeFile(fileContainer.content.toString());
 
         }
         return true;

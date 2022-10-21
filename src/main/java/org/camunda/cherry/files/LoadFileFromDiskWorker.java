@@ -86,7 +86,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                                 .setGroup(GROUP_PROCESS_FILE)
                         ,
                         RunnerParameter.getInstance(INPUT_ARCHIVE_FOLDER, "Archive folder", String.class, RunnerParameter.Level.OPTIONAL, "With the policy " + POLICY_V_ARCHIVE + ". File is moved in this folder.")
-                                .addCondition(INPUT_POLICY, Arrays.asList(POLICY_V_ARCHIVE))
+                                .addCondition(INPUT_POLICY, Collections.singletonList(POLICY_V_ARCHIVE))
                                 .setGroup(GROUP_PROCESS_FILE),
 
                         RunnerParameter.getInstance(INPUT_STORAGEDEFINITION, "Storage definition", String.class, StorageDefinition.StorageDefinitionType.JSON.toString(),
@@ -107,13 +107,13 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                         ,
                         RunnerParameter.getInstance(INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT, "Folder Storage definition Complement",
                                         String.class, RunnerParameter.Level.OPTIONAL, "Complement to the Storage definition, if needed. " + StorageDefinition.StorageDefinitionType.FOLDER + ": please provide the folder to save the file")
-                                .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(StorageDefinition.StorageDefinitionType.FOLDER.toString()))
+                                .addCondition(INPUT_STORAGEDEFINITION, Collections.singletonList(StorageDefinition.StorageDefinitionType.FOLDER.toString()))
                                 .setGroup(GROUP_STORAGE_DEFINITION),
                         RunnerParameter.getGsonInstance(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, "CMIS Storage definition Complement",
                                         RunnerParameter.Level.OPTIONAL,
                                         "Complement to the Storage definition, if needed. " + StorageDefinition.StorageDefinitionType.FOLDER + ": please provide the folder to save the file",
                                         CmisParameters.getGsonTemplate())
-                                .addCondition(INPUT_STORAGEDEFINITION, Arrays.asList(StorageDefinition.StorageDefinitionType.CMIS.toString()))
+                                .addCondition(INPUT_STORAGEDEFINITION, Collections.singletonList(StorageDefinition.StorageDefinitionType.CMIS.toString()))
                                 .setGroup(GROUP_STORAGE_DEFINITION)
                 ),
 
@@ -134,7 +134,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
     /**
      * mark this worker as a Framework runner
      *
-     * @return
+     * @return true because this worker is part of the framework
      */
     @Override
     public boolean isFrameworkRunner() {
@@ -149,7 +149,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getLabel() {
-        return "Cherry:Load file from disk";
+        return "Load file from disk using the Cherry storage";
     }
 
     @Override

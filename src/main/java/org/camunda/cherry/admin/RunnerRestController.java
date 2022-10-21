@@ -16,6 +16,16 @@ import org.camunda.cherry.runtime.CherryJobRunnerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -172,24 +182,47 @@ public class RunnerRestController {
     @GetMapping(value = "/api/runner/templatefile",
             produces = MediaType.TEXT_PLAIN_VALUE)
     public @ResponseBody
-    byte[] downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
+    ResponseEntity<Resource> downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
                             @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) throws IOException {
         boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
         logger.info("Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
-        String content = null;
+        String content = "Cherry";
+        String collectionName=null;
         if (runnerName == null) {
+            List<AbstractRunner> listRunners=getListRunners(withFrameworkRunnersIncluded);
             // generate for ALL runners
-            List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
+            List<Map<String, Object>> listTemplate = listRunners.stream()
                     .map(runner -> new RunnerDecorationTemplate(runner).getTemplate())
                     .toList();
             content = RunnerDecorationTemplate.getJsonFromList(listTemplate);
+            Optional<String> collectionNameOp = listRunners.stream()
+                    .findFirst()
+                    .map(AbstractRunner::getCollectionName)
+                    ;
+            collectionName = collectionNameOp.isPresent() ? collectionNameOp.get(): "Cherry";
+
         } else {
             AbstractRunner runner = getRunnerByName(runnerName);
             if (runner == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
+            collectionName=runner.getName();
             content = RunnerDecorationTemplate.getJsonFromList(List.of(new RunnerDecorationTemplate(runner).getTemplate()));
         }
-        return content.getBytes(Charset.defaultCharset());
+        byte[] contentBytes= content.getBytes(Charset.defaultCharset());
+        HttpHeaders header = new HttpHeaders();
+        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+collectionName+"Template.json");
+        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        header.add("Pragma", "no-cache");
+        header.add("Expires", "0");
+
+        ByteArrayResource resource = new ByteArrayResource(contentBytes);
+
+        return ResponseEntity.ok()
+                .headers(header)
+                .contentLength(contentBytes.length)
+                .contentType(MediaType.parseMediaType("application/json"))
+                .body(resource);
+
     }
 
 
