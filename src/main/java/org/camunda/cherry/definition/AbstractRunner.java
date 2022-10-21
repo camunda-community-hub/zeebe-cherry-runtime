@@ -825,7 +825,13 @@ public abstract class AbstractRunner {
         this.logo = logo;
     }
 
-
+    /**
+     * Return the collection name.
+     * @return collection name
+     */
+    public String getCollectionName() {
+        return "Cherry";
+    }
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Definition information                                  */
