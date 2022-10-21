@@ -63,7 +63,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
     /**
      * mark this worker as a Framework runner
      *
-     * @return
+     * @return true because this worker is part of the CherryFramework
      */
     @Override
     public boolean isFrameworkRunner() {
@@ -77,7 +77,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
     @Override
     public String getLabel() {
-        return "Cherry: Save a file to disk";
+        return "Save a file to disk using the Cherry storage";
     }
 
     @Override
@@ -95,13 +95,13 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
         if (fileVariable == null) {
             logError("File behind input[" + INPUT_SOURCE_FILE + "] does not exist ");
-            throw new ZeebeBpmnError(BPMNERROR_LOAD_FILE_ERROR, "Worker [" + getName() + "] file behind input[" + INPUT_SOURCE_FILE + "] does not exist");
+            throw new ZeebeBpmnError(BPMNERROR_LOAD_FILE_ERROR, getSignature()+" file behind input[" + INPUT_SOURCE_FILE + "] does not exist");
 
         }
         File folder = new File(folderToSave);
         if (!(folder.exists() && folder.isDirectory())) {
             logError("Folder[" + folder.getAbsolutePath() + "] does not exist ");
-            throw new ZeebeBpmnError(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Worker [" + getName() + "] folder[" + folder.getAbsolutePath() + "] does not exist");
+            throw new ZeebeBpmnError(BPMNERROR_FOLDER_NOT_EXIST_ERROR, getSignature()+" folder[" + folder.getAbsolutePath() + "] does not exist");
         }
 
         try {
@@ -110,12 +110,16 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
             logInfo("Write file[" + file + "]");
         } catch (Exception e) {
             logError("Cannot save to folder[" + folderToSave + "] : " + e);
-            throw new ZeebeBpmnError(BPMNERROR_WRITE_FILE_ERROR, "Worker [" + getName() + "] cannot save to folder[" + folderToSave + "] :" + e);
+            throw new ZeebeBpmnError(BPMNERROR_WRITE_FILE_ERROR, getSignature()+" cannot save to folder[" + folderToSave + "] :" + e);
         }
     }
 
     @Override
     public String getLogo() {
         return WORKERLOGO;
+    }
+
+    private String getSignature() {
+        return "Worker["+getName()+"]";
     }
 }

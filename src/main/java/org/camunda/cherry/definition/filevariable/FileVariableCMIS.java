@@ -22,7 +22,7 @@ import java.io.ByteArrayOutputStream;
 public class FileVariableCMIS {
     Logger logger = LoggerFactory.getLogger(FileVariableCMIS.class.getName());
 
-    private FileVariableFactory fileVariableFactory;
+    private final FileVariableFactory fileVariableFactory;
 
     public FileVariableCMIS(FileVariableFactory fileVariableFactory) {
         this.fileVariableFactory = fileVariableFactory;
@@ -72,6 +72,7 @@ public class FileVariableCMIS {
         FileVariable fileVariable = new FileVariable();
         fileVariable.name = fileName;
         fileVariable.mimeType = documentStream.getMimeType();
+        fileVariable.storageDefinition = storageDefinition;
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
@@ -94,9 +95,9 @@ public class FileVariableCMIS {
 
     /**
      * Remove a file in the directory
-     * @param storageDefinition
-     * @param fileName
-     * @return
+     * @param storageDefinition Storage Definition
+     * @param fileName filename to delete
+     * @return true is the operation was successful
      */
     public boolean removeFile(StorageDefinition storageDefinition, String fileName) throws Exception {
         CmisParameters cmisParameters = CmisParameters.getCodingConnection(storageDefinition.complementInObject);

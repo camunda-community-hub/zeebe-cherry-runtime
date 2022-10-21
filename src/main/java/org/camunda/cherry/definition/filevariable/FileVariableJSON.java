@@ -32,13 +32,16 @@ public class FileVariableJSON {
     /**
      * deserialize a fileVariable
      *
+     * @param storageDefinition the storage definition
      * @param fileVariableJson FileVariable in JSON format
      * @return the fileVariable object
      * @throws JsonProcessingException error during parsing the JSON information
      */
-    public FileVariable fromJson(String fileVariableJson) throws JsonProcessingException {
+    public FileVariable fromJson(StorageDefinition storageDefinition, String fileVariableJson) throws JsonProcessingException {
         try {
-            return new ObjectMapper().readValue(fileVariableJson, FileVariable.class);
+            FileVariable fileVariable= new ObjectMapper().readValue(fileVariableJson, FileVariable.class);
+            fileVariable.storageDefinition=storageDefinition;
+            return fileVariable;
         } catch (JsonProcessingException e) {
             logger.error("Cherry.FileVariableJSON: exception " + e + " During unserialize fileVariable");
             throw e;

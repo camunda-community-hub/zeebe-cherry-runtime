@@ -19,6 +19,11 @@ import java.nio.file.Paths;
 public class FileVariableTempFolder {
     Logger logger = LoggerFactory.getLogger(FileVariableTempFolder.class.getName());
 
+    private FileVariableFactory fileVariableFactory;
+
+    public FileVariableTempFolder(FileVariableFactory fileVariableFactory) {
+        this.fileVariableFactory =fileVariableFactory;
+    }
     /**
      * Save the file Variable structure in the temporary folder
      *
@@ -47,11 +52,12 @@ public class FileVariableTempFolder {
     /**
      * read the fileVariable
      *
+     * @param storageDefinition the storage definition
      * @param tempFileName name of the file in the temporary directory
      * @return the fileVariable object
      * @throws Exception during the reading
      */
-    public FileVariable fromTempFolder(String tempFileName) throws Exception {
+    public FileVariable fromTempFolder(StorageDefinition storageDefinition, String tempFileName) throws Exception {
         String tempFilePath = null;
         try {
             // get the temporary path
@@ -63,6 +69,7 @@ public class FileVariableTempFolder {
             fileVariable.name = tempFileName;
             fileVariable.mimeType = FileVariable.getMimeTypeFromName(tempFileName);
             fileVariable.value = Files.readAllBytes(Paths.get(tempFilePath + separator + tempFileName));
+            fileVariable.storageDefinition = storageDefinition;
             return fileVariable;
 
         } catch (Exception e) {

@@ -22,7 +22,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
     /**
      * mark this Connector as a Framework runner
      *
-     * @return
+     * @return true because this worker is part of the Cherry framework
      */
     @Override
     public boolean isFrameworkRunner() {
@@ -31,12 +31,12 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
     @Override
     public String getName() {
-        return "Cherry:Ping connector";
+        return "Ping connector";
     }
 
     @Override
     public String getLabel() {
-        return "Cherry: Ping using the ConnectorSDK pattern";
+        return "Ping using the ConnectorSDK pattern";
     }
 
     @Override

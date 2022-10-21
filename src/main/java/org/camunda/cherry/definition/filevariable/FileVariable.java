@@ -15,6 +15,12 @@ public class FileVariable {
     public String mimeType;
     public byte[] value;
 
+    /**
+     * Keep the information from where this fileVariable come from.
+     * So, if the worker wants to save it at the same place, it has the information.
+     * This is only an information from the FileVariable, it may be null
+     */
+    public StorageDefinition storageDefinition;
 
     /**
      * Return the suffix of the file, based on the name or on the mimeType
