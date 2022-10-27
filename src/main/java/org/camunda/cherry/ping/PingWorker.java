@@ -58,7 +58,7 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
     @Override
     public String getLabel() {
-        return "Ping using the worker pattern";
+        return "Ping (Worker)";
     }
 
 
