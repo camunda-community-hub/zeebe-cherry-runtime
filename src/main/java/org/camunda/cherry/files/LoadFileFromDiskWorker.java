@@ -149,7 +149,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getLabel() {
-        return "Load file from disk using the Cherry storage";
+        return "Load file from disk";
     }
 
     @Override
