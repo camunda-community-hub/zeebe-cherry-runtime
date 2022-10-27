@@ -77,7 +77,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
     @Override
     public String getLabel() {
-        return "Save a file to disk using the Cherry storage";
+        return "Save a file to disk";
     }
 
     @Override

@@ -1,12 +1,11 @@
 /* -------------------------------------------------------------------- */
-/* PingConnector                                                        */
-/* This connector return a list of output variable, not an object       */
-/* This is the same Input/execution as the PingObjectConnector          */
+/* PingObjectConnector                                                  */
+/* This connector return an Object as the output variable               */
+/* This is the same Input/execution as the PingConnector                */
 /* but the result is different.                                         */
 /* See PingConnectorOutput versus PingObjectConnectorOutput             */
 /* -------------------------------------------------------------------- */
 package org.camunda.cherry.ping;
-
 
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
@@ -17,15 +16,14 @@ import org.springframework.stereotype.Component;
 import java.net.InetAddress;
 import java.util.Collections;
 
-/* ------------------------------------------------------------------- */
-
 @Component
-public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
+public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
-    protected PingConnector() {
-        super("c-pingconnector",
+
+    protected PingObjectConnector() {
+        super("c-pingobjectconnector",
                 PingConnectorInput.class,
-                PingConnectorOutput.class,
+                PingObjectConnectorOutput.class,
                 Collections.emptyList());
     }
 
@@ -41,17 +39,17 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
     @Override
     public String getName() {
-        return "Ping connector";
+        return "Ping Object connector";
     }
 
     @Override
     public String getLabel() {
-        return "Ping (ConnectorSDK)";
+        return "Ping (Object ConnectorSDK)";
     }
 
     @Override
     public String getDescription() {
-        return "Do a simple ping as a connector, and return timestamp, ipAdress. A Delay can be set as parameter";
+        return "Do a simple ping as a connector, and return object containing timestamp, ipAddress. A Delay can be set as parameter";
     }
 
     @Override
@@ -63,8 +61,6 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
         Thread.sleep( pingConnectorInput.getDelay());
         InetAddress IP=InetAddress.getLocalHost();
 
-        return new PingConnectorOutput(System.currentTimeMillis(), IP.getHostAddress());
+        return new PingObjectConnectorOutput(System.currentTimeMillis(), IP.getHostAddress());
     }
-
 }
-
