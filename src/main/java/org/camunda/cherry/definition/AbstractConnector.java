@@ -21,6 +21,9 @@ import java.util.List;
 public abstract class AbstractConnector extends AbstractRunner implements OutboundConnectorFunction {
     Logger logger = LoggerFactory.getLogger(AbstractConnector.class.getName());
 
+    private AbstractConnectorInput abstractConnectorInput;
+
+    private AbstractConnectorOutput abstractConnectorOutput;
     protected AbstractConnector(String type,
                                 Class<?> connectorInputClass,
                                 Class<?> connectorOutputClass,
@@ -32,6 +35,7 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
         try {
             Object inputClass = connectorInputClass.getConstructors()[0].newInstance();
             if (inputClass instanceof AbstractConnectorInput abstractConnectorInput) {
+                this.abstractConnectorInput = abstractConnectorInput;
                 setListInput(abstractConnectorInput.getInputParameters());
             } else {
                 logger.error("AbstractConnector: connectorInputClass must extends AbstractConnectorInput");
@@ -40,23 +44,34 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
         } catch (Exception e) {
             logger.error("AbstractConnector: can't create ConnectorInput to get listOfParameters " + e);
         }
-        try {
-            for (Constructor constructor : connectorOutputClass.getConstructors()) {
-                if (constructor.getParameterCount() == 0) {
-                    Object outputClass = constructor.newInstance();
-                    if (outputClass instanceof AbstractConnectorOutput abstractConnectorOutput) {
-                        setListOutput(abstractConnectorOutput.getListOutput());
-                    } else {
-                        logger.error("AbstractConnector: connectorOutputClass must extends AbstractConnectorOutput");
+        if (connectorOutputClass!=null) {
+            try {
+
+                for (Constructor constructor : connectorOutputClass.getConstructors()) {
+                    if (constructor.getParameterCount() == 0) {
+                        Object outputClass = constructor.newInstance();
+                        if (outputClass instanceof AbstractConnectorOutput abstractConnectorOutput) {
+                            this.abstractConnectorOutput = abstractConnectorOutput;
+                            setListOutput(abstractConnectorOutput.getListOutput());
+                        }
+                        // it is acceptable that this class does not extend the AbstractConnectorOutput (pure connector pattern)
                     }
                 }
-            }
 
-        } catch (Exception e) {
-            logger.error("AbstractConnector: can't create ConnectorOutput to get list OfParameters" + e);
+            } catch (Exception e) {
+                logger.error("AbstractConnector: can't create ConnectorOutput to get list OfParameters" + e);
+            }
         }
 
     }
 
-    public abstract String getResponseVariable();
+
+    public AbstractConnectorInput getAbstractConnectorInput() {
+        return abstractConnectorInput;
+    }
+
+    public AbstractConnectorOutput getAbstractConnectorOutput() {
+        return abstractConnectorOutput;
+    }
+
 }

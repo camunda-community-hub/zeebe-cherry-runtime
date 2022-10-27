@@ -8,10 +8,8 @@ package org.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class RunnerDecorationTemplate {
 
@@ -45,7 +43,11 @@ public class RunnerDecorationTemplate {
      */
 
     public Map<String, Object> getTemplate() {
+
         Map<String, Object> templateContent = new HashMap<>();
+        if (! verifyRunner())
+            return templateContent;
+
         templateContent.put("$schema", "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json");
         templateContent.put("name", runner.getDisplayLabel());
         templateContent.put("id", runner.getClass().getName());
@@ -63,12 +65,28 @@ public class RunnerDecorationTemplate {
                 Map.of("type", "Hidden",
                         "value", runner.getType(),
                         "binding", Map.of("type", "zeebe:taskDefinition:type")));
+        boolean pleaseAddOutputGroup=false;
         if (runner instanceof AbstractConnector connector) {
-            listProperties.add(Map.of(
-                    "type", "Hidden",
-                    "value", connector.getResponseVariable(),
-                    "binding", Map.of("type", "zeebe:taskHeader", "key", "resultVariable")
-            ));
+            pleaseAddOutputGroup=true;
+
+            // there is here two options:
+            // connector return and object or a list of output
+            if (runner.getListOutput().isEmpty()) {
+                // connector returns an object
+                listProperties.add(Map.of(
+                        "label", "Result Variable",
+                        "type", "String",
+                        "value", "result",
+                        "group", "output",
+                        "binding", Map.of("type", "zeebe:taskHeader", "key", "resultVariable")));
+            }
+            else {
+                listProperties.add(Map.of(
+                        "type", "Hidden",
+                        "value", "result",
+                        "binding", Map.of("type", "zeebe:taskHeader", "key", "resultVariable")
+                ));
+            }
         }
         // Identify all groups
         List<RunnerParameter.Group> listGroups = new ArrayList<>();
@@ -82,7 +100,7 @@ public class RunnerDecorationTemplate {
             listGroups.add(new RunnerParameter.Group(GROUP_INPUT, "Input"));
 
         // We group all result in a Group Output
-        if (!runner.getListOutput().isEmpty())
+        if (!runner.getListOutput().isEmpty() || pleaseAddOutputGroup)
             listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, "Output"));
 
 
@@ -94,17 +112,17 @@ public class RunnerDecorationTemplate {
                             .toList());
         }
 
-        for (RunnerParameter runner : runner.getListInput()) {
+        for (RunnerParameter runnerParameter : runner.getListInput()) {
             // do not generate a propertie for a accessAllVariables
-            if (runner.isAccessAllVariables())
+            if (runnerParameter.isAccessAllVariables())
                 continue;
-            listProperties.addAll(getParameterProperties(runner, true));
+            listProperties.addAll(getParameterProperties(runnerParameter, true,""));
         }
-        for (RunnerParameter runner : runner.getListOutput()) {
-            // do not generate a propertie for a accessAllVariables
-            if (runner.isAccessAllVariables())
+        for (RunnerParameter runnerParameter : runner.getListOutput()) {
+            // do not generate a property for accessAllVariables
+            if (runnerParameter.isAccessAllVariables())
                 continue;
-            listProperties.addAll(getParameterProperties(runner, false));
+            listProperties.addAll(getParameterProperties(runnerParameter, false, runner instanceof AbstractConnector? "result.":""));
         }
         return templateContent;
     }
@@ -114,9 +132,10 @@ public class RunnerDecorationTemplate {
      *
      * @param runnerParameter runner parameter to get the description
      * @param isInput         true if this is an input parameter
+     * @param prefixName add a prefixName to the source in the binding (mandatory for connectors)
      * @return a template description
      */
-    private List<Map<String, Object>> getParameterProperties(RunnerParameter runnerParameter, boolean isInput) {
+    private List<Map<String, Object>> getParameterProperties(RunnerParameter runnerParameter, boolean isInput, String prefixName) {
         List<Map<String, Object>> listProperties = new ArrayList<>();
 
         // Calculate the condition
@@ -203,7 +222,7 @@ public class RunnerDecorationTemplate {
         } else {
             propertyParameter.put("binding",
                     Map.of("type", "zeebe:output",
-                            "source", "= " + runnerParameter.name));
+                            "source", "= " + prefixName+ runnerParameter.name));
 
         }
         if (runnerParameter.group != null)
@@ -236,5 +255,41 @@ public class RunnerDecorationTemplate {
 
 
         return listProperties;
+    }
+
+    private boolean verifyRunner() {
+        StringBuilder errors= new StringBuilder();
+        if (runner instanceof AbstractConnector runnerConnector) {
+            AbstractConnectorOutput abstractConnectorOutput = runnerConnector.getAbstractConnectorOutput();
+            // ATTENTION, the output must start with a lower case, and
+            for (RunnerParameter runnerParameter : runner.getListOutput()) {
+                // do not generate a property for accessAllVariables
+                if (runnerParameter.isAccessAllVariables())
+                    continue;
+                if (runnerParameter.getName().isEmpty()) {
+                    errors.append("One parameters does not have a name");
+                    continue;
+                }
+                String firstLetter = runnerParameter.getName().substring(0,1);
+
+                if (! firstLetter.toLowerCase().equals(firstLetter)) {
+                    errors.append("The first letter must be in Lower case");
+                    continue;
+                }
+                // check if a method get<runnerParameter.getName()> exist
+                Method m = null;
+                try {
+                    m = abstractConnectorOutput.getClass().getMethod("get"+runnerParameter.getName(), null);
+                } catch (NoSuchMethodException e) {
+                    errors.append("A method [get"+runnerParameter.getName()+"()] must exist");
+                    continue;
+                }
+
+
+            }
+        }
+        // where to log the information??
+
+        return errors.isEmpty();
     }
 }

@@ -60,7 +60,7 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
     @Override
     public String getLabel() {
-        return "Cherry: Purge file in the storage";
+        return "Purge file in the storage";
     }
 
     @Override
