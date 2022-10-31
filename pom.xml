@@ -13,7 +13,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <zeebe.version>8.1.0</zeebe.version>
-        <junit.jupiter.version>5.8.2</junit.jupiter.version>
+        <junit.jupiter.version>5.9.1</junit.jupiter.version>
         <opensagres.version>2.0.3</opensagres.version>
         <spring.boot.version>2.7.4</spring.boot.version>
     </properties>
@@ -120,7 +120,7 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>bulma</artifactId>
-            <version>0.9.3</version>
+            <version>0.9.4</version>
         </dependency>
         <dependency>
             <groupId>org.webjars</groupId>
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>datatables</artifactId>
-            <version>1.11.4</version>
+            <version>1.12.1</version>
         </dependency>
         <dependency>
             <groupId>org.webjars.npm</groupId>
