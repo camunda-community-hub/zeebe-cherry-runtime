@@ -6,7 +6,7 @@
 /* syntax is FOLDER:<Path>                                              */
 /*  Attention, the folder must be accessible where the worker is running*/
 /* ******************************************************************** */
-package org.camunda.cherry.definition.filevariable;
+package io.camunda.cherry.definition.filevariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

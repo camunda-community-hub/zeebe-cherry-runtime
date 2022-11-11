@@ -4,14 +4,13 @@
 /*                                                                      */
 /*  Save a file variable in CMIS,                                       */
 /* ******************************************************************** */
-package org.camunda.cherry.definition.filevariable;
+package io.camunda.cherry.definition.filevariable;
 
-import org.apache.chemistry.opencmis.client.api.Document;
 import org.apache.chemistry.opencmis.client.api.Folder;
 import org.apache.chemistry.opencmis.commons.data.ContentStream;
-import org.camunda.cherry.connection.cmis.CmisConnection;
-import org.camunda.cherry.connection.cmis.CmisFactoryConnection;
-import org.camunda.cherry.connection.cmis.CmisParameters;
+import io.camunda.cherry.connection.cmis.CmisConnection;
+import io.camunda.cherry.connection.cmis.CmisFactoryConnection;
+import io.camunda.cherry.connection.cmis.CmisParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

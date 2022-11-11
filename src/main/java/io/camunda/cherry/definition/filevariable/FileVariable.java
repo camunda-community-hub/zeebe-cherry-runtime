@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  File variable contains the file. Attention, file is in memory then  */
 /* ******************************************************************** */
-package org.camunda.cherry.definition.filevariable;
+package io.camunda.cherry.definition.filevariable;
 
 import java.io.File;
 import java.net.URLConnection;

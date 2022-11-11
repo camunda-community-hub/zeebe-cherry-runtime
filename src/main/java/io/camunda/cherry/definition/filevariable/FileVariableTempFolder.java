@@ -5,7 +5,7 @@
 /*  Save a file variable in the temporary folder of the host            */
 /*  Attention, this is the temporary folder where the worker is running */
 /* ******************************************************************** */
-package org.camunda.cherry.definition.filevariable;
+package io.camunda.cherry.definition.filevariable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

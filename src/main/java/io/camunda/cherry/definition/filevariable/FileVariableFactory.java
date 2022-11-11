@@ -6,7 +6,7 @@
 /*  files are possible, and the factory give access to the different    */
 /* formats                                                              */
 /* ******************************************************************** */
-package org.camunda.cherry.definition.filevariable;
+package io.camunda.cherry.definition.filevariable;
 
 import org.springframework.stereotype.Service;
 
