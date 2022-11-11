@@ -1,4 +1,4 @@
-package org.camunda.cherry.definition;
+package io.camunda.cherry.definition;
 
 import org.junit.jupiter.api.Test;
 

@@ -5,7 +5,7 @@
 /*  All workers extends this class. It gives tool to access parameters, */
 /*  and the contract implementation on parameters                       */
 /* ******************************************************************** */
-package org.camunda.cherry.definition;
+package io.camunda.cherry.definition;
 
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -13,9 +13,7 @@ import io.camunda.zeebe.client.api.worker.JobHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class AbstractWorker extends AbstractRunner implements JobHandler {

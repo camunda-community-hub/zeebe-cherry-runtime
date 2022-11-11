@@ -10,16 +10,16 @@
 /* The execution depends on the class: Worker or Connector              */
 /*                                                                      */
 /* ******************************************************************** */
-package org.camunda.cherry.definition;
+package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import org.camunda.cherry.definition.filevariable.FileVariable;
-import org.camunda.cherry.definition.filevariable.FileVariableFactory;
-import org.camunda.cherry.definition.filevariable.FileVariableReference;
-import org.camunda.cherry.definition.filevariable.StorageDefinition;
-import org.camunda.cherry.runtime.ZeebeContainer;
+import io.camunda.cherry.definition.filevariable.FileVariable;
+import io.camunda.cherry.definition.filevariable.FileVariableFactory;
+import io.camunda.cherry.definition.filevariable.FileVariableReference;
+import io.camunda.cherry.definition.filevariable.StorageDefinition;
+import io.camunda.cherry.runtime.ZeebeContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -533,8 +533,18 @@ public abstract class AbstractRunner {
      * @param message message to log
      */
     public void logError(String message) {
-        loggerAbstract.error("CherryWorker[" + getName() + "]: " + message);
+        loggerAbstract.error("CherryRunner[" + getName() + "]: " + message);
     }
+
+    /**
+     * Log an info
+     *
+     * @param message message to log
+     */
+    public void logInfo(String message) {
+        loggerAbstract.info("CherryRunner[" + getName() + "]: " + message);
+    }
+
 
     /**
      * Check the contract

@@ -8,7 +8,7 @@
 /*   - be able to give description, logo, name                          */
 /*  and the contract implementation on parameters                       */
 /* ******************************************************************** */
-package org.camunda.cherry.definition;
+package io.camunda.cherry.definition;
 
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.slf4j.Logger;
