@@ -2,18 +2,15 @@
 [![Community extension badge](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
 ![Compatible with: Camunda Platform 8](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%208-0072Ce)
 
-# Zeebe Cherry Framework
-
-This project is a framework to build workers for Zeebe.
-
-The framework offers a library for your project and a set of administrative pages.
-
 # What is the Cherry Framework?
 
 The Cherry Framework is a framework dedicated to administrators and developers.
 It executes connectors and workers and provides administrative functions to monitor execution.
 
 ![Cherry Framework Overview](src/main/resources/static/img/CherryFrameworkOverview.png?raw=true)
+
+For a quick execution, access the Tutorial chapter.
+
 
 ## Administrator
 Multiple collections used the Cherry Framework (Office PDF, CMIS). Each collection embedded multiple connectors or runners.
@@ -105,13 +102,13 @@ Execute `start.sh` or `start.bat` available on the framework.
 Execute
 ````
 mvn spring-boot:run
-
 ````
-## Docker image
 
+## Docker image
+soon
 
 ## Docker Compose
-
+soon
 
 
 ## Access the Web Application
@@ -490,7 +487,7 @@ Create a project under Eclipse/Intellij, and use this skeleton to create your fi
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>org.camunda.cherry.CherryApplication</mainClass>
+                    <mainClass>CherryApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
