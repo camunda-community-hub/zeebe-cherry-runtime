@@ -22,4 +22,15 @@ public class AbstractConnectorInput {
         return Collections.emptyList();
     }
 
+    /**
+     * Create the list and give a class.
+     * If the Cherry input connector is created from a basic connector, give the Input connector.
+     * The Cherry will be able to verify the list againts the Input: all fields are declared? All RunnerParameters exists as a member in the class?
+     */
+    public record InputParametersInfo (List<RunnerParameter> listRunners, Class inputClass){}
+
+    public InputParametersInfo getInputParametersInfo() {
+        return new InputParametersInfo(Collections.emptyList(), null);
+    }
+
 }
