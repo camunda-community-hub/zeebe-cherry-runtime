@@ -110,7 +110,7 @@ public class RunnerInformation {
      * @return the list of errors
      */
     public String getDefinitionErrors() {
-        return String.join(", ", runner.getDefinitionErrors());
+        return String.join(", ", runner.checkValidDefinition());
     }
 
     public enum TYPE_RUNNER {WORKER, CONNECTOR}

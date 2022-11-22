@@ -12,7 +12,15 @@
         <java.version>17</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
+
         <zeebe.version>8.1.0</zeebe.version>
+
+        <!-- 0.2.0 works fine -->
+        <connector-core.version>0.3.0</connector-core.version>
+
+        <connector-runtime.version>0.2.2</connector-runtime.version>
+        <connector-validation.version>0.2.2</connector-validation.version>
+
         <junit.jupiter.version>5.9.1</junit.jupiter.version>
         <opensagres.version>2.0.3</opensagres.version>
         <spring.boot.version>2.7.4</spring.boot.version>
@@ -66,17 +74,17 @@
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-core</artifactId>
-            <version>0.2.0</version>
+            <version>${connector-core.version}</version>
         </dependency>
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-job-worker</artifactId>
-            <version>0.2.2</version>
+            <version>${connector-runtime.version}</version>
         </dependency>
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-validation</artifactId>
-            <version>0.2.2</version>
+            <version>${connector-validation.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
         <dependency>
