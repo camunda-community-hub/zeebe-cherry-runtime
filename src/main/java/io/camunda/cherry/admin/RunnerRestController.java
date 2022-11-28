@@ -116,7 +116,7 @@ public class RunnerRestController {
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
             return completeRunnerInformation(runnerInfo, false, false, null);
         } catch (CherryJobRunnerFactory.OperationException e) {
-            if (e.exceptionCode.equals(CherryJobRunnerFactory.WORKER_NOT_FOUND))
+            if (CherryJobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerName + "] error " + e);
         }
@@ -138,7 +138,7 @@ public class RunnerRestController {
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
             return completeRunnerInformation(runnerInfo, false, false, null);
         } catch (CherryJobRunnerFactory.OperationException e) {
-            if (e.exceptionCode.equals(CherryJobRunnerFactory.WORKER_NOT_FOUND))
+            if (CherryJobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerName + "] error " + e);
         }
