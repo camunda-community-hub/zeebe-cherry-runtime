@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  WorkerInformation                                                   */
+/*  RunnerInformation                                                   */
 /*                                                                      */
 /*  Collect worker information from a worker.                           */
 /*  This class works as a facade. It's easy then to get the JSON        */
