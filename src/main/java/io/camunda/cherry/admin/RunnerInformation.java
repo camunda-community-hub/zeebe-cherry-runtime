@@ -111,6 +111,7 @@ public class RunnerInformation {
      */
     public String getDefinitionErrors() {
         return String.join(", ", runner.checkValidDefinition());
+
     }
 
     public enum TYPE_RUNNER {WORKER, CONNECTOR}

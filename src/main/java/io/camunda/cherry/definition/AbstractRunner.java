@@ -741,7 +741,6 @@ public abstract class AbstractRunner {
         return listBpmnErrors;
     }
 
-
     /**
      * Return the list of variable to fetch if this is possible, else null.
      * To calculate the list:

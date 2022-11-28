@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotEmpty;
 
+
 public class PingConnectorInput extends AbstractConnectorInput {
 
     // see https://docs.camunda.io/docs/components/integration-framework/connectors/custom-built-connectors/connector-sdk/#validation

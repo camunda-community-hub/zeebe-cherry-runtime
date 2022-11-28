@@ -260,6 +260,8 @@ Include in your pom.xml the library
 </dependency>
 ````
 
+Library is deployed in https://artifacts.camunda.com/ui/native/camunda-bpm-community-extensions/org/camunda/community/zeebe-cherry-framework
+
 ## Includes artefacts
 
 Check the pom.xml, and add the different artefacts

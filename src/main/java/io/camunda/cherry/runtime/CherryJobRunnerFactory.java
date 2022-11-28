@@ -83,6 +83,7 @@ public class CherryJobRunnerFactory {
             if (running.runner != null) {
                 try {
                     stopRunner(running.runner.getIdentification());
+
                 } catch (Exception e) {
                     logger.error("Error on runner [" + running.runner.getIdentification() + "] : "+e);
                 }
@@ -137,6 +138,7 @@ public class CherryJobRunnerFactory {
     public boolean isRunnerActive(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
+
                 return running.containerJobWorker.getJobWorker() != null;
             }
         }
@@ -238,5 +240,6 @@ public class CherryJobRunnerFactory {
         public String getExplanation() {
             return explanation;
         }
+
     }
 }
