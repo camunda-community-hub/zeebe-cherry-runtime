@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  WorkerInformation                                                   */
+/*  RunnerInformation                                                   */
 /*                                                                      */
 /*  Collect worker information from a worker.                           */
 /*  This class works as a facade. It's easy then to get the JSON        */
@@ -110,7 +110,8 @@ public class RunnerInformation {
      * @return the list of errors
      */
     public String getDefinitionErrors() {
-        return String.join(", ", runner.getDefinitionErrors());
+        return String.join(", ", runner.checkValidDefinition());
+
     }
 
     public enum TYPE_RUNNER {WORKER, CONNECTOR}

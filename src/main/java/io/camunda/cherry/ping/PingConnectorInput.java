@@ -6,7 +6,8 @@ import io.camunda.cherry.definition.RunnerParameter;
 import java.util.Arrays;
 import java.util.List;
 
-import jakarta.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotEmpty;
+
 
 public class PingConnectorInput extends AbstractConnectorInput {
 

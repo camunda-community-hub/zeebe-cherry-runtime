@@ -25,10 +25,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractRunner {
 
@@ -688,7 +690,7 @@ public abstract class AbstractRunner {
      *
      * @param parameterName parameter to get the value
      * @param activatedJob  activated job
-     * @return
+     * @return an object
      */
     protected Object getValueFromJob(String parameterName, final ActivatedJob activatedJob) {
         if (activatedJob.getVariablesAsMap().containsKey(parameterName))
@@ -739,17 +741,6 @@ public abstract class AbstractRunner {
         return listBpmnErrors;
     }
 
-    /**
-     * Check parameters. If something is not correct in the definition, then throw an error
-     *
-     * @return a list of errors
-     */
-    public List<String> getDefinitionErrors() {
-        List<String> listOfErrors = new ArrayList<>();
-        listOfErrors.addAll(checkListParameters(listInput));
-        listOfErrors.addAll(checkListParameters(listOutput));
-        return listOfErrors;
-    }
     /**
      * Return the list of variable to fetch if this is possible, else null.
      * To calculate the list:
@@ -825,7 +816,7 @@ public abstract class AbstractRunner {
      * Image must be a string like
      * "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18.0' viewBox='0 0 18 18.0' %3E%3Cg id='XMLID_238_'%3E %3Cpath id='XMLID_239_' d='m 14.708846 10.342394 c -1.122852 0.0,-2.528071 0.195852,-2.987768 0.264774 C 9.818362 8.6202,9.277026 7.4907875,9.155265 7.189665 C 9.320285 6.765678,9.894426 5.155026,9.976007 3.0864196 C 10.016246 2.0507226,9.797459 1.2768387,9.325568 ....   -0.00373,0.03951 0.00969,0.0425 0.030567 z'/%3E%3C/svg%3E";
      *
-     * @return
+     * @return the logo
      */
     public String getLogo() {
         return logo;
@@ -856,10 +847,51 @@ public abstract class AbstractRunner {
      *
      * @return
      */
-    public boolean isValidDefinition() {
-        return (getIdentification().isEmpty());
+    public List<String> checkValidDefinition() {
+        List<String> listOfErrors= new ArrayList<>();
+        if (getIdentification().isEmpty())
+            listOfErrors.add("No identification");
+
+        if (this instanceof AbstractConnector) {
+            AbstractConnectorInput.InputParametersInfo parameterInfo=((AbstractConnector) this).getAbstractConnectorInput().getInputParametersInfo();
+            if (parameterInfo!=null && ! parameterInfo.listRunners().isEmpty() && parameterInfo.inputClass()!=null)
+                listOfErrors.addAll(confrontParameterWithClass( parameterInfo.inputClass(), parameterInfo.listRunners()));
+        }
+
+        listOfErrors.addAll(checkListParameters(listInput));
+        listOfErrors.addAll(checkListParameters(listOutput));
+
+        return listOfErrors;
     }
 
+    /**
+     * Confront a list of RunnerParameter with a class.
+     * @param clazz class to confront
+     * @param parameters list of Runner.
+     * @return empty is every thing is OK, else an analysis
+     */
+    private List<String> confrontParameterWithClass(Class clazz, List<RunnerParameter> parameters) {
+        List<String> listOfErrors= new ArrayList<>();
+
+        Field[] fields = clazz.getDeclaredFields();
+        // All fields are part of parameters?
+        for (Field field: fields) {
+            long number = parameters.stream().filter(t -> t.getName().equals(field.getName())).count();
+            if (number != 1)
+                listOfErrors.add("Class Field[" + field.getName() + "] is not part of parameters");
+        }
+
+        // All parameters must be part of the fields
+        for (RunnerParameter parameter : parameters) {
+            if (parameter.getName().equals("*"))
+                continue;
+            long number = Stream.of(fields).filter(t -> t.getName().equals(parameter.getName())).count();
+            if (number != 1)
+                listOfErrors.add("Parameter[" + parameter.getName() + "] is not part of fields in the class");
+        }
+
+       return listOfErrors;
+    }
 
 
     private List<String> checkListParameters(List<RunnerParameter> listParameters) {

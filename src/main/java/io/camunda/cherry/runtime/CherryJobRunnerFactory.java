@@ -6,7 +6,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runtime;
 
-import io.camunda.connector.runtime.jobworker.api.outbound.ConnectorJobHandler;
+import io.camunda.connector.runtime.util.outbound.ConnectorJobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
 import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
 import io.camunda.cherry.definition.AbstractConnector;
@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 @Service
 public class CherryJobRunnerFactory {
-    public static final String WORKER_NOT_FOUND = "WorkerNotFound";
+    public static final String RUNNER_NOT_FOUND = "WorkerNotFound";
     public static final String UNKNOWN_WORKER_CLASS = "UnknownWorkerClass";
     public static final String WORKER_INVALID_DEFINITION = "WORKER_INVALID_DEFINITION";
 
@@ -56,9 +56,9 @@ public class CherryJobRunnerFactory {
 
 
         for (AbstractRunner runner : listRunners) {
-            String errors = String.join(", ", runner.getDefinitionErrors());
-            if (!errors.isEmpty()) {
-                logger.error("Runner [" + runner.getIdentification() + "] can't start, errors " + errors);
+            List<String> listOfErrors = runner.checkValidDefinition();
+            if (!listOfErrors.isEmpty()) {
+                logger.error("Runner [" + runner.getIdentification() + "] can't start, errors " + String.join(", ",listOfErrors));
                 continue;
             }
 
@@ -83,11 +83,9 @@ public class CherryJobRunnerFactory {
             if (running.runner != null) {
                 try {
                     stopRunner(running.runner.getIdentification());
-                } catch (OperationException e) {
-                    logger.error("Error on worker [" + running.runner.getIdentification() + "]");
 
                 } catch (Exception e) {
-                    logger.error("Error on worker [" + running.runner.getIdentification() + "]");
+                    logger.error("Error on runner [" + running.runner.getIdentification() + "] : "+e);
                 }
             }
         }
@@ -104,12 +102,12 @@ public class CherryJobRunnerFactory {
     public boolean stopRunner(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
-                closeJobWorker(running.containerJobWorker.jobWorker);
-                running.containerJobWorker.jobWorker = null;
+                closeJobWorker(running.containerJobWorker.getJobWorker());
+                running.containerJobWorker.setJobWorker(null);
                 return true;
             }
         }
-        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
+        throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
     }
 
     /**
@@ -117,32 +115,34 @@ public class CherryJobRunnerFactory {
      *
      * @param runnerName name of the runner (connector/worker)
      * @return true if the runner started
-     * @throws Exception
+     * @throws OperationException runner can't start
      */
     public boolean startRunner(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
-                if (!running.runner.isValidDefinition())
+                List<String> listOfErrors= running.runner.checkValidDefinition();
+                if (! listOfErrors.isEmpty())
                     throw new OperationException(WORKER_INVALID_DEFINITION, "Worker has error in the definition : "
-                            + String.join(";", running.runner.getDefinitionErrors()));
+                            + String.join(";", listOfErrors));
 
-                closeJobWorker(running.containerJobWorker.jobWorker);
-                running.containerJobWorker.jobWorker = null;
+                closeJobWorker(running.containerJobWorker.getJobWorker());
+                running.containerJobWorker.setJobWorker( null);
                 JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild = createJobWorker(running.runner);
-                running.containerJobWorker.jobWorker = jobWorkerBuild.open();
+                running.containerJobWorker.setJobWorker( jobWorkerBuild.open());
                 return true;
             }
         }
-        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
+        throw new OperationException(RUNNER_NOT_FOUND, "Worker not found");
     }
 
     public boolean isRunnerActive(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
-                return running.containerJobWorker.jobWorker != null;
+
+                return running.containerJobWorker.getJobWorker() != null;
             }
         }
-        throw new OperationException(WORKER_NOT_FOUND, "Worker not found");
+        throw new OperationException(RUNNER_NOT_FOUND, "Worker not found");
     }
 
 
@@ -202,9 +202,17 @@ public class CherryJobRunnerFactory {
      * Not possible to restart a jobWorker: must be created again !
      */
     private static class ContainerJobWorker {
-        public JobWorker jobWorker;
+        private JobWorker jobWorker;
 
         public ContainerJobWorker(JobWorker jobWorker) {
+            this.jobWorker = jobWorker;
+        }
+
+        public JobWorker getJobWorker() {
+            return jobWorker;
+        }
+
+        public void setJobWorker(JobWorker jobWorker) {
             this.jobWorker = jobWorker;
         }
     }
@@ -216,13 +224,22 @@ public class CherryJobRunnerFactory {
     /**
      * Declare an exception on an operation
      */
-    public class OperationException extends Exception {
-        public String exceptionCode;
-        public String explanation;
+    public static class OperationException extends Exception {
+        private final String exceptionCode;
+        private final String explanation;
 
         OperationException(String exceptionCode, String explanation) {
             this.exceptionCode = exceptionCode;
             this.explanation = explanation;
         }
+
+        public String getExceptionCode() {
+            return exceptionCode;
+        }
+
+        public String getExplanation() {
+            return explanation;
+        }
+
     }
 }
