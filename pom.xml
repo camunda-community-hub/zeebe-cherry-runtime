@@ -13,7 +13,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
 
-        <zeebe.version>8.1.4</zeebe.version>
+        <zeebe.version>8.1.5</zeebe.version>
 
         <!-- 0.2.0 works fine -->
         <connector-core.version>0.3.0</connector-core.version>
