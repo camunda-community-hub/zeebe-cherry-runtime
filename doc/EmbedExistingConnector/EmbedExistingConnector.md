@@ -1,4 +1,4 @@
-This documentation explain how to embed an existing connector.
+This documentation explains how to embed an existing connector.
 
 # Use an existing connector
 An existing connector does not reference any external framework. The Cherry Framework must not 
@@ -197,7 +197,7 @@ public class PingObjectConnectorOutput  {
 * Object output
 
 The result is an object. In the Modeler, the template present this:
-![Object Output](../src/main/resources/static/img/OutputConnectorObject.png?raw=true)
+![Object Output](OutputConnectorObject.png?raw=true)
 
 Doing that, you don't have any particular constraints on the object. Different members (internaltTimeStampMS) may be public, 
 or private and any getter can be defined.
@@ -227,7 +227,7 @@ The Element Template is:
 
 * Fields output
 If you want to present in the Modeler the different fields, and user can setup each properties in a differ
-  ![Fields Output](../src/main/resources/static/img/OutputConnectorFields.png?raw=true)
+  ![Fields Output](OutputConnectorFields.png?raw=true)
 
 Then, the connector must expose a list of getter(). But the first letter in the getter must be in *lower case* else 
 the connector SDK will not find it
@@ -310,7 +310,13 @@ Copy from this github repository the three different file `deploy.yaml`, `mvn-bu
 
 Copy `dependabot.yml` too.
 
-![Github Workflow](../src/main/resources/static/img/GithubWorkflow.png?raw=true)
+![Github Workflow](GithubWorkflow.png?raw=true)
+
+
+
+After each commit in the main, a new workflow should start
+![Github Actions](GithubAction.png?raw=true)
+
 
 
 ## Reference the project in the infrastructure
@@ -330,7 +336,7 @@ For example add ad the end
 Create a pull request with the modification
 
 
-![Pull request in Infrastructure](../src/main/resources/static/img/AddProjectInInfrastuctureRepository.png?raw=true)
+![Pull request in Infrastructure](AddProjectInInfrastuctureRepository.png?raw=true)
 
 
 # Build a Cherry Collection
@@ -341,15 +347,16 @@ A connector is running in a collection. A collection groups multiple runners (co
 # reference the connector in the Cherry Collection
 To branch an existing connector to Cherry, you have to create some Facade objects.
 
-A Cherry runner (a connector or a frameworks) required moire information than what is provided in a connector. 
-This additional information is usefull to generate the documentation and the element-template. For example, a connetor can get a STRING for a parameter, but as a developper, you want to specify that the string is a list of value (UP, DOWN, RIGHT, LEFT).
+A Cherry runner (a connector or framework) requires more information than what is provided in a connector.
+This additional information is useful for generating the documentation and the element-template. For example, a connector can get a STRING for a parameter, but as a developer, you want to specify that the string is a list of values (UP, DOWN, RIGHT, LEFT).
 Doing that:
-* the documentation is more explicite
-* the element-template will be not a String, but a list of value (or a reference to a process variable)
+* The documentation is more explicit
+* The element-template will not be a String, but a list of values (or a reference to a process variable)
 * Cherry will verify, before calling the connector, that the specification is respected
 
 
 For a connector, you have to path to integrate it.
+
 
 **Explicit path**
 
@@ -581,7 +588,7 @@ public String getLogo() {
 **execute**
 The execution is quite similar to the connector. It will call the Connector.
 
-The ConnectorExecution exception must be catched, and a ZeebeBpmnError can be send instead if you like.
+The ConnectorExecution exception must be catched, and a ZeebeBpmnError can be sent instead if you like.
 
 
 `````
