@@ -183,42 +183,48 @@ public class RunnerRestController {
                             @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) throws IOException {
         boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
         logger.info("Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
-        String content = "Cherry";
-        String collectionName=null;
-        if (runnerName == null) {
-            List<AbstractRunner> listRunners=getListRunners(withFrameworkRunnersIncluded);
-            // generate for ALL runners
-            List<Map<String, Object>> listTemplate = listRunners.stream()
+        try {
+            String content = "Cherry";
+            String collectionName = null;
+            if (runnerName == null) {
+                List<AbstractRunner> listRunners = getListRunners(withFrameworkRunnersIncluded);
+                // generate for ALL runners
+                List<Map<String, Object>> listTemplate = listRunners.stream()
                     .map(runner -> new RunnerDecorationTemplate(runner).getTemplate())
                     .toList();
-            content = RunnerDecorationTemplate.getJsonFromList(listTemplate);
-            Optional<String> collectionNameOp = listRunners.stream()
-                    .findFirst()
-                    .map(AbstractRunner::getCollectionName)
-                    ;
-            collectionName = collectionNameOp.isPresent() ? collectionNameOp.get(): "Cherry";
+                content = RunnerDecorationTemplate.getJsonFromList(listTemplate);
+                Optional<String> collectionNameOp = listRunners.stream().findFirst().map(AbstractRunner::getCollectionName);
+                collectionName = collectionNameOp.isPresent() ? collectionNameOp.get() : "Cherry";
 
-        } else {
-            AbstractRunner runner = getRunnerByName(runnerName);
-            if (runner == null)
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
-            collectionName=runner.getName();
-            content = RunnerDecorationTemplate.getJsonFromList(List.of(new RunnerDecorationTemplate(runner).getTemplate()));
-        }
-        byte[] contentBytes= content.getBytes(Charset.defaultCharset());
-        HttpHeaders header = new HttpHeaders();
-        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+collectionName+"Template.json");
-        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
-        header.add("Pragma", "no-cache");
-        header.add("Expires", "0");
+            } else {
+                AbstractRunner runner = getRunnerByName(runnerName);
+                if (runner == null)
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
+                collectionName = runner.getName();
+                content = RunnerDecorationTemplate.getJsonFromList(List.of(new RunnerDecorationTemplate(runner).getTemplate()));
+            }
+            byte[] contentBytes = content.getBytes(Charset.defaultCharset());
+            HttpHeaders header = new HttpHeaders();
+            header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + collectionName + "Template.json");
+            header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            header.add("Pragma", "no-cache");
+            header.add("Expires", "0");
 
-        ByteArrayResource resource = new ByteArrayResource(contentBytes);
+            ByteArrayResource resource = new ByteArrayResource(contentBytes);
 
-        return ResponseEntity.ok()
+            return ResponseEntity.ok()
                 .headers(header)
                 .contentLength(contentBytes.length)
                 .contentType(MediaType.parseMediaType("application/json"))
                 .body(resource);
+        }
+        catch(Exception e ){
+            logger.error("Download template error for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]") + " FrameworkIncluded["
+                + withFrameworkRunnersIncluded
+                + "] :" +e );
+            return ResponseEntity.internalServerError().body(null);
+
+        }
 
     }
 

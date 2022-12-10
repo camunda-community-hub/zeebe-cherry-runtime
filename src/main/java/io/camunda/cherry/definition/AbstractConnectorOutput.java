@@ -24,13 +24,20 @@ public class AbstractConnectorOutput {
     public AbstractConnectorOutput() {
     }
 
+    public List<RunnerParameter> getOutputParameters() {
+        return Collections.emptyList();
+    }
+
+
+    protected record OutputParametersInfo (List<RunnerParameter> listRunners, Class outputClass){}
+
     /**
      * Return the list of Parameters used by the connector
      *
      * @return list of parameters
      */
-    public List<RunnerParameter> getListOutput() {
-        return Collections.emptyList();
+    protected AbstractConnectorOutput.OutputParametersInfo getOutputParametersInfo() {
+        return new AbstractConnectorOutput.OutputParametersInfo(Collections.emptyList(), null);
     }
 
 }

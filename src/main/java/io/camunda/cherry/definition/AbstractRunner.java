@@ -842,56 +842,26 @@ public abstract class AbstractRunner {
         return value == null || value.trim().isEmpty();
     }
 
+    public record ValidationResult (List<String> listOfErrors, List<String> listOfWarnings){}
+
     /**
      * Is the runner is correct for the definition? If not, the runner can't be start
      *
-     * @return
+     * @return list of errors, empty is everything is OK
      */
-    public List<String> checkValidDefinition() {
-        List<String> listOfErrors= new ArrayList<>();
+    public ValidationResult checkValidDefinition() {
+        ValidationResult validationResult = new ValidationResult(new ArrayList<>(), new ArrayList<>());
         if (getIdentification().isEmpty())
-            listOfErrors.add("No identification");
+            validationResult.listOfErrors.add("No identification");
 
-        if (this instanceof AbstractConnector) {
-            AbstractConnectorInput.InputParametersInfo parameterInfo=((AbstractConnector) this).getAbstractConnectorInput().getInputParametersInfo();
-            if (parameterInfo!=null && ! parameterInfo.listRunners().isEmpty() && parameterInfo.inputClass()!=null)
-                listOfErrors.addAll(confrontParameterWithClass( parameterInfo.inputClass(), parameterInfo.listRunners()));
-        }
 
-        listOfErrors.addAll(checkListParameters(listInput));
-        listOfErrors.addAll(checkListParameters(listOutput));
+        validationResult.listOfErrors.addAll(checkListParameters(listInput));
+        validationResult.listOfErrors.addAll(checkListParameters(listOutput));
 
-        return listOfErrors;
+        return validationResult;
     }
 
-    /**
-     * Confront a list of RunnerParameter with a class.
-     * @param clazz class to confront
-     * @param parameters list of Runner.
-     * @return empty is every thing is OK, else an analysis
-     */
-    private List<String> confrontParameterWithClass(Class clazz, List<RunnerParameter> parameters) {
-        List<String> listOfErrors= new ArrayList<>();
 
-        Field[] fields = clazz.getDeclaredFields();
-        // All fields are part of parameters?
-        for (Field field: fields) {
-            long number = parameters.stream().filter(t -> t.getName().equals(field.getName())).count();
-            if (number != 1)
-                listOfErrors.add("Class Field[" + field.getName() + "] is not part of parameters");
-        }
-
-        // All parameters must be part of the fields
-        for (RunnerParameter parameter : parameters) {
-            if (parameter.getName().equals("*"))
-                continue;
-            long number = Stream.of(fields).filter(t -> t.getName().equals(parameter.getName())).count();
-            if (number != 1)
-                listOfErrors.add("Parameter[" + parameter.getName() + "] is not part of fields in the class");
-        }
-
-       return listOfErrors;
-    }
 
 
     private List<String> checkListParameters(List<RunnerParameter> listParameters) {
