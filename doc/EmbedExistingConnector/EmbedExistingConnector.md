@@ -1,10 +1,11 @@
-This documentation explains how to embed an existing connector.
+#Introduction
+This document explains how to embed an existing connector. It gives some tips for creating a connector.
 
 # Use an existing connector
-An existing connector does not reference any external framework. The Cherry Framework must not 
+An existing connector does not reference any external framework. The Cherry Framework must not
 be referenced.
 
-Visit https://github.com/camunda-community-hub/camunda-8-connector-officetopdf to have an example
+Visit https://github.com/camunda-community-hub/camunda-8-connector-officetopdf to have an example.
 
 The two dependencies to include is
 `````
@@ -23,20 +24,20 @@ The two dependencies to include is
 `````
 
 ## Name the package
-Name the package io.camunda.connector.<ConnectorName>
-Example: io.camunda.connector.officetopdf
+Name the package io.camunda. Connector.<ConnectorName>
+Example: io.camunda. Connector.officetopdf
 
 
-## Create three class
+## Create three classes
 
-Create three java class to manipulate the connector
+Create three java classes to manipulate the Connector
 
-* <connectorName>Function is the core of your connector
-* <connectorName>Input store all input information
-* <connectorName>Output store all output information
+* <connectorName>Function is the core of your Connector
+* <connectorName>Input stores all input information
+* <connectorName>Output stores all output information
 
 ## Function class
-The @OutboundConnector must be used to create your connector: 
+The @OutboundConnector must be used to create your Connector:
 
 `````
 
@@ -49,7 +50,7 @@ The @OutboundConnector must be used to create your connector:
 public class OfficeToPdfFunction implements OutboundConnectorFunction {
 
   /**
-   * Different BPMN Errors this connector can throw
+   * Different BPMN Errors this Connector can throw
    */
   public static final String BPMERROR_CONVERSION_ERROR = "CONVERSION_ERROR";
   public static final String BPMERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
@@ -91,8 +92,8 @@ public class OfficeToPdfInput {
 
 `````
 
-Cherry Framework will require the name of input and output to build the templates and documentation. 
-To be consistent, create in this class a constant per input: if the name change, then the constant will
+Cherry Framework will require the name of Input and Output to build the templates and documentation.
+To be consistent, create in this class a constant per Input: if the name change, then the constant will
 change, and you will be able to detect it via a compilation error.
 
 
@@ -123,7 +124,7 @@ OfficeToPdfInput officeInput = context.getVariablesAsType(OfficeToPdfInput.class
 `````
 ## Throw errors
 Generate a ConnectorException to throw an error.
-The Connector Exception need a code: give a constant as defined
+The Connector Exception needs a code: give a constant as defined.
 
 `````
 
@@ -139,10 +140,10 @@ public static final String BPMERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
 The ConnectorException will be catched by the Cherry facade.
 
 ## access files
-C8 does not manipulate Document / files.
-The library connector-8-DocumentRepository allow these operations.
+C8 does not manipulate Document/files.
+The library connector-8-DocumentRepository allows these operations.
 
-Documents/files can be saved in different storage: File system, CMIS, Database.
+Documents/files can be saved in different storage: File system, CMIS, and Database.
 To save a file in the repository, use this method:
 
 ````
@@ -158,13 +159,13 @@ To save a file in the repository, use this method:
     FileVariableReference docReference = fileRepoFactory.saveFileVariable(doc);
 
 ````
-The docReference can be saved in a process variable, as a String (to avoid any Library issue)
+The docReference can be saved in a process variable as a String (to avoid any Library issue)
 
 ````
   String docReference = docReference.toJson()
 ````
 
-To read a file from the repository with the docReference, use
+To read a file from the repository with the docReference, use:
 
 ````
     FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
@@ -174,17 +175,17 @@ To read a file from the repository with the docReference, use
 ## Generate the element template
 You can use the Cherry Framework to generate the element template.
 
-Branch the connector inside a Cherry collection, start the application, and via the administration, Cherry generates the element-templates. 
+Branch the Connector inside a Cherry collection, start the application, and via the administration, Cherry generates the element-templates.
 
 ## Output object in the template
-You have to choose how you want to produce the result in the element-template.
+You have to choose how to produce the result in the element-template.
 
-In both situation, the connector produce an Object in the output. But in the modeler, you may display just a field, 
-and the designer will select the process variable where the object is saved.
+In both situations, the Connector produces an Object in the output. But in the Modeler, you may display just a field,
+and the designer will select the process variable where the Object is saved.
 
-Or in the Modeler, you may want to present one field per properties of your object. The ConnectorSDK have a constraint then.
+Or in the Modeler, you may want to present one field per property of your Object. The ConnectorSDK has a constraint, then.
 
-In our example, the object returned is
+In our example, the Object returned is
 
 ````
 public class PingObjectConnectorOutput  {
@@ -196,11 +197,11 @@ public class PingObjectConnectorOutput  {
 
 * Object output
 
-The result is an object. In the Modeler, the template present this:
+A result is an object. In the Modeler, the template present this:
 ![Object Output](OutputConnectorObject.png?raw=true)
 
-Doing that, you don't have any particular constraints on the object. Different members (internaltTimeStampMS) may be public, 
-or private and any getter can be defined.
+By doing that, you don't have any particular constraints on the Object. Different members (internaltTimeStampMS) may be public,
+or private, and any getter can be defined.
 
 ````
 public long getTimeStampMS() {
@@ -226,10 +227,10 @@ The Element Template is:
 ````
 
 * Fields output
-If you want to present in the Modeler the different fields, and user can setup each properties in a differ
+  If you want to present in the Modeler the different fields, and user can setup each property in a differ
   ![Fields Output](OutputConnectorFields.png?raw=true)
 
-Then, the connector must expose a list of getter(). But the first letter in the getter must be in *lower case* else 
+Then, the Connector must expose a list of getter(). But the first letter in the getter must be in *lower case* else
 the connector SDK will not find it
 
 ````
@@ -242,7 +243,7 @@ public String getipAddress() {
 return internalIpAddress;
 }
 ````
-If you define a getter like getTimeStampMS, then the execution will failed. After the first letter, any Upper Case can be used.
+If you define a getter like getTimeStampMS, then the execution will fail. After the first letter, any Upper Case can be used.
 
 The Element Template is
 ````
@@ -276,11 +277,11 @@ The Element Template is
 }
 ````
 
-The tip is in the FEEL expression "= result.timeStampMS". 
-To access the information `result.myField`, Feel will call a method `getmyField`. 
-It is forbidden to set in a FEEL expression `result.MyField`: the first letter must be in lower case.
+The tip is in the FEEL expression "= result.timeStampMS".
+To access the information `result.myField`, Feel will call a method `getmyField`.
+It is forbidden to set in a FEEL expression `result.MyField`: the first letter must be in lowercase.
 
-So, if you want to generate a Element Template with one input for each member of the output, you must create a getter according the constraints.
+So, if you want to generate an Element Template with one Input for each member of the output, you must create a getter according to the constraints.
 
 
 
@@ -288,7 +289,7 @@ So, if you want to generate a Element Template with one input for each member of
 
 ## Good tips
 
-Create a method getName() to return the name of the connector. 
+Create a method getName() to return the name of the Connector.
 
 
 
@@ -296,17 +297,17 @@ Create a method getName() to return the name of the connector.
 
 
 # Camunda Nexus repository
-To be visible to all pom.xml and to be integrated, the connector must be registered in the Camunda Nexus Repository
+To be visible to all pom.xml and to be integrated, the Connector must be registered in the Camunda Nexus Repository.
 
-In the mean time, execute a mvn install on your repository. The JAR file is saved on your local maven repository, and will be available for the integration in a collection.
+In the meantime, execute a mvn install on your repository. The JAR file is saved on your local maven repository and will be available for integration into a collection.
 
 The procedure is visible here
 https://github.com/camunda-community-hub/community-action-maven-release
 
 
-## Define a Github workflow
-Under the root of your projectm create a directory `.gitbub`, and then a directory `workflows`.
-Copy from this github repository the three different file `deploy.yaml`, `mvn-build.yml`, `mvn-release.yml`
+## Define a GitHub workflow
+Under the root of your project, create a directory `.github`, and then a directory, `workflows`.
+Copy from this GitHub repository the three different files `deploy.yaml`, `mvn-build.yml`, `mvn-release.yml`
 
 Copy `dependabot.yml` too.
 
@@ -326,7 +327,7 @@ To allow the project to be deployed, your project must be referenced in this fil
 https://github.com/camunda-community-hub/infrastructure
 
 Add your project terraform/github/repositories.tf via a Pull Request.
-For example add ad the end
+For example, add at the end
 
 ````
 "zeebe-cherry-framework",
@@ -344,15 +345,15 @@ A connector is running in a collection. A collection groups multiple runners (co
 
 
 
-# reference the connector in the Cherry Collection
+# reference the Connector in the Cherry Collection
 To branch an existing connector to Cherry, you have to create some Facade objects.
 
 A Cherry runner (a connector or framework) requires more information than what is provided in a connector.
-This additional information is useful for generating the documentation and the element-template. For example, a connector can get a STRING for a parameter, but as a developer, you want to specify that the string is a list of values (UP, DOWN, RIGHT, LEFT).
+This additional information is useful for generating the documentation and the element-template. For example, a connector can get a STRING for a parameter, but as a developer, you want to specify that the String is a list of values (UP, DOWN, RIGHT, LEFT).
 Doing that:
 * The documentation is more explicit
 * The element-template will not be a String, but a list of values (or a reference to a process variable)
-* Cherry will verify, before calling the connector, that the specification is respected
+* Cherry will verify, before calling the Connector, that the specification is respected
 
 
 For a connector, you have to path to integrate it.
@@ -360,24 +361,24 @@ For a connector, you have to path to integrate it.
 
 **Explicit path**
 
-One java class, which describe all the Input and Output parameters. This is more simple (onely one class), 
-but you have to explicitaly declare all information. For example, the input Parameter INPUT_FILENAME must be declared as a String class.
-With the introspection path, Cherry will load the Java definition and find by itself all parameters because they are member of the class.
+One java class, which describes all the Input and Output parameters. This is more simple (only one class),
+but you have to explicitly declare all information. For example, the input Parameter INPUT_FILENAME must be declared as a String class.
+With the introspection path, Cherry will load the Java definition and find by itself all parameters because they are members of the class.
 
-Even in the introspection, you will have to declare more information. Cherry required for an Input to have a label and a description. You may want to add some cons
+Even in the introspection, you will have to declare more information. Cherry required Input to have a label and a description. You may want to add some control.
 
-**Introspection path** 
-Three java class. One for the execution, one to declare all Input parameters, and one to declare all Output parameters.
+**Introspection path**
+Three java classes. One for the execution, one to declare all Input parameters, and one to declare all Output parameters.
 
-Attention: the introspection method does not work to integrate a existing connector, because the Input class must extend the AbstractConnectorInput, and must extends the Input class of the connector, and this is not possible in Java to extends 2 class.
+Attention: the introspection method does not work to integrate an existing connector because the Input class must extend the AbstractConnectorInput, and must extend the Input class of the Connector, and this is not possible in Java to extend 2 classes.
 
 
 
 
 ## Maven
-First step, the connector JAR must be referenced in the Pom.xml
+The first step, the connector JAR must be referenced in the Pom.xml
 
-The collection must reference in the maven:
+The collection must reference the maven:
 ````
   <properties>
     <java.version>17</java.version>
@@ -396,7 +397,7 @@ The collection must reference in the maven:
     <spring.boot.version>2.7.4</spring.boot.version>
   </properties>
   ````
-and in the dependencies section:
+And in the dependencies section:
 
 ````
     <dependency>
@@ -449,11 +450,11 @@ and in the dependencies section:
 
 ## Explicit Path
 
-In the Explicit path, the class declare all the Input Parameters as a list of parameters. Same for the Output Parameters.
+In the Explicit path, the class declares all the Input Parameters as a list of parameters. Same for the Output Parameters.
 
 Create one class, and name it Facade to be explicit.
 
-The class must extend the AbstractConnector class
+The class must extend the AbstractConnector class.
 
 ````
 
@@ -462,16 +463,17 @@ import org.camunda.cherry.definition.AbstractConnector;
 @Component
 public class OfficeToPdfOutputFacade  extends AbstractConnector 
 ````
-ATTENTION: The Cherry Framework detects automatically all runners to start. This detection is based on:
-* the class is a @Component
-* the package starts by io.camunda
 
-If one of the two condition is not respected the runner is not detected.
+ATTENTION: The Cherry Framework automatically detects all runners to start. This detection is based on the following:
+* The class is a @Component
+* The package starts by io.camunda
 
-Monitor the log at start:
+If one of the two conditions is not respected, the runner is not detected.
+
+Monitor the log at the start:
 
 
-The connector publish some constants, and this is the good moment to use it
+The Connector publishes some constants, and this is a good moment to use them.
 
 ````
 import io.camunda.connector.officetopdf.OfficeToPdfFunction;
@@ -491,10 +493,10 @@ public OfficeToPdfFunctionFacade() {
                 "Destination file name"),
                 
             RunnerParameter.getInstance(OfficeToPdfFunction.INPUT_DESTINATION_STORAGEDEFINITION,
-                "Destination storage definitino", 
+                "Destination storage definition", 
                 String.class,
                 StorageDefinition.StorageDefinitionType.JSON.toString(),
-                RunnerParameter.Level.OPTIONAL, "Storage Definition use to describe how to save the file")
+                RunnerParameter.Level.OPTIONAL, "Storage Definition used to describe how to save the file")
 
         ), Collections.singletonList(
             RunnerParameter.getInstance(OfficeToPdfFunction.OUTPUT_DESTINATION_FILE, 
@@ -513,14 +515,14 @@ public OfficeToPdfFunctionFacade() {
 **Input parameters**
 
 For each input parameter, more information must be provided.
-* The label for the input. This label will be used in the Element-template
-* the java type (String? Integer? ). This type must be the same as the Input class.
-* The level: REQUIRED? OPTIONAL? When the Connector input have a "@NonEmpty" annotation, it must be turn to REQUIRED
-* the explanation on the input
+* The label for the Input. This label will be used in the Element-template
+* The java type (String? Integer? ). This type must be the same as the Input class.
+* The level: REQUIRED? OPTIONAL? When the Connector input has a "@NonEmpty" annotation, it must be turned to REQUIRED
+* the explanation on the Input
 
-You can take advantage of the Cherry framework to go deeper in the definition
+You can take advantage of the Cherry framework to go deeper into the definition
 
-To define a list of choice, use the addChoice() method
+To define a list of choices, use the addChoice() method
 `````
   RunnerParameter.getInstance(INPUT_WATERMARK_COLOR, 
       "Color", 
@@ -542,31 +544,31 @@ To define a list of choice, use the addChoice() method
 .addChoice("YELLOW", "yellow"),
 `````
 
-A condition may be added on an input. If the value of an another field is take, then the Input field will be visible.
+A condition may be added to an input. If another field's value is taken, the Input field will be visible.
 `````
   .addCondition(INPUT_STORAGEDEFINITION, 
               Collections.singletonList(StorageDefinition.StorageDefinitionType.CMIS.toString()))
   
 `````
 
-The Input may be registered in a Group
+The Input may be registered in a Group.
 
 `````
   .setGroup(GROUP_STORAGE_DEFINITION)
 `````
 
-Multiple another operation exist on the Input definition. Refer to the documentation.
+Multiple other operations exist on the Input definition. Refer to the documentation.
 
 **Output parameter**
-All Ouput parameters must be defined too.
+All Output parameters must be defined too.
 
 **Define the errors**
-It is important to register all BPMN Error that the connector can throw, with an explanation.
+It is important to register all BPMN Errors that the Connector can throw with an explanation.
 
-**Additionnal methods**
-The Cherry Framework required additionnal information from the connectors.
+**Additional methods**
+The Cherry Framework required additional information from the connectors.
 
-Name, description, and Logo to help the administrator and create a nice element-template
+Name, description, and Logo to help the administrator create a nice element-template
 
 `````
  @Override
@@ -586,9 +588,9 @@ public String getLogo() {
 `````
 
 **execute**
-The execution is quite similar to the connector. It will call the Connector.
+The execution is quite similar to the Connector. It will call the Connector.
 
-The ConnectorExecution exception must be catched, and a ZeebeBpmnError can be sent instead if you like.
+The ConnectorExecution exception must be caught, and a ZeebeBpmnError can be sent instead if you like.
 
 
 `````
@@ -604,7 +606,7 @@ public OfficeToPdfOutput execute(OutboundConnectorContext context) throws Except
 `````
 
 ## Introspection path
-Three class has to be defined. One for the function, one for the Input parameters and one for the Ouput parameter
+Three class has to be defined. One for the function, one for the Input parameters, and one for the Output parameter
 
 The construction for the function is different:
 
@@ -614,15 +616,15 @@ super(SendBPMNMessageFunction.WORKERTYPE_SEND_MESSAGE,
     SendBpmnMessageOutputFacade.class,
     Arrays.asList(
         BpmnError.getInstance(SendBPMNMessageFunction.BPMNERROR_TOO_MANY_CORRELATION_VARIABLE_ERROR,
-            "Correlation error. The Correlation expect one and only one variable."),
+            "Correlation error. The Correlation expects one and only one variable."),
         BpmnError.getInstance(SendBPMNMessageFunction.BPMNERROR_INCORRECT_VARIABLE,
             "A variable must <name>=<value>")));
 ````
 
-The list of parameters is moved in the Input class
+The list of parameters is moved to the Input class.
 
 **Input class facade**
-The Input declare all members, and still need to return the declaration for each Input, in the method getInputParametersInfo() :
+The Input declares all members and still need to return the declaration for each Input in the method getInputParametersInfo() :
 
 ````
 public class SendBpmnMessageInputFacade extends AbstractConnectorInput {
@@ -644,7 +646,7 @@ public static final String INPUT_MESSAGE_DURATION = "messageDuration";
   public InputParametersInfo getInputParametersInfo() {
     List listParameters= Arrays.asList(
         RunnerParameter.getInstance(INPUT_MESSAGE_NAME, "Message name", String.class, RunnerParameter.Level.REQUIRED, "Message name"),
-        RunnerParameter.getInstance(INPUT_CORRELATION_VARIABLES, "Correlation variables", String.class, RunnerParameter.Level.OPTIONAL, "Correlation variables. The content of theses variable is used to find the process instance to unfroze"),
+        RunnerParameter.getInstance(INPUT_CORRELATION_VARIABLES, "Correlation variables", String.class, RunnerParameter.Level.OPTIONAL, "Correlation variables. The content of these variables is used to find the process instance to unfroze"),
         RunnerParameter.getInstance(INPUT_MESSAGE_VARIABLES, "Message variables", String.class, RunnerParameter.Level.OPTIONAL, "Variables to copy in the message"),
         RunnerParameter.getInstance(INPUT_MESSAGE_ID_VARIABLES, "ID message", String.class, RunnerParameter.Level.OPTIONAL, "Id of the message"),
         RunnerParameter.getInstance(INPUT_MESSAGE_ACCESS, "*", String.class, RunnerParameter.Level.OPTIONAL, "Access any variables referenced in the Correlation of the Message list"),
