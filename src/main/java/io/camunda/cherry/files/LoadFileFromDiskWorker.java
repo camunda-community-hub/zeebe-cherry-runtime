@@ -8,20 +8,22 @@
 /* ******************************************************************** */
 package io.camunda.cherry.files;
 
+import io.camunda.file.storage.FileVariable;
+import io.camunda.file.storage.StorageDefinition;
+import io.camunda.file.storage.cmis.CmisParameters;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import io.camunda.cherry.connection.cmis.CmisParameters;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.cherry.definition.filevariable.FileVariable;
-import io.camunda.cherry.definition.filevariable.StorageDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -126,7 +128,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                         BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
                         BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
                         BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "Error when the file is moved to the archive directory"),
-                        BpmnError.getInstance(StorageDefinition.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"),
+                        BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION, "Storage definition is incorrect"),
                         BpmnError.getInstance(BPMNERROR_INCORRECT_CMIS_PARAMETERS, "GSON expected to get information to connect the repository"))
         );
     }
@@ -170,14 +172,15 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
         String filterFile = getInputStringValue(INPUT_FILTER_FILE, null, activatedJob);
         String policy = getInputStringValue(INPUT_POLICY, null, activatedJob);
         String storageDefinitionSt = getInputStringValue(INPUT_STORAGEDEFINITION, null, activatedJob);
-
-        // with a template, the storage definition is just the droptdown value, so add the complement if present
-        StorageDefinition storageDefinition = StorageDefinition.getFromString(storageDefinitionSt);
-        String storageDefinitionFolderComplement = getInputStringValue(INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT, null, activatedJob);
-        if (storageDefinitionFolderComplement != null && !storageDefinitionFolderComplement.trim().isEmpty())
-            storageDefinition.complement = storageDefinitionFolderComplement;
+        StorageDefinition storageDefinition =null;
 
         try {
+            // with a template, the storage definition is just the droptdown value, so add the complement if present
+            storageDefinition = StorageDefinition.getFromString(storageDefinitionSt);
+            String storageDefinitionFolderComplement = getInputStringValue(INPUT_STORAGEDEFINITION_FOLDER_COMPLEMENT, null, activatedJob);
+            if (storageDefinitionFolderComplement != null && !storageDefinitionFolderComplement.trim().isEmpty())
+                storageDefinition.complement = storageDefinitionFolderComplement;
+
             storageDefinition.complementInObject = getInputGsonValue(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, null, activatedJob);
         } catch (Exception e) {
             String cmisComplementSt = getInputStringValue(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, null, activatedJob);
@@ -226,12 +229,14 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
             // load the first file only
             fileToProcess = listFilesFiltered.get(0);
             fileVariable = new FileVariable();
-            fileVariable.value = new byte[(int) fileToProcess.length()];
-            fileVariable.name = fileToProcess.getName();
-            fileVariable.mimeType = FileVariable.getMimeTypeFromName(fileVariable.name);
+            byte[] content =  new byte[(int) fileToProcess.length()];
+            fileVariable.setValue( new byte[(int) fileToProcess.length()]);
+            fileVariable.setName( fileToProcess.getName());
+            fileVariable.setMimeType( FileVariable.getMimeTypeFromName(fileVariable.getName()));
 
             try (FileInputStream fis = new FileInputStream(fileToProcess)) {
-                fis.read(fileVariable.value);
+                fis.read(content);
+                fileVariable.setValue( content);
             } catch (Exception e) {
                 logger.error(getName() + ": cannot read file[" + fileToProcess.getAbsolutePath() + "] : " + e);
                 throw new ZeebeBpmnError(BPMNERROR_LOAD_FILE_ERROR, "Worker [" + getName() + "]  cannot read file[" + fileToProcess.getAbsolutePath() + "] : " + e);
@@ -241,8 +246,8 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
         // output
         if (fileVariable != null) {
             setOutputFileVariableValue(OUTPUT_FILE_LOADED, storageDefinition, fileVariable, contextExecution);
-            setOutputValue(OUTPUT_FILE_NAME, fileVariable.name, contextExecution);
-            setOutputValue(OUTPUT_FILE_MIMETYPE, fileVariable.mimeType, contextExecution);
+            setOutputValue(OUTPUT_FILE_NAME, fileVariable.getName(), contextExecution);
+            setOutputValue(OUTPUT_FILE_MIMETYPE, fileVariable.getMimeType(), contextExecution);
         } else {
             setOutputValue(OUTPUT_FILE_LOADED, null, contextExecution);
             setOutputValue(OUTPUT_FILE_NAME, null, contextExecution);

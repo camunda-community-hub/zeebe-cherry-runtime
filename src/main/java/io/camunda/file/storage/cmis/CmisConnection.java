@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  Manage the connection to one CMIS repository                        */
 /* ******************************************************************** */
-package io.camunda.cherry.connection.cmis;
+package io.camunda.file.storage.cmis;
 
 import org.apache.chemistry.opencmis.client.api.*;
 import org.apache.chemistry.opencmis.client.runtime.SessionFactoryImpl;
@@ -95,8 +95,8 @@ public class CmisConnection {
 
     /**
      * Return an object by it's ID
-     * @param objectId
-     * @return
+     * @param objectId Id of object
+     * @return a CMIS Object
      */
     public CmisObject getObjectById(final String objectId) {
         return session.getObject(objectId);
@@ -125,11 +125,11 @@ public class CmisConnection {
         VersioningState versioningState = null;
 
         /**
-         * Ask to save a document. To not ask for a versioning policyu
+         * Ask to save a document. To not ask for a versioning policy
          *
-         * @param parentFolder
-         * @param documentName
-         * @return
+         * @param parentFolder parent where the document is loaded
+         * @param documentName name of document
+         * @return a Document properties
          */
         public static DocumentProperties getDocument(String parentFolder, String documentName) {
             DocumentProperties documentProperties = new DocumentProperties();
@@ -156,7 +156,7 @@ public class CmisConnection {
      * @param documentProperties Properties to saved the document
      * @param inputDocument      Content of the document
      * @param mimeType           Mime type of the document
-     * @return
+     * @return a Document
      */
     public Document uploadNewDocument(DocumentProperties documentProperties, InputStream inputDocument, long length, final String mimeType) throws Exception {
         final Folder folder = getFolderByPath(documentProperties.parentFolder);
@@ -248,7 +248,7 @@ public class CmisConnection {
 
     /**
      * Access the CMIS session for any advance usage
-     * @return
+     * @return the session Id
      */
     public Session getSession() {
         return session;

@@ -45,7 +45,7 @@ public class RunnerDecorationTemplate {
     public Map<String, Object> getTemplate() {
 
         Map<String, Object> templateContent = new HashMap<>();
-        if (! verifyRunner())
+        if (! runner.checkValidDefinition().listOfErrors().isEmpty())
             return templateContent;
 
         templateContent.put("$schema", "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json");
@@ -257,39 +257,4 @@ public class RunnerDecorationTemplate {
         return listProperties;
     }
 
-    private boolean verifyRunner() {
-        StringBuilder errors= new StringBuilder();
-        if (runner instanceof AbstractConnector runnerConnector) {
-            AbstractConnectorOutput abstractConnectorOutput = runnerConnector.getAbstractConnectorOutput();
-            // ATTENTION, the output must start with a lower case, and
-            for (RunnerParameter runnerParameter : runner.getListOutput()) {
-                // do not generate a property for accessAllVariables
-                if (runnerParameter.isAccessAllVariables())
-                    continue;
-                if (runnerParameter.getName().isEmpty()) {
-                    errors.append("One parameters does not have a name");
-                    continue;
-                }
-                String firstLetter = runnerParameter.getName().substring(0,1);
-
-                if (! firstLetter.toLowerCase().equals(firstLetter)) {
-                    errors.append("The first letter must be in Lower case");
-                    continue;
-                }
-                // check if a method get<runnerParameter.getName()> exist
-                Method m = null;
-                try {
-                    m = abstractConnectorOutput.getClass().getMethod("get"+runnerParameter.getName(), null);
-                } catch (NoSuchMethodException e) {
-                    errors.append("A method [get"+runnerParameter.getName()+"()] must exist");
-                    continue;
-                }
-
-
-            }
-        }
-        // where to log the information??
-
-        return errors.isEmpty();
-    }
 }

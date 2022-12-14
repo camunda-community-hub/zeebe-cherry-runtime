@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  Manage all connection for CMIS                                      */
 /* ******************************************************************** */
-package io.camunda.cherry.connection.cmis;
+package io.camunda.file.storage.cmis;
 
 
 import java.util.HashMap;
@@ -14,7 +14,7 @@ public class CmisFactoryConnection {
 
     public Map<String, CmisConnection> allConnections = new HashMap<>();
 
-    private static CmisFactoryConnection singletonCmisFactory = new CmisFactoryConnection();
+    private static final CmisFactoryConnection singletonCmisFactory = new CmisFactoryConnection();
 
     public static CmisFactoryConnection getInstance() {
         return singletonCmisFactory;

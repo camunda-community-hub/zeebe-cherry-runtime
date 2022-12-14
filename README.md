@@ -280,6 +280,9 @@ server.servlet.context-path=/
 spring.mustache.prefix=classpath:static/templates/
 ````
 
+## Embeded an existing connector
+See the documentation relative to this pattern
+
 
 ## Develop your own runner
 Create a new Java class for your runner. Extends the class AbstractWorker for a Worker, AbstractConnector for a Connector

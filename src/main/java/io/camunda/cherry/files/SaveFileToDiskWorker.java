@@ -9,14 +9,14 @@
 package io.camunda.cherry.files;
 
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.file.storage.FileVariable;
+import io.camunda.file.storage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
-import io.camunda.cherry.definition.filevariable.FileVariable;
-import io.camunda.cherry.definition.filevariable.StorageDefinition;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -57,7 +57,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
                         BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Load file error"),
                         BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR, "Folder does not exist, or not visible from the server"),
                         BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
-                        BpmnError.getInstance(StorageDefinition.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
+                        BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
     }
 
     /**
@@ -105,8 +105,8 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
         }
 
         try {
-            Path file = Paths.get(folder.getAbsolutePath() + FileSystems.getDefault().getSeparator() + (fileName == null ? fileVariable.name : fileName));
-            Files.write(file, fileVariable.value);
+            Path file = Paths.get(folder.getAbsolutePath() + FileSystems.getDefault().getSeparator() + (fileName == null ? fileVariable.getName() : fileName));
+            Files.write(file, fileVariable.getValue());
             logInfo("Write file[" + file + "]");
         } catch (Exception e) {
             logError("Cannot save to folder[" + folderToSave + "] : " + e);

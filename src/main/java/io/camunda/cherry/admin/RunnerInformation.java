@@ -31,8 +31,6 @@ public class RunnerInformation {
 
     private CherryHistoricFactory.Performance performance;
 
-
-
     /**
      * Keep the runner in the class. This class is a facade
      *
@@ -80,6 +78,13 @@ public class RunnerInformation {
         return runner.getListOutput();
     }
 
+    public String getValidationErrorsMessage() {
+        return String.join("; ", runner.checkValidDefinition().listOfErrors());
+    }
+    public String getValidationWarningsMessage() {
+        return String.join("; ", runner.checkValidDefinition().listOfWarnings());
+    }
+
     public List<BpmnError> getListBpmnErrors() {
         return runner.getListBpmnErrors();
     }
@@ -110,7 +115,7 @@ public class RunnerInformation {
      * @return the list of errors
      */
     public String getDefinitionErrors() {
-        return String.join(", ", runner.checkValidDefinition());
+        return String.join(", ", runner.checkValidDefinition().listOfErrors());
 
     }
 

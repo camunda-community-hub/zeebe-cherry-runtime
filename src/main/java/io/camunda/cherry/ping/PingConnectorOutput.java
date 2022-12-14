@@ -33,7 +33,7 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
     }
 
     @Override
-    public List<RunnerParameter> getListOutput() {
+    public List<RunnerParameter> getOutputParameters() {
         return Arrays.asList(
                 RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp"),
                 RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED, "Returm the IpAddress")

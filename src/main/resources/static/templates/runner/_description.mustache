@@ -12,7 +12,14 @@
             <h5 class="card-title" style="font-weight: 1000;">Class Name:</h5>
             <p class="card-text" style="padding-left:30px; padding-bottom: 20px">{{className}}</p>
 
-            <h5 class="card-title" style="font-weight: 1000;">Element template:</h5>
+          <h5 class="card-title" style="font-weight: 1000;">Validation:</h5>
+          Errors;</br>
+          <p class="card-text" style="padding-left:30px; padding-bottom:20px; color:red">{{validationErrorsMessage}}</p>
+          Warnings:</br>
+          <p class="card-text" style="padding-left:30px; padding-bottom:20px;
+          color:brown">{{validationWarningsMessage}}</p>
+
+          <h5 class="card-title" style="font-weight: 1000;">Element template:</h5>
             <div class="block">
                 <a target="_cherryElementTemplate" href="/cherry/api/runner/templatefile?name={{name}}" class="button is-info" download>Download {{name}} Element Template</a>
             </div>
