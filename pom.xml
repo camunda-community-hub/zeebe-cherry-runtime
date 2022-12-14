@@ -75,13 +75,16 @@
             <version>${connector-validation.version}</version>
         </dependency>
 
-        <!-- Access file  -->
+        <!-- Access file
+        In version 2.1.0, java file are added to be able to compile the Cherry Framework: the lib is not published
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>zebee-cherry-filestorage</artifactId>
             <version>${cherryfilestorage.version}</version>
             <scope>provided</scope>
         </dependency>
+        -->
+
 
         <!-- JSON LocalDateTime -->
         <dependency>
