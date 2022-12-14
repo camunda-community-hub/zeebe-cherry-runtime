@@ -6,6 +6,9 @@
 /* ******************************************************************** */
 package io.camunda.cherry.files;
 
+import io.camunda.file.storage.FileRepoFactory;
+import io.camunda.file.storage.FileVariableReference;
+import io.camunda.file.storage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
@@ -13,9 +16,6 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.cherry.definition.filevariable.FileVariableFactory;
-import io.camunda.cherry.definition.filevariable.FileVariableReference;
-import io.camunda.cherry.definition.filevariable.StorageDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +24,6 @@ import java.util.Arrays;
 @Component
 public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunner {
 
-    @Autowired
-    FileVariableFactory fileVariableFactory;
 
     private static final String OUTPUT_FILE_IS_PURGED = "filePurged";
     private static final String INPUT_SOURCE_FILE = "sourceFile";
@@ -40,7 +38,7 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
                         RunnerParameter.getInstance(OUTPUT_FILE_IS_PURGED, "File is purged", Object.class, RunnerParameter.Level.REQUIRED, "True if the file is purged correctly")
                 ),
                 Arrays.asList(
-                        BpmnError.getInstance(StorageDefinition.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
+                        BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
     }
 
     /**
@@ -78,12 +76,14 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
         FileVariableReference fileVariable = getFileVariableReferenceValue(INPUT_SOURCE_FILE, activatedJob);
         try {
-            boolean filePurged = fileVariableFactory.purgeFileVariable(fileVariable);
+            FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
+
+            boolean filePurged = fileRepoFactory.purgeFileVariable(fileVariable);
             setOutputValue(OUTPUT_FILE_IS_PURGED, filePurged, contextExecution);
         } catch (Exception e) {
             logError("Can't purge file " + e);
             setOutputValue(OUTPUT_FILE_IS_PURGED, false, contextExecution);
-            throw new ZeebeBpmnError(StorageDefinition.BPMNERROR_INCORRECT_STORAGEDEFINITION, "Worker [" + getName() + "] File[" + fileVariable.content + "] can't purge");
+            throw new ZeebeBpmnError(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION, "Worker [" + getName() + "] File[" + fileVariable.content + "] can't purge");
         }
 
     }

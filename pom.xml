@@ -17,6 +17,9 @@
         <connector-core.version>0.3.0</connector-core.version>
         <connector-validation.version>0.3.0</connector-validation.version>
 
+        <!-- Access file -->
+        <cherryfilestorage.version>1.0.0</cherryfilestorage.version>
+
         <junit.jupiter.version>5.9.1</junit.jupiter.version>
         <opensagres.version>2.0.3</opensagres.version>
         <spring.boot.version>2.7.4</spring.boot.version>
@@ -72,6 +75,13 @@
             <version>${connector-validation.version}</version>
         </dependency>
 
+        <!-- Access file  -->
+        <dependency>
+            <groupId>io.camunda.connector</groupId>
+            <artifactId>zebee-cherry-filestorage</artifactId>
+            <version>${cherryfilestorage.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- JSON LocalDateTime -->
         <dependency>
