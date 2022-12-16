@@ -139,7 +139,7 @@ public static final String BPMERROR_LOAD_FILE_ERROR = "LOAD_FILE_ERROR";
 `````
 The ConnectorException will be catched by the Cherry facade.
 
-## access files
+## Access files
 C8 does not manipulate Document/files.
 The library connector-8-DocumentRepository allows these operations. This library is outisde the Cherry Framework
    
