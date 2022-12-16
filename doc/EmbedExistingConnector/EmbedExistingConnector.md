@@ -141,10 +141,21 @@ The ConnectorException will be catched by the Cherry facade.
 
 ## access files
 C8 does not manipulate Document/files.
-The library connector-8-DocumentRepository allows these operations.
+The library connector-8-DocumentRepository allows these operations. This library is outisde the Cherry Framework
+   
+`````   
+    <dependency>
+      <groupId>io.camunda.connector</groupId>
+      <artifactId>zebee-cherry-filestorage</artifactId>
+      <version>1.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+`````
+   
 
 Documents/files can be saved in different storage: File system, CMIS, and Database.
-To save a file in the repository, use this method:
+   
+To save a file in the repository, use this method (note that the storageDefinition String is asked as a Input):
 
 ````
     byte[] content;
