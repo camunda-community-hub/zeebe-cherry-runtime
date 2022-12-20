@@ -56,9 +56,11 @@ public class CherryJobRunnerFactory {
 
 
         for (AbstractRunner runner : listRunners) {
-            List<String> listOfErrors = runner.checkValidDefinition();
+            List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
             if (!listOfErrors.isEmpty()) {
-                logger.error("Runner [" + runner.getIdentification() + "] can't start, errors " + String.join(", ",listOfErrors));
+                logger.error("CherryJobRunnerFactory: CAN' START [" + runner.getType()
+                    + (runner.getName() != null ? " (" + runner.getName() + ")" : "")
+                    + "] can't start, errors " + String.join(", ",listOfErrors));
                 continue;
             }
 
@@ -120,7 +122,7 @@ public class CherryJobRunnerFactory {
     public boolean startRunner(String runnerName) throws OperationException {
         for (Running running : listRunnerRunning) {
             if (running.runner().getIdentification().equals(runnerName)) {
-                List<String> listOfErrors= running.runner.checkValidDefinition();
+                List<String> listOfErrors= running.runner.checkValidDefinition().listOfErrors();
                 if (! listOfErrors.isEmpty())
                     throw new OperationException(WORKER_INVALID_DEFINITION, "Worker has error in the definition : "
                             + String.join(";", listOfErrors));

@@ -9,31 +9,33 @@
 /*  This class just manipulate the information with the format          */
 /*  <Type>:<Complement>
 /* ******************************************************************** */
-package io.camunda.cherry.definition.filevariable;
+package io.camunda.file.storage;
 
 import com.google.gson.Gson;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class StorageDefinition {
 
-    public final static String BPMNERROR_INCORRECT_STORAGEDEFINITION = "INCORRECT_STORAGEDEFINITION";
+    public final static String ERROR_INCORRECT_STORAGEDEFINITION = "INCORRECT_STORAGEDEFINITION";
+    public static final String STORAGE_DEFINITION_DELIMITATEUR = ":";
     static Logger logger = LoggerFactory.getLogger(StorageDefinition.class.getName());
     public StorageDefinitionType type;
     public String complement = null;
     public Object complementInObject = null;
 
-    public static StorageDefinition getFromString(String completeStorageDefinition) throws ZeebeBpmnError {
+    public static StorageDefinition getFromString(String completeStorageDefinition) throws Exception {
         try {
-            int posDelimiter = completeStorageDefinition.indexOf(":");
+            int posDelimiter = completeStorageDefinition.indexOf(STORAGE_DEFINITION_DELIMITATEUR);
 
             String storageTypeSt = posDelimiter == -1 ? completeStorageDefinition : completeStorageDefinition.substring(0, posDelimiter);
             StorageDefinition storageDefinition = new StorageDefinition();
             storageDefinition.type = StorageDefinitionType.valueOf(storageTypeSt);
 
             switch( storageDefinition.type) {
-                case FOLDER: storageDefinition.complement = completeStorageDefinition.substring(posDelimiter + 1);break;
+                case FOLDER:
+                    storageDefinition.complement = completeStorageDefinition.substring(posDelimiter + 1);
+                    break;
                 case CMIS:
                     String complement = completeStorageDefinition.substring(posDelimiter + 1);
                     Gson gson = new Gson();
@@ -50,23 +52,23 @@ public class StorageDefinition {
                     + "|" + StorageDefinitionType.CMIS
                     + "|" + StorageDefinitionType.TEMPFOLDER
                     + "|" + StorageDefinitionType.FOLDER + "]";
-            logger.error("Cherry.StorageDefinition: Can't decode [" + completeStorageDefinition + "] " + e);
-            throw new ZeebeBpmnError(BPMNERROR_INCORRECT_STORAGEDEFINITION, message);
+            logger.error("StorageDefinition: Can't decode [" + completeStorageDefinition + "] " + e);
+            throw new Exception(ERROR_INCORRECT_STORAGEDEFINITION+": "+message);
         }
     }
 
     /**
      * Encode the current storage definition to a String, so it is easily movable to any information
      *
-     * @return
+     * @return the string which encode the storage definition
      */
     public String encodeToString() {
         String result = type.toString();
         if (complement != null) {
-            result += ":" + complement;
+            result += STORAGE_DEFINITION_DELIMITATEUR + complement;
         } else if (complementInObject != null) {
             Gson gson = new Gson();
-            result += ":" + gson.toJson(complementInObject);
+            result += STORAGE_DEFINITION_DELIMITATEUR + gson.toJson(complementInObject);
         }
         return result;
     }
