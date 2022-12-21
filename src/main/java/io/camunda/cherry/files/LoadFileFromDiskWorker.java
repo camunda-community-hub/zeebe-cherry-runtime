@@ -8,22 +8,20 @@
 /* ******************************************************************** */
 package io.camunda.cherry.files;
 
+import io.camunda.cherry.definition.AbstractWorker;
+import io.camunda.cherry.definition.BpmnError;
+import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.cherry.definition.RunnerParameter;
 import io.camunda.file.storage.FileVariable;
 import io.camunda.file.storage.StorageDefinition;
 import io.camunda.file.storage.cmis.CmisParameters;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.IntFrameworkRunner;
-import io.camunda.cherry.definition.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -146,7 +144,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getName() {
-        return "CherryLoadFileFromDisk";
+        return "FileStorageLoadFileFromDisk";
     }
 
     @Override

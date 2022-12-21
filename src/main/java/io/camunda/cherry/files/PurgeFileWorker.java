@@ -6,20 +6,20 @@
 /* ******************************************************************** */
 package io.camunda.cherry.files;
 
+import io.camunda.cherry.definition.AbstractWorker;
+import io.camunda.cherry.definition.BpmnError;
+import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.cherry.definition.RunnerParameter;
 import io.camunda.file.storage.FileRepoFactory;
 import io.camunda.file.storage.FileVariableReference;
 import io.camunda.file.storage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.IntFrameworkRunner;
-import io.camunda.cherry.definition.RunnerParameter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 @Component
 public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunner {
@@ -31,20 +31,20 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
     public PurgeFileWorker() {
         super("c-files-purge",
-                Arrays.asList(
+                Collections.singletonList(
                         RunnerParameter.getInstance(INPUT_SOURCE_FILE, "Source file", Object.class, RunnerParameter.Level.REQUIRED, "FileVariable used to save")
                 ),
-                Arrays.asList(
+            Collections.singletonList(
                         RunnerParameter.getInstance(OUTPUT_FILE_IS_PURGED, "File is purged", Object.class, RunnerParameter.Level.REQUIRED, "True if the file is purged correctly")
                 ),
-                Arrays.asList(
+            Collections.singletonList(
                         BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION, "Incorrect storage definition")));
     }
 
     /**
      * mark this worker as a Framework runner
      *
-     * @return
+     * @return true if the runner is part of the framework
      */
     @Override
     public boolean isFrameworkRunner() {
@@ -53,7 +53,7 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
     @Override
     public String getName() {
-        return "CherryPurgeFile";
+        return "FileStoragePurgeFile";
     }
 
     @Override
