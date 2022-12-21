@@ -16,37 +16,49 @@ import io.camunda.cherry.definition.RunnerParameter;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class PingConnectorOutput extends AbstractConnectorOutput {
 
-    private long internalTimeStampMS;
-    private String internalIpAddress;
+  private long internalTimeStampMS;
+  private String internalIpAddress;
 
-    public PingConnectorOutput() {
-        super();
-    }
+  private Map<String, Object> parameters;
 
-    public PingConnectorOutput(long currentTimestamp, String ipAddress) {
-        super();
-        this.internalTimeStampMS = currentTimestamp;
-        this.internalIpAddress = ipAddress;
-    }
+  public PingConnectorOutput() {
+    super();
+  }
 
-    @Override
-    public List<RunnerParameter> getOutputParameters() {
-        return Arrays.asList(
-                RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp"),
-                RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED, "Returm the IpAddress")
-                );
-    }
+  public PingConnectorOutput(long currentTimestamp, String ipAddress, Map<String,Object> parameters) {
+    super();
+    this.internalTimeStampMS = currentTimestamp;
+    this.internalIpAddress = ipAddress;
+    this.parameters = parameters;
+  }
 
-    /* The getter must start by a lower case */
-    public long gettimeStampMS() {
-        return internalTimeStampMS;
-    }
-    /* The getter must start by a lower case */
-    public String getipAddress() {
-        return internalIpAddress;
-    }
+  @Override
+  public List<RunnerParameter> getOutputParameters() {
+    return Arrays.asList(
+        RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED,
+            "Produce a timestamp"),
+        RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED,
+            "Returm the IpAddress"),
+    RunnerParameter.getInstance("parameters", "Parameters", Map.class, RunnerParameter.Level.REQUIRED,
+        "Returm parameters"));
+  }
 
+  /* The getter must start by a lower case */
+  public long gettimeStampMS() {
+    return internalTimeStampMS;
+  }
+
+  /* The getter must start by a lower case */
+  public String getipAddress() {
+    return internalIpAddress;
+  }
+
+  public Map<String, Object> getparameters() {
+    return parameters;
+  }
 }
+

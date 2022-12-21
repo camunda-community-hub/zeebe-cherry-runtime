@@ -72,7 +72,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
     @Override
     public String getName() {
-        return "CherrySaveFileToDisk";
+        return "FileStorageSaveFileToDisk";
     }
 
     @Override
@@ -82,7 +82,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
     @Override
     public String getDescription() {
-        return "Save a file in a storage definition a disk";
+        return "Save a file from a storage definition to a disk";
     }
 
     @Override

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.Map;
 
 /* ------------------------------------------------------------------- */
 
@@ -61,9 +62,11 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
         // context.validate(pingConnectorInput);
         Thread.sleep( pingConnectorInput.getDelay());
-        InetAddress IP=InetAddress.getLocalHost();
+        InetAddress ipAddress=InetAddress.getLocalHost();
 
-        return new PingConnectorOutput(System.currentTimeMillis(), IP.getHostAddress());
+        return new PingConnectorOutput(System.currentTimeMillis(),
+            ipAddress.getHostAddress(),
+            Map.of("JDK", System.getProperty("java.version")));
     }
 
 }
