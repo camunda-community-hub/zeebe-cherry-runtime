@@ -12,56 +12,14 @@
 <section class="section">
     <div class="container">
         <div class="box">
-            <h1 class="title is-5">124 total jobs in last 24 hours of 6 Worker/Connector Types</h1>
-            <div class="columns">
-                <div class="column">
-                    <h1 class="title is-4 has-text-primary">90 Successful</h1>
-                </div>
-                <div class="column">
-                    <h1 class="title is-4 has-text-danger">10 Failed</h1>
-                </div>
-            </div>
+          <div id="dashboardHeader"></div>
+        </div>
 
-            <progress class="progress is-large is-primary" value="90" max="100">90%</progress>
-        </div>
-        <div class="box">
-            <div class="columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-files-load-from-disk">c-files-load-from-disk, 10 total, 10 successful, 0 failed</h1>
-                    <progress class="progress is-small is-primary" value="10" max="10">10</progress>
-                </div>
-            </div>
-            <div class="is-hoverable columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-files-save-to-disk">c-files-save-to-disk, 20 total, 15 successful, 5 failed</h1>
-                    <progress class="progress is-small is-primary" value="15" max="20">10</progress>
-                </div>
-            </div>
-            <div class="is-hoverable columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-ping">c-ping, 24 total, 23 successful, 1 failed</h1>
-                    <progress class="progress is-small is-primary" value="23" max="24">10</progress>
-                </div>
-            </div>
-            <div class="is-hoverable columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-pingconnector">c-pingconnector, 0 total, 0 successful, 0 failed</h1>
-                    <progress class="progress is-small is-info" value="1" max="1">0</progress>
-                </div>
-            </div>
-            <div class="is-hoverable columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-send-message">c-send-message, 36 total, 24 successful, 12 failed</h1>
-                    <progress class="progress is-small is-primary" value="24" max="36">24</progress>
-                </div>
-            </div>
-            <div class="is-hoverable columns">
-                <div class="column is-two-thirds">
-                    <h1 class="title is-5 job-type is-hoverable" data-runner-name="c-set-variables">c-set-variables, 19 total, 19 successful, 0 failed</h1>
-                    <progress class="progress is-small is-primary" value="19" max="19">19</progress>
-                </div>
-            </div>
-        </div>
+          <div class="box" >
+            <h1 class="title">Details</h1>
+            <div id="dashboardDetails"></div>
+
+          </div>
     </div>
 
 </section>
@@ -72,6 +30,7 @@
 <script>
     $(document).ready( function () {
         initNavBar();
+        initDashboardTable();
 
         $('.job-type').on('click', function(e) {
             e.preventDefault();

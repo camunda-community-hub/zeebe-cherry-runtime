@@ -9,7 +9,9 @@ package io.camunda.cherry.ping;
 
 
 import io.camunda.cherry.definition.AbstractConnector;
+import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.springframework.stereotype.Component;
@@ -23,11 +25,13 @@ import java.util.Map;
 @Component
 public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
+    public static final String ERROR_NO_CONNECTION = "NO_CONNECTION";
+
     protected PingConnector() {
         super("c-pingconnector",
                 PingConnectorInput.class,
                 PingConnectorOutput.class,
-                Collections.emptyList());
+                Collections.singletonList(new BpmnError(ERROR_NO_CONNECTION, "Can't realize the connection")));
     }
 
     /**
@@ -60,6 +64,9 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
         PingConnectorInput pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
 
+        if (pingConnectorInput.isThrowErrorPlease()) {
+            throw new ConnectorException(ERROR_NO_CONNECTION, "No connection to the earth");
+        }
         // context.validate(pingConnectorInput);
         Thread.sleep( pingConnectorInput.getDelay());
         InetAddress ipAddress=InetAddress.getLocalHost();

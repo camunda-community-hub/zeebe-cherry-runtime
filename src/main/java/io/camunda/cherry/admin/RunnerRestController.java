@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,36 @@ public class RunnerRestController {
     }).toList();
   }
 
+  @GetMapping(value = "/api/runner/dashboard", produces = "application/json")
+  public Map<String,Object> getDashbboard( @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+    Map<String,Object> info=new HashMap<>();
+    int delayStatsInHoursInt = delayStatsInHours==null? 24: delayStatsInHours;
+
+  long totalSucceed=0;
+    long totalFailed=0;
+    List<Map<String,Object>> listDetails = new ArrayList<>();
+    for (AbstractRunner runner: listRunners ) {
+      Map<String,Object> infoRunner = new HashMap<>();
+      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getName(), delayStatsInHoursInt);
+      infoRunner.put("name", runner.getName());
+      infoRunner.put("logo", runner.getLogo() );
+      try {
+        infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getName()));
+      } catch (CherryJobRunnerFactory.OperationException e) {
+        infoRunner.put("active", false);
+      }
+      infoRunner.put("statistic", statisticRunner);
+      infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getName(), delayStatsInHoursInt));
+      listDetails.add( infoRunner);
+      totalSucceed += statisticRunner.succeed;
+      totalFailed += statisticRunner.failed;
+    }
+    info.put("details", listDetails);
+    info.put("totalsucceed",totalSucceed);
+    info.put("totalfailed",totalFailed);
+    info.put("nbRunners",listRunners.size());
+    return info;
+  }
   @GetMapping(value = "/api/runner/detail", produces = "application/json")
   public Optional<RunnerInformation> getWorker(@RequestParam(name = "name") String runnerName,
                                                @RequestParam(name = "logo", required = false) Boolean logo,

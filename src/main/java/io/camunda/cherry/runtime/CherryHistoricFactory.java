@@ -7,6 +7,7 @@
 package io.camunda.cherry.runtime;
 
 
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
@@ -17,16 +18,18 @@ import java.util.Random;
 @Service
 public class CherryHistoricFactory {
 
+    @Component
     public static class Statistic {
         public long executions;
         public long failed;
+        public long succeed;
     }
 
     private final Random rand = new Random(System.currentTimeMillis());
 
 
 
-
+    @Component
     public static class Interval {
         /**
          * Name is something like 16:00 / 16:15
@@ -38,6 +41,7 @@ public class CherryHistoricFactory {
 
     }
 
+    @Component
     public static class Performance {
         public long picTimeInMs;
         public long executions;
@@ -48,8 +52,9 @@ public class CherryHistoricFactory {
 
     public Statistic getStatistic(String runnerName, int delayStatInHour) {
         Statistic statistic = new Statistic();
-        statistic.executions = rand.nextLong(1000 * delayStatInHour);
         statistic.failed = rand.nextLong(10 * delayStatInHour);
+        statistic.succeed = rand.nextLong(1000 * delayStatInHour);
+        statistic.executions = statistic.failed+statistic.succeed;
         return statistic;
     }
 

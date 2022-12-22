@@ -38,6 +38,13 @@ public class AdminRestController {
     @Autowired
     private List<AbstractRunner> listRunner;
 
+    @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
+    public Map<String,Object> getParameters() {
+        Map<String,Object> parameters = new HashMap<>();
+        parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
+        return parameters;
+
+    }
     @GetMapping(value = "/api/runtime/threads", produces = "application/json")
     public Integer getNumberOfThreads() {
         return cherryJobRunnerFactory.getNumberOfThreads();
@@ -50,11 +57,5 @@ public class AdminRestController {
 
     }
 
-    @GetMapping(value = "/api/runtime/info", produces = "application/json")
-    public Map<String,Object> getInfo( @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
-        Map<String,Object> info = new HashMap<>();
-        info.put("performance", cherryHistoricFactory.getEnginePerformance(delayStatsInHours==null? 24 : delayStatsInHours));
-        info.put("statistic", cherryHistoricFactory.getEngineStatistic(delayStatsInHours==null? 24 : delayStatsInHours));
-        return info;
-    }
+
 }
