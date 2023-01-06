@@ -5,7 +5,7 @@
 /* but the result is different.                                         */
 /* See PingConnectorOutput versus PingObjectConnectorOutput             */
 /* -------------------------------------------------------------------- */
-package io.camunda.cherry.ping;
+package io.camunda.cherry.ping.connector;
 
 
 import io.camunda.cherry.definition.AbstractConnector;
@@ -25,13 +25,13 @@ import java.util.Map;
 @Component
 public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
-    public static final String ERROR_NO_CONNECTION = "NO_CONNECTION";
+    public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
 
     protected PingConnector() {
         super("c-pingconnector",
                 PingConnectorInput.class,
                 PingConnectorOutput.class,
-                Collections.singletonList(new BpmnError(ERROR_NO_CONNECTION, "Can't realize the connection")));
+            Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
     }
 
     /**
@@ -65,7 +65,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
         PingConnectorInput pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
 
         if (pingConnectorInput.isThrowErrorPlease()) {
-            throw new ConnectorException(ERROR_NO_CONNECTION, "No connection to the earth");
+            throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
         }
         // context.validate(pingConnectorInput);
         Thread.sleep( pingConnectorInput.getDelay());

@@ -4,7 +4,7 @@
 /*                                                                      */
 /* Realize a simple ping                                                */
 /* ******************************************************************** */
-package io.camunda.cherry.ping;
+package io.camunda.cherry.ping.worker;
 
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.IntFrameworkRunner;

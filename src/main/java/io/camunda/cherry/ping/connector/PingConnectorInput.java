@@ -1,4 +1,4 @@
-package io.camunda.cherry.ping;
+package io.camunda.cherry.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorInput;
 import io.camunda.cherry.definition.RunnerParameter;
@@ -45,6 +45,7 @@ public class PingConnectorInput extends AbstractConnectorInput {
                 Boolean.class,
                 RunnerParameter.Level.OPTIONAL,
                 "If true, then the connector throw an error")
+                .setVisibleInTemplate()
         );
     }
 
