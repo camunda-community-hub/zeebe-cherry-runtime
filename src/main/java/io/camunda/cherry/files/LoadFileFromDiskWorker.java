@@ -144,8 +144,14 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getName() {
-        return "FileStorageLoadFileFromDisk";
+        return "File Storage: Load file";
     }
+
+    @Override
+    public String getCollectionName() {
+        return "File Storage";
+    }
+
 
     @Override
     public String getLabel() {
@@ -161,6 +167,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
     public String getLogo() {
         return WORKERLOGO;
     }
+
 
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {

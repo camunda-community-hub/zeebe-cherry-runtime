@@ -72,7 +72,12 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
 
     @Override
     public String getName() {
-        return "FileStorageSaveFileToDisk";
+        return "File Storage: Save File";
+    }
+
+    @Override
+    public String getCollectionName() {
+        return "File Storage";
     }
 
     @Override

@@ -18,7 +18,6 @@ import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 @Component
@@ -53,7 +52,12 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
     @Override
     public String getName() {
-        return "FileStoragePurgeFile";
+        return "File Storage: Purge File";
+    }
+
+    @Override
+    public String getCollectionName() {
+        return "File Storage";
     }
 
     @Override
