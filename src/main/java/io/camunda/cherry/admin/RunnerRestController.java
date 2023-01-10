@@ -48,7 +48,7 @@ public class RunnerRestController {
   CherryHistoricFactory cherryHistoricFactory;
 
   /**
-   * Spring populate the list of all workers
+   * Spring populate the list of all runners
    */
   @Autowired
   private List<AbstractRunner> listRunners;
@@ -209,6 +209,9 @@ public class RunnerRestController {
                                   @RequestParam(name = "separatetemplate", required = false) Boolean separateTemplate)
       throws IOException {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
+    // Zip file required? Add all templates in the ZIP.
+    if (separateTemplate==null && withFrameworkRunners==null)
+      withFrameworkRunnersIncluded=true;
     logger.info(
         "Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
             + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
