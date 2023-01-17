@@ -24,7 +24,7 @@
     </bpmn:userTask>
     <bpmn:sequenceFlow id="Flow_00mgsl9" sourceRef="StartEvent_1" targetRef="Activity_15uqhbf" />
     <bpmn:sequenceFlow id="Flow_0owg6v7" sourceRef="Activity_15uqhbf" targetRef="ReviewTask" />
-    <bpmn:boundaryEvent id="Event_18hwv5j" attachedToRef="Activity_15uqhbf">
+    <bpmn:boundaryEvent id="Event_18hwv5j" name="BAD_WEATHER" attachedToRef="Activity_15uqhbf">
       <bpmn:outgoing>Flow_0j7k7s5</bpmn:outgoing>
       <bpmn:errorEventDefinition id="ErrorEventDefinition_18s61i1" errorRef="Error_0737k6y" />
     </bpmn:boundaryEvent>
@@ -101,14 +101,17 @@
           <dc:Bounds x="349" y="345" width="22" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0eg0aq4_di" bpmnElement="Event_18hwv5j">
+        <dc:Bounds x="312" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="338" y="176" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_140nrvk_di" bpmnElement="N2mnBoundaryEvent">
         <dc:Bounds x="582" y="142" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="619" y="176" width="22" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0eg0aq4_di" bpmnElement="Event_18hwv5j">
-        <dc:Bounds x="312" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1kq0q02_di" bpmnElement="Flow_1kq0q02">
         <di:waypoint x="650" y="120" />

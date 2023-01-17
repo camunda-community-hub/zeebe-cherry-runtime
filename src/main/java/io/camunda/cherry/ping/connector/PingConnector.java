@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Random;
 
 /* ------------------------------------------------------------------- */
 
@@ -26,6 +27,8 @@ import java.util.Map;
 public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
     public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+
+    private Random random = new Random();
 
     protected PingConnector() {
         super("c-pingconnector",
@@ -68,7 +71,12 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
             throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
         }
         // context.validate(pingConnectorInput);
-        Thread.sleep( pingConnectorInput.getDelay());
+        int delay=pingConnectorInput.getDelay();
+        if (delay<0) {
+            delay = random.nextInt(10000)+1500;
+        }
+
+        Thread.sleep( delay );
         InetAddress ipAddress=InetAddress.getLocalHost();
 
         return new PingConnectorOutput(System.currentTimeMillis(),

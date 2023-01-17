@@ -7,17 +7,25 @@
 /* ******************************************************************** */
 package io.camunda.cherry.definition;
 
+import io.camunda.cherry.runtime.CherryHistoricFactory;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.client.api.worker.JobHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractWorker extends AbstractRunner implements JobHandler {
     Logger loggerAbstractWorker = LoggerFactory.getLogger(AbstractWorker.class.getName());
+
+    @Autowired
+    CherryHistoricFactory cherryHistoricFactory;
+
+
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Administration                                          */
@@ -49,6 +57,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
      * @param activatedJob information on job to execute
      */
     public void handle(final JobClient jobClient, final ActivatedJob activatedJob) {
+        Instant executionInstant = Instant.now();
 
         ContextExecution contextExecution = new ContextExecution();
         contextExecution.beginExecution = System.currentTimeMillis();
@@ -70,13 +79,19 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
         validateInput();
 
         // ok, this is correct, execute it now
-        execute(jobClient, activatedJob, contextExecution);
+        ExecutionStatusEnum status;
+        try {
+            execute(jobClient, activatedJob, contextExecution);
 
-        validateOutput();
+            validateOutput();
 
-        // let's verify the execution respect the output contract
-        checkOutput(contextExecution);
-
+            // let's verify the execution respect the output contract
+            checkOutput(contextExecution);
+            status = ExecutionStatusEnum.SUCCESS;
+        } catch (Exception e) {
+            loggerAbstractWorker.error("Error during execution "+e.getMessage()+" " +e.getCause());
+            status=ExecutionStatusEnum.FAIL;
+        }
 
         // save the output in the process instance
         jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
@@ -86,6 +101,13 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
             logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms");
         else if (contextExecution.endExecution - contextExecution.beginExecution > 2000)
             logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms (long)");
+
+
+        // save execution
+        cherryHistoricFactory.saveExecution( executionInstant,
+            getName(),
+            status,
+            contextExecution.endExecution - contextExecution.beginExecution);
     }
 
 

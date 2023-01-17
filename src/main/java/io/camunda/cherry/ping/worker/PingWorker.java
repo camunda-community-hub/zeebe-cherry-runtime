@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Random;
 
 @Component
 public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
@@ -26,6 +27,8 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
     private static final String INPUT_MESSAGE = "message";
     private static final String INPUT_DELAY = "delay";
     private static final String OUTPUT_TIMESTAMP = "timestamp";
+
+    private Random random = new Random();
 
     public PingWorker() {
         super("c-ping",
@@ -73,6 +76,9 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
         String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
         Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
         logInfo(message);
+        if (delay!=null && delay<0) {
+            delay = Long.valueOf(random.nextInt(10000)+1500);
+        }
         if (delay != null) {
             try {
                 Thread.sleep(delay);
