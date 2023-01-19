@@ -89,7 +89,7 @@ public class RunnerRestController {
     List<Map<String,Object>> listDetails = new ArrayList<>();
     for (AbstractRunner runner: listRunners ) {
       Map<String,Object> infoRunner = new HashMap<>();
-      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getName(), delayStatsInHoursInt);
+      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(), delayStatsInHoursInt);
       infoRunner.put("name", runner.getName());
       infoRunner.put("logo", runner.getLogo() );
       try {
@@ -98,7 +98,7 @@ public class RunnerRestController {
         infoRunner.put("active", false);
       }
       infoRunner.put("statistic", statisticRunner);
-      infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getName(), delayStatsInHoursInt));
+      infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getType(), delayStatsInHoursInt));
       listDetails.add( infoRunner);
       totalSucceeded += statisticRunner.succeeded;
       totalFailed += statisticRunner.failed;

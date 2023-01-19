@@ -13,15 +13,18 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
 
   @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
       + " where runnerexecution.executionTime >= :dateToSearch ")
-  public RunnerExecutionEntity findLastRecord(@Param("dateToSearch") Instant dateToSearch);
+  RunnerExecutionEntity findLastRecord(@Param("dateToSearch") Instant dateToSearch);
 
-  @Query("select runnerexecution.status, count(runnerexecution) as number from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch " + " group by runnerexecution.status")
-  public List<Map<String, Object>> selectStatusStats(@Param("dateToSearch") Instant dateToSearch);
+  @Query(
+      "select runnerexecution.status as status, count(runnerexecution) as number from RunnerExecutionEntity runnerexecution"
+          + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+          + " group by runnerexecution.status")
+  List<Map<String, Object>> selectStatusStats(@Param("runnerType") String runnerType,
+                                              @Param("dateToSearch") Instant dateToSearch);
 
   @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerName = :runnerName")
-  public List<RunnerExecutionEntity> selectRunnerRecords(@Param("dateToSearch") Instant dateToSearch,
-                                                         @Param("runnerName") String runnerName);
+      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType")
+  List<RunnerExecutionEntity> selectRunnerRecords(@Param("runnerType") String runnerType,
+                                                  @Param("dateToSearch") Instant dateToSearch);
 
 }

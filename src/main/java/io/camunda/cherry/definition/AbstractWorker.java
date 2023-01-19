@@ -105,7 +105,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
 
         // save execution
         cherryHistoricFactory.saveExecution( executionInstant,
-            getName(),
+            getType(),
             status,
             contextExecution.endExecution - contextExecution.beginExecution);
     }
@@ -132,6 +132,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
      *
      * @param message message to log
      */
+    @Override
     public void logInfo(String message) {
         loggerAbstractWorker.info("CherryWorker[" + getIdentification() + "]:" + message);
     }

@@ -21,8 +21,8 @@ public class RunnerExecutionEntity {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private Long id;
 
-  @Column(name = "runner_name", length = 100)
-  public String  runnerName;
+  @Column(name = "runner_type", length = 100)
+  public String  runnerType;
 
   @Column(name = "execution_time")
   public Instant executionTime;

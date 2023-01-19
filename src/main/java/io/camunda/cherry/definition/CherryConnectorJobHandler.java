@@ -18,7 +18,7 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
 
   CherryHistoricFactory cherryHistoricFactory;
 
-  private AbstractConnector abstractConnector;
+  private final AbstractConnector abstractConnector;
 
   public CherryConnectorJobHandler(AbstractConnector abstractConnector, CherryHistoricFactory cherryHistoricFactory) {
     super(abstractConnector);
@@ -26,6 +26,7 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     this.cherryHistoricFactory = cherryHistoricFactory;
   }
 
+  @Override
   public void handle(JobClient client, ActivatedJob job) {
     Instant executionInstant = Instant.now();
     long beginExecution = System.currentTimeMillis();
@@ -42,7 +43,7 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     logger.info(
         "Connector[" + abstractConnector.getName() + "] executed in " + (endExecution - beginExecution) + " ms");
 
-    cherryHistoricFactory.saveExecution(executionInstant, abstractConnector.getName(), status,
+    cherryHistoricFactory.saveExecution(executionInstant, abstractConnector.getType(), status,
         endExecution - beginExecution);
 
   }

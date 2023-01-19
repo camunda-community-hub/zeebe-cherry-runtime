@@ -15,7 +15,7 @@
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/runner/detail?name=${workerName}&stats=true`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
     }
 
     function getDashboardInfo() {
@@ -121,24 +121,32 @@
 
           let templateDetails='<div> \
             \{\{#details\}\} \
-              <div class="column is-two-thirds"> \
-                <h1 class="title is-5 job-type is-hoverable"> \
-                    <img width="30px" src="\{\{logo\}\}"></img> \
-                    \&nbsp &nbsp &nbsp \
-                    \{\{name\}\} \, \{\{statistic.executions\}\} total, \{\{statistic.failed\}\} failed \
-                    \{\{#active\}\} \
-                    &nbsp &nbsp &nbsp \
-                      <button class="start-runner button is-selected is-primary" style="height: 1.5em">Active</button>\
-                    \{\{/active\}\} \
-                    \{\{^active\}\} \
-                      <button class="stop-runner button is-selected is-danger" style="height: 1.5em">Stopped</button> \
-                    \{\{/active\}\} \
+              <div class="column is-two-thirds" style="padding: 0px 0px 50px 0px"> \
+                <h1 class="title is-5 job-type is-hoverable" > \
+                    <table>\
+                      <tr>\
+                        <td style="border: 1px solid; padding: 5px;text-align: center; box-shadow: 5px 5px">\
+                          <img width="30px" src="\{\{logo\}\}"></img></td>\
+                        <td style="padding: 5px 0px 0px 25px">\
+                          \{\{name\}\} \, \{\{statistic.executions\}\} total, \{\{statistic.failed\}\} failed \
+                        </td> \
+                      </tr><tr> \
+                        <td style="border: 1px solid;box-shadow: 5px 5px">\
+                          \{\{#active\}\} \
+                            <button class="start-runner button is-selected is-primary" style="height: 1.5em">Active</button>\
+                          \{\{/active\}\} \
+                          \{\{^active\}\} \
+                            <button class="stop-runner button is-selected is-danger" style="height: 1.5em">Stopped</button> \
+                          \{\{/active\}\} \
+                        </td>\
+                      </tr>\
+                    </table> \
                 <h1> \
                 <progress class="progress is-small is-primary" \
                   value="\{\{statistic.progressSucceeded\}\}" \
                   max="\{\{statistic.progressExecutions\}\}"> \
                 </progress> \
-                <h2> \
+                <h2 > \
                   <i>Average \{\{performance.averageTimeInMs\}\} ms \
                      Pic \{\{performance.picTimeInMs\}\} ms \
                   </i></h2> \
