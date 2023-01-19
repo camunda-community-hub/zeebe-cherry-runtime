@@ -80,7 +80,7 @@ public class RunnerRestController {
   }
 
   @GetMapping(value = "/api/runner/dashboard", produces = "application/json")
-  public Map<String,Object> getDashbboard( @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+  public Map<String,Object> getDashboard(@RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
     Map<String,Object> info=new HashMap<>();
     int delayStatsInHoursInt = delayStatsInHours==null? 24: delayStatsInHours;
 
@@ -118,8 +118,9 @@ public class RunnerRestController {
     return listRunners.stream()
         .filter(worker -> worker.getIdentification().equals(runnerName))
         .map(RunnerInformation::getRunnerInformation)
-        .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats == null ? false : stats,
-            delayStatsInHours))
+        .map(w -> this.completeRunnerInformation(w, logo == null || logo,
+            stats == null ? false : stats, // false if not asked
+            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours)) // 23 hours is not set
         .findFirst();
   }
 

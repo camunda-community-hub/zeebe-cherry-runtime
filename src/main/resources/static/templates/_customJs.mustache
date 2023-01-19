@@ -15,7 +15,7 @@
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?name=${workerName}&stats=true`, {}, {})
     }
 
     function getDashboardInfo() {
