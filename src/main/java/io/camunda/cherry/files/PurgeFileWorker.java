@@ -10,15 +10,14 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.file.storage.FileRepoFactory;
-import io.camunda.file.storage.FileVariableReference;
-import io.camunda.file.storage.StorageDefinition;
+import io.camunda.filestorage.FileRepoFactory;
+import io.camunda.filestorage.FileVariableReference;
+import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 @Component
@@ -53,7 +52,12 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
 
     @Override
     public String getName() {
-        return "FileStoragePurgeFile";
+        return "File Storage: Purge File";
+    }
+
+    @Override
+    public String getCollectionName() {
+        return "File Storage";
     }
 
     @Override

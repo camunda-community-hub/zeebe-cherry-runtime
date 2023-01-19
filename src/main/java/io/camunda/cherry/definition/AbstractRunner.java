@@ -13,10 +13,10 @@
 package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
-import io.camunda.file.storage.FileRepoFactory;
-import io.camunda.file.storage.FileVariable;
-import io.camunda.file.storage.FileVariableReference;
-import io.camunda.file.storage.StorageDefinition;
+import io.camunda.filestorage.FileRepoFactory;
+import io.camunda.filestorage.FileVariable;
+import io.camunda.filestorage.FileVariableReference;
+import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import io.camunda.cherry.runtime.ZeebeContainer;
@@ -43,6 +43,12 @@ public abstract class AbstractRunner {
     public static final String BOOLEAN_V_NO = "NO";
     // This idea was inspired by: https://stackoverflow.com/questions/40402756/check-if-a-string-is-parsable-as-another-java-type
     static Map<Class<?>, Predicate<String>> canParsePredicates = new HashMap<>();
+
+    /**
+     * Execution can be SUCCESS, FAIL (then runner ask to retry) or BPMNERROR
+     */
+    public enum ExecutionStatusEnum {SUCCESS, FAIL, BPMNERROR}
+
 
     @Autowired
     ZeebeContainer zeebeContainer;

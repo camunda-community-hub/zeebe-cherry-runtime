@@ -6,6 +6,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runtime;
 
+import io.camunda.cherry.definition.CherryConnectorJobHandler;
 import io.camunda.connector.runtime.util.outbound.ConnectorJobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
 import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
@@ -33,6 +34,9 @@ public class CherryJobRunnerFactory {
 
     Logger logger = LoggerFactory.getLogger(CherryJobRunnerFactory.class.getName());
 
+
+    @Autowired
+    CherryHistoricFactory cherryHistoricFactory;
 
     @Autowired
     List<AbstractConnector> listAbstractConnector;
@@ -188,7 +192,7 @@ public class CherryJobRunnerFactory {
         if (runner instanceof AbstractWorker abstractWorker)
             jobWorkerBuild3 = jobWorkerBuild2.handler(abstractWorker);
         else if (runner instanceof AbstractConnector abstractConnector)
-            jobWorkerBuild3 = jobWorkerBuild2.handler(new ConnectorJobHandler(abstractConnector));
+            jobWorkerBuild3 = jobWorkerBuild2.handler(new CherryConnectorJobHandler(abstractConnector, cherryHistoricFactory));
         else
             throw new OperationException(UNKNOWN_WORKER_CLASS, "Unknown AbstractRunner class");
         jobWorkerBuild3.name(runner.getName() == null ? runner.getType() : runner.getName());

@@ -1,11 +1,52 @@
 #Introduction
 This document explains how to embed an existing connector. It gives some tips for creating a connector.
 
-# Use an existing connector
+
+# Build a connector
+
+## Main rules
 An existing connector does not reference any external framework. The Cherry Framework must not
 be referenced.
 
+A connector can reference filestorage library, to manipulate files.
+
+```
+ <!-- Access file -->
+    <dependency>
+      <groupId>io.camunda.filestorage</groupId>
+      <artifactId>filestorage</artifactId>
+      <version>${filestorage.version}</version>
+    </dependency>
+```
+
+
+A connector must define a license: copy the LICENSE file directly at the root level
+
+In the READ ME, the structure must be, per connector:
+
+### Level 1: Type Of Connector
+
+### Level 1: Build
+
+#### Level 2: API
+
+##### Level 3: Input
+The JSON structure must be added, with all needed explanation
+
+##### Level 3: Output
+The JSON structure must be added, with all needed explanation
+
+##### Level 3: Errors
+Different BPMN errors that the connector can produce sould be referenced
+
+#### Level 2: Element templates
+Give the path where the element template is
+
+
 Visit https://github.com/camunda-community-hub/camunda-8-connector-officetopdf to have an example.
+
+
+## Include dependencies
 
 The two dependencies to include is
 `````
@@ -315,6 +356,18 @@ In the meantime, execute a mvn install on your repository. The JAR file is saved
 The procedure is visible here
 https://github.com/camunda-community-hub/community-action-maven-release
 
+## Add the correct parent in the pom.xml
+
+To deploy the library, the parent in pom.xml must be
+
+
+```
+  <parent>
+    <groupId>org.camunda.community</groupId>
+    <artifactId>community-hub-release-parent</artifactId>
+    <version>1.3.1</version>
+  </parent>
+```
 
 ## Define a GitHub workflow
 Under the root of your project, create a directory `.github`, and then a directory, `workflows`.

@@ -1,4 +1,4 @@
-package io.camunda.cherry.ping;
+package io.camunda.cherry.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorInput;
 import io.camunda.cherry.definition.RunnerParameter;
@@ -16,6 +16,11 @@ public class PingConnectorInput extends AbstractConnectorInput {
     @NotEmpty private String message;
     private int delay;
 
+    public boolean isThrowErrorPlease() {
+        return throwErrorPlease;
+    }
+
+    private boolean throwErrorPlease;
 
     /**
      * Return the parameters definition
@@ -34,7 +39,13 @@ public class PingConnectorInput extends AbstractConnectorInput {
                         "Delay",
                         Long.class,
                         RunnerParameter.Level.OPTIONAL,
-                        "Delay to sleep")
+                        "Delay to sleep"),
+            RunnerParameter.getInstance("throwErrorPlease",
+                "Throw Error Please",
+                Boolean.class,
+                RunnerParameter.Level.OPTIONAL,
+                "If true, then the connector throw an error")
+                .setVisibleInTemplate()
         );
     }
 

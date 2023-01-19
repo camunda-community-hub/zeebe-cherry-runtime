@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class RunnerRestController {
   CherryHistoricFactory cherryHistoricFactory;
 
   /**
-   * Spring populate the list of all workers
+   * Spring populate the list of all runners
    */
   @Autowired
   private List<AbstractRunner> listRunners;
@@ -78,6 +79,37 @@ public class RunnerRestController {
     }).toList();
   }
 
+  @GetMapping(value = "/api/runner/dashboard", produces = "application/json")
+  public Map<String,Object> getDashboard(@RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+    Map<String,Object> info=new HashMap<>();
+    int delayStatsInHoursInt = delayStatsInHours==null? 24: delayStatsInHours;
+
+  long totalSucceeded=0;
+    long totalFailed=0;
+    List<Map<String,Object>> listDetails = new ArrayList<>();
+    for (AbstractRunner runner: listRunners ) {
+      Map<String,Object> infoRunner = new HashMap<>();
+      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(), delayStatsInHoursInt);
+      infoRunner.put("name", runner.getName());
+      infoRunner.put("logo", runner.getLogo() );
+      try {
+        infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getName()));
+      } catch (CherryJobRunnerFactory.OperationException e) {
+        infoRunner.put("active", false);
+      }
+      infoRunner.put("statistic", statisticRunner);
+      infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getType(), delayStatsInHoursInt));
+      listDetails.add( infoRunner);
+      totalSucceeded += statisticRunner.succeeded;
+      totalFailed += statisticRunner.failed;
+    }
+    info.put("details", listDetails);
+    info.put("totalsucceeded",totalSucceeded);
+    info.put("totalfailed",totalFailed);
+    info.put("totalexecutions",totalSucceeded+totalFailed);
+    info.put("nbRunners",listRunners.size());
+    return info;
+  }
   @GetMapping(value = "/api/runner/detail", produces = "application/json")
   public Optional<RunnerInformation> getWorker(@RequestParam(name = "name") String runnerName,
                                                @RequestParam(name = "logo", required = false) Boolean logo,
@@ -86,8 +118,9 @@ public class RunnerRestController {
     return listRunners.stream()
         .filter(worker -> worker.getIdentification().equals(runnerName))
         .map(RunnerInformation::getRunnerInformation)
-        .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats == null ? false : stats,
-            delayStatsInHours))
+        .map(w -> this.completeRunnerInformation(w, logo == null || logo,
+            stats == null ? false : stats, // false if not asked
+            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours)) // 23 hours is not set
         .findFirst();
   }
 
@@ -178,6 +211,9 @@ public class RunnerRestController {
                                   @RequestParam(name = "separatetemplate", required = false) Boolean separateTemplate)
       throws IOException {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
+    // Zip file required? Add all templates in the ZIP.
+    if (separateTemplate==null && withFrameworkRunners==null)
+      withFrameworkRunnersIncluded=true;
     logger.info(
         "Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
             + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
