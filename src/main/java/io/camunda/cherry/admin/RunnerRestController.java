@@ -84,7 +84,7 @@ public class RunnerRestController {
     Map<String,Object> info=new HashMap<>();
     int delayStatsInHoursInt = delayStatsInHours==null? 24: delayStatsInHours;
 
-  long totalSucceed=0;
+  long totalSucceeded=0;
     long totalFailed=0;
     List<Map<String,Object>> listDetails = new ArrayList<>();
     for (AbstractRunner runner: listRunners ) {
@@ -100,12 +100,13 @@ public class RunnerRestController {
       infoRunner.put("statistic", statisticRunner);
       infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getName(), delayStatsInHoursInt));
       listDetails.add( infoRunner);
-      totalSucceed += statisticRunner.succeed;
+      totalSucceeded += statisticRunner.succeeded;
       totalFailed += statisticRunner.failed;
     }
     info.put("details", listDetails);
-    info.put("totalsucceed",totalSucceed);
+    info.put("totalsucceeded",totalSucceeded);
     info.put("totalfailed",totalFailed);
+    info.put("totalexecutions",totalSucceeded+totalFailed);
     info.put("nbRunners",listRunners.size());
     return info;
   }

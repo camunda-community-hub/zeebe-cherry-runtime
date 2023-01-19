@@ -36,7 +36,7 @@ public class CherryHistoricFactory {
   public static class Statistic {
     public long executions;
     public long failed;
-    public long succeed;
+    public long succeeded;
   }
 
   private final Random rand = new Random(System.currentTimeMillis());
@@ -80,11 +80,11 @@ public class CherryHistoricFactory {
     for (Map<String, Object> record : listStats) {
       Long recordNumber = Long.valueOf(record.get("number").toString());
       if (AbstractRunner.ExecutionStatusEnum.SUCCESS.toString().equalsIgnoreCase(record.get("status").toString()))
-        statistic.succeed += recordNumber;
+        statistic.succeeded += recordNumber;
       else
         statistic.failed += recordNumber;
     }
-    statistic.executions = statistic.failed + statistic.succeed;
+    statistic.executions = statistic.failed + statistic.succeeded;
     return statistic;
   }
 
