@@ -18,6 +18,13 @@
         return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
     }
 
+    function getDashboardInfo() {
+      return getAjax('/cherry/api/runner/dashboard', {}, {})
+    }
+
+    function getSystemParameters() {
+      return getAjax('/cherry/api/runtime/parameters', {}, {})
+    }
     function getTemplate(templateName) {
         return getAjax(`/templates/${templateName}`, "", {contentType: 'text/plain', dataType: "html"})
     }
@@ -93,5 +100,89 @@
             }
 
         });
+    }
+
+    function initDashboardTable() {
+      let listWorkersDashboard = [];
+      getDashboardInfo().then(function(result) {
+        if(result) {
+          for(var i in result.details)
+          {
+            let workerStats = result.details[ i ];
+            workerStats.statistic.progressSucceeded = workerStats.statistic.succeeded;
+            workerStats.statistic.progressExecutions = workerStats.statistic.executions;
+
+            // no execution? Do not display a red bar. Empty bar does not exist, so display a green bar
+            if (workerStats.statistic.progressExecutions==0) {
+              workerStats.statistic.progressSucceeded = 1;
+              workerStats.statistic.progressExecutions = 1;
+            }
+          }
+
+          let templateDetails='<div> \
+            \{\{#details\}\} \
+              <div class="column is-two-thirds" style="padding: 0px 0px 50px 0px"> \
+                <h1 class="title is-5 job-type is-hoverable" > \
+                    <table>\
+                      <tr>\
+                        <td style="border: 1px solid; padding: 5px;text-align: center; box-shadow: 5px 5px">\
+                          <img width="30px" src="\{\{logo\}\}"></img></td>\
+                        <td style="padding: 5px 0px 0px 25px">\
+                          \{\{name\}\} \, \{\{statistic.executions\}\} total, \{\{statistic.failed\}\} failed \
+                        </td> \
+                      </tr><tr> \
+                        <td style="border: 1px solid;box-shadow: 5px 5px">\
+                          \{\{#active\}\} \
+                            <button class="start-runner button is-selected is-primary" style="height: 1.5em">Active</button>\
+                          \{\{/active\}\} \
+                          \{\{^active\}\} \
+                            <button class="stop-runner button is-selected is-danger" style="height: 1.5em">Stopped</button> \
+                          \{\{/active\}\} \
+                        </td>\
+                      </tr>\
+                    </table> \
+                <h1> \
+                <progress class="progress is-small is-primary" \
+                  value="\{\{statistic.progressSucceeded\}\}" \
+                  max="\{\{statistic.progressExecutions\}\}"> \
+                </progress> \
+                <h2 > \
+                  <i>Average \{\{performance.averageTimeInMs\}\} ms \
+                     Pic \{\{performance.picTimeInMs\}\} ms \
+                  </i></h2> \
+              </div> \
+            \{\{/details\}\} \
+          </div>'
+
+          $("#dashboardDetails").html(Mustache.render(templateDetails,result));
+
+          result.progressTotalSucceeded= result.totalsucceeded;
+          result.progressTotalExecutions= result.totalexecutions;
+          if (result.progressTotalExecutions==0) {
+            result.progressTotalSucceeded=1;
+            result.progressTotalExecutions=1;
+          }
+
+          let templateHeader='<h1 class="title is-5"> \
+              {\{totalsucceed\}\} total jobs in last 24 hours of {\{nbRunners\}\} Runners\
+            </h1> \
+            <div class="columns"> \
+              <div class="column"> \
+                <h1 class="title is-4 has-text-primary">\{\{totalsucceeded\}\} Successful</h1> \
+              </div> \
+              <div class="column"> \
+                <h1 class="title is-4 has-text-danger">\{\{totalfailed\}\} Failed</h1> \
+              </div> \
+            </div> \
+          <progress class="progress is-large is-primary" \
+                    value="\{\{progressTotalSucceeded\}\}" \
+                    max="\{\{progressTotalExecutions\}\}"> \
+         </progress>'
+
+          $("#dashboardHeader").html(Mustache.render(templateHeader,result));
+
+          console.log("initDashboardTable : the end list="+listWorkersDashboard.length+" html="+dashboardHtml)
+        }
+      });
     }
 </script>

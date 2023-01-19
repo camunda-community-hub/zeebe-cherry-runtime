@@ -5,26 +5,33 @@
 /* but the result is different.                                         */
 /* See PingConnectorOutput versus PingObjectConnectorOutput             */
 /* -------------------------------------------------------------------- */
-package io.camunda.cherry.ping;
+package io.camunda.cherry.ping.objectconnector;
 
 import io.camunda.cherry.definition.AbstractConnector;
+import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.cherry.ping.connector.PingConnectorInput;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.Random;
 
 @Component
 public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
+    public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+
+    private Random random = new Random();
 
     protected PingObjectConnector() {
         super("c-pingobjectconnector",
                 PingConnectorInput.class,
                 PingObjectConnectorOutput.class,
-                Collections.emptyList());
+                Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
     }
 
     /**
@@ -56,9 +63,15 @@ public class PingObjectConnector extends AbstractConnector implements IntFramewo
     public Object execute(OutboundConnectorContext context) throws Exception {
 
         PingConnectorInput pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
+        if (pingConnectorInput.isThrowErrorPlease())
+            throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
 
         // context.validate(pingConnectorInput);
-        Thread.sleep( pingConnectorInput.getDelay());
+        int delay=pingConnectorInput.getDelay();
+        if (delay<0) {
+            delay = random.nextInt(10000)+1500;
+        }
+        Thread.sleep( delay );
         InetAddress IP=InetAddress.getLocalHost();
 
         return new PingObjectConnectorOutput(System.currentTimeMillis(), IP.getHostAddress());

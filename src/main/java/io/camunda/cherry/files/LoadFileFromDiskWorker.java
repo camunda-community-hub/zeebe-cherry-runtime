@@ -12,9 +12,9 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.file.storage.FileVariable;
-import io.camunda.file.storage.StorageDefinition;
-import io.camunda.file.storage.cmis.CmisParameters;
+import io.camunda.filestorage.FileVariable;
+import io.camunda.filestorage.StorageDefinition;
+import io.camunda.filestorage.cmis.CmisParameters;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
@@ -144,8 +144,14 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
 
     @Override
     public String getName() {
-        return "FileStorageLoadFileFromDisk";
+        return "File Storage: Load file";
     }
+
+    @Override
+    public String getCollectionName() {
+        return "File Storage";
+    }
+
 
     @Override
     public String getLabel() {
@@ -161,6 +167,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
     public String getLogo() {
         return WORKERLOGO;
     }
+
 
     @Override
     public void execute(final JobClient client, final ActivatedJob activatedJob, ContextExecution contextExecution) {
