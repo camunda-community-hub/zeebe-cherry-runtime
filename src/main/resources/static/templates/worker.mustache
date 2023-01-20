@@ -13,7 +13,10 @@
     <div class="workerHeader"></div>
     <div class="container">
         <h1 class="runner-name title is-size-1">
-            {{#logo}}<img width="50px" style="padding-right:10px" src="{{logo}}"/>{{/logo}}
+            {{#logo}}
+                <img width="50px" src="{{logo}}"/>
+            {{/logo}}
+          </div>
         </h1>
         <div class="tabs">
             <ul>
@@ -50,6 +53,15 @@
 
     function showTab(runner, templateName, tab) {
         getTemplate(templateName).then(function(template){
+
+            // calculate the progressInformation: same, if there is no execution, then calculate 1
+            runner.statistic.progressExecutionsSucceeded= runner.statistic.executionsSucceeded;
+            runner.statistic.progressExecutions=runner.statistic.executions;
+            if (runner.statistic.progressExecutions==0) {
+              runner.statistic.progressExecutionsSucceeded = 1;
+              runner.statistic.progressExecutions = 1;
+            }
+
             let html = Mustache.render(template, runner);
             $('#tab-content').html(html);
             if(tab) {

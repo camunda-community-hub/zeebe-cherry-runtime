@@ -15,7 +15,7 @@
     }
 
     function getWorker(workerName) {
-        return getAjax(`/cherry/api/runner/detail?name=${workerName}`, {}, {})
+        return getAjax(`/cherry/api/runner/detail?name=${workerName}&stats=true`, {}, {})
     }
 
     function getDashboardInfo() {
@@ -43,21 +43,12 @@
             let runnerName = table.row(this).data().runnerName;
             window.location = "/worker?runnerName="+runnerName;
         }
-        /* Old code for displaying in modal popup
-        return function(e) {
-            let workerName = table.row(this).data().runnerName;
-            getWorker(workerName).then(function (worker) {
-                getTemplate("_workerDetail.mustache").then(function(template){
-                    let html = Mustache.render(template, {worker: worker});
-                    $('#workerModal .modal-card .modal-card-head .modal-card-title .title').html(worker.name);
-                    $('#workerModal .modal-card .modal-card-head .modal-card-title .subtitle').html(worker.className);
-                    $('#workerModal .modal-card .modal-card-body').html(html);
-                    $('#workerModal').addClass("is-active");
-                });
-            });
-        }*/
     }
 
+    function onRunnerDetailClick(runnerName) {
+      debugger;
+      window.location = "/worker?runnerName="+runnerName;
+    }
     function initWorkersTable() {
         let data = [];
         getWorkers().then(function(result) {
@@ -70,7 +61,6 @@
                         runnerType: worker.type,
                         runnerTypeRunner: worker.typeRunner,
                         runnerClassName: worker.className,
-                        runnerActive: worker.active,
                         runnerLogo: worker.logo
                     })
                 }
@@ -92,7 +82,6 @@
                         {data: 'runnerType'},
                         {data: 'runnerTypeRunner'},
                         {data: 'runnerClassName'},
-                        {data: 'runnerActive'}
                     ]
                 });
 
@@ -109,12 +98,12 @@
           for(var i in result.details)
           {
             let workerStats = result.details[ i ];
-            workerStats.statistic.progressSucceeded = workerStats.statistic.succeeded;
+            workerStats.statistic.progressExecutionsSucceeded = workerStats.statistic.executionsSucceeded;
             workerStats.statistic.progressExecutions = workerStats.statistic.executions;
 
             // no execution? Do not display a red bar. Empty bar does not exist, so display a green bar
             if (workerStats.statistic.progressExecutions==0) {
-              workerStats.statistic.progressSucceeded = 1;
+              workerStats.statistic.progressExecutionsSucceeded = 1;
               workerStats.statistic.progressExecutions = 1;
             }
           }
@@ -126,9 +115,13 @@
                     <table>\
                       <tr>\
                         <td style="border: 1px solid; padding: 5px;text-align: center; box-shadow: 5px 5px">\
-                          <img width="30px" src="\{\{logo\}\}"></img></td>\
+                          <img width="30px" src="\{\{logo\}\}"\
+                            onclick="onRunnerDetailClick(\{\{name\}\})"></img>\
+                        </td>\
                         <td style="padding: 5px 0px 0px 25px">\
-                          \{\{name\}\} \, \{\{statistic.executions\}\} total, \{\{statistic.failed\}\} failed \
+                          \{\{name\}\} \, \{\{statistic.executions\}\} total,\
+                           \{\{statistic.executionsFailed\}\} failed \
+                           \{\{statistic.executionsBpmnError\}\} BPMN Errors \
                         </td> \
                       </tr><tr> \
                         <td style="border: 1px solid;box-shadow: 5px 5px">\
@@ -143,7 +136,7 @@
                     </table> \
                 <h1> \
                 <progress class="progress is-small is-primary" \
-                  value="\{\{statistic.progressSucceeded\}\}" \
+                  value="\{\{statistic.progressExecutionsSucceeded\}\}" \
                   max="\{\{statistic.progressExecutions\}\}"> \
                 </progress> \
                 <h2 > \
@@ -156,26 +149,31 @@
 
           $("#dashboardDetails").html(Mustache.render(templateDetails,result));
 
-          result.progressTotalSucceeded= result.totalsucceeded;
-          result.progressTotalExecutions= result.totalexecutions;
+
+          result.progressTotalExecutionsSucceeded= result.totalExecutionsSucceeded;
+          result.progressTotalExecutions= result.totalExecutions;
           if (result.progressTotalExecutions==0) {
             result.progressTotalSucceeded=1;
             result.progressTotalExecutions=1;
           }
+
 
           let templateHeader='<h1 class="title is-5"> \
               {\{totalsucceed\}\} total jobs in last 24 hours of {\{nbRunners\}\} Runners\
             </h1> \
             <div class="columns"> \
               <div class="column"> \
-                <h1 class="title is-4 has-text-primary">\{\{totalsucceeded\}\} Successful</h1> \
+                <h1 class="title is-4 has-text-primary">\{\{totalExecutionsSucceeded\}\} Successful</h1> \
               </div> \
               <div class="column"> \
-                <h1 class="title is-4 has-text-danger">\{\{totalfailed\}\} Failed</h1> \
+                <h1 class="title is-4 has-text-danger">\{\{totalExecutionsFailed\}\} Failed</h1> \
+              </div> \
+              <div class="column"> \
+                <h1 class="title is-4 has-text-danger">\{\{totalExecutionsBpmnErrors\}\} BPMN Errors</h1> \
               </div> \
             </div> \
           <progress class="progress is-large is-primary" \
-                    value="\{\{progressTotalSucceeded\}\}" \
+                    value="\{\{progressTotalExecutionsSucceeded\}\}" \
                     max="\{\{progressTotalExecutions\}\}"> \
          </progress>'
 
