@@ -73,25 +73,30 @@ public class RunnerRestController {
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
 
-    return listRunners.stream().map(RunnerInformation::getRunnerInformation).map(w -> {
-      return this.completeRunnerInformation(w, logo == null || logo, stats == null ? false : stats,
-          delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
-    }).toList();
+    return listRunners.stream()
+        .map(RunnerInformation::getRunnerInformation)
+        .map(w -> this.completeRunnerInformation(w, // this
+            logo == null || logo,  // logo
+            stats != null && stats, // stats
+            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours))
+        .toList();
   }
 
   @GetMapping(value = "/api/runner/dashboard", produces = "application/json")
-  public Map<String,Object> getDashboard(@RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
-    Map<String,Object> info=new HashMap<>();
-    int delayStatsInHoursInt = delayStatsInHours==null? 24: delayStatsInHours;
+  public Map<String, Object> getDashboard(@RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+    Map<String, Object> info = new HashMap<>();
+    int delayStatsInHoursInt = delayStatsInHours == null ? 24 : delayStatsInHours;
 
-  long totalSucceeded=0;
-    long totalFailed=0;
-    List<Map<String,Object>> listDetails = new ArrayList<>();
-    for (AbstractRunner runner: listRunners ) {
-      Map<String,Object> infoRunner = new HashMap<>();
-      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(), delayStatsInHoursInt);
+    long totalSucceeded = 0;
+    long totalFailed = 0;
+    long totalBpmnError = 0;
+    List<Map<String, Object>> listDetails = new ArrayList<>();
+    for (AbstractRunner runner : listRunners) {
+      Map<String, Object> infoRunner = new HashMap<>();
+      CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(),
+          delayStatsInHoursInt);
       infoRunner.put("name", runner.getName());
-      infoRunner.put("logo", runner.getLogo() );
+      infoRunner.put("logo", runner.getLogo());
       try {
         infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getName()));
       } catch (CherryJobRunnerFactory.OperationException e) {
@@ -99,17 +104,20 @@ public class RunnerRestController {
       }
       infoRunner.put("statistic", statisticRunner);
       infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getType(), delayStatsInHoursInt));
-      listDetails.add( infoRunner);
-      totalSucceeded += statisticRunner.succeeded;
-      totalFailed += statisticRunner.failed;
+      listDetails.add(infoRunner);
+      totalSucceeded += statisticRunner.executionsSucceeded;
+      totalFailed += statisticRunner.executionsFailed;
+      totalBpmnError += statisticRunner.executionsBpmnErrors;
     }
     info.put("details", listDetails);
-    info.put("totalsucceeded",totalSucceeded);
-    info.put("totalfailed",totalFailed);
-    info.put("totalexecutions",totalSucceeded+totalFailed);
-    info.put("nbRunners",listRunners.size());
+    info.put("totalExecutionsSucceeded", totalSucceeded);
+    info.put("totalExecutionsFailed", totalFailed);
+    info.put("totalExecutionsBpmnErrors", totalBpmnError);
+    info.put("totalExecutions", totalSucceeded + totalFailed + totalBpmnError);
+    info.put("nbRunners", listRunners.size());
     return info;
   }
+
   @GetMapping(value = "/api/runner/detail", produces = "application/json")
   public Optional<RunnerInformation> getWorker(@RequestParam(name = "name") String runnerName,
                                                @RequestParam(name = "logo", required = false) Boolean logo,
@@ -118,8 +126,8 @@ public class RunnerRestController {
     return listRunners.stream()
         .filter(worker -> worker.getIdentification().equals(runnerName))
         .map(RunnerInformation::getRunnerInformation)
-        .map(w -> this.completeRunnerInformation(w, logo == null || logo,
-            stats == null ? false : stats, // false if not asked
+        .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
+            // false if not asked
             delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours)) // 23 hours is not set
         .findFirst();
   }
@@ -212,8 +220,8 @@ public class RunnerRestController {
       throws IOException {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
     // Zip file required? Add all templates in the ZIP.
-    if (separateTemplate==null && withFrameworkRunners==null)
-      withFrameworkRunnersIncluded=true;
+    if (separateTemplate == null && withFrameworkRunners == null)
+      withFrameworkRunnersIncluded = true;
     logger.info(
         "Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
             + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
@@ -235,8 +243,8 @@ public class RunnerRestController {
         for (AbstractRunner runner : getListRunners(withFrameworkRunnersIncluded)) {
           Map<String, Object> templateContent = new RunnerDecorationTemplate(runner).getTemplate();
           mapContent.put(runner.getName(), RunnerDecorationTemplate.getJsonFromList(List.of(templateContent)));
-          if (collectionName==null)
-              collectionName=runner.getCollectionName();
+          if (collectionName == null)
+            collectionName = runner.getCollectionName();
         }
       } else {
         // one file with all runner
@@ -255,7 +263,7 @@ public class RunnerRestController {
       ZipOperation zipOperation = new ZipOperation("element-template");
       try {
         for (Map.Entry<String, String> template : mapContent.entrySet()) {
-          zipOperation.addZipContent(template.getKey()+".json", template.getValue());
+          zipOperation.addZipContent(template.getKey() + ".json", template.getValue());
         }
         zipOperation.close();
       } catch (IOException e) {

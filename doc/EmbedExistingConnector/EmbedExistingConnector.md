@@ -403,7 +403,9 @@ Create a pull request with the modification
 
 ![Pull request in Infrastructure](AddProjectInInfrastuctureRepository.png?raw=true)
 
-
+Do not forget to add a comment and tag @camunda-community-hub/devrel.
+   
+   
 # Build a Cherry Collection
 A connector is running in a collection. A collection groups multiple runners (connectors and workers).
 
