@@ -1,1 +1,15 @@
-<h1 class="runner-name title is-size-1">{{#logo}}<img width="50px" style="padding-right:10px" src="{{logo}}"/>{{/logo}}{{name}}</h1>
+<h1 class="runner-name title is-size-1">
+  <table>
+  <tr>
+  <td>
+    {{#logo}}
+      <div style="border: 1px solid;padding: 5px;text-align: center;box-shadow: 5px 5px">
+        <img width="50px" src="{{logo}}"/>
+      </div>
+    {{/logo}}
+  </td><td style="padding-left: 30px">
+    {{name}}
+  </td>
+  </tr>
+  </table>
+</h1>

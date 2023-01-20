@@ -8,11 +8,9 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
-import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,22 +22,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
+
 @Service
 public class CherryHistoricFactory {
 
+  public static final String SLOT_FORMATTER = "%30dD%02d:%02d";
   Logger logger = LoggerFactory.getLogger(CherryHistoricFactory.class.getName());
 
   @Autowired
   RunnerExecutionRepository runnerExecutionRepository;
 
-  @Component
   public static class Statistic {
     public long executions;
-    public long failed;
-    public long succeeded;
+    public long executionsFailed;
+    public long executionsSucceeded;
+    public long executionsBpmnErrors;
   }
-
-  private final Random rand = new Random(System.currentTimeMillis());
 
   public static class Interval {
     /**
@@ -48,8 +47,8 @@ public class CherryHistoricFactory {
     public String slot;
     public long executions = 0;
     public long sumOfExecutionTime = 0;
-    public long executionsSuccess = 0;
-    public long executionsFaileds = 0;
+    public long executionsSucceeded = 0;
+    public long executionsFailed = 0;
     public long executionsBpmnErrors = 0;
     public long picTimeInMs = 0;
     public long averageTimeInMs = 0;
@@ -60,7 +59,6 @@ public class CherryHistoricFactory {
 
   }
 
-  @Component
   public static class Performance {
     public long picTimeInMs;
     public long executions;
@@ -88,12 +86,21 @@ public class CherryHistoricFactory {
     List<Map<String, Object>> listStats = runnerExecutionRepository.selectStatusStats(runnerType, dateThreshold);
     for (Map<String, Object> record : listStats) {
       Long recordNumber = Long.valueOf(record.get("number").toString());
-      if (record.get("status")!=null && AbstractRunner.ExecutionStatusEnum.SUCCESS.toString().equalsIgnoreCase(record.get("status").toString()))
-        statistic.succeeded += recordNumber;
-      else
-        statistic.failed += recordNumber;
+      try {
+        ExecutionStatusEnum status = ExecutionStatusEnum.valueOf(record.get("status").toString());
+        switch (status) {
+        case SUCCESS -> statistic.executionsSucceeded += recordNumber;
+        case FAIL -> statistic.executionsFailed += recordNumber;
+        case BPMNERROR -> statistic.executionsBpmnErrors += recordNumber;
+        default -> throw new IllegalStateException("Unexpected value: " + status);
+        }
+      } catch(Exception e) {
+        // should not arrived here
+        statistic.executionsFailed += recordNumber;
+      }
+        
     }
-    statistic.executions = statistic.failed + statistic.succeeded;
+    statistic.executions = statistic.executionsSucceeded + statistic.executionsFailed + statistic.executionsBpmnErrors;
     return statistic;
   }
 
@@ -118,7 +125,7 @@ public class CherryHistoricFactory {
     dateThreshold = indexTime.toInstant(ZoneOffset.UTC);
 
     for (int index = 0; index <= 24 * 4; index++) {
-      String slotString = String.format("%3dD%02d:%02d", indexTime.getDayOfYear(), indexTime.getHour(),
+      String slotString = String.format("%03dD%02d:%02d", indexTime.getDayOfYear(), indexTime.getHour(),
           indexTime.getMinute());
       mapInterval.put(slotString, new Interval(slotString));
       indexTime=indexTime.plusMinutes(15);
@@ -136,7 +143,7 @@ public class CherryHistoricFactory {
       slotTime = slotTime.minusNanos(slotTime.getNano());
       slotTime = slotTime.minusSeconds(slotTime.getSecond());
       slotTime = slotTime.minusMinutes(slotTime.getMinute()% 15);
-      String slotString = String.format("%3dD%02d:%02d", slotTime.getDayOfYear(), slotTime.getHour(),
+      String slotString = String.format(SLOT_FORMATTER, slotTime.getDayOfYear(), slotTime.getHour(),
           slotTime.getMinute());
       Interval interval = mapInterval.get(slotString);
       if (interval == null) {
@@ -147,8 +154,8 @@ public class CherryHistoricFactory {
       interval.executions++;
       interval.sumOfExecutionTime += runnerExecutionEntity.executionMs;
       switch (runnerExecutionEntity.status) {
-      case SUCCESS -> interval.executionsSuccess++;
-      case FAIL -> interval.executionsFaileds++;
+      case SUCCESS -> interval.executionsSucceeded++;
+      case FAIL -> interval.executionsFailed++;
       case BPMNERROR -> interval.executionsBpmnErrors++;
       }
       if (runnerExecutionEntity.executionMs > interval.picTimeInMs)
@@ -198,7 +205,7 @@ public class CherryHistoricFactory {
    * @param status status of execution
    * @param durationInMs duration of this execution
    */
-  public void saveExecution(Instant executionTime, String runnerType, AbstractRunner.ExecutionStatusEnum status, long durationInMs) {
+  public void saveExecution(Instant executionTime, String runnerType, ExecutionStatusEnum status, long durationInMs) {
     try {
       RunnerExecutionEntity runnerExecutionEntity = new RunnerExecutionEntity();
       runnerExecutionEntity.executionMs = durationInMs;

@@ -6,4 +6,16 @@
             <button data-runner-name="{{name}}" class="stop-runner button {{^active}}is-selected is-danger{{/active}}">{{^active}}Stopped{{/active}}{{#active}}Stop{{/active}}</button>
         </div>
     </div>
+    <div style="padding:0px 0px 20px 0px">
+      {{statistic.executions}} total,
+      {{statistic.executionsSucceeded}} succeeded,
+      {{statistic.executionsFailed}} failed,
+      {{statistic.executionsBpmnErrors}} BPMN Errors
+    </div>
+    <progress class="progress is-small is-primary"
+              value="{{statistic.progressExecutionsSucceeded}}"
+              max="{{statistic.progressExecutions}}"></progress>
+    <div>
+      <i>Average {{performance.averageTimeInMs}} ms, Pic {{performance.picTimeInMs}} ms</i>
+    </div>
 </div>
