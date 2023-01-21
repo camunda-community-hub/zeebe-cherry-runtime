@@ -8,15 +8,15 @@
 /* ******************************************************************** */
 package io.camunda.cherry.files;
 
+import io.camunda.cherry.definition.AbstractWorker;
+import io.camunda.cherry.definition.BpmnError;
+import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
 import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
-import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.IntFrameworkRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
