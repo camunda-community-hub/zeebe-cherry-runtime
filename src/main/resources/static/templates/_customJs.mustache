@@ -46,7 +46,6 @@
     }
 
     function onRunnerDetailClick(runnerName) {
-      debugger;
       window.location = "/worker?runnerName="+runnerName;
     }
     function initWorkersTable() {
@@ -108,15 +107,15 @@
             }
           }
 
-          let templateDetails='<div> \
+          let templateDetails='<table style="width: 100%" > \
             \{\{#details\}\} \
-              <div class="column is-two-thirds" style="padding: 0px 0px 50px 0px"> \
+            <tr onclick="onRunnerDetailClick(\'\{\{name\}\}\')"><td>\
+                        <div class="column is-two-thirds" style="padding: 0px 0px 50px 0px"> \
                 <h1 class="title is-5 job-type is-hoverable" > \
                     <table>\
                       <tr>\
                         <td style="border: 1px solid; padding: 5px;text-align: center; box-shadow: 5px 5px">\
-                          <img width="30px" src="\{\{logo\}\}"\
-                            onclick="onRunnerDetailClick(\{\{name\}\})"></img>\
+                          <img width="30px" src="\{\{logo\}\}"\></img>\
                         </td>\
                         <td style="padding: 5px 0px 0px 25px">\
                           \{\{name\}\} \, \{\{statistic.executions\}\} total,\
@@ -144,16 +143,16 @@
                      Pic \{\{performance.picTimeInMs\}\} ms \
                   </i></h2> \
               </div> \
+              </td></tr> \
             \{\{/details\}\} \
-          </div>'
+          </table>'
 
           $("#dashboardDetails").html(Mustache.render(templateDetails,result));
 
-
           result.progressTotalExecutionsSucceeded= result.totalExecutionsSucceeded;
           result.progressTotalExecutions= result.totalExecutions;
-          if (result.progressTotalExecutions==0) {
-            result.progressTotalSucceeded=1;
+          if (result.progressTotalExecutionsSucceeded==0) {
+            result.progressTotalExecutionsSucceeded=1;
             result.progressTotalExecutions=1;
           }
 
