@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,13 +73,14 @@ public class RunnerRestController {
   public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
 
     return listRunners.stream()
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, // this
             logo == null || logo,  // logo
             stats != null && stats, // stats
-            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours))
+            dateThreshold))
         .toList();
   }
 
@@ -86,6 +88,7 @@ public class RunnerRestController {
   public Map<String, Object> getDashboard(@RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
     Map<String, Object> info = new HashMap<>();
     int delayStatsInHoursInt = delayStatsInHours == null ? 24 : delayStatsInHours;
+    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(delayStatsInHoursInt);
 
     long totalSucceeded = 0;
     long totalFailed = 0;
@@ -94,7 +97,8 @@ public class RunnerRestController {
     for (AbstractRunner runner : listRunners) {
       Map<String, Object> infoRunner = new HashMap<>();
       CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(),
-          delayStatsInHoursInt);
+          dateThreshold);
+      CherryHistoricFactory.Performance performanceRunner = cherryHistoricFactory.getPerformance(runner.getType(), dateThreshold);
       infoRunner.put("name", runner.getName());
       infoRunner.put("type", runner.getType());
       infoRunner.put("logo", runner.getLogo());
@@ -104,7 +108,7 @@ public class RunnerRestController {
         infoRunner.put("active", false);
       }
       infoRunner.put("statistic", statisticRunner);
-      infoRunner.put("performance", cherryHistoricFactory.getPerformance(runner.getType(), delayStatsInHoursInt));
+      infoRunner.put("performance", performanceRunner);
       listDetails.add(infoRunner);
       totalSucceeded += statisticRunner.executionsSucceeded;
       totalFailed += statisticRunner.executionsFailed;
@@ -124,12 +128,13 @@ public class RunnerRestController {
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
+    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
     return listRunners.stream()
         .filter(worker -> worker.getIdentification().equals(runnerName))
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
             // false if not asked
-            delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours)) // 23 hours is not set
+                dateThreshold)) // 23 hours is not set
         .findFirst();
   }
 
@@ -308,16 +313,16 @@ public class RunnerRestController {
   private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation,
                                                       boolean withLogo,
                                                       boolean withStats,
-                                                      Integer delayStatInHour) {
+                                                      Instant dateThreshold) {
     try {
       runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getName()));
       runnerInformation.setDisplayLogo(withLogo);
 
       if (withStats) {
         runnerInformation.setStatistic(
-            cherryHistoricFactory.getStatistic(runnerInformation.getName(), delayStatInHour));
+            cherryHistoricFactory.getStatistic(runnerInformation.getType(), dateThreshold));
         runnerInformation.setPerformance(
-            cherryHistoricFactory.getPerformance(runnerInformation.getName(), delayStatInHour));
+            cherryHistoricFactory.getPerformance(runnerInformation.getType(), dateThreshold));
       }
 
     } catch (CherryJobRunnerFactory.OperationException e) {

@@ -20,14 +20,13 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
 
 @Service
 public class CherryHistoricFactory {
 
-  public static final String SLOT_FORMATTER = "%30dD%02d:%02d";
+  public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
   Logger logger = LoggerFactory.getLogger(CherryHistoricFactory.class.getName());
 
   @Autowired
@@ -54,7 +53,7 @@ public class CherryHistoricFactory {
     public long averageTimeInMs = 0;
 
     public Interval(String slot) {
-      this.slot= slot;
+      this.slot = slot;
     }
 
   }
@@ -75,14 +74,14 @@ public class CherryHistoricFactory {
 
   /**
    * get main statistics for the runner type in the last <delayStatInHour> period
-   * @param runnerType type of runner
-   * @param delayStatInHour delay in hour for the period (now-delayinhour < now)
+   *
+   * @param runnerType    type of runner
+   * @param dateThreshold Date threshold to collect information
    * @return statistic object
    */
-  public Statistic getStatistic(String runnerType, int delayStatInHour) {
+  public Statistic getStatistic(String runnerType, Instant dateThreshold) {
     Statistic statistic = new Statistic();
 
-    Instant dateThreshold = getInstantByDelay(delayStatInHour);
     List<Map<String, Object>> listStats = runnerExecutionRepository.selectStatusStats(runnerType, dateThreshold);
     for (Map<String, Object> record : listStats) {
       Long recordNumber = Long.valueOf(record.get("number").toString());
@@ -94,11 +93,11 @@ public class CherryHistoricFactory {
         case BPMNERROR -> statistic.executionsBpmnErrors += recordNumber;
         default -> throw new IllegalStateException("Unexpected value: " + status);
         }
-      } catch(Exception e) {
+      } catch (Exception e) {
         // should not arrived here
         statistic.executionsFailed += recordNumber;
       }
-        
+
     }
     statistic.executions = statistic.executionsSucceeded + statistic.executionsFailed + statistic.executionsBpmnErrors;
     return statistic;
@@ -106,29 +105,27 @@ public class CherryHistoricFactory {
 
   /**
    * Get performance for a runnerType. Return a record per 15 minutes. Do not ask 1 year !
-   * @param runnerType type of runner
-   * @param delayStatInHour delay in hour for the period (now-delayinhour < now)
+   *
+   * @param runnerType    type of runner
+   * @param dateThreshold Date threshold to collect information
    * @return performance object
    */
-  public Performance getPerformance(String runnerType, int delayStatInHour) {
+  public Performance getPerformance(String runnerType, Instant dateThreshold) {
     Performance performance = new Performance();
-
-    Instant dateThreshold = getInstantByDelay(delayStatInHour);
 
     Map<String, Interval> mapInterval = new LinkedHashMap<>();
     //--- populate all the map
     LocalDateTime indexTime = LocalDateTime.ofInstant(dateThreshold, ZoneOffset.UTC);
     indexTime = indexTime.minusNanos(indexTime.getNano());
     indexTime = indexTime.minusSeconds(indexTime.getSecond());
-    indexTime = indexTime.minusMinutes(indexTime.getMinute()  % 15);
+    indexTime = indexTime.minusMinutes(indexTime.getMinute() % 15);
     indexTime = indexTime.plusMinutes(15);
     dateThreshold = indexTime.toInstant(ZoneOffset.UTC);
 
     for (int index = 0; index <= 24 * 4; index++) {
-      String slotString = String.format("%03dD%02d:%02d", indexTime.getDayOfYear(), indexTime.getHour(),
-          indexTime.getMinute());
+      String slotString = getSlotFromDate(indexTime);
       mapInterval.put(slotString, new Interval(slotString));
-      indexTime=indexTime.plusMinutes(15);
+      indexTime = indexTime.plusMinutes(15);
     }
 
     //---  now we can fetch and explode data
@@ -137,14 +134,7 @@ public class CherryHistoricFactory {
     for (RunnerExecutionEntity runnerExecutionEntity : listExecutions) {
       Instant executionTime = runnerExecutionEntity.executionTime;
       LocalDateTime slotTime = LocalDateTime.ofInstant(executionTime, ZoneOffset.UTC);
-
-      // find the slot from the execution time
-      // back the the previous quater
-      slotTime = slotTime.minusNanos(slotTime.getNano());
-      slotTime = slotTime.minusSeconds(slotTime.getSecond());
-      slotTime = slotTime.minusMinutes(slotTime.getMinute()% 15);
-      String slotString = String.format(SLOT_FORMATTER, slotTime.getDayOfYear(), slotTime.getHour(),
-          slotTime.getMinute());
+      String slotString = getSlotFromDate(slotTime);
       Interval interval = mapInterval.get(slotString);
       if (interval == null) {
         // this must not arrive
@@ -177,21 +167,33 @@ public class CherryHistoricFactory {
     }
 
     // global values
-    if (sumTotalExecutions>0)
+    if (sumTotalExecutions > 0)
       performance.averageTimeInMs = sumTotalExecutionTimeInMs / sumTotalExecutions;
 
     return performance;
   }
 
-  public Performance getEnginePerformance(int delayStatInHour) {
-    return getPerformance("", delayStatInHour);
+  public Performance getEnginePerformance(Instant dateThreshold) {
+    return getPerformance("", dateThreshold);
   }
 
-  public Statistic getEngineStatistic(int delayStatInHour) {
-    return getStatistic("", delayStatInHour);
+  public Statistic getEngineStatistic(Instant dateThreshold) {
+    return getStatistic("", dateThreshold);
   }
 
+  /**
+   * Frim a dateTime, return the slot as a string. For example "143d12:15"
+   *
+   * @param slotTime
+   * @return
+   */
+  private String getSlotFromDate(LocalDateTime slotTime) {
+    slotTime = slotTime.minusNanos(slotTime.getNano());
+    slotTime = slotTime.minusSeconds(slotTime.getSecond());
+    slotTime = slotTime.minusMinutes(slotTime.getMinute() % 15);
+    return String.format(SLOT_FORMATTER, slotTime.getDayOfYear(), slotTime.getHour(), slotTime.getMinute());
 
+  }
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Save                                          */
@@ -200,10 +202,11 @@ public class CherryHistoricFactory {
 
   /**
    * save the execution statistics
+   *
    * @param executionTime instant of the execution
-   * @param runnerType name of runner
-   * @param status status of execution
-   * @param durationInMs duration of this execution
+   * @param runnerType    name of runner
+   * @param status        status of execution
+   * @param durationInMs  duration of this execution
    */
   public void saveExecution(Instant executionTime, String runnerType, ExecutionStatusEnum status, long durationInMs) {
     try {
@@ -214,8 +217,8 @@ public class CherryHistoricFactory {
       runnerExecutionEntity.status = status;
       try {
         runnerExecutionEntity.status = status;
-      }catch(Exception e)
-      {}
+      } catch (Exception e) {
+      }
 
       runnerExecutionRepository.save(runnerExecutionEntity);
     } catch (Exception e) {
@@ -223,7 +226,7 @@ public class CherryHistoricFactory {
     }
   }
 
-  private Instant getInstantByDelay(int delayStatInHour) {
+  public Instant getInstantByDelay(int delayStatInHour) {
     return Instant.now().minusSeconds(delayStatInHour * 60 * 60);
   }
 
