@@ -6,13 +6,12 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runtime;
 
-import io.camunda.cherry.definition.CherryConnectorJobHandler;
-import io.camunda.connector.runtime.util.outbound.ConnectorJobHandler;
-import io.camunda.zeebe.client.api.worker.JobWorker;
-import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
+import io.camunda.cherry.definition.CherryConnectorJobHandler;
+import io.camunda.zeebe.client.api.worker.JobWorker;
+import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

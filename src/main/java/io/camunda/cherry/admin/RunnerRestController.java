@@ -96,6 +96,7 @@ public class RunnerRestController {
       CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(),
           delayStatsInHoursInt);
       infoRunner.put("name", runner.getName());
+      infoRunner.put("type", runner.getType());
       infoRunner.put("logo", runner.getLogo());
       try {
         infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getName()));
