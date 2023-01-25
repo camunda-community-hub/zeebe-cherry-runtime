@@ -1,0 +1,18 @@
+version: "3"
+services:
+
+
+  cherry-framework:
+    image: "zeebe-cherryframework:1.0.0"
+    container_name: "Cherry-framework"
+    ports:
+      - "9082:9082"
+    environment:
+      - SERVER_PORT=9082
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
+      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      - ZEEBE_CLIENT_CLOUD_REGION=
+      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
+      - LOGGING_LEVEL_ROOT=INFO

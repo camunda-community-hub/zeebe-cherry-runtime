@@ -4,12 +4,17 @@
 
 # What is the Cherry Framework?
 
-The Cherry Framework is a framework dedicated to administrators and developers.
-It executes connectors and workers and provides administrative functions to monitor execution.
+The Cherry Framework is a framework dedicated to execute Camunda 8 Connectors and Workers. 
+it is dedicated to administrators and developers. it provides administrative functions to monitor executions.
 
 ![Cherry Framework Overview](src/main/resources/static/img/CherryFrameworkOverview.png?raw=true)
 
 For a quick execution, access the Tutorial chapter.
+
+Collections of connectors/workers can be integrated in the Cherry Framework. A collection is an application ready to execute.
+This documentation gives information:
+* for administrators, to start and administrate a Collection
+* for developers, to integrate a connector, or develop a connector or a worker in the framework, to create a Collection.
 
 
 ## Administrator
@@ -105,11 +110,18 @@ mvn spring-boot:run
 ````
 
 ## Docker image
-soon
+Execute
+````
+mvn install
+docker build -t zeebe-cherryframework:1.0.0 .
+````
 
 ## Docker Compose
-soon
+A docker-compose.yaml file is available
+Execute
+````
 
+``
 
 ## Access the Web Application
 
