@@ -120,8 +120,8 @@ docker build -t zeebe-cherryframework:1.0.0 .
 A docker-compose.yaml file is available
 Execute
 ````
-
-``
+docker-compose up
+````
 
 ## Access the Web Application
 
