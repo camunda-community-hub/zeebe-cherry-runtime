@@ -89,9 +89,9 @@ public class WatcherFactory {
 
    */
   public void executeOrders(AbstractWatcher.WatcherExecution watcherExecution,
-                            List<WatcherOrderInformation> listOrderInformation) {
+                            List<WatcherOrderInformation> listOrdersInformation) {
 
-    for (WatcherOrderInformation orderInformation : listOrderInformation) {
+    for (WatcherOrderInformation orderInformation : listOrdersInformation) {
       Instant executionInstant = Instant.now();
       long beginExecution = System.currentTimeMillis();
       AbstractRunner.ExecutionStatusEnum status = AbstractRunner.ExecutionStatusEnum.SUCCESS;
@@ -113,10 +113,12 @@ public class WatcherFactory {
       long endExecution = System.currentTimeMillis();
       logger.info(
           "Watcher[" + watcherExecution.getWatcher().getName() + "] executed in " + (endExecution - beginExecution)
-              + " ms");
+              + " ms for "+listOrdersInformation.size()+" orders");
 
-      cherryHistoricFactory.saveExecution(executionInstant, RunnerExecutionEntity.TypeExecutor.WATCHER,
-          watcherExecution.getWatcher().getType(), status, connectorException, endExecution - beginExecution);
+      if (! listOrdersInformation.isEmpty()) {
+        cherryHistoricFactory.saveExecution(executionInstant, RunnerExecutionEntity.TypeExecutor.WATCHER,
+            watcherExecution.getWatcher().getType(), status, connectorException, endExecution - beginExecution);
+      }
     }
 
   }
@@ -224,10 +226,10 @@ public class WatcherFactory {
      * execute: collect the listOfOrder and execute them
      */
     public void run() {
-      logger.info("Start Tour Or Duty[" + watcherExecution.getName() + "]");
+      logger.debug("Start Tour Or Duty[" + watcherExecution.getName() + "]");
       List<WatcherOrderInformation> listOrderInformation = watcherExecution.getWatcher().tourOfDuty(watcherExecution);
       this.watcherFactory.executeOrders(watcherExecution, listOrderInformation);
-      logger.info("End Tour Or Duty " + watcherExecution.getWatcher().getName() + "]");
+      logger.info("End Tour Or Duty [" + watcherExecution.getName() + "] - "+listOrderInformation.size()+" orders executed");
     }
   }
 

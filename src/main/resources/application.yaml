@@ -41,26 +41,31 @@ spring.jpa:
   generate-ddl: true
   hibernate.ddl-auto: "update"
 
-watchers:
-  name: hello
-  execution:
-    - type: "WatchDirectory"
-      name: "watch my directory"
-      directory: "./src/test/resources/watcher/watchservice"
-      filterFile: ".*\\.txt"
-      storageDefinition: "JSON"
+# Example of Watcher configuration
 
-      action: "CREATEPROCESSINSTANCEPERID"
-      processId: "watchDirectory"
+#watchers:
+#  execution:
+#    - type: "WatchDirectory"
+#      name: "watch my directory"
+#      directory: "./src/test/resources/watcher/watchservice"
+#      filterFile: ".*\\.txt"
+#      storageDefinition: "JSON"
+#      fileReference: "ApplicantMotivationFile"
+#      fileName: "ApplicantFileName"
+#
+#      action: "CREATEPROCESSINSTANCEPERID"
+#      processId: "watchDirectory"
 
 
-    - type: "Directory"
-      name: "watch my directory"
-      directory: "./src/test/resources/watcher/watchdir"
-      filterFile: ".*\\.txt"
-      storageDefinition: "JSON"
-
-      action: "CREATEPROCESSINSTANCEPERID"
-      processId: "watchDirectory"
-      timeBetweenDutyInMS: 5000
+#   - type: "Directory"
+#     name: "watch my directory"
+#      directory: "./src/test/resources/watcher/watchdir"
+#      filterFile: ".*\\.txt"
+#      storageDefinition: "JSON"
+#      fileReference: "ApplicantMotivationFile"
+#      fileName: "ApplicantFileName"
+#
+#      action: "CREATEPROCESSINSTANCEPERID"
+#      processId: "watchDirectory"
+#      timeBetweenDutyInMS: 30000
 

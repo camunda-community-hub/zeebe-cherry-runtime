@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nullable;
 
 @Component
-@PropertySource("classpath:application.properties2")
+@PropertySource("classpath:application.yaml")
 public class ZeebeConfiguration {
 
   @Value("${zeebe.client.broker.gateway-address:localhost:26500}")

@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public abstract class AbstractWatcher {
 
   private final List<RunnerParameter> listInput;
+  private final List<RunnerParameter> listInputForOutputVariableName;
   private final List<RunnerParameter> listOutput;
   private final List<BpmnError> listBpmnErrors;
   private final String type;
@@ -23,16 +24,24 @@ public abstract class AbstractWatcher {
 
   /**
    * Constructor
+   * OutputVariableName:
+   * List Input information to produce the Output data.
+   * Example, give "VARIABLE_FILENAME" mean
+   * - VARIABLE_FILENAME must exist as a String in the configuration. Value if "DocumentApplicant"
+   * - the watcher save the filename under the "DocumentApplicant" variable
    *
    * @param listInput  list of Input parameters for the worker
+   * @param listInputForOutputVariableName  list the different variable name for output.
    * @param listOutput list of Output parameters for the worker
    */
   protected AbstractWatcher(String type,
                             List<RunnerParameter> listInput,
+                            List<RunnerParameter> listInputForOutputVariableName,
                             List<RunnerParameter> listOutput,
                             List<BpmnError> listBpmnErrors) {
     this.type = type;
     this.listInput = listInput;
+    this.listInputForOutputVariableName = listInputForOutputVariableName;
     this.listOutput = listOutput;
     this.listBpmnErrors = listBpmnErrors;
   }
@@ -49,6 +58,8 @@ public abstract class AbstractWatcher {
   public List<RunnerParameter> getListInput() {
     return listInput;
   }
+
+  public List<RunnerParameter> getListInputForOutputVariableName() { return listInputForOutputVariableName;}
 
   public List<RunnerParameter> getListOutput() {
     return listOutput;
@@ -96,6 +107,7 @@ public abstract class AbstractWatcher {
    * Time in millisecond between two turn of duty
    */
   public abstract long getDefaultSleepTimeMs();
+
 
   /**
    * Watcher specify if he needs a "tourOfDuty".
@@ -160,18 +172,7 @@ public abstract class AbstractWatcher {
     return listWatcherExecutions;
   }
 
-  /**
-   * Create the order information from watcher parameters (action, other information)
-   *
-   * @return a new order information
-   */
-  protected WatcherOrderInformation createOrderInformation(WatcherExecution watcherExecution) {
-    WatcherOrderInformation orderInformation = new WatcherOrderInformation();
-    orderInformation.orderAction = watcherExecution.getAction();
 
-    orderInformation.processId = (String) watcherExecution.getParameter(AbstractWatcher.WatcherParameter.PROCESSID);
-    return orderInformation;
-  }
 
   public void start(WatcherExecution watcherExecution) {
     try {
@@ -267,6 +268,42 @@ public abstract class AbstractWatcher {
 
     public Object getInput(String inputName) {
       return mapInputs.get(inputName);
+    }
+
+    /**
+     * Create the order information from watcher parameters (action, other information)
+     *
+     * @return a new order information
+     */
+    public WatcherOrderInformation createOrderInformation() {
+      WatcherOrderInformation orderInformation = new WatcherOrderInformation();
+      orderInformation.orderAction = getAction();
+
+      orderInformation.processId = (String) getParameter(AbstractWatcher.WatcherParameter.PROCESSID);
+      return orderInformation;
+    }
+
+    /**
+     * Populate an order information from an InputVariable with a value.
+     * If the InputVariable is not given, nothing arrived
+     * @param orderInformation order information to populate
+     * @param inputVariableName InputVariable name. The value of this input is the name of the output
+     * @param value value to populated
+     */
+    public void populateOrderInformation(WatcherOrderInformation orderInformation, String inputVariableName, Object value) {
+      if (mapInputs.get(inputVariableName) instanceof String inputVariableValue) {
+        orderInformation.setVariable(inputVariableValue, value);
+      }
+    }
+    /**
+     * Return the variable name for an InputForOutput
+     * Example, INPUT is "VARIABLE_FILENAME". Configuration give for this value "DocumentApplicant"
+     * The method return "DocumentApplicant".
+     * @param inputVariable
+     * @return
+     */
+    public String getOutputVariableName( String inputVariable) {
+      return (mapInputs.get(inputVariable) instanceof String) ? (String) mapInputs.get(inputVariable) : null;
     }
 
     public Object getParameter(WatcherParameter parameterName) {

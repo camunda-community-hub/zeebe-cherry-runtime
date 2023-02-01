@@ -20,18 +20,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Component
 public class WatcherDirectory extends AbstractWatcher {
 
-  public static final String OUTPUT_FILE_REFERENCE = "fileReference";
+  public static final String WATCHER_TYPE = "Directory";
+
   public static final String INPUT_DIRECTORY = "directory";
   public static final String OUTPUT_FILE_NAME = "fileName";
   public static final String INPUT_STORAGE_DEFINITION = "storageDefinition";
   public static final String INPUT_DIRECTORY_ARCHIVE = "directoryArchive";
   public static final String INPUT_FILTER_FILE = "filterFile";
-  public static final String WATCHER_TYPE = "Directory";
+
+  public static final String INPUT_VARIABLE_FILE_REFERENCE = "fileReference";
+  public static final String INPUT_VARIABLE_FILE_NAME = "fileName";
+
+
   public static final String ERROR_CANT_SAVE_FILE = "CANT_SAVE_FILE";
   public static final String ERROR_CANT_READ_FILE = "CANT_READ_FILE";
   public static final String ERROR_NOT_A_DIRECTORY = "Not a directory";
@@ -55,12 +61,15 @@ public class WatcherDirectory extends AbstractWatcher {
                 "File is saved in this storage definition, and saved under the fileReference variable. If not specified, then file is not saved")
 
         ),
-
-        Arrays.asList(RunnerParameter.getInstance(OUTPUT_FILE_NAME, "File name detected", String.class,
-                RunnerParameter.Level.REQUIRED, "Name of file detected"),
-            RunnerParameter.getInstance(OUTPUT_FILE_REFERENCE, "File name reference", String.class,
+        Arrays.asList(
+            RunnerParameter.getInstance(INPUT_VARIABLE_FILE_NAME, "Variable file name", String.class,
                 RunnerParameter.Level.OPTIONAL,
-                "If a storageDefinition is specified, file is saved and the reference is join")),
+                "Variable name where the file name will be saved"),
+            RunnerParameter.getInstance(INPUT_VARIABLE_FILE_REFERENCE, "Variable file reference", String.class,
+                RunnerParameter.Level.OPTIONAL,
+                "Variable name where the file reference is saved")),
+
+        Collections.emptyList(),
         Arrays.asList(BpmnError.getInstance(ERROR_CANT_SAVE_FILE, "File can't be saved. Check the directory"),
             BpmnError.getInstance(ERROR_CANT_READ_FILE, "File can't be read"),
             BpmnError.getInstance(ERROR_NOT_A_DIRECTORY,
@@ -155,7 +164,7 @@ public class WatcherDirectory extends AbstractWatcher {
     }).toList();
 
     for (File fileToProcess : listFilesFiltered) {
-      WatcherOrderInformation orderInformation = createOrderInformation(watcherExecution);
+      WatcherOrderInformation orderInformation = watcherExecution.createOrderInformation();
 
       orderInformation.setVariable(OUTPUT_FILE_NAME, fileToProcess.getName());
       orderInformation.setLabel(fileToProcess.getName());
@@ -182,7 +191,8 @@ public class WatcherDirectory extends AbstractWatcher {
 
         try {
           FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariable);
-          orderInformation.setVariable(OUTPUT_FILE_REFERENCE, fileVariableReference.toJson());
+          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_REFERENCE, fileVariableReference.toJson());
+          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_NAME, fileToProcess.getName());
         } catch (Exception e) {
           throw new ConnectorException(ERROR_CANT_SAVE_FILE, "File [" + fileToProcess.getName() + "]");
         }
