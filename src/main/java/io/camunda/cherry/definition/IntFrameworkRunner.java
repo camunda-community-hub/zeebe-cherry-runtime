@@ -11,5 +11,5 @@ import org.springframework.stereotype.Component;
 
 @Component
 public interface IntFrameworkRunner {
-    boolean isFrameworkRunner();
+  boolean isFrameworkRunner();
 }

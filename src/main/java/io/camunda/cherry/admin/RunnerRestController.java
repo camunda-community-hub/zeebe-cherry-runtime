@@ -73,7 +73,8 @@ public class RunnerRestController {
   public List<RunnerInformation> getWorkersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
-    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
+    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(
+        delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
 
     return listRunners.stream()
         .map(RunnerInformation::getRunnerInformation)
@@ -98,7 +99,8 @@ public class RunnerRestController {
       Map<String, Object> infoRunner = new HashMap<>();
       CherryHistoricFactory.Statistic statisticRunner = cherryHistoricFactory.getStatistic(runner.getType(),
           dateThreshold);
-      CherryHistoricFactory.Performance performanceRunner = cherryHistoricFactory.getPerformance(runner.getType(), dateThreshold);
+      CherryHistoricFactory.Performance performanceRunner = cherryHistoricFactory.getPerformance(runner.getType(),
+          dateThreshold);
       infoRunner.put("name", runner.getName());
       infoRunner.put("type", runner.getType());
       infoRunner.put("logo", runner.getLogo());
@@ -128,13 +130,14 @@ public class RunnerRestController {
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "delaystatsinhours", required = false) Integer delayStatsInHours) {
-    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
+    Instant dateThreshold = cherryHistoricFactory.getInstantByDelay(
+        delayStatsInHours == null ? Integer.valueOf(24) : delayStatsInHours);
     return listRunners.stream()
         .filter(worker -> worker.getIdentification().equals(runnerName))
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
             // false if not asked
-                dateThreshold)) // 23 hours is not set
+            dateThreshold)) // 23 hours is not set
         .findFirst();
   }
 
@@ -319,8 +322,7 @@ public class RunnerRestController {
       runnerInformation.setDisplayLogo(withLogo);
 
       if (withStats) {
-        runnerInformation.setStatistic(
-            cherryHistoricFactory.getStatistic(runnerInformation.getType(), dateThreshold));
+        runnerInformation.setStatistic(cherryHistoricFactory.getStatistic(runnerInformation.getType(), dateThreshold));
         runnerInformation.setPerformance(
             cherryHistoricFactory.getPerformance(runnerInformation.getType(), dateThreshold));
       }

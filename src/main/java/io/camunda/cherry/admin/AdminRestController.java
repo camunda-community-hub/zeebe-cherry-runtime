@@ -28,38 +28,37 @@ import java.util.Map;
 @RequestMapping("cherry")
 public class AdminRestController {
 
-    Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
+  Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
+  @Autowired
+  CherryJobRunnerFactory cherryJobRunnerFactory;
 
-    @Autowired
-    CherryJobRunnerFactory cherryJobRunnerFactory;
+  @Autowired
+  CherryHistoricFactory cherryHistoricFactory;
+  /**
+   * Spring populate the list of all workers
+   */
+  @Autowired
+  private List<AbstractRunner> listRunner;
 
-    @Autowired
-    CherryHistoricFactory cherryHistoricFactory;
-    /**
-     * Spring populate the list of all workers
-     */
-    @Autowired
-    private List<AbstractRunner> listRunner;
+  @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
+  public Map<String, Object> getParameters() {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
+    return parameters;
 
-    @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
-    public Map<String,Object> getParameters() {
-        Map<String,Object> parameters = new HashMap<>();
-        parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
-        return parameters;
+  }
 
-    }
-    @GetMapping(value = "/api/runtime/threads", produces = "application/json")
-    public Integer getNumberOfThreads() {
-        return cherryJobRunnerFactory.getNumberOfThreads();
+  @GetMapping(value = "/api/runtime/threads", produces = "application/json")
+  public Integer getNumberOfThreads() {
+    return cherryJobRunnerFactory.getNumberOfThreads();
 
-    }
+  }
 
-    @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
-    public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
-        cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
+  @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
+  public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
+    cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
 
-    }
-
+  }
 
 }

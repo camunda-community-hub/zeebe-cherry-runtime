@@ -20,120 +20,120 @@ import java.util.List;
 @Component
 public class RunnerInformation {
 
+  private AbstractRunner runner;
 
-    private AbstractRunner runner;
+  private boolean active;
 
-    private boolean active;
+  private boolean displayLogo = true;
 
-    private boolean displayLogo = true;
+  private CherryHistoricFactory.Statistic statistic;
 
-    private CherryHistoricFactory.Statistic statistic;
+  private CherryHistoricFactory.Performance performance;
 
-    private CherryHistoricFactory.Performance performance;
+  /**
+   * Keep the runner in the class. This class is a facade
+   *
+   * @param runner
+   * @return runner information for a runner
+   */
+  public static RunnerInformation getRunnerInformation(AbstractRunner runner) {
+    RunnerInformation workerInformation = new RunnerInformation();
+    workerInformation.runner = runner;
+    return workerInformation;
+  }
 
-    /**
-     * Keep the runner in the class. This class is a facade
-     *
-     * @param runner
-     * @return runner information for a runner
-     */
-    public static RunnerInformation getRunnerInformation(AbstractRunner runner) {
-        RunnerInformation workerInformation = new RunnerInformation();
-        workerInformation.runner = runner;
-        return workerInformation;
-    }
+  /**
+   * Get all information on runner
+   */
+  public String getName() {
+    return runner.getIdentification();
+  }
 
-    /**
-     * Get all information on runner
-     */
-    public String getName() {
-        return runner.getIdentification();
-    }
+  public String getLabel() {
+    return runner.getLabel();
+  }
 
-    public String getLabel() {
-        return runner.getLabel();
-    }
+  public String getDisplayLabel() {
+    return runner.getDisplayLabel();
+  }
 
-    public String getDisplayLabel() {
-        return runner.getDisplayLabel();
-    }
+  public String getType() {
+    return runner.getType();
+  }
 
-    public String getType() {
-        return runner.getType();
-    }
+  public boolean isActive() {
+    return active;
+  }
 
-    public boolean isActive() {
-        return active;
-    }
+  public void setActive(boolean active) {
+    this.active = active;
+  }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+  public List<RunnerParameter> getListInput() {
+    return runner.getListInput();
+  }
 
-    public List<RunnerParameter> getListInput() {
-        return runner.getListInput();
-    }
+  public List<RunnerParameter> getListOutput() {
+    return runner.getListOutput();
+  }
 
-    public List<RunnerParameter> getListOutput() {
-        return runner.getListOutput();
-    }
+  public String getValidationErrorsMessage() {
+    return String.join("; ", runner.checkValidDefinition().listOfErrors());
+  }
 
-    public String getValidationErrorsMessage() {
-        return String.join("; ", runner.checkValidDefinition().listOfErrors());
-    }
-    public String getValidationWarningsMessage() {
-        return String.join("; ", runner.checkValidDefinition().listOfWarnings());
-    }
+  public String getValidationWarningsMessage() {
+    return String.join("; ", runner.checkValidDefinition().listOfWarnings());
+  }
 
-    public List<BpmnError> getListBpmnErrors() {
-        return runner.getListBpmnErrors();
-    }
+  public List<BpmnError> getListBpmnErrors() {
+    return runner.getListBpmnErrors();
+  }
 
-    public String getClassName() {
-        return runner.getClass().getName();
-    }
+  public String getClassName() {
+    return runner.getClass().getName();
+  }
 
-    public String getDescription() {
-        return runner.getDescription();
-    }
+  public String getDescription() {
+    return runner.getDescription();
+  }
 
-    public String getLogo() {
-        return displayLogo ? runner.getLogo() : null;
-    }
+  public String getLogo() {
+    return displayLogo ? runner.getLogo() : null;
+  }
 
-    public TYPE_RUNNER getTypeRunner() {
-        return runner instanceof AbstractWorker ? TYPE_RUNNER.WORKER : TYPE_RUNNER.CONNECTOR;
-    }
+  public TYPE_RUNNER getTypeRunner() {
+    return runner instanceof AbstractWorker ? TYPE_RUNNER.WORKER : TYPE_RUNNER.CONNECTOR;
+  }
 
-    public void setDisplayLogo(boolean displayLogo) {
-        this.displayLogo = displayLogo;
-    }
+  public void setDisplayLogo(boolean displayLogo) {
+    this.displayLogo = displayLogo;
+  }
 
-    /**
-     * If the runner has definition error, is will not be possible to start it
-     *
-     * @return the list of errors
-     */
-    public String getDefinitionErrors() {
-        return String.join(", ", runner.checkValidDefinition().listOfErrors());
+  /**
+   * If the runner has definition error, is will not be possible to start it
+   *
+   * @return the list of errors
+   */
+  public String getDefinitionErrors() {
+    return String.join(", ", runner.checkValidDefinition().listOfErrors());
 
-    }
+  }
 
-    public enum TYPE_RUNNER {WORKER, CONNECTOR}
+  public CherryHistoricFactory.Statistic getStatistic() {
+    return statistic;
+  }
 
-    public void setStatistic(CherryHistoricFactory.Statistic statistic) {
-        this.statistic = statistic;
-    }
+  public void setStatistic(CherryHistoricFactory.Statistic statistic) {
+    this.statistic = statistic;
+  }
 
-    public void setPerformance(CherryHistoricFactory.Performance performance) {
-        this.performance = performance;
-    }
+  public CherryHistoricFactory.Performance getPerformance() {
+    return performance;
+  }
 
-    public CherryHistoricFactory.Statistic getStatistic() {
-        return statistic;
-    }
+  public void setPerformance(CherryHistoricFactory.Performance performance) {
+    this.performance = performance;
+  }
 
-    public CherryHistoricFactory.Performance getPerformance() {
-        return performance;
-    }
+  public enum TYPE_RUNNER {WORKER, CONNECTOR}
 }

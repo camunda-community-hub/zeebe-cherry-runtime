@@ -112,7 +112,6 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
 
   }
 
-
   @Override
   public ValidationResult checkValidDefinition() {
     ValidationResult validationResult = super.checkValidDefinition();
@@ -122,8 +121,8 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     if (abstractConnectorInput != null) {
       AbstractConnectorInput.InputParametersInfo parameterInfo = abstractConnectorInput.getInputParametersInfo();
       if (parameterInfo != null && !parameterInfo.listRunners().isEmpty() && parameterInfo.inputClass() != null)
-        validationResult.listOfErrors().addAll(
-            confrontParameterWithClass(parameterInfo.inputClass(), parameterInfo.listRunners(), "INPUT"));
+        validationResult.listOfErrors()
+            .addAll(confrontParameterWithClass(parameterInfo.inputClass(), parameterInfo.listRunners(), "INPUT"));
     }
     if (connectorInputClass != null) {
       validationResult.listOfErrors().addAll(confrontParameterWithClass(connectorInputClass, getListInput(), "INPUT"));
@@ -132,11 +131,12 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     if (abstractConnectorOutput != null) {
       AbstractConnectorOutput.OutputParametersInfo parameterInfo = abstractConnectorOutput.getOutputParametersInfo();
       if (parameterInfo != null && !parameterInfo.listRunners().isEmpty() && parameterInfo.outputClass() != null)
-        validationResult.listOfErrors().addAll(
-            confrontParameterWithClass(parameterInfo.outputClass(), parameterInfo.listRunners(), "OUTPUT"));
+        validationResult.listOfErrors()
+            .addAll(confrontParameterWithClass(parameterInfo.outputClass(), parameterInfo.listRunners(), "OUTPUT"));
     }
     if (connectorInputClass != null) {
-      validationResult.listOfErrors().addAll(confrontParameterWithClass(connectorOutputClass, getListOutput(), "OUTPUT"));
+      validationResult.listOfErrors()
+          .addAll(confrontParameterWithClass(connectorOutputClass, getListOutput(), "OUTPUT"));
     }
 
     // Check if the output is correctly define
@@ -148,8 +148,9 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
       return validationResult;
 
     // ATTENTION, the output must start with a lower case. But this is not mandatory, the connector can return the object, not each method
-    if (getListOutput().size()==0 && classConnectorOutputVerification!=null) {
-      validationResult.listOfWarnings().add("No Output are defined, but one object is returning by the connector - defined the output");
+    if (getListOutput().size() == 0 && classConnectorOutputVerification != null) {
+      validationResult.listOfWarnings()
+          .add("No Output are defined, but one object is returning by the connector - defined the output");
     }
     if (getListOutput().size() == 1 && getListOutput().get(0).getClass().equals(Object.class)) {
       // this is acceptable, the connector return an Object
@@ -174,8 +175,9 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
         try {
           m = classConnectorOutputVerification.getMethod("get" + runnerParameter.getName(), null);
         } catch (NoSuchMethodException e) {
-          validationResult.listOfErrors().add("A method [get" + runnerParameter.getName() + "()] must exist in class "
-              + classConnectorOutputVerification.getName());
+          validationResult.listOfErrors()
+              .add("A method [get" + runnerParameter.getName() + "()] must exist in class "
+                  + classConnectorOutputVerification.getName());
           continue;
         }
 
@@ -214,7 +216,7 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     // All fields are part of parameters?
     for (Field field : fields) {
       // ignore static field
-      if (Modifier.isStatic(field.getModifiers()) )
+      if (Modifier.isStatic(field.getModifiers()))
         continue;
       long number = parameters.stream().filter(t -> t.getName().equals(field.getName())).count();
       if (number != 1)
@@ -226,8 +228,9 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
       if (parameter.getName().equals("*"))
         continue;
       long number = Stream.of(fields)
-          .filter(field-> ! Modifier.isStatic(field.getModifiers()))
-          .filter(field -> field.getName().equals(parameter.getName())).count();
+          .filter(field -> !Modifier.isStatic(field.getModifiers()))
+          .filter(field -> field.getName().equals(parameter.getName()))
+          .count();
       if (number != 1)
         listOfErrors.add(label + ":Parameter[" + parameter.getName() + "] is not part of fields in the class");
     }
