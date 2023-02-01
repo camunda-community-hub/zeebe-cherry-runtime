@@ -12,7 +12,7 @@ public class ZipOperation {
 
   ByteArrayOutputStream zipContent;
   ZipOutputStream zipOut;
-String fileName;
+  String fileName;
 
   public ZipOperation(String zipFileName) {
     zipContent = new ByteArrayOutputStream();
@@ -22,8 +22,9 @@ String fileName;
 
   /**
    * Add a file in the Zip
+   *
    * @param fileName file name
-   * @param content content to add
+   * @param content  content to add
    * @throws IOException in case of error
    */
   public void addZipContent(String fileName, String content) throws IOException {

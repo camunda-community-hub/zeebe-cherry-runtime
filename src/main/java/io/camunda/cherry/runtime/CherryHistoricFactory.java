@@ -8,6 +8,7 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
+import io.camunda.connector.api.error.ConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,46 +33,6 @@ public class CherryHistoricFactory {
   @Autowired
   RunnerExecutionRepository runnerExecutionRepository;
 
-  public static class Statistic {
-    public long executions;
-    public long executionsFailed;
-    public long executionsSucceeded;
-    public long executionsBpmnErrors;
-  }
-
-  public static class Interval {
-    /**
-     * Name is something like 16:00 / 16:15
-     */
-    public String slot;
-    public long executions = 0;
-    public long sumOfExecutionTime = 0;
-    public long executionsSucceeded = 0;
-    public long executionsFailed = 0;
-    public long executionsBpmnErrors = 0;
-    public long picTimeInMs = 0;
-    public long averageTimeInMs = 0;
-
-    public Interval(String slot) {
-      this.slot = slot;
-    }
-
-  }
-
-  public static class Performance {
-    public long picTimeInMs;
-    public long executions;
-    public long averageTimeInMs;
-    public List<Interval> listIntervals = new ArrayList<>();
-  }
-
-
-  /* -------------------------------------------------------- */
-  /*                                                          */
-  /*  get information                                          */
-  /*                                                          */
-  /* -------------------------------------------------------- */
-
   /**
    * get main statistics for the runner type in the last <delayStatInHour> period
    *
@@ -83,10 +44,10 @@ public class CherryHistoricFactory {
     Statistic statistic = new Statistic();
 
     List<Map<String, Object>> listStats = runnerExecutionRepository.selectStatusStats(runnerType, dateThreshold);
-    for (Map<String, Object> record : listStats) {
-      Long recordNumber = Long.valueOf(record.get("number").toString());
+    for (Map<String, Object> recordStats : listStats) {
+      Long recordNumber = Long.valueOf(recordStats.get("number").toString());
       try {
-        ExecutionStatusEnum status = ExecutionStatusEnum.valueOf(record.get("status").toString());
+        ExecutionStatusEnum status = ExecutionStatusEnum.valueOf(recordStats.get("status").toString());
         switch (status) {
         case SUCCESS -> statistic.executionsSucceeded += recordNumber;
         case FAIL -> statistic.executionsFailed += recordNumber;
@@ -177,6 +138,13 @@ public class CherryHistoricFactory {
     return getPerformance("", dateThreshold);
   }
 
+
+  /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  get information                                          */
+  /*                                                          */
+  /* -------------------------------------------------------- */
+
   public Statistic getEngineStatistic(Instant dateThreshold) {
     return getStatistic("", dateThreshold);
   }
@@ -184,8 +152,8 @@ public class CherryHistoricFactory {
   /**
    * Frim a dateTime, return the slot as a string. For example "143d12:15"
    *
-   * @param slotTime
-   * @return
+   * @param slotTime time to extract the slot
+   * @return slot in String
    */
   private String getSlotFromDate(LocalDateTime slotTime) {
     slotTime = slotTime.minusNanos(slotTime.getNano());
@@ -194,31 +162,36 @@ public class CherryHistoricFactory {
     return String.format(SLOT_FORMATTER, slotTime.getDayOfYear(), slotTime.getHour(), slotTime.getMinute());
 
   }
-  /* -------------------------------------------------------- */
-  /*                                                          */
-  /*  Save                                          */
-  /*                                                          */
-  /* -------------------------------------------------------- */
 
   /**
    * save the execution statistics
    *
    * @param executionTime instant of the execution
+   * @param typeExecutor  type of executor
    * @param runnerType    name of runner
    * @param status        status of execution
+   * @param error         if the execution get an error, provide it
    * @param durationInMs  duration of this execution
    */
-  public void saveExecution(Instant executionTime, String runnerType, ExecutionStatusEnum status, long durationInMs) {
+  public void saveExecution(Instant executionTime,
+                            RunnerExecutionEntity.TypeExecutor typeExecutor,
+                            String runnerType,
+                            ExecutionStatusEnum status,
+                            ConnectorException error,
+                            long durationInMs) {
     try {
       RunnerExecutionEntity runnerExecutionEntity = new RunnerExecutionEntity();
+      runnerExecutionEntity.typeExecutor = typeExecutor;
       runnerExecutionEntity.executionMs = durationInMs;
       runnerExecutionEntity.executionTime = executionTime;
       runnerExecutionEntity.runnerType = runnerType;
       runnerExecutionEntity.status = status;
-      try {
-        runnerExecutionEntity.status = status;
-      } catch (Exception e) {
+      if (error != null) {
+        runnerExecutionEntity.errorCode = error.getErrorCode();
+        runnerExecutionEntity.errorExplanation = error.getMessage();
       }
+
+      runnerExecutionEntity.status = status;
 
       runnerExecutionRepository.save(runnerExecutionEntity);
     } catch (Exception e) {
@@ -227,7 +200,45 @@ public class CherryHistoricFactory {
   }
 
   public Instant getInstantByDelay(int delayStatInHour) {
-    return Instant.now().minusSeconds(delayStatInHour * 60 * 60);
+    return Instant.now().minusSeconds( (long) delayStatInHour * 60 * 60);
+  }
+
+  public static class Statistic {
+    public long executions;
+    public long executionsFailed;
+    public long executionsSucceeded;
+    public long executionsBpmnErrors;
+  }
+  /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  Save                                          */
+  /*                                                          */
+  /* -------------------------------------------------------- */
+
+  public static class Interval {
+    /**
+     * Name is something like 16:00 / 16:15
+     */
+    public String slot;
+    public long executions = 0;
+    public long sumOfExecutionTime = 0;
+    public long executionsSucceeded = 0;
+    public long executionsFailed = 0;
+    public long executionsBpmnErrors = 0;
+    public long picTimeInMs = 0;
+    public long averageTimeInMs = 0;
+
+    public Interval(String slot) {
+      this.slot = slot;
+    }
+
+  }
+
+  public static class Performance {
+    public long picTimeInMs;
+    public long executions;
+    public long averageTimeInMs;
+    public List<Interval> listIntervals = new ArrayList<>();
   }
 
 }

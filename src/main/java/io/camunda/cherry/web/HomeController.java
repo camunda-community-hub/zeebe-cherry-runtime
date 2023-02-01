@@ -8,24 +8,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 @EnableAutoConfiguration
 public class HomeController {
 
-    @GetMapping("/")
-    String home() {
-        return "index";
-    }
+  @GetMapping("/")
+  String home() {
+    return "index";
+  }
 
-    @GetMapping("/workers")
-    String workers() {
-        return "workers";
-    }
+  @GetMapping("/workers")
+  String workers() {
+    return "workers";
+  }
 
-    @GetMapping("/dashboard")
-    String dashboard() {
-        return "dashboard";
-    }
+  @GetMapping("/dashboard")
+  String dashboard() {
+    return "dashboard";
+  }
 
-    @GetMapping("/worker")
-    String worker() {
-        return "worker";
-    }
+  @GetMapping("/worker")
+  String worker() {
+    return "worker";
+  }
 
 }

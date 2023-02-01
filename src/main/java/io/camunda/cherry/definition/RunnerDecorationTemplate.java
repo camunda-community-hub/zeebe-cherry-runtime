@@ -217,7 +217,8 @@ public class RunnerDecorationTemplate {
       // don't have the group at this moment
       propertyCheckbox.put(ATTR_DESCRIPTION, runnerParameter.explanation);
       propertyCheckbox.put(ATTR_VALUE, "false");
-      propertyCheckbox.put(ATTR_BINDING, Map.of(ATTR_TYPE, "zeebe:input", ATTR_NAME, runnerParameter.name + "_optional"));
+      propertyCheckbox.put(ATTR_BINDING,
+          Map.of(ATTR_TYPE, "zeebe:input", ATTR_NAME, runnerParameter.name + "_optional"));
 
       propertyCheckbox.put(ATTR_TYPE, TYPE_FIELD_DROPDOWN);
       List<Map<String, String>> listYesNoChoices = new ArrayList<>();

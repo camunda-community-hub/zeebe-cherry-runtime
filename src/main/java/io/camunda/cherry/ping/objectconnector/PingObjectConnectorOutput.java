@@ -1,26 +1,24 @@
 package io.camunda.cherry.ping.objectconnector;
 
-public class PingObjectConnectorOutput  {
+public class PingObjectConnectorOutput {
 
-    private Long internalTimeStampMS;
-    private String internalIpAddress;
+  private final Long internalTimeStampMS;
+  private final String internalIpAddress;
 
+  public PingObjectConnectorOutput(long currentTimestamp, String ipAddress) {
+    super();
+    this.internalTimeStampMS = currentTimestamp;
+    this.internalIpAddress = ipAddress;
+  }
 
+  /* Return an objet, getter can be regular */
+  public long getTimeStampMS() {
+    return internalTimeStampMS;
+  }
 
-    public PingObjectConnectorOutput(long currentTimestamp, String ipAddress) {
-        super();
-        this.internalTimeStampMS = currentTimestamp;
-        this.internalIpAddress = ipAddress;
-    }
-
-
-    /* Return an objet, getter can be regular */
-    public long getTimeStampMS() {
-        return internalTimeStampMS;
-    }
-    /* Return an objet, getter can be regular */
-    public String getIpAddress() {
-        return internalIpAddress;
-    }
+  /* Return an objet, getter can be regular */
+  public String getIpAddress() {
+    return internalIpAddress;
+  }
 
 }

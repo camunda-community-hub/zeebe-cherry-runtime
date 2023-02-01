@@ -8,6 +8,8 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
+import io.camunda.zeebe.client.api.ZeebeFuture;
+import io.camunda.zeebe.client.api.response.Topology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,92 +21,109 @@ import org.springframework.stereotype.Component;
 
 public class ZeebeContainer {
 
-    Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
+  Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
 
+  @Autowired
+  ZeebeConfiguration zeebeConfiguration;
 
-    @Autowired
-    ZeebeConfiguration zeebeConfiguration;
+  private ZeebeClient zeebeClient;
 
+  /**
+   * Number of thread currently used at the Zeebe Client
+   */
+  private int numberOfThreads = 1;
 
-    private ZeebeClient zeebeClient;
+  /**
+   * Number of thread required when the zeebe client will restart
+   */
+  private int numberOfThreadsRequired = 1;
 
-    /**
-     * Number of thread currently used at the Zeebe Client
-     */
-    private int numberOfThreads = 1;
-
-    /**
-     * Number of thread required when the zeebe client will restart
-     */
-    private int numberOfThreadsRequired = 1;
-
-    /**
-     * Start the ZeebeClient
-     */
-    protected void startZeebeeClient() {
-        zeebeClient = null;
-        String validation = zeebeConfiguration.checkValidation();
-        if (validation != null) {
-            logger.error("Incorrect configuration: " + validation);
-            return;
-        }
-
-        ZeebeClientBuilder zeebeClientBuilder;
-        if (zeebeConfiguration.isCouldConfiguration()) {
-            zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
-                    .withClusterId(zeebeConfiguration.clusterId)
-                    .withClientId(zeebeConfiguration.clientId)
-                    .withClientSecret(zeebeConfiguration.clientSecret)
-                    .withRegion(zeebeConfiguration.region);
-
-        } else {
-            zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress()).usePlaintext();
-        }
-        zeebeClient = zeebeClientBuilder
-                .numJobWorkerExecutionThreads(numberOfThreadsRequired)
-                .build();
-        numberOfThreads = numberOfThreadsRequired;
-        logger.info("ZeebeClient number of thread=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+  /**
+   * Start the ZeebeClient
+   */
+  protected void startZeebeeClient() {
+    zeebeClient = null;
+    String validation = zeebeConfiguration.checkValidation();
+    if (validation != null) {
+      logger.error("Incorrect configuration: " + validation);
+      return;
     }
 
-    /**
-     * Stop the zeebeClient
-     */
-    public void stopZeebeeClient() {
-        zeebeClient.close();
-        zeebeClient = null;
-    }
+    ZeebeClientBuilder zeebeClientBuilder;
+    if (zeebeConfiguration.isCouldConfiguration()) {
+      zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
+          .withClusterId(zeebeConfiguration.clusterId)
+          .withClientId(zeebeConfiguration.clientId)
+          .withClientSecret(zeebeConfiguration.clientSecret)
+          .withRegion(zeebeConfiguration.region);
 
-    /**
-     * Return the current ZeebeClient
-     * Attention: do not save it, it may be deleted and recreated on demand
-     *
-     * @return the zeebeClient
-     */
-    public ZeebeClient getZeebeClient() {
-        return zeebeClient;
+    } else {
+      zeebeClientBuilder = ZeebeClient.newClientBuilder()
+          .gatewayAddress(zeebeConfiguration.getGatewayAddress())
+          .usePlaintext();
     }
+    zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(numberOfThreadsRequired).build();
 
-    public boolean isOk() {
-        return zeebeClient != null;
-    }
+    pingZeebeClient();
 
-    /**
-     * Protected because the main interface for this information is the CherryJobRunningFactory
-     *
-     * @return the number of threads used when the ZeebeClient is started
-     */
-    protected int getNumberOfhreads() {
-        return numberOfThreads;
-    }
+    numberOfThreads = numberOfThreadsRequired;
+    logger.info("ZeebeClient number of thread=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+  }
 
-    /**
-     * Protected because the main interface for this information is the CherryJobRunningFactory
-     * Setting this information does not recreate a zeebeclient. All runners must be stop before.
-     *
-     * @param numberOfThreads number of threads used at the next startup
-     */
-    protected void setNumberOfThreadsRequired(int numberOfThreads) {
-        this.numberOfThreadsRequired = numberOfThreads;
+  /**
+   * Check if the Zeebe Server is alive
+   *
+   * @return true if the zeebe server is alive, else false
+   */
+  public boolean pingZeebeClient() {
+    try {
+      ZeebeFuture<Topology> send = zeebeClient.newTopologyRequest().send();
+      Topology join = send.join();
+
+      return true;
+    } catch (Exception e) {
+      return false;
     }
+  }
+
+  /**
+   * Stop the zeebeClient
+   */
+  public void stopZeebeeClient() {
+    zeebeClient.close();
+    zeebeClient = null;
+  }
+
+  /**
+   * Return the current ZeebeClient
+   * Attention: do not save it, it may be deleted and recreated on demand
+   *
+   * @return the zeebeClient
+   */
+  public ZeebeClient getZeebeClient() {
+    return zeebeClient;
+  }
+
+  public boolean isOk() {
+    return zeebeClient != null;
+  }
+
+  /**
+   * Protected because the main interface for this information is the CherryJobRunningFactory
+   *
+   * @return the number of threads used when the ZeebeClient is started
+   */
+  protected int getNumberOfhreads() {
+    return numberOfThreads;
+  }
+
+  /**
+   * Protected because the main interface for this information is the CherryJobRunningFactory
+   * Setting this information does not recreate a zeebeclient. All runners must be stop before.
+   *
+   * @param numberOfThreads number of threads used at the next startup
+   */
+  protected void setNumberOfThreadsRequired(int numberOfThreads) {
+    this.numberOfThreadsRequired = numberOfThreads;
+  }
 }

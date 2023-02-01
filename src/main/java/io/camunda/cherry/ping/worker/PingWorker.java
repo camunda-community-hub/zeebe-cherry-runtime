@@ -23,76 +23,69 @@ import java.util.Random;
 @Component
 public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
+  private static final String INPUT_MESSAGE = "message";
+  private static final String INPUT_DELAY = "delay";
+  private static final String OUTPUT_TIMESTAMP = "timestamp";
 
-    private static final String INPUT_MESSAGE = "message";
-    private static final String INPUT_DELAY = "delay";
-    private static final String OUTPUT_TIMESTAMP = "timestamp";
+  private final Random random = new Random();
 
-    private Random random = new Random();
+  public PingWorker() {
+    super("c-ping", Arrays.asList(
+        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
+            "Message to log"),
+        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL,
+            "Delay to sleep")), Collections.singletonList(
+        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
+            "Produce a timestamp")), Collections.emptyList());
 
-    public PingWorker() {
-        super("c-ping",
-                Arrays.asList(
-                        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
-                        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep")
-                ),
-                Collections.singletonList(
-                        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")
-                ),
-                Collections.emptyList()
-        );
+  }
 
+  /**
+   * mark this worker as a Framework runner
+   *
+   * @return true because this worker is part of the Cherry framework
+   */
+  @Override
+  public boolean isFrameworkRunner() {
+    return true;
+  }
+
+  @Override
+  public String getName() {
+    return "Ping worker";
+  }
+
+  @Override
+  public String getLabel() {
+    return "Ping (Worker)";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
+  }
+
+  @Override
+  public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+    String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
+    Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
+    logInfo(message);
+    if (delay != null && delay < 0) {
+      delay = Long.valueOf(random.nextInt(10000) + 1500);
     }
-
-    /**
-     * mark this worker as a Framework runner
-     *
-     * @return true because this worker is part of the Cherry framework
-     */
-    @Override
-    public boolean isFrameworkRunner() {
-        return true;
+    if (delay != null) {
+      try {
+        Thread.sleep(delay);
+      } catch (InterruptedException e) {
+        // Restore interrupted state...
+        Thread.currentThread().interrupt();
+      }
     }
+    DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 
-    @Override
-    public String getName() {
-        return "Ping worker";
-    }
+    String formattedDate = formatter.format(new Date());
+    setOutputValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
 
-    @Override
-    public String getLabel() {
-        return "Ping (Worker)";
-    }
-
-
-    @Override
-    public String getDescription() {
-        return "Do a simple ping as a Worker, and return a timestamp. A Delay can be set as parameter.";
-    }
-
-
-    @Override
-    public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
-        String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
-        Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
-        logInfo(message);
-        if (delay!=null && delay<0) {
-            delay = Long.valueOf(random.nextInt(10000)+1500);
-        }
-        if (delay != null) {
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                // Restore interrupted state...
-                Thread.currentThread().interrupt();
-            }
-        }
-        DateFormat formatter = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
-
-        String formattedDate = formatter.format(new Date());
-        setOutputValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
-
-    }
-
+  }
 
 }

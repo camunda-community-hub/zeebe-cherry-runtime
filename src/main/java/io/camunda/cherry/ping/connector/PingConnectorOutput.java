@@ -29,7 +29,7 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
     super();
   }
 
-  public PingConnectorOutput(long currentTimestamp, String ipAddress, Map<String,Object> parameters) {
+  public PingConnectorOutput(long currentTimestamp, String ipAddress, Map<String, Object> parameters) {
     super();
     this.internalTimeStampMS = currentTimestamp;
     this.internalIpAddress = ipAddress;
@@ -43,8 +43,8 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
             "Produce a timestamp"),
         RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED,
             "Returm the IpAddress"),
-    RunnerParameter.getInstance("parameters", "Parameters", Map.class, RunnerParameter.Level.REQUIRED,
-        "Returm parameters"));
+        RunnerParameter.getInstance("parameters", "Parameters", Map.class, RunnerParameter.Level.REQUIRED,
+            "Returm parameters"));
   }
 
   /* The getter must start by a lower case */

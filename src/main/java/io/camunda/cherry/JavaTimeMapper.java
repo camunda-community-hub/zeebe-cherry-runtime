@@ -15,10 +15,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class JavaTimeMapper {
-    @Bean
-    public JsonMapper jsonMapper() {
-        final var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        return new ZeebeObjectMapper(objectMapper);
-    }
+  @Bean
+  public JsonMapper jsonMapper() {
+    final var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    return new ZeebeObjectMapper(objectMapper);
+  }
 
 }

@@ -13,24 +13,25 @@ import java.util.List;
 
 public class AbstractConnectorInput {
 
-    /**
-     * Return the list of Parameters used by the connector
-     *
-     * @return
-     */
-    public List<RunnerParameter> getInputParameters() {
-        return Collections.emptyList();
-    }
+  /**
+   * Return the list of Parameters used by the connector
+   *
+   * @return
+   */
+  public List<RunnerParameter> getInputParameters() {
+    return Collections.emptyList();
+  }
 
-    /**
-     * Create the list and give a different class.
-     * If the Cherry input connector is created from a basic connector, give the Input connector.
-     * The Cherry will be able to verify the list against the Input: all fields are declared? All RunnerParameters exists as a member in the class?
-     */
-    protected record InputParametersInfo (List<RunnerParameter> listRunners, Class inputClass){}
+  protected InputParametersInfo getInputParametersInfo() {
+    return new InputParametersInfo(Collections.emptyList(), null);
+  }
 
-    protected InputParametersInfo getInputParametersInfo() {
-        return new InputParametersInfo(Collections.emptyList(), null);
-    }
+  /**
+   * Create the list and give a different class.
+   * If the Cherry input connector is created from a basic connector, give the Input connector.
+   * The Cherry will be able to verify the list against the Input: all fields are declared? All RunnerParameters exists as a member in the class?
+   */
+  protected record InputParametersInfo(List<RunnerParameter> listRunners, Class inputClass) {
+  }
 
 }

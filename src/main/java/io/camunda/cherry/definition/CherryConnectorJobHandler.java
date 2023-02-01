@@ -1,5 +1,6 @@
 package io.camunda.cherry.definition;
 
+import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.runtime.CherryHistoricFactory;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.runtime.util.outbound.ConnectorJobHandler;
@@ -14,11 +15,9 @@ import java.time.Instant;
  * This job handler intercept the execution to the result
  */
 public class CherryConnectorJobHandler extends ConnectorJobHandler {
-  Logger logger = LoggerFactory.getLogger(CherryConnectorJobHandler.class.getName());
-
-  CherryHistoricFactory cherryHistoricFactory;
-
   private final AbstractConnector abstractConnector;
+  Logger logger = LoggerFactory.getLogger(CherryConnectorJobHandler.class.getName());
+  CherryHistoricFactory cherryHistoricFactory;
 
   public CherryConnectorJobHandler(AbstractConnector abstractConnector, CherryHistoricFactory cherryHistoricFactory) {
     super(abstractConnector);
@@ -31,11 +30,13 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     Instant executionInstant = Instant.now();
     long beginExecution = System.currentTimeMillis();
     AbstractRunner.ExecutionStatusEnum status;
+    ConnectorException connectorException = null;
     try {
       super.handle(client, job);
       status = AbstractRunner.ExecutionStatusEnum.SUCCESS;
-    } catch (ConnectorException e) {
+    } catch (ConnectorException ce) {
       status = AbstractRunner.ExecutionStatusEnum.BPMNERROR;
+      connectorException = ce;
     } catch (Exception e) {
       status = AbstractRunner.ExecutionStatusEnum.FAIL;
     }
@@ -43,7 +44,11 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     logger.info(
         "Connector[" + abstractConnector.getName() + "] executed in " + (endExecution - beginExecution) + " ms");
 
-    cherryHistoricFactory.saveExecution(executionInstant, abstractConnector.getType(), status,
+    cherryHistoricFactory.saveExecution(executionInstant, // this instance
+        RunnerExecutionEntity.TypeExecutor.CONNECTOR, // this is a connector
+        abstractConnector.getType(), // type of connector
+        status, // status of execution
+        connectorException, // error
         endExecution - beginExecution);
 
   }

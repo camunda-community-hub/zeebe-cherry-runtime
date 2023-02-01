@@ -19,15 +19,13 @@ public class CherrySecretProvider implements SecretProvider {
 
     // First, in the applications
     String value = envSpring.getProperty(key);
-    if (value!=null)
+    if (value != null)
       return value;
 
     // Second, may be a Env?
     value = System.getProperty(key);
-    if (value!=null)
-      return value;
+    return value;
 
     // value if not find
-    return null;
   }
 }
