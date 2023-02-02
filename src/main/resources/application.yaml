@@ -15,18 +15,14 @@ zeebe.client:
   worker:
     maxJobsActive: 32
     threads: 1
-server.port: 9081
+# server.port: 9081
 logging.level.root: INFO
 
   # Spring Boot Configuration
 spring.application.name: ZeebeCherry
   # TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
-spring.mustache.prefix: classpath:static/templates/
-  # Spring Boot Actuator endpoints
-  # Note: originally, we experimented with using this to get information about beans. But this is no longer needed
-  #management.endpoints.jmx.exposure.include=health,beans
-  #management.endpoints.web.exposure.include=health,beans
+# server.servlet.context-path: /
+# spring.mustache.prefix: classpath:static/templates/
 
 
   # Save statistics and information
