@@ -41,6 +41,14 @@ public class AdminRestController {
   @Autowired
   private List<AbstractRunner> listRunner;
 
+  @GetMapping(value = "/api/ping", produces = "application/json")
+  public Map<String, Object> ping() {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("timestamp", System.currentTimeMillis());
+    return parameters;
+
+  }
+
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
