@@ -1,4 +1,4 @@
-FROM maven:3-jdk-11 as builder
+FROM maven:3.8.3-openjdk-17 as builder
 # setup base dir
 WORKDIR /usr/src/app
 # copy files from project
