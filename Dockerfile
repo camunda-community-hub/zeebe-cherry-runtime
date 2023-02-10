@@ -13,4 +13,4 @@ RUN --mount=type=cache,target=/root/.m2 mvn -DskipTests -Dmaven.test.skip clean 
 # docker build -t zeebe-cherry-officepdf:1.0.0 .
 FROM openjdk:17-alpine
 COPY --from=builder /usr/src/app/target/zeebe-cherry-framework-*-jar-with-dependencies.jar /usr/src/app/app.jar
-ENTRYPOINT ["java","-jar","usr/src/app/app.jar", "io.camunda.CherryApplication"]
+ENTRYPOINT ["java","-jar","/usr/src/app/app.jar", "io.camunda.CherryApplication"]
