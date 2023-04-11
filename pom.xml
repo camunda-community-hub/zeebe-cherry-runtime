@@ -119,19 +119,19 @@
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
+
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <version>2.1.214</version>
     </dependency>
-
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
     </dependency>
 
 
-    <!-- Webjars -->
+    <!-- Webjars
     <dependency>
       <groupId>org.webjars</groupId>
       <artifactId>jquery</artifactId>
@@ -152,12 +152,15 @@
       <artifactId>datatables</artifactId>
       <version>1.12.1</version>
     </dependency>
+    -->
+
+    <!--
     <dependency>
       <groupId>org.webjars.npm</groupId>
       <artifactId>mustache</artifactId>
       <version>4.2.0</version>
     </dependency>
-
+-->
     <dependency>
       <groupId>org.apache.chemistry.opencmis</groupId>
       <artifactId>chemistry-opencmis-client-impl</artifactId>
@@ -188,38 +191,6 @@
   </dependencies>
 
   <build>
-    <!-- generate React front end -->
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>com.github.eirslett</groupId>
-                    <artifactId>frontend-maven-plugin</artifactId>
-                    <versionRange>[1.12.1,)</versionRange>
-                    <goals>
-                      <goal>install-node-and-npm</goal>
-                      <goal>npm</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore/>
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
-
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -276,39 +247,38 @@
         </configuration>
       </plugin>
 
+      <!-- connect the React application in the Springboot application -->
       <plugin>
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
-        <version>1.12.1</version>
         <configuration>
-          <workingDirectory>src/main/front</workingDirectory>
-          <installDirectory>${project.basedir}/target</installDirectory>
+          <workingDirectory>src/main/frontend</workingDirectory>
         </configuration>
         <executions>
           <execution>
             <id>install node and npm</id>
-            <phase>generate-sources</phase>
             <goals>
               <goal>install-node-and-npm</goal>
             </goals>
             <configuration>
-              <nodeVersion>v18.5.0</nodeVersion>
-              <npmVersion>8.12.1</npmVersion>
+              <nodeVersion>v16.13.0</nodeVersion>
+              <!-- 18.14.0 is the last version -->
+              <npmVersion>8.2.0</npmVersion>
+              <!-- last is 9.6.2 is the last version-->
             </configuration>
           </execution>
           <execution>
             <id>npm install</id>
-            <phase>process-sources</phase>
             <goals>
               <goal>npm</goal>
             </goals>
+            <!-- Optional configuration which provides for running any npm command -->
             <configuration>
               <arguments>install</arguments>
             </configuration>
           </execution>
           <execution>
-            <id>react-script build</id>
-            <phase>generate-resources</phase>
+            <id>npm run build</id>
             <goals>
               <goal>npm</goal>
             </goals>
@@ -318,33 +288,27 @@
           </execution>
         </executions>
       </plugin>
-      <!-- Copy the front end into the static folder for JARs  -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.3.0</version>
         <executions>
           <execution>
             <id>copy-resources</id>
-            <phase>prepare-package</phase>
+            <phase>install</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}</outputDirectory>
+              <outputDirectory>${basedir}/target/classes/static/</outputDirectory>
               <resources>
-
-                <!-- Copy React index file and manifest -->
                 <resource>
-                  <directory>${basedir}/src/main/front/build</directory>
-                  <targetPath>${basedir}/target/classes/static/</targetPath>
-                  <filtering>false</filtering>
+                  <directory>${basedir}/src/main/frontend/build/</directory>
                 </resource>
               </resources>
             </configuration>
           </execution>
         </executions>
       </plugin>
+
 
     </plugins>
   </build>
