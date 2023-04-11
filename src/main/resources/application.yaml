@@ -15,7 +15,7 @@ zeebe.client:
   worker:
     maxJobsActive: 32
     threads: 1
-# server.port: 9081
+server.port: 9081
 logging.level.root: INFO
 
   # Spring Boot Configuration
