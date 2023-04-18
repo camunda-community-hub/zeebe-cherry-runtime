@@ -8,6 +8,7 @@ package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.camunda.connector.runtime.util.ConnectorHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +24,9 @@ public class RunnerDecorationTemplate {
    * */
 
   public static final String GROUP_OUTPUT = "Output";
+  public static final String GROUP_OUTPUT_LABEL = "Output";
   public static final String GROUP_INPUT = "Input";
+  public static final String GROUP_INPUT_LABEL ="Input";
   public static final String ATTR_LABEL = "label";
   public static final String ATTR_TYPE = "type";
   public static final String ZEEBE_TASK_HEADER = "zeebe:taskHeader";
@@ -121,11 +124,11 @@ public class RunnerDecorationTemplate {
 
     // We group all result in a Group Input
     if (!runner.getListInput().isEmpty())
-      listGroups.add(new RunnerParameter.Group(GROUP_INPUT, "Input"));
+      listGroups.add(new RunnerParameter.Group(GROUP_INPUT, GROUP_INPUT_LABEL));
 
     // We group all result in a Group Output
     if (!runner.getListOutput().isEmpty() || pleaseAddOutputGroup)
-      listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, "Output"));
+      listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
     if (listGroups != null) {
       templateContent.put(ATTR_GROUPS,
@@ -148,7 +151,7 @@ public class RunnerDecorationTemplate {
 
     // check if the runner generates error
     if (!runner.getListBpmnErrors().isEmpty()) {
-      //  {
+      //
       //            "label": "Error Expression",
       //            "description": "Expression to define BPMN Errors to throw",
       //            "group": "errors",
@@ -157,13 +160,14 @@ public class RunnerDecorationTemplate {
       //            "binding": {
       //            "type": "zeebe:taskHeader",
       //                "key": "errorExpression"
-      //        }
+      //
       HashMap<String, Object> errorParameters = new HashMap<>();
       errorParameters.put(ATTR_LABEL, "Error Expression");
       errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
-      errorParameters.put(ATTR_VALUE, "bpmnError(error.code, error.message)");
-      errorParameters.put(ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, "errorExpression"));
+      errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
+      errorParameters.put(ATTR_BINDING,
+          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ConnectorHelper.ERROR_EXPRESSION_HEADER_NAME));
 
       listProperties.add(errorParameters);
     }
