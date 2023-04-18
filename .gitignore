@@ -12,3 +12,5 @@ buildNumber.properties
 /.idea/
 /src/test/resources/files/output
 /cherry.*.db
+/localstorage/classloader/*
+/localstorage/upload/*
