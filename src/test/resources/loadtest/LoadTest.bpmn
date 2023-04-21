@@ -1,0 +1,584 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1mhos5z" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.10.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.1.0">
+  <bpmn:process id="LoadTest" name="LoadTest" isExecutable="true">
+    <bpmn:startEvent id="Event_1kmzos6" name="start">
+      <bpmn:outgoing>Flow_0xx59ph</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="Activity_Multi_LoadFile">
+      <bpmn:incoming>Flow_0aol72p</bpmn:incoming>
+      <bpmn:outgoing>Flow_12vkk2c</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_0i0ubmu" name="Start load file">
+        <bpmn:outgoing>Flow_0k1t4xv</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_12z18xw" sourceRef="Activity_LoadFile" targetRef="Event_1j1oun3" />
+      <bpmn:endEvent id="Event_17ulpwv" name="end">
+        <bpmn:incoming>Flow_0er2at2</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0er2at2" sourceRef="Event_1j1oun3" targetRef="Event_17ulpwv" />
+      <bpmn:sequenceFlow id="Flow_0k1t4xv" sourceRef="Event_0i0ubmu" targetRef="Activity_LoadFile" />
+      <bpmn:intermediateCatchEvent id="Event_1j1oun3" name="30s">
+        <bpmn:incoming>Flow_12z18xw</bpmn:incoming>
+        <bpmn:outgoing>Flow_0er2at2</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_139un6h">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:serviceTask id="Activity_LoadFile" name="Load File" zeebe:modelerTemplate="io.camunda.cherry.files.LoadFileFromDiskWorker" zeebe:modelerTemplateIcon="data:image/svg+xml,%3C?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39; standalone=&#39;no&#39;?%3E%3Csvg   xmlns:dc=&#39;http://purl.org/dc/elements/1.1/&#39;   xmlns:cc=&#39;http://creativecommons.org/ns%23&#39;   xmlns:rdf=&#39;http://www.w3.org/1999/02/22-rdf-syntax-ns%23&#39;   xmlns:svg=&#39;http://www.w3.org/2000/svg&#39;   xmlns=&#39;http://www.w3.org/2000/svg&#39;   version=&#39;1.1&#39;   id=&#39;Capa_1&#39;   x=&#39;0px&#39;   y=&#39;0px&#39;   viewBox=&#39;0 0 18 18&#39;   xml:space=&#39;preserve&#39;   width=&#39;18&#39;   height=&#39;18&#39;%3E%3Cmetadata   id=&#39;metadata55&#39;%3E%3Crdf:RDF%3E%3Ccc:Work       rdf:about=&#39;&#39;%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type         rdf:resource=&#39;http://purl.org/dc/dcmitype/StillImage&#39; /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cdefs   id=&#39;defs53&#39; /%3E%3Cg   id=&#39;g18&#39;   transform=&#39;scale(0.3)&#39;%3E %3Cpath   d=&#39;M 30,0 C 13.458,0 0,13.458 0,30 0,46.542 13.458,60 30,60 46.542,60 60,46.542 60,30 60,13.458 46.542,0 30,0 Z m 0,58 C 14.561,58 2,45.439 2,30 2,14.561 14.561,2 30,2 45.439,2 58,14.561 58,30 58,45.439 45.439,58 30,58 Z&#39;   id=&#39;path2&#39; /%3E %3Cpath   d=&#39;M 23.165,8.459 C 23.702,8.329 24.033,7.789 23.904,7.253 23.775,6.716 23.234,6.387 22.698,6.514 18.763,7.46 15.176,9.469 12.322,12.323 9.468,15.177 7.46,18.764 6.514,22.698 c -0.129,0.536 0.202,1.076 0.739,1.206 0.078,0.019 0.157,0.027 0.234,0.027 0.451,0 0.861,-0.308 0.972,-0.767 0.859,-3.575 2.685,-6.836 5.277,-9.429 2.592,-2.593 5.854,-4.417 9.429,-5.276 z&#39;   id=&#39;path4&#39; /%3E %3Cpath   d=&#39;m 52.747,36.096 c -0.538,-0.129 -1.077,0.201 -1.206,0.739 -0.859,3.575 -2.685,6.836 -5.277,9.429 -2.592,2.593 -5.854,4.418 -9.43,5.277 -0.537,0.13 -0.868,0.67 -0.739,1.206 0.11,0.459 0.521,0.767 0.972,0.767 0.077,0 0.156,-0.009 0.234,-0.027 3.936,-0.946 7.523,-2.955 10.377,-5.809 2.854,-2.854 4.862,-6.441 5.809,-10.376 0.128,-0.536 -0.203,-1.076 -0.74,-1.206 z&#39;   id=&#39;path6&#39; /%3E %3Cpath   d=&#39;m 24.452,13.286 c 0.538,-0.125 0.873,-0.663 0.747,-1.2 -0.125,-0.538 -0.665,-0.878 -1.2,-0.747 -3.09,0.72 -5.904,2.282 -8.141,4.52 -2.237,2.236 -3.8,5.051 -4.52,8.141 -0.126,0.537 0.209,1.075 0.747,1.2 0.076,0.019 0.152,0.026 0.228,0.026 0.454,0 0.865,-0.312 0.973,-0.773 0.635,-2.725 2.014,-5.207 3.986,-7.18 1.972,-1.973 4.456,-3.352 7.18,-3.987 z&#39;   id=&#39;path8&#39; /%3E %3Cpath   d=&#39;m 48.661,36.001 c 0.126,-0.537 -0.209,-1.075 -0.747,-1.2 -0.538,-0.133 -1.075,0.209 -1.2,0.747 -0.635,2.725 -2.014,5.207 -3.986,7.18 -1.972,1.973 -4.455,3.352 -7.18,3.986 -0.538,0.125 -0.873,0.663 -0.747,1.2 0.107,0.462 0.519,0.773 0.973,0.773 0.075,0 0.151,-0.008 0.228,-0.026 3.09,-0.72 5.904,-2.282 8.141,-4.52 2.236,-2.236 3.798,-5.05 4.518,-8.14 z&#39;   id=&#39;path10&#39; /%3E %3Cpath   d=&#39;m 26.495,16.925 c -0.119,-0.541 -0.653,-0.879 -1.19,-0.763 -4.557,0.997 -8.146,4.586 -9.143,9.143 -0.118,0.539 0.224,1.072 0.763,1.19 0.072,0.016 0.144,0.023 0.215,0.023 0.46,0 0.873,-0.318 0.976,-0.786 0.831,-3.796 3.821,-6.786 7.617,-7.617 0.538,-0.118 0.88,-0.651 0.762,-1.19 z&#39;   id=&#39;path12&#39; /%3E %3Cpath   d=&#39;m 43.838,34.695 c 0.118,-0.539 -0.224,-1.072 -0.763,-1.19 -0.54,-0.118 -1.072,0.222 -1.19,0.763 -0.831,3.796 -3.821,6.786 -7.617,7.617 -0.539,0.118 -0.881,0.651 -0.763,1.19 0.103,0.468 0.516,0.786 0.976,0.786 0.071,0 0.143,-0.008 0.215,-0.023 4.556,-0.997 8.145,-4.586 9.142,-9.143 z&#39;   id=&#39;path14&#39; /%3E %3Cpath   d=&#39;m 38.08,30 c 0,-4.455 -3.625,-8.08 -8.08,-8.08 -4.455,0 -8.08,3.625 -8.08,8.08 0,4.455 3.625,8.08 8.08,8.08 4.455,0 8.08,-3.625 8.08,-8.08 z M 30,36.08 c -3.353,0 -6.08,-2.728 -6.08,-6.08 0,-3.352 2.728,-6.08 6.08,-6.08 3.352,0 6.08,2.728 6.08,6.08 0,3.352 -2.727,6.08 -6.08,6.08 z&#39;   id=&#39;path16&#39; /%3E%3C/g%3E%3Cg   id=&#39;g20&#39;%3E%3C/g%3E%3Cg   id=&#39;g22&#39;%3E%3C/g%3E%3Cg   id=&#39;g24&#39;%3E%3C/g%3E%3Cg   id=&#39;g26&#39;%3E%3C/g%3E%3Cg   id=&#39;g28&#39;%3E%3C/g%3E%3Cg   id=&#39;g30&#39;%3E%3C/g%3E%3Cg   id=&#39;g32&#39;%3E%3C/g%3E%3Cg   id=&#39;g34&#39;%3E%3C/g%3E%3Cg   id=&#39;g36&#39;%3E%3C/g%3E%3Cg   id=&#39;g38&#39;%3E%3C/g%3E%3Cg   id=&#39;g40&#39;%3E%3C/g%3E%3Cg   id=&#39;g42&#39;%3E%3C/g%3E%3Cg   id=&#39;g44&#39;%3E%3C/g%3E%3Cg   id=&#39;g46&#39;%3E%3C/g%3E%3Cg   id=&#39;g48&#39;%3E%3C/g%3E%3Cg   id=&#39;g85&#39;   transform=&#39;matrix(1.1259408,0,0,1.1259408,33.760593,8.6647721)&#39;%3E%3Cpath     d=&#39;m -15.969199,-1.3973349 c -0.04428,0.56592004 -0.49572,0.83754004 -0.58752,0.88722004 -0.4887,0.26676 -1.31112,0.17388 -1.70856,-0.38556 -0.21924,-0.30780004 -0.3294,-0.79758004 -0.1161,-1.13670004 l 0.0027,-0.0054 c 0.07668,-0.12474 0.25434,-0.33534 0.58212,-0.34236 h 0.01188 c 0.11718,0 0.25218,0.03564 0.37152,0.06696 0.0837,0.02214 0.15606,0.04104 0.21006,0.04482 0.03402,0.00216 0.08262,-0.00648 0.14418,-0.01728 0.18414,-0.0324 0.4914,-0.0864 0.76032,0.10368 0.36612,0.2597403 0.33156,0.76356 0.3294,0.78462 z&#39;     id=&#39;path57&#39;     style=&#39;fill:%23aa0000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.207499,-2.3007546 c -0.1053,0.07452 -0.17496,0.16686 -0.21708,0.2349 l -0.0027,0.00432 c -0.10908,0.17388 -0.13932,0.37584 -0.1188,0.57348 -0.0022,0.00108 -0.0043,0.00216 -0.0059,0.00378 -0.40014,0.3267 -0.85212,0.24246 -1.02762,0.19116 l -0.01026,-0.0027 c -0.5589,-0.13932 -1.11078,-0.74304 -1.00926,-1.38618 0.05616,-0.35424 0.324,-0.7614 0.72792,-0.85428 0.06966,-0.0162 0.43362,-0.0837 0.7263,0.16146 0.08964,0.0756 0.15606,0.1857601 0.21438,0.28296 0.04158,0.0702 0.07776,0.13014 0.11718,0.16956 0.02538,0.02538 0.06966,0.05022 0.12582,0.08208 0.1647,0.09234 0.4131,0.2322001 0.4779,0.53352 5.4e-4,0.00216 0.0011,0.00432 0.0022,0.00594 z&#39;     id=&#39;path59&#39;     style=&#39;fill:%23aa0000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -17.110219,-2.3309949 c -0.03186,0.0054 -0.05994,0.00918 -0.07992,0.00918 -0.0032,0 -0.0065,-5.4e-4 -0.0092,-5.4e-4 -0.01512,-0.00108 -0.03294,-0.00324 -0.05184,-0.00702 0.16578,-0.42336 0.23436,-1.10052 -0.34182,-1.95804 -0.0011,-0.00216 -0.0027,-0.00378 -0.0049,-0.0054 0.03348,-0.13284 0.04482,-0.22572 0.04752,-0.2484 0.0016,-0.01512 -0.0092,-0.02808 -0.02376,-0.0297 -0.01512,-0.00216 -0.02808,0.00918 -0.0297,0.02376 -0.0065,0.05778 -0.07128,0.5788801 -0.4347,1.0416602 -0.22734,0.28944 -0.58536,0.5049 -0.70902,0.56646 -0.01134,-0.00756 -0.02106,-0.01512 -0.02754,-0.0216 -0.01782,-0.01782 -0.0351,-0.04104 -0.05292,-0.06858 0.01026,-0.0054 0.02106,-0.01134 0.0324,-0.01728 0.12906,-0.06912 0.34506,-0.1841401 0.60858,-0.4600801 0.31158,-0.32616 0.37098,-0.82566 0.2835,-0.96174 -0.04212,-0.06588 -0.10962,-0.07236 -0.16362,-0.07722 -0.07074,-0.00594 -0.1134,-0.01026 -0.12096,-0.10638 -0.007,-0.0837 0.0324,-0.15768 0.1107,-0.20736 0.1053,-0.0675 0.29376,-0.0891 0.47628,0.01458 0.11394,0.06426 0.11286,0.17388 0.11232,0.27972 -5.4e-4,0.07074 -0.0011,0.1377 0.03402,0.18576 l 0.01512,0.02052 c 0.0864,0.1171801 0.28836,0.3904201 0.40932,0.86724 0.12906,0.5102999 0.007,0.9752399 -0.07992,1.1604599 z&#39;     id=&#39;path61&#39;     style=&#39;fill:%23502d16;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.698899,-4.5455348 c -0.0043,0.00216 -0.0086,0.00324 -0.01296,0.00324 -0.0097,0 -0.0189,-0.0054 -0.02376,-0.01404 -5.4e-4,-5.4e-4 -0.03834,-0.06804 -0.10638,-0.13014 -0.01134,-0.00972 -0.01188,-0.027 -0.0022,-0.0378 0.01026,-0.01134 0.027,-0.01188 0.03834,-0.00216 0.07506,0.06804 0.11556,0.14094 0.11718,0.14418 0.0076,0.01296 0.0027,0.02916 -0.01026,0.03672 z&#39;     id=&#39;path63&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.644359,-4.0309149 c -0.05616,0.06642 -0.08532,0.0783 -0.1296,0.09612 l -0.01404,0.00594 c -0.0032,0.00162 -0.007,0.00216 -0.01026,0.00216 -0.0108,0 -0.02052,-0.00648 -0.02484,-0.01674 -0.0059,-0.0135 5.4e-4,-0.0297 0.01458,-0.0351 l 0.01404,-0.00594 c 0.0405,-0.01674 0.06102,-0.02538 0.10908,-0.081 0.0097,-0.01188 0.027,-0.01296 0.03834,-0.00324 0.01134,0.00972 0.01242,0.02646 0.0027,0.0378 z&#39;     id=&#39;path65&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -17.948839,-4.4391548 c -0.01404,-0.02214 -0.0324,-0.03402 -0.05292,-0.0405 -0.07182,0.09666 -0.32454,0.243 -0.57834,0.243 -0.0675,0 -0.13554,-0.01026 -0.1998,-0.03456 -0.1728,-0.06588 -0.29106,-0.15768 -0.40554,-0.24624 -0.09072,-0.07074 -0.17658,-0.13716 -0.28134,-0.18252 -0.01404,-0.00648 -0.01998,-0.02214 -0.01404,-0.03564 0.0059,-0.01404 0.0216,-0.01998 0.03564,-0.01404 0.1107,0.0486 0.19926,0.11664 0.29268,0.18954 0.11124,0.0864 0.2268,0.1755 0.3915,0.23814 0.16794,0.06372 0.3564,0.02214 0.4995,-0.04212 -0.06156,-0.19008 -0.45954,-0.76842 -1.11564,-0.6210001 -0.10152,0.02268 -0.19008,0.04374 -0.26784,0.0621 -0.3294,0.07722 -0.47034,0.11016 -0.61668,0.07128 0.0135,0.06804 0.04914,0.12582 0.10584,0.17226 0.1134,0.09126 0.2781,0.11394 0.3564,0.11502 -0.03996,-0.04536 -0.08262,-0.07452 -0.135,-0.09288 -0.01404,-0.00486 -0.0216,-0.01998 -0.01674,-0.03402 0.0049,-0.01458 0.02052,-0.0216 0.03456,-0.01674 0.1701,0.05994 0.2484,0.21222 0.37476,0.5227201 0.1323,0.32508 0.59508,0.62802 0.97038,0.5157 0.38232,-0.11448 0.37584,-0.51732 0.3753,-0.52164 0,-0.0108 0.0065,-0.02106 0.0162,-0.02538 0.02538,-0.01134 0.15552,-0.07074 0.24732,-0.15714 0.0016,-0.00162 0.0032,-0.0027 0.0049,-0.0027 v -5.4e-4 c -0.0043,-0.02646 -0.01188,-0.04752 -0.02106,-0.0621 m -0.89532,-0.2851201 c 0.01026,-0.01134 0.027,-0.01188 0.03834,-0.00216 0.07506,0.06804 0.11556,0.14094 0.11718,0.14418 0.0076,0.01296 0.0027,0.02916 -0.01026,0.03672 -0.0043,0.00216 -0.0086,0.00324 -0.01296,0.00324 -0.0097,0 -0.0189,-0.0054 -0.02376,-0.01404 -5.4e-4,-5.4e-4 -0.03834,-0.06804 -0.10638,-0.13014 -0.01134,-0.00972 -0.01188,-0.027 -0.0022,-0.0378 m -0.45468,0.36774 c -0.0011,0 -0.01674,0.0027 -0.04752,0.0027 -0.0243,0 -0.05724,-0.00162 -0.09936,-0.00702 -0.01512,-0.00162 -0.02538,-0.01512 -0.02322,-0.03024 0.0016,-0.01458 0.01512,-0.02484 0.03024,-0.02322 0.08748,0.01134 0.13014,0.00486 0.13068,0.00486 0.01458,-0.0027 0.02862,0.00702 0.03078,0.02214 0.0027,0.01458 -0.007,0.02808 -0.0216,0.03078 m 0.65448,0.32562 c -0.05616,0.06642 -0.08532,0.0783 -0.1296,0.09612 l -0.01404,0.00594 c -0.0032,0.00162 -0.007,0.00216 -0.01026,0.00216 -0.0108,0 -0.02052,-0.00648 -0.02484,-0.01674 -0.0059,-0.0135 5.4e-4,-0.0297 0.01458,-0.0351 l 0.01404,-0.00594 c 0.0405,-0.01674 0.06102,-0.02538 0.10908,-0.081 0.0097,-0.01188 0.027,-0.01296 0.03834,-0.00324 0.01134,0.00972 0.01242,0.02646 0.0027,0.0378 z&#39;     id=&#39;path67&#39;     style=&#39;fill:%23008000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -19.277239,-4.3873149 c 0.0027,0.01458 -0.007,0.02808 -0.0216,0.03078 -0.0011,0 -0.01674,0.0027 -0.04752,0.0027 -0.0243,0 -0.05724,-0.00162 -0.09936,-0.00702 -0.01512,-0.00162 -0.02538,-0.01512 -0.02322,-0.03024 0.0016,-0.01458 0.01512,-0.02484 0.03024,-0.02322 0.08748,0.01134 0.13014,0.00486 0.13068,0.00486 0.01458,-0.0027 0.02862,0.00702 0.03078,0.02214 z&#39;     id=&#39;path69&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3C/g%3E%3C/svg%3E">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="c-files-load-from-disk" />
+          <zeebe:ioMapping>
+            <zeebe:input source="./src/test/resources/files/" target="folder" />
+            <zeebe:input source="false" target="fileName_optional" />
+            <zeebe:input source="false" target="filterFile_optional" />
+            <zeebe:input source="UNCHANGE" target="policy" />
+            <zeebe:input source="JSON" target="storageDefinition" />
+            <zeebe:input source="false" target="fileLoaded_optional" />
+            <zeebe:input source="false" target="fileNameLoaded_optional" />
+            <zeebe:input source="false" target="fileMimeType_optional" />
+          </zeebe:ioMapping>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0k1t4xv</bpmn:incoming>
+        <bpmn:outgoing>Flow_12z18xw</bpmn:outgoing>
+        <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+          <bpmn:extensionElements>
+            <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+          </bpmn:extensionElements>
+        </bpmn:multiInstanceLoopCharacteristics>
+      </bpmn:serviceTask>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0xx59ph" sourceRef="Event_1kmzos6" targetRef="Activity_SetListofColor" />
+    <bpmn:sequenceFlow id="Flow_0aol72p" name="Load file" sourceRef="Gateway_0j681b2" targetRef="Activity_Multi_LoadFile">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1htggxv" name="end">
+      <bpmn:incoming>Flow_12vkk2c</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_12vkk2c" sourceRef="Activity_Multi_LoadFile" targetRef="Event_1htggxv" />
+    <bpmn:sequenceFlow id="Flow_0oq0x4v" sourceRef="Activity_SetListofColor" targetRef="Gateway_0j681b2" />
+    <bpmn:serviceTask id="Activity_SetListofColor" name="setListofColors" zeebe:modelerTemplate="io.camunda.cherry.operations.SetVariableWorker" zeebe:modelerTemplateIcon="data:image/svg+xml,%3C?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39; standalone=&#39;no&#39;?%3E%3Csvg   xmlns:dc=&#39;http://purl.org/dc/elements/1.1/&#39;   xmlns:cc=&#39;http://creativecommons.org/ns%23&#39;   xmlns:rdf=&#39;http://www.w3.org/1999/02/22-rdf-syntax-ns%23&#39;   xmlns:svg=&#39;http://www.w3.org/2000/svg&#39;   xmlns=&#39;http://www.w3.org/2000/svg&#39;   width=&#39;18&#39;   height=&#39;18&#39;   viewBox=&#39;0 0 16.875 16.875&#39;   id=&#39;svg15795&#39;   version=&#39;1.1&#39;%3E  %3Cdefs     id=&#39;defs15797&#39;%3E    %3CradialGradient       r=&#39;255.59&#39;       gradientTransform=&#39;matrix(-0.12272793,0,0,0.12272793,-1807.3634,-1063.9497)&#39;       cx=&#39;-464.92001&#39;       cy=&#39;873.19&#39;       gradientUnits=&#39;userSpaceOnUse&#39;       id=&#39;radialGradient3026-9-1&#39;%3E      %3Cstop         offset=&#39;.5&#39;         style=&#39;stop-color:%23ffd046;stop-opacity:1&#39;         id=&#39;stop48-0-2&#39; /%3E      %3Cstop         offset=&#39;1&#39;         style=&#39;stop-color:%23f0a957;stop-opacity:1&#39;         id=&#39;stop50-8-9&#39; /%3E    %3C/radialGradient%3E  %3C/defs%3E  %3Cmetadata     id=&#39;metadata15800&#39;%3E    %3Crdf:RDF%3E      %3Ccc:Work         rdf:about=&#39;&#39;%3E        %3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E        %3Cdc:type           rdf:resource=&#39;http://purl.org/dc/dcmitype/StillImage&#39; /%3E        %3Cdc:title%3E%3C/dc:title%3E      %3C/cc:Work%3E    %3C/rdf:RDF%3E  %3C/metadata%3E  %3Cg     id=&#39;layer1&#39;     transform=&#39;translate(-333.12983,-288.31523)&#39;%3E    %3Cg       transform=&#39;matrix(0.36709704,0,0,0.36709704,986.33222,642.92532)&#39;       style=&#39;display:inline&#39;       id=&#39;g15745&#39;%3E      %3Cpath         d=&#39;m -1764.6075,-935.9985 c 0,0 3.8003,2.04759 9.6285,4.07616 3.5202,1.22728 9.7726,-0.84277 13.0276,-1.70481 3.26,-0.86511 8.8927,-2.65449 7.3298,-4.21743 -1.5631,-1.56257 -6.0571,-4.89537 -6.0571,-4.89537 0,0 4.2789,7.06582 -23.9295,6.74145 z&#39;         style=&#39;fill:%23ffffff;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path9-1-4&#39; /%3E      %3Cpath         id=&#39;path13-3-8&#39;         style=&#39;fill:%23ffffff;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1738.5952,-941.13712 c 0,2.98008 -8.9157,5.39684 -19.915,5.39684 -10.9985,0 -19.9126,-2.41639 -19.9126,-5.39684 2.2937,-1.66297 1.9624,-3.06329 1.9624,-3.06329 h 35.9961 c 0,0 -0.3197,1.39983 1.8691,3.06255 z&#39; /%3E      %3Cpath         d=&#39;m -1774.2711,-954.86792 c 0.4453,-1.01594 2.1705,-4.52486 5.6775,-6.995 6.3577,-4.4835 14.2414,-3.62821 18.8768,-0.93691 3.1324,1.82227 5.2903,4.17054 7.0001,7.61821 0.4172,0.84216 1.1951,2.63915 1.7282,5.20993 0.4613,2.22972 0.5058,3.63581 0.58,5.97108 0,1.95125 -3.7069,3.71117 -10.0877,4.56818 -8.93,1.19586 -19.7224,0.15709 -24.1026,-2.3198 -1.2534,-0.70839 -1.8451,-1.46218 -1.8426,-2.19634 0.092,-3.01727 0.204,-6.43549 2.1707,-10.91935 z&#39;         style=&#39;fill:%23ffffff;stroke-linejoin:round&#39;         id=&#39;path19-3-0&#39; /%3E      %3Cpath         d=&#39;m -1774.2711,-954.86792 c 0.4453,-1.01594 2.1705,-4.52486 5.6775,-6.995 6.3577,-4.4835 14.2414,-3.62821 18.8768,-0.93691 3.1324,1.82227 5.2903,4.17054 7.0001,7.61821 0.4172,0.84216 1.1951,2.63915 1.7282,5.20993 0.4613,2.22972 0.5058,3.63581 0.58,5.97108 0,1.95125 -3.7069,3.71117 -10.0877,4.56818 -8.93,1.19586 -19.7224,0.15709 -24.1026,-2.3198 -1.2534,-0.70839 -1.8451,-1.46218 -1.8426,-2.19634 0.092,-3.01727 0.204,-6.43549 2.1707,-10.91935 z&#39;         style=&#39;fill:%2374fc00;fill-opacity:1;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path23-1-6&#39; /%3E      %3Cpath         d=&#39;m -1764.7572,-936.08809 c 0,0 3.8014,2.04415 9.6284,4.07591 3.5189,1.22483 9.7706,-0.84277 13.0263,-1.70788 3.2599,-0.86192 8.8934,-2.65141 7.3303,-4.21754 -1.5629,-1.56233 -6.0547,-4.89329 -6.0547,-4.89329 0,0 4.277,7.06618 -23.9307,6.7428 z&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:0.633166;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path27-6-0&#39; /%3E      %3Cpath         id=&#39;path31-3-3&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:0.633166;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1738.7453,-941.22671 c 0,2.98032 -8.913,5.39499 -19.9138,5.39499 -10.998,0 -19.9138,-2.41405 -19.9138,-5.39499 2.2952,-1.66272 1.961,-3.06243 1.961,-3.06243 h 35.9986 c 0,0 -0.214,1.63369 1.9731,3.29629 z&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:%23ffd520;stroke-linejoin:round&#39;         id=&#39;path37-0-6&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:none;stroke:%23000000;stroke-width:0.633166;stroke-linejoin:round&#39;         id=&#39;path41-6-5&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:url(%23radialGradient3026-9-1);stroke:%23fac44b;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path52-0-7&#39; /%3E      %3Cpath         d=&#39;m -1767.915,-962.62629 c 13.3737,-8.528 26.9474,8.98687 26.5227,20.23415 l 1.2441,0.50196 c -7e-4,-12.25929 -13.2853,-30.32975 -27.7672,-20.73611&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         id=&#39;path60-2-9&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon62-6-3&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         points=&#39;76.865,262.06 61.197,281.15 66.729,266.15 &#39; /%3E      %3Cpath         d=&#39;m -1745.3502,-940.13566 c 0,-11.09583 -6.6212,-28.38329 -18.6117,-24.45845 12.8582,-4.35218 23.8104,11.56833 23.8104,22.70098 l 0.6789,1.84129 -5.2013,1.75427 -0.6765,-1.83772 z&#39;         style=&#39;fill:%23ffd467;fill-opacity:1;stroke:none;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round&#39;         id=&#39;path64-7-7&#39; /%3E      %3Cpath         d=&#39;m -1745.349,-940.13566 0.6782,1.84141 -3.0497,-2.13755 c 0.4259,-11.24802 -6.82,-30.72126 -20.1949,-22.19658 14.4819,-9.59106 22.566,10.23183 22.566,22.49358 z&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         id=&#39;path70-9-2&#39; /%3E      %3Cpath         d=&#39;m -1745.349,-940.13566 0.6782,1.84141 -3.0497,-2.13755 c 0.4259,-11.24802 -6.82,-30.72126 -20.1949,-22.19658 14.4819,-9.59106 22.566,10.23183 22.566,22.49358 z&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:none;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round&#39;         id=&#39;path74-7-4&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon78-8-4&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:5.1591;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         points=&#39;267.24,277.31 253.03,251.64 254.68,222.57 265.49,233.41 &#39; /%3E      %3Cpolygon         style=&#39;stroke-linejoin:round&#39;         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon80-2-4&#39;         points=&#39;329.73,266.98 320.7,241.3 322.32,217.4 327.99,223.07 &#39; /%3E      %3Cpath         id=&#39;path82-9-3&#39;         style=&#39;fill:%23ffd467;fill-opacity:1;stroke:%23ffd467;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1764.7572,-940.52103 c 0,0 -7.3005,-0.90536 -7.6667,-1.27121 -0.3672,-0.36291 0.2126,-5.38788 0.2126,-5.38788 l 7.6696,1.26802 z&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon84-9-0&#39;         style=&#39;fill:%23f4b253;fill-opacity:1;stroke:%23f4b253;stroke-width:5.1591;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         points=&#39;254.68,222.57 265.49,233.41 327.99,223.07 317.16,212.24 &#39; /%3E    %3C/g%3E    %3Cg       id=&#39;g48&#39;       transform=&#39;matrix(0.29730774,0,0,0.29730774,336.52636,289.85483)&#39;%3E      %3Cpath         d=&#39;m 16.7328,13.29858 c -0.1476,1.8864 -1.6524,2.7918 -1.9584,2.9574 -1.629,0.8892 -4.3704,0.5796 -5.6952001,-1.2852 -0.7308,-1.026 -1.098,-2.6586 -0.387,-3.789 l 0.009,-0.018 c 0.2556,-0.4158 0.8478,-1.1178 1.9404001,-1.1412 h 0.0396 c 0.3906,0 0.8406,0.1188 1.2384,0.2232 0.279,0.0738 0.5202,0.1368 0.7002,0.1494 0.1134,0.0072 0.2754,-0.0216 0.4806,-0.0576 0.6138,-0.108 1.638,-0.288 2.5344,0.3456 1.2204,0.865801 1.1052,2.5452 1.098,2.6154 z&#39;         id=&#39;path2&#39;         style=&#39;fill:%23aa0000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 9.2718,10.287181 c -0.351,0.2484 -0.5832,0.5562 -0.7236,0.783 l -0.009,0.0144 c -0.3636001,0.5796 -0.4644,1.2528 -0.3960001,1.9116 -0.0072,0.0036 -0.0144,0.0072 -0.0198,0.0126 -1.3338001,1.089 -2.8404,0.8082 -3.4254003,0.6372 l -0.0342,-0.009 c -1.8630002,-0.4644 -3.70259996,-2.4768 -3.3642,-4.6206 0.1872,-1.1808001 1.08,-2.538 2.4264,-2.8476 0.2322,-0.054 1.4454,-0.279 2.421,0.5382 0.2988,0.252 0.5202,0.6192001 0.7146,0.9432 0.1386,0.234 0.2592,0.4338 0.3906001,0.5652 0.0846,0.0846 0.2322,0.1674 0.4194,0.2736 0.549,0.3078001 1.3770001,0.7740001 1.5930002,1.7784 0.0018,0.0072 0.0036,0.0144 0.0072,0.0198 z&#39;         id=&#39;path4&#39;         style=&#39;fill:%23aa0000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 12.9294,10.18638 c -0.1062,0.018 -0.1998,0.0306 -0.2664,0.0306 -0.0108,0 -0.0216,-0.0018 -0.0306,-0.0018 -0.0504,-0.0036 -0.1098,-0.0108 -0.1728,-0.0234 0.5526,-1.4112 0.7812,-3.6684 -1.1394,-6.5268 -0.0036,-0.0072 -0.009,-0.0126 -0.0162,-0.018 0.1116,-0.4428 0.1494,-0.7524 0.1584,-0.828 0.0054,-0.0504 -0.0306,-0.0936 -0.0792,-0.099 -0.0504,-0.0072 -0.0936,0.0306 -0.099,0.0792 -0.0216,0.1926 -0.2376,1.9296001 -1.4490001,3.4722004 -0.7578001,0.9648001 -1.9512001,1.6830001 -2.3634002,1.8882 -0.0378,-0.0252 -0.0702,-0.0504 -0.0918,-0.072 -0.0594,-0.0594 -0.117,-0.1368 -0.1764,-0.2286 0.0342,-0.018 0.0702,-0.0378 0.108,-0.0576 0.4302,-0.2304 1.1502,-0.6138001 2.0286002,-1.5336001 1.0386001,-1.0872 1.2366001,-2.7522001 0.9450001,-3.2058 -0.1404,-0.2196 -0.3654001,-0.2412 -0.5454001,-0.2574 -0.2358,-0.0198 -0.378,-0.0342 -0.4032,-0.3546 -0.0234,-0.279 0.108,-0.5256 0.369,-0.6912 0.3510001,-0.225 0.9792001,-0.297 1.5876001,0.0486 0.3798,0.2142 0.3762,0.5796 0.3744,0.9324 -0.0018,0.2358 -0.0036,0.459 0.1134,0.6192 l 0.0504,0.0684 c 0.288,0.3906001 0.9612,1.3014001 1.3644,2.8908 C 13.626,8.01918 13.2192,9.56898 12.9294,10.18638 Z&#39;         id=&#39;path6&#39;         style=&#39;fill:%23502d16;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 7.6338,2.8045802 c -0.0144,0.0072 -0.0288,0.0108 -0.0432,0.0108 -0.0324,0 -0.063,-0.018 -0.0792,-0.0468 -0.0018,-0.0018 -0.1278,-0.2268 -0.3546,-0.4338 -0.0378,-0.0324 -0.0396,-0.09 -0.0072,-0.126 0.0342,-0.0378 0.09,-0.0396 0.1278,-0.0072 0.2502,0.2268 0.3852,0.4698 0.3906,0.4806 0.025201,0.0432 0.009,0.0972 -0.0342,0.1224 z&#39;         id=&#39;path8&#39; /%3E      %3Cpath         d=&#39;m 7.8156,4.51998 c -0.1872,0.2214 -0.2844,0.261 -0.432,0.3204 l -0.0468,0.0198 c -0.0108,0.0054 -0.0234,0.0072 -0.0342,0.0072 -0.036,0 -0.0684,-0.0216 -0.0828,-0.0558 -0.0198,-0.045 0.0018,-0.099 0.0486,-0.117 l 0.0468,-0.0198 c 0.135,-0.0558 0.2034,-0.0846 0.3636,-0.27 0.0324,-0.0396 0.09,-0.0432 0.1278,-0.0108 0.0378,0.0324 0.0414,0.0882 0.009,0.126 z&#39;         id=&#39;path10&#39; /%3E      %3Cpath         d=&#39;m 10.134,3.1591802 c -0.0468,-0.0738 -0.108,-0.1134 -0.1764,-0.135 -0.2394,0.3222 -1.0818001,0.81 -1.9278,0.81 -0.225,0 -0.4518,-0.0342 -0.666,-0.1152 -0.576,-0.2196 -0.9702,-0.5256 -1.3518001,-0.8208 -0.3024,-0.2358 -0.5886,-0.4572 -0.9378,-0.6084001 -0.0468,-0.0216 -0.0666,-0.0738 -0.0468,-0.1188 0.0198,-0.0468 0.072,-0.0666 0.1188,-0.0468 0.369,0.162 0.6642,0.3888001 0.9756,0.6318 0.3708,0.2880001 0.756,0.5850001 1.3050001,0.7938 0.5598,0.2124 1.1880001,0.0738 1.6650001,-0.1404 -0.2052,-0.6336 -1.5318002,-2.56139997 -3.7188,-2.0700002 -0.3384,0.0756 -0.6336,0.1458 -0.8928,0.207 -1.098,0.2574 -1.5678,0.3672001 -2.0556002,0.2376 0.045,0.2268001 0.1638,0.4194 0.3528,0.5742001 0.378,0.3042 0.927,0.3798 1.1880001,0.3834 C 3.8322,2.59038 3.69,2.49318 3.5154,2.43198 3.4686,2.41578 3.4434,2.36538 3.4596,2.31858 c 0.0162,-0.0486 0.0684,-0.072 0.1152,-0.0558 0.567,0.1998 0.828,0.7074 1.2492001,1.7424002 0.441,1.0836 1.9836001,2.0934 3.2346,1.7190001 1.2744,-0.3816 1.2528001,-1.7244 1.251,-1.7388 0,-0.036 0.0216,-0.0702 0.054,-0.0846 0.0846,-0.0378 0.5184,-0.2358 0.8243999,-0.5238 0.0054,-0.0054 0.0108,-0.009 0.0162,-0.009 v -0.0018 C 10.1898,3.27798 10.1646,3.20778 10.134,3.1591802 M 7.1496005,2.20878 c 0.0342,-0.0378 0.09,-0.0396 0.1278,-0.0072 0.2502,0.2268 0.3852,0.4698 0.3906,0.4806 0.0252,0.0432 0.009,0.0972 -0.0342,0.1224 -0.0144,0.0072 -0.0288,0.0108 -0.0432,0.0108 -0.0324,0 -0.063,-0.018 -0.0792,-0.0468 -0.0018,-0.0018 -0.1278,-0.2268 -0.3546,-0.4338 -0.037801,-0.0324 -0.0396,-0.09 -0.0072,-0.126 m -1.5156002,1.2258 c -0.0036,0 -0.0558,0.009 -0.1584,0.009 -0.081,0 -0.1908,-0.0054 -0.3312,-0.0234 -0.0504,-0.0054 -0.0846,-0.0504 -0.0774,-0.1008 0.0054,-0.0486 0.0504,-0.0828 0.1008,-0.0774 0.2916,0.0378 0.4338,0.0162 0.4356,0.0162 0.0486,-0.009 0.0954,0.0234 0.1026,0.0738 0.009,0.0486 -0.0234,0.0936 -0.072,0.1026 M 7.8156,4.51998 c -0.1872,0.2214 -0.2844,0.261 -0.432,0.3204 l -0.0468,0.0198 c -0.0108,0.0054 -0.0234,0.0072 -0.0342,0.0072 -0.036,0 -0.0684,-0.0216 -0.0828,-0.0558 -0.0198,-0.045 0.0018,-0.099 0.0486,-0.117 l 0.0468,-0.0198 c 0.135,-0.0558 0.2034,-0.0846 0.3636,-0.27 0.0324,-0.0396 0.09,-0.0432 0.1278,-0.0108 0.0378,0.0324 0.0414,0.0882 0.009,0.126 z&#39;         id=&#39;path12&#39;         style=&#39;fill:%23008000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 5.7060003,3.33198 c 0.009,0.0486 -0.0234,0.0936 -0.072,0.1026 -0.0036,0 -0.0558,0.009 -0.1584,0.009 -0.081,0 -0.1908,-0.0054 -0.3312,-0.0234 -0.0504,-0.0054 -0.0846,-0.0504 -0.0774,-0.1008 0.0054,-0.0486 0.0504,-0.0828 0.1008,-0.0774 0.2916,0.0378 0.4338,0.0162 0.4356,0.0162 0.0486,-0.009 0.0954,0.0234 0.1026,0.0738 z&#39;         id=&#39;path14&#39; /%3E    %3C/g%3E  %3C/g%3E%3C/svg%3E">
+      <bpmn:extensionElements>
+        <zeebe:ioMapping>
+          <zeebe:input source="listOfColors=JSON([&#34;blue&#34;, &#34;red&#34;, &#34;yellow&#34;,&#34;green&#34;, &#34;pink&#34;,&#34;cyan&#34;,&#34;gray&#34;,&#34;dark&#34;,&#34;navy&#34;,&#34;pink&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;,&#34;01&#34;])" target="operations" />
+        </zeebe:ioMapping>
+        <zeebe:taskDefinition type="c-set-variables" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="errorExpression" value="bpmnError(error.code, error.message)" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xx59ph</bpmn:incoming>
+      <bpmn:outgoing>Flow_0oq0x4v</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:subProcess id="Activity_Multi_PingDelay">
+      <bpmn:incoming>Flow_1jrm6vx</bpmn:incoming>
+      <bpmn:outgoing>Flow_0j0crhx</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_077svig" name="Start delay">
+        <bpmn:outgoing>Flow_1fflfji</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:endEvent id="Event_1er0xln" name="end">
+        <bpmn:incoming>Flow_0wy5gtv</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:intermediateCatchEvent id="Event_0m6vscd" name="15s">
+        <bpmn:incoming>Flow_1rxtbxc</bpmn:incoming>
+        <bpmn:outgoing>Flow_0wy5gtv</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_14jqrsv">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT15S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="Flow_1fflfji" sourceRef="Event_077svig" targetRef="Activity_PingDelay" />
+      <bpmn:sequenceFlow id="Flow_0wy5gtv" sourceRef="Event_0m6vscd" targetRef="Event_1er0xln" />
+      <bpmn:sequenceFlow id="Flow_1rxtbxc" sourceRef="Activity_PingDelay" targetRef="Event_0m6vscd" />
+      <bpmn:serviceTask id="Activity_PingDelay" name="Ping Delay">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="c-pingconnector" />
+          <zeebe:ioMapping>
+            <zeebe:input source="false" target="message_optional" />
+            <zeebe:input source="true" target="delay_optional" />
+            <zeebe:input source="-1" target="delay" />
+            <zeebe:input source="false" target="throwErrorPlease" />
+            <zeebe:input source="false" target="timeStampMS_optional" />
+            <zeebe:input source="false" target="ipAddress_optional" />
+            <zeebe:input source="false" target="parameters_optional" />
+          </zeebe:ioMapping>
+          <zeebe:taskHeaders>
+            <zeebe:header key="resultVariable" value="result" />
+            <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+          </zeebe:taskHeaders>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1fflfji</bpmn:incoming>
+        <bpmn:outgoing>Flow_1rxtbxc</bpmn:outgoing>
+        <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+          <bpmn:extensionElements>
+            <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+          </bpmn:extensionElements>
+        </bpmn:multiInstanceLoopCharacteristics>
+      </bpmn:serviceTask>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1jrm6vx" name="Ping with delay" sourceRef="Gateway_0j681b2" targetRef="Activity_Multi_PingDelay">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:subProcess id="Activity_Multi_PingError">
+      <bpmn:incoming>Flow_1x97t4c</bpmn:incoming>
+      <bpmn:outgoing>Flow_19a9bjd</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_1s9aexo" name="Start BPMN Error">
+        <bpmn:outgoing>Flow_1ra45vv</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:endEvent id="Event_0kmy7xm" name="end">
+        <bpmn:incoming>Flow_1uytppr</bpmn:incoming>
+        <bpmn:incoming>Flow_1ajbvwe</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:intermediateCatchEvent id="Event_0m1hcjr" name="15s">
+        <bpmn:incoming>Flow_0qrqpmx</bpmn:incoming>
+        <bpmn:incoming>Flow_1i2890a</bpmn:incoming>
+        <bpmn:outgoing>Flow_1uytppr</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_0gefhck">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT15S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="Flow_1ra45vv" sourceRef="Event_1s9aexo" targetRef="Activity_PingError" />
+      <bpmn:sequenceFlow id="Flow_1uytppr" sourceRef="Event_0m1hcjr" targetRef="Event_0kmy7xm" />
+      <bpmn:sequenceFlow id="Flow_0qrqpmx" sourceRef="Activity_PingError" targetRef="Event_0m1hcjr" />
+      <bpmn:boundaryEvent id="Event_0hmc7cw" name="Error" attachedToRef="Activity_PingError">
+        <bpmn:outgoing>Flow_0pxxkgw</bpmn:outgoing>
+        <bpmn:errorEventDefinition id="ErrorEventDefinition_06m9dc2" errorRef="Error_0p53hwb" />
+      </bpmn:boundaryEvent>
+      <bpmn:sequenceFlow id="Flow_0pxxkgw" sourceRef="Event_0hmc7cw" targetRef="Activity_Verify" />
+      <bpmn:sequenceFlow id="Flow_1i2890a" sourceRef="Activity_Verify" targetRef="Event_0m1hcjr" />
+      <bpmn:userTask id="Activity_Verify" name="verify">
+        <bpmn:incoming>Flow_0pxxkgw</bpmn:incoming>
+        <bpmn:outgoing>Flow_1i2890a</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:serviceTask id="Activity_PingError" name="Ping Delay">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="c-pingconnector" />
+          <zeebe:ioMapping>
+            <zeebe:input source="false" target="message_optional" />
+            <zeebe:input source="false" target="delay_optional" />
+            <zeebe:input source="=true" target="throwErrorPlease" />
+            <zeebe:input source="false" target="timeStampMS_optional" />
+            <zeebe:input source="false" target="ipAddress_optional" />
+            <zeebe:input source="false" target="parameters_optional" />
+          </zeebe:ioMapping>
+          <zeebe:taskHeaders>
+            <zeebe:header key="resultVariable" value="result" />
+            <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
+          </zeebe:taskHeaders>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1ra45vv</bpmn:incoming>
+        <bpmn:outgoing>Flow_0qrqpmx</bpmn:outgoing>
+        <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+          <bpmn:extensionElements>
+            <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+          </bpmn:extensionElements>
+        </bpmn:multiInstanceLoopCharacteristics>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_1ajbvwe" sourceRef="Event_07kywq3" targetRef="Event_0kmy7xm" />
+      <bpmn:boundaryEvent id="Event_07kywq3" name="30s" attachedToRef="Activity_Verify">
+        <bpmn:outgoing>Flow_1ajbvwe</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_17bv8ve">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:boundaryEvent>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1x97t4c" name="BPMN Error" sourceRef="Gateway_0j681b2" targetRef="Activity_Multi_PingError">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1m0lgnt" name="end">
+      <bpmn:incoming>Flow_0j0crhx</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0j0crhx" sourceRef="Activity_Multi_PingDelay" targetRef="Event_1m0lgnt" />
+    <bpmn:endEvent id="Event_0xun8kn" name="end">
+      <bpmn:incoming>Flow_19a9bjd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_19a9bjd" sourceRef="Activity_Multi_PingError" targetRef="Event_0xun8kn" />
+    <bpmn:inclusiveGateway id="Gateway_0j681b2" name="Who start?">
+      <bpmn:incoming>Flow_0oq0x4v</bpmn:incoming>
+      <bpmn:outgoing>Flow_0aol72p</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1jrm6vx</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1x97t4c</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1fpydk4</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:subProcess id="Activity_Multi_Watermark">
+      <bpmn:incoming>Flow_1fpydk4</bpmn:incoming>
+      <bpmn:outgoing>Flow_17hvt8i</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true">
+        <bpmn:extensionElements>
+          <zeebe:loopCharacteristics inputCollection="=listOfColors" />
+        </bpmn:extensionElements>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:startEvent id="Event_1v2nicb" name="Start PDF">
+        <bpmn:outgoing>Flow_02elou0</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_02elou0" sourceRef="Event_1v2nicb" targetRef="LoadPdfFileTask" />
+      <bpmn:endEvent id="Event_1f1if66" name="end">
+        <bpmn:incoming>Flow_02124ke</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_02124ke" sourceRef="Event_1pftu6n" targetRef="Event_1f1if66" />
+      <bpmn:intermediateCatchEvent id="Event_1pftu6n" name="45S">
+        <bpmn:incoming>Flow_0w3qkcw</bpmn:incoming>
+        <bpmn:outgoing>Flow_02124ke</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_1whfvd7">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT45S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:serviceTask id="LoadPdfFileTask" name="Load Pdf file" zeebe:modelerTemplate="io.camunda.cherry.files.LoadFileFromDiskWorker" zeebe:modelerTemplateIcon="data:image/svg+xml,%3C?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39; standalone=&#39;no&#39;?%3E%3Csvg   xmlns:dc=&#39;http://purl.org/dc/elements/1.1/&#39;   xmlns:cc=&#39;http://creativecommons.org/ns%23&#39;   xmlns:rdf=&#39;http://www.w3.org/1999/02/22-rdf-syntax-ns%23&#39;   xmlns:svg=&#39;http://www.w3.org/2000/svg&#39;   xmlns=&#39;http://www.w3.org/2000/svg&#39;   version=&#39;1.1&#39;   id=&#39;Capa_1&#39;   x=&#39;0px&#39;   y=&#39;0px&#39;   viewBox=&#39;0 0 18 18&#39;   xml:space=&#39;preserve&#39;   width=&#39;18&#39;   height=&#39;18&#39;%3E%3Cmetadata   id=&#39;metadata55&#39;%3E%3Crdf:RDF%3E%3Ccc:Work       rdf:about=&#39;&#39;%3E%3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E%3Cdc:type         rdf:resource=&#39;http://purl.org/dc/dcmitype/StillImage&#39; /%3E%3Cdc:title%3E%3C/dc:title%3E%3C/cc:Work%3E%3C/rdf:RDF%3E%3C/metadata%3E%3Cdefs   id=&#39;defs53&#39; /%3E%3Cg   id=&#39;g18&#39;   transform=&#39;scale(0.3)&#39;%3E %3Cpath   d=&#39;M 30,0 C 13.458,0 0,13.458 0,30 0,46.542 13.458,60 30,60 46.542,60 60,46.542 60,30 60,13.458 46.542,0 30,0 Z m 0,58 C 14.561,58 2,45.439 2,30 2,14.561 14.561,2 30,2 45.439,2 58,14.561 58,30 58,45.439 45.439,58 30,58 Z&#39;   id=&#39;path2&#39; /%3E %3Cpath   d=&#39;M 23.165,8.459 C 23.702,8.329 24.033,7.789 23.904,7.253 23.775,6.716 23.234,6.387 22.698,6.514 18.763,7.46 15.176,9.469 12.322,12.323 9.468,15.177 7.46,18.764 6.514,22.698 c -0.129,0.536 0.202,1.076 0.739,1.206 0.078,0.019 0.157,0.027 0.234,0.027 0.451,0 0.861,-0.308 0.972,-0.767 0.859,-3.575 2.685,-6.836 5.277,-9.429 2.592,-2.593 5.854,-4.417 9.429,-5.276 z&#39;   id=&#39;path4&#39; /%3E %3Cpath   d=&#39;m 52.747,36.096 c -0.538,-0.129 -1.077,0.201 -1.206,0.739 -0.859,3.575 -2.685,6.836 -5.277,9.429 -2.592,2.593 -5.854,4.418 -9.43,5.277 -0.537,0.13 -0.868,0.67 -0.739,1.206 0.11,0.459 0.521,0.767 0.972,0.767 0.077,0 0.156,-0.009 0.234,-0.027 3.936,-0.946 7.523,-2.955 10.377,-5.809 2.854,-2.854 4.862,-6.441 5.809,-10.376 0.128,-0.536 -0.203,-1.076 -0.74,-1.206 z&#39;   id=&#39;path6&#39; /%3E %3Cpath   d=&#39;m 24.452,13.286 c 0.538,-0.125 0.873,-0.663 0.747,-1.2 -0.125,-0.538 -0.665,-0.878 -1.2,-0.747 -3.09,0.72 -5.904,2.282 -8.141,4.52 -2.237,2.236 -3.8,5.051 -4.52,8.141 -0.126,0.537 0.209,1.075 0.747,1.2 0.076,0.019 0.152,0.026 0.228,0.026 0.454,0 0.865,-0.312 0.973,-0.773 0.635,-2.725 2.014,-5.207 3.986,-7.18 1.972,-1.973 4.456,-3.352 7.18,-3.987 z&#39;   id=&#39;path8&#39; /%3E %3Cpath   d=&#39;m 48.661,36.001 c 0.126,-0.537 -0.209,-1.075 -0.747,-1.2 -0.538,-0.133 -1.075,0.209 -1.2,0.747 -0.635,2.725 -2.014,5.207 -3.986,7.18 -1.972,1.973 -4.455,3.352 -7.18,3.986 -0.538,0.125 -0.873,0.663 -0.747,1.2 0.107,0.462 0.519,0.773 0.973,0.773 0.075,0 0.151,-0.008 0.228,-0.026 3.09,-0.72 5.904,-2.282 8.141,-4.52 2.236,-2.236 3.798,-5.05 4.518,-8.14 z&#39;   id=&#39;path10&#39; /%3E %3Cpath   d=&#39;m 26.495,16.925 c -0.119,-0.541 -0.653,-0.879 -1.19,-0.763 -4.557,0.997 -8.146,4.586 -9.143,9.143 -0.118,0.539 0.224,1.072 0.763,1.19 0.072,0.016 0.144,0.023 0.215,0.023 0.46,0 0.873,-0.318 0.976,-0.786 0.831,-3.796 3.821,-6.786 7.617,-7.617 0.538,-0.118 0.88,-0.651 0.762,-1.19 z&#39;   id=&#39;path12&#39; /%3E %3Cpath   d=&#39;m 43.838,34.695 c 0.118,-0.539 -0.224,-1.072 -0.763,-1.19 -0.54,-0.118 -1.072,0.222 -1.19,0.763 -0.831,3.796 -3.821,6.786 -7.617,7.617 -0.539,0.118 -0.881,0.651 -0.763,1.19 0.103,0.468 0.516,0.786 0.976,0.786 0.071,0 0.143,-0.008 0.215,-0.023 4.556,-0.997 8.145,-4.586 9.142,-9.143 z&#39;   id=&#39;path14&#39; /%3E %3Cpath   d=&#39;m 38.08,30 c 0,-4.455 -3.625,-8.08 -8.08,-8.08 -4.455,0 -8.08,3.625 -8.08,8.08 0,4.455 3.625,8.08 8.08,8.08 4.455,0 8.08,-3.625 8.08,-8.08 z M 30,36.08 c -3.353,0 -6.08,-2.728 -6.08,-6.08 0,-3.352 2.728,-6.08 6.08,-6.08 3.352,0 6.08,2.728 6.08,6.08 0,3.352 -2.727,6.08 -6.08,6.08 z&#39;   id=&#39;path16&#39; /%3E%3C/g%3E%3Cg   id=&#39;g20&#39;%3E%3C/g%3E%3Cg   id=&#39;g22&#39;%3E%3C/g%3E%3Cg   id=&#39;g24&#39;%3E%3C/g%3E%3Cg   id=&#39;g26&#39;%3E%3C/g%3E%3Cg   id=&#39;g28&#39;%3E%3C/g%3E%3Cg   id=&#39;g30&#39;%3E%3C/g%3E%3Cg   id=&#39;g32&#39;%3E%3C/g%3E%3Cg   id=&#39;g34&#39;%3E%3C/g%3E%3Cg   id=&#39;g36&#39;%3E%3C/g%3E%3Cg   id=&#39;g38&#39;%3E%3C/g%3E%3Cg   id=&#39;g40&#39;%3E%3C/g%3E%3Cg   id=&#39;g42&#39;%3E%3C/g%3E%3Cg   id=&#39;g44&#39;%3E%3C/g%3E%3Cg   id=&#39;g46&#39;%3E%3C/g%3E%3Cg   id=&#39;g48&#39;%3E%3C/g%3E%3Cg   id=&#39;g85&#39;   transform=&#39;matrix(1.1259408,0,0,1.1259408,33.760593,8.6647721)&#39;%3E%3Cpath     d=&#39;m -15.969199,-1.3973349 c -0.04428,0.56592004 -0.49572,0.83754004 -0.58752,0.88722004 -0.4887,0.26676 -1.31112,0.17388 -1.70856,-0.38556 -0.21924,-0.30780004 -0.3294,-0.79758004 -0.1161,-1.13670004 l 0.0027,-0.0054 c 0.07668,-0.12474 0.25434,-0.33534 0.58212,-0.34236 h 0.01188 c 0.11718,0 0.25218,0.03564 0.37152,0.06696 0.0837,0.02214 0.15606,0.04104 0.21006,0.04482 0.03402,0.00216 0.08262,-0.00648 0.14418,-0.01728 0.18414,-0.0324 0.4914,-0.0864 0.76032,0.10368 0.36612,0.2597403 0.33156,0.76356 0.3294,0.78462 z&#39;     id=&#39;path57&#39;     style=&#39;fill:%23aa0000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.207499,-2.3007546 c -0.1053,0.07452 -0.17496,0.16686 -0.21708,0.2349 l -0.0027,0.00432 c -0.10908,0.17388 -0.13932,0.37584 -0.1188,0.57348 -0.0022,0.00108 -0.0043,0.00216 -0.0059,0.00378 -0.40014,0.3267 -0.85212,0.24246 -1.02762,0.19116 l -0.01026,-0.0027 c -0.5589,-0.13932 -1.11078,-0.74304 -1.00926,-1.38618 0.05616,-0.35424 0.324,-0.7614 0.72792,-0.85428 0.06966,-0.0162 0.43362,-0.0837 0.7263,0.16146 0.08964,0.0756 0.15606,0.1857601 0.21438,0.28296 0.04158,0.0702 0.07776,0.13014 0.11718,0.16956 0.02538,0.02538 0.06966,0.05022 0.12582,0.08208 0.1647,0.09234 0.4131,0.2322001 0.4779,0.53352 5.4e-4,0.00216 0.0011,0.00432 0.0022,0.00594 z&#39;     id=&#39;path59&#39;     style=&#39;fill:%23aa0000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -17.110219,-2.3309949 c -0.03186,0.0054 -0.05994,0.00918 -0.07992,0.00918 -0.0032,0 -0.0065,-5.4e-4 -0.0092,-5.4e-4 -0.01512,-0.00108 -0.03294,-0.00324 -0.05184,-0.00702 0.16578,-0.42336 0.23436,-1.10052 -0.34182,-1.95804 -0.0011,-0.00216 -0.0027,-0.00378 -0.0049,-0.0054 0.03348,-0.13284 0.04482,-0.22572 0.04752,-0.2484 0.0016,-0.01512 -0.0092,-0.02808 -0.02376,-0.0297 -0.01512,-0.00216 -0.02808,0.00918 -0.0297,0.02376 -0.0065,0.05778 -0.07128,0.5788801 -0.4347,1.0416602 -0.22734,0.28944 -0.58536,0.5049 -0.70902,0.56646 -0.01134,-0.00756 -0.02106,-0.01512 -0.02754,-0.0216 -0.01782,-0.01782 -0.0351,-0.04104 -0.05292,-0.06858 0.01026,-0.0054 0.02106,-0.01134 0.0324,-0.01728 0.12906,-0.06912 0.34506,-0.1841401 0.60858,-0.4600801 0.31158,-0.32616 0.37098,-0.82566 0.2835,-0.96174 -0.04212,-0.06588 -0.10962,-0.07236 -0.16362,-0.07722 -0.07074,-0.00594 -0.1134,-0.01026 -0.12096,-0.10638 -0.007,-0.0837 0.0324,-0.15768 0.1107,-0.20736 0.1053,-0.0675 0.29376,-0.0891 0.47628,0.01458 0.11394,0.06426 0.11286,0.17388 0.11232,0.27972 -5.4e-4,0.07074 -0.0011,0.1377 0.03402,0.18576 l 0.01512,0.02052 c 0.0864,0.1171801 0.28836,0.3904201 0.40932,0.86724 0.12906,0.5102999 0.007,0.9752399 -0.07992,1.1604599 z&#39;     id=&#39;path61&#39;     style=&#39;fill:%23502d16;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.698899,-4.5455348 c -0.0043,0.00216 -0.0086,0.00324 -0.01296,0.00324 -0.0097,0 -0.0189,-0.0054 -0.02376,-0.01404 -5.4e-4,-5.4e-4 -0.03834,-0.06804 -0.10638,-0.13014 -0.01134,-0.00972 -0.01188,-0.027 -0.0022,-0.0378 0.01026,-0.01134 0.027,-0.01188 0.03834,-0.00216 0.07506,0.06804 0.11556,0.14094 0.11718,0.14418 0.0076,0.01296 0.0027,0.02916 -0.01026,0.03672 z&#39;     id=&#39;path63&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -18.644359,-4.0309149 c -0.05616,0.06642 -0.08532,0.0783 -0.1296,0.09612 l -0.01404,0.00594 c -0.0032,0.00162 -0.007,0.00216 -0.01026,0.00216 -0.0108,0 -0.02052,-0.00648 -0.02484,-0.01674 -0.0059,-0.0135 5.4e-4,-0.0297 0.01458,-0.0351 l 0.01404,-0.00594 c 0.0405,-0.01674 0.06102,-0.02538 0.10908,-0.081 0.0097,-0.01188 0.027,-0.01296 0.03834,-0.00324 0.01134,0.00972 0.01242,0.02646 0.0027,0.0378 z&#39;     id=&#39;path65&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -17.948839,-4.4391548 c -0.01404,-0.02214 -0.0324,-0.03402 -0.05292,-0.0405 -0.07182,0.09666 -0.32454,0.243 -0.57834,0.243 -0.0675,0 -0.13554,-0.01026 -0.1998,-0.03456 -0.1728,-0.06588 -0.29106,-0.15768 -0.40554,-0.24624 -0.09072,-0.07074 -0.17658,-0.13716 -0.28134,-0.18252 -0.01404,-0.00648 -0.01998,-0.02214 -0.01404,-0.03564 0.0059,-0.01404 0.0216,-0.01998 0.03564,-0.01404 0.1107,0.0486 0.19926,0.11664 0.29268,0.18954 0.11124,0.0864 0.2268,0.1755 0.3915,0.23814 0.16794,0.06372 0.3564,0.02214 0.4995,-0.04212 -0.06156,-0.19008 -0.45954,-0.76842 -1.11564,-0.6210001 -0.10152,0.02268 -0.19008,0.04374 -0.26784,0.0621 -0.3294,0.07722 -0.47034,0.11016 -0.61668,0.07128 0.0135,0.06804 0.04914,0.12582 0.10584,0.17226 0.1134,0.09126 0.2781,0.11394 0.3564,0.11502 -0.03996,-0.04536 -0.08262,-0.07452 -0.135,-0.09288 -0.01404,-0.00486 -0.0216,-0.01998 -0.01674,-0.03402 0.0049,-0.01458 0.02052,-0.0216 0.03456,-0.01674 0.1701,0.05994 0.2484,0.21222 0.37476,0.5227201 0.1323,0.32508 0.59508,0.62802 0.97038,0.5157 0.38232,-0.11448 0.37584,-0.51732 0.3753,-0.52164 0,-0.0108 0.0065,-0.02106 0.0162,-0.02538 0.02538,-0.01134 0.15552,-0.07074 0.24732,-0.15714 0.0016,-0.00162 0.0032,-0.0027 0.0049,-0.0027 v -5.4e-4 c -0.0043,-0.02646 -0.01188,-0.04752 -0.02106,-0.0621 m -0.89532,-0.2851201 c 0.01026,-0.01134 0.027,-0.01188 0.03834,-0.00216 0.07506,0.06804 0.11556,0.14094 0.11718,0.14418 0.0076,0.01296 0.0027,0.02916 -0.01026,0.03672 -0.0043,0.00216 -0.0086,0.00324 -0.01296,0.00324 -0.0097,0 -0.0189,-0.0054 -0.02376,-0.01404 -5.4e-4,-5.4e-4 -0.03834,-0.06804 -0.10638,-0.13014 -0.01134,-0.00972 -0.01188,-0.027 -0.0022,-0.0378 m -0.45468,0.36774 c -0.0011,0 -0.01674,0.0027 -0.04752,0.0027 -0.0243,0 -0.05724,-0.00162 -0.09936,-0.00702 -0.01512,-0.00162 -0.02538,-0.01512 -0.02322,-0.03024 0.0016,-0.01458 0.01512,-0.02484 0.03024,-0.02322 0.08748,0.01134 0.13014,0.00486 0.13068,0.00486 0.01458,-0.0027 0.02862,0.00702 0.03078,0.02214 0.0027,0.01458 -0.007,0.02808 -0.0216,0.03078 m 0.65448,0.32562 c -0.05616,0.06642 -0.08532,0.0783 -0.1296,0.09612 l -0.01404,0.00594 c -0.0032,0.00162 -0.007,0.00216 -0.01026,0.00216 -0.0108,0 -0.02052,-0.00648 -0.02484,-0.01674 -0.0059,-0.0135 5.4e-4,-0.0297 0.01458,-0.0351 l 0.01404,-0.00594 c 0.0405,-0.01674 0.06102,-0.02538 0.10908,-0.081 0.0097,-0.01188 0.027,-0.01296 0.03834,-0.00324 0.01134,0.00972 0.01242,0.02646 0.0027,0.0378 z&#39;     id=&#39;path67&#39;     style=&#39;fill:%23008000;fill-opacity:1;stroke-width:0.3&#39; /%3E%3Cpath     d=&#39;m -19.277239,-4.3873149 c 0.0027,0.01458 -0.007,0.02808 -0.0216,0.03078 -0.0011,0 -0.01674,0.0027 -0.04752,0.0027 -0.0243,0 -0.05724,-0.00162 -0.09936,-0.00702 -0.01512,-0.00162 -0.02538,-0.01512 -0.02322,-0.03024 0.0016,-0.01458 0.01512,-0.02484 0.03024,-0.02322 0.08748,0.01134 0.13014,0.00486 0.13068,0.00486 0.01458,-0.0027 0.02862,0.00702 0.03078,0.02214 z&#39;     id=&#39;path69&#39;     style=&#39;stroke-width:0.3&#39; /%3E%3C/g%3E%3C/svg%3E">
+        <bpmn:extensionElements>
+          <zeebe:taskDefinition type="c-files-load-from-disk" />
+          <zeebe:ioMapping>
+            <zeebe:input source="= &#34;D:\dev\intellij\community\zeebe-cherry-runtime\src\test\resources\loadtest&#34;" target="folder" />
+            <zeebe:input source="true" target="fileName_optional" />
+            <zeebe:input source="largeDocument.pdf" target="fileName" />
+            <zeebe:input source="false" target="filterFile_optional" />
+            <zeebe:input source="UNCHANGE" target="policy" />
+            <zeebe:input source="TEMPFOLDER" target="storageDefinition" />
+            <zeebe:input source="true" target="fileLoaded_optional" />
+            <zeebe:input source="false" target="fileNameLoaded_optional" />
+            <zeebe:input source="false" target="fileMimeType_optional" />
+            <zeebe:output source="= fileLoaded" target="cherrySourcePdfDocument" />
+          </zeebe:ioMapping>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_02elou0</bpmn:incoming>
+        <bpmn:outgoing>Flow_19l8bzw</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_19l8bzw" sourceRef="LoadPdfFileTask" targetRef="AddTopWatermarkInputTask" />
+      <bpmn:serviceTask id="AddTopWatermarkInputTask" name="Add Top Watermark input" zeebe:modelerTemplate="io.camunda.cherry.pdf.PdfWatermarkFacade" zeebe:modelerTemplateIcon="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;18&#39; height=&#39;18.0&#39; viewBox=&#39;0 0 18 18.0&#39; %3E%3Cg id=&#39;XMLID_238_&#39;%3E %3Cpath id=&#39;XMLID_239_&#39; d=&#39;m 14.708846 10.342394 c -1.122852 0.0,-2.528071 0.195852,-2.987768 0.264774 C 9.818362 8.6202,9.277026 7.4907875,9.155265 7.189665 C 9.320285 6.765678,9.894426 5.155026,9.976007 3.0864196 C 10.016246 2.0507226,9.797459 1.2768387,9.325568 0.7862517 C 8.854491 0.29647747,8.284297 0.2583872,8.120788 0.2583872 c -0.573329 0.0,-1.5351098 0.28991616,-1.5351098 2.2313614 c 0.0 1.6845098,0.7853807 3.4719677,1.0024838 3.933813 C 6.444349 9.754026,5.216342 12.03393,4.9555745 12.502801 C 0.35941938 14.233297,0.0 15.906485,0.0 16.380697 c 0.0 0.852155,0.6068903 1.360916,1.6234258 1.360916 c 2.4697742 0.0,4.7236066 -4.146503,5.096265 -4.866503 c 1.754129 -0.698923,4.101909 -1.131852,4.6987553 -1.235148 c 1.711974 1.6308,3.691916 2.065935,4.514109 2.065935 c 0.61862 0.0,2.067387 0.0,2.067387 -1.489529 C 18.0 10.833156,16.227118 10.342394,14.708846 10.342394 m -0.119033 0.977865 c 1.334032 0.0,1.6866 0.441174,1.6866 0.674419 c 0.0 0.146381,-0.05557 0.623962,-0.770632 0.623962 c -0.641207 0.0,-1.748265 -0.370568,-2.837497 -1.174646 c 0.454238 -0.05969,1.126394 -0.123735,1.921529 -0.123735 M 8.050761 1.2062323 c 0.1216452 0.0,0.2017161 0.039077,0.2677355 0.1306452 C 8.702187 1.8692712,8.392819 3.6088843,8.016271 4.9702067 C 7.6527867 3.8029358,7.3799996 2.0118778,7.7638063 1.3817617 C 7.838826 1.2587807,7.9245877 1.2062323,8.050761 1.2062323 M 7.402878 11.626084 C 7.885859 10.650368,8.427195 9.228368,8.722046 8.424116 C 9.312098 9.411736,10.105723 10.32869,10.564724 10.825839 C 9.135581 11.127136,8.054303 11.428143,7.402878 11.626084 m -6.443478 4.884794 c -0.0318194 -0.03774,-0.0365226 -0.11729,-0.0125419 -0.212806 c 0.0502839 -0.200149,0.4345548 -1.192297,3.2139292 -2.435575 c -0.3979743 0.626865,-1.0201355 1.522568,-1.703613 2.191704 c -0.4811226 0.450348,-0.8557549 0.678716,-1.1135033 0.678716 c -0.092206 1.0E-6,-0.2192516 -0.02514,-0.384271 -0.222039 z&#39;/%3E%3C/g%3E%3Cpath fill=&#39;%23AA0000&#39; style=&#39;stroke-width:0.414187&#39; id=&#39;path49&#39; d=&#39;M 17.801788 5.406512 C 17.740654 6.1878333,17.117386 6.562838,16.990644 6.6314273 C 16.315935 6.999722,15.180484 6.87149,14.63177 6.0991144 C 14.329082 5.674159,14.176993 4.997958,14.471479 4.529762 l 0.0037 -0.00746 C 14.581045 4.350083,14.826327 4.059324,15.278867 4.049632 h 0.0164 c 0.161781 0.0,0.348165 0.049205,0.512928 0.092446 c 0.115558 0.030567,0.21546 0.056661,0.290014 0.061879 c 0.04697 0.00298,0.114067 -0.00895,0.199058 -0.023857 c 0.254227 -0.044732,0.678437 -0.1192857,1.049714 0.1431429 c 0.505473 0.3586031,0.457759 1.0541877,0.454777 1.0832635 z&#39;/%3E%3Cpath fill=&#39;%23AA0000&#39; style=&#39;stroke-width:0.414187&#39; id=&#39;path51&#39; d=&#39;m 14.711542 4.1592307 c -0.145379 0.1028839,-0.241554 0.2303706,-0.299705 0.3243081 l -0.0037 0.00596 c -0.150598 0.2400625,-0.192348 0.5188929,-0.164018 0.791759 c -0.003 0.00149,-0.006 0.00298,-0.0082 0.00522 c -0.552442 0.4510491,-1.176455 0.3347455,-1.418755 0.2639196 l -0.01417 -0.00373 C 12.03134 5.354325,11.269403 4.520816,11.409564 3.6328826 C 11.487104 3.143811,11.856885 2.581677,12.414546 2.4534447 c 0.09617 -0.022366,0.598665 -0.115558,1.002746 0.2229152 c 0.123759 0.1043751,0.21546 0.2564644,0.295977 0.3906608 c 0.05741 0.09692,0.107358 0.1796741,0.161782 0.2340983 c 0.03504 0.03504,0.09617 0.069335,0.17371 0.1133214 c 0.227388 0.1274867,0.570335 0.3205804,0.659799 0.7365894 c 7.45E-4 0.00298,0.0015 0.00596,0.003 0.0082 z&#39;/%3E%3Cpath fill=&#39;%23502D16&#39; style=&#39;stroke-width:0.414187&#39; id=&#39;path53&#39; d=&#39;m 16.22647 4.1174803 c -0.04399 0.00746,-0.08275 0.012674,-0.110339 0.012674 c -0.0045 0.0,-0.0089 -7.456E-4,-0.01267 -7.456E-4 c -0.02088 -0.00149,-0.04548 -0.00447,-0.07157 -0.00969 c 0.228879 -0.5845001,0.323563 -1.519402,-0.471924 -2.7033129 c -0.0015 -0.00298,-0.0037 -0.00522,-0.0067 -0.00746 c 0.04622 -0.1834018,0.06188 -0.311634,0.06561 -0.3429465 c 0.0022 -0.020875,-0.01267 -0.038768,-0.0328 -0.041004 c -0.02088 -0.00298,-0.03877 0.012674,-0.04101 0.032804 c -0.0089 0.079772,-0.09841 0.7992145,-0.600156 1.4381388 c -0.313871 0.3996073,-0.808161 0.6970761,-0.978889 0.7820671 c -0.01566 -0.010438,-0.02908 -0.020875,-0.03802 -0.029821 c -0.0246 -0.024603,-0.04846 -0.056661,-0.07306 -0.094683 c 0.01417 -0.00746,0.02908 -0.015656,0.04473 -0.023857 c 0.178183 -0.095429,0.476398 -0.2542278,0.840219 -0.6351966 c 0.430175 -0.4503036,0.512184 -1.1399243,0.391407 -1.3277993 c -0.05815 -0.090955,-0.151344 -0.099902,-0.225898 -0.1066116 c -0.09767 -0.0082,-0.156562 -0.014165,-0.167 -0.14687057 c -0.0097 -0.11555806,0.04473 -0.21769646,0.152835 -0.28628576 c 0.14538 -0.093192,0.405572 -0.12301341,0.657563 0.0201295 c 0.157308 0.0887188,0.155817 0.24006253,0.155071 0.38618752 c -7.45E-4 0.097665,-0.0015 0.1901116,0.04697 0.2564643 l 0.02088 0.02833 c 0.119286 0.1617813,0.398116 0.5390224,0.565116 1.1973305 c 0.178183 0.7045312,0.0097 1.3464376,-0.110339 1.6021564 z&#39;/%3E%3Cpath style=&#39;stroke-width:0.414187&#39; id=&#39;path55&#39; d=&#39;m 14.033104 1.060038 c -0.006 0.00298,-0.01193 0.00447,-0.01789 0.00447 c -0.01342 0.0,-0.02609 -0.00745,-0.0328 -0.019384 c -7.46E-4 -7.455E-4,-0.05293 -0.0939375,-0.146871 -0.1796741 c -0.01566 -0.0134196,-0.0164 -0.0372768,-0.003 -0.0521875 c 0.01417 -0.0156563,0.03728 -0.0164018,0.05293 -0.002982 c 0.10363 0.0939375,0.159545 0.1945848,0.161782 0.1990581 c 0.01044 0.017893,0.0037 0.040259,-0.01417 0.050696 z&#39;/%3E%3Cpath style=&#39;stroke-width:0.414187&#39; id=&#39;path57&#39; d=&#39;m 14.108404 1.7705336 c -0.07754 0.091701,-0.117795 0.1081027,-0.178929 0.1327054 l -0.01938 0.0082 c -0.0045 0.00224,-0.0097 0.00298,-0.01417 0.00298 c -0.01491 0.0,-0.02833 -0.00895,-0.0343 -0.023112 c -0.0082 -0.018638,7.46E-4 -0.041005,0.02013 -0.04846 l 0.01938 -0.0082 c 0.05592 -0.023112,0.08425 -0.03504,0.150598 -0.1118304 c 0.01342 -0.016402,0.03728 -0.017893,0.05293 -0.00447 c 0.01566 0.01342,0.01715 0.036531,0.0037 0.052188 z&#39;/%3E%3Cpath style=&#39;stroke-width:0.414187&#39; fill=&#39;%23008000&#39; id=&#39;path59&#39; d=&#39;m 15.068654 1.2069086 c -0.01938 -0.030567,-0.04473 -0.046969,-0.07306 -0.055915 c -0.09916 0.1334509,-0.448067 0.3354911,-0.798469 0.3354911 c -0.09319 0.0,-0.187129 -0.014165,-0.275848 -0.047714 C 13.682706 1.3478158,13.519433 1.2210743,13.36138 1.0988064 C 13.23613 1.0011412,13.117589 0.90944034,12.972955 0.8468153 c -0.01938 -0.008946,-0.02758 -0.030567,-0.01938 -0.0492054 c 0.0082 -0.0193839,0.02982 -0.0275848,0.04921 -0.0193839 c 0.152835 0.0670982,0.275103 0.16103578,0.40408 0.26168305 c 0.153581 0.1192858,0.313125 0.2422992,0.540514 0.3287813 c 0.231861 0.087973,0.492054 0.030567,0.68962 -0.058152 c -0.08499 -0.2624286,-0.634451 -1.0608975,-1.540277 -0.85736626 c -0.14016 0.0313125,-0.262428 0.0603884,-0.369785 0.0857366 c -0.454777 0.10661162,-0.649362 0.15208936,-0.851402 0.0984107 c 0.01864 0.0939376,0.06784 0.17370984,0.146125 0.23782597 c 0.156562 0.12599558,0.383951 0.15730807,0.492053 0.15879917 c -0.05517 -0.062625,-0.114067 -0.10288399,-0.186384 -0.12823221 c -0.01938 -0.00671,-0.02982 -0.0275848,-0.02311 -0.0469688 c 0.0067 -0.0201295,0.02833 -0.0298214,0.04771 -0.0231116 c 0.234844 0.0827545,0.342947 0.2929955,0.517402 0.72167873 c 0.182656 0.4488126,0.821581 0.8670582,1.339728 0.7119868 c 0.527839 -0.1580536,0.518893 -0.7142233,0.518147 -0.7201876 c 0.0 -0.014911,0.0089 -0.029076,0.02237 -0.03504 c 0.03504 -0.015656,0.214715 -0.097665,0.341456 -0.2169509 c 0.0022 -0.00224,0.0045 -0.00373,0.0067 -0.00373 v -7.436E-4 c -0.006 -0.036531,-0.0164 -0.065607,-0.02908 -0.085737 M 13.832556 0.8132656 c 0.01417 -0.0156562,0.03728 -0.0164018,0.05293 -0.002982 c 0.103629 0.0939375,0.159544 0.1945848,0.161781 0.1990581 c 0.01044 0.017893,0.0037 0.040259,-0.01417 0.050696 c -0.006 0.00298,-0.01193 0.00447,-0.01789 0.00447 c -0.01342 0.0,-0.02609 -0.00745,-0.0328 -0.019384 c -7.45E-4 -7.456E-4,-0.05293 -0.0939375,-0.14687 -0.17967416 c -0.01566 -0.0134196,-0.0164 -0.0372768,-0.003 -0.0521875 M 13.204814 1.3209755 c -0.0015 0.0,-0.02311 0.00373,-0.06561 0.00373 c -0.03355 0.0,-0.07903 -0.00224,-0.137178 -0.00969 c -0.02088 -0.00224,-0.03504 -0.020875,-0.03206 -0.04175 c 0.0022 -0.02013,0.02088 -0.034295,0.04175 -0.032058 c 0.120777 0.015656,0.179675 0.00671,0.18042 0.00671 c 0.02013 -0.00373,0.03951 0.00969,0.0425 0.030567 c 0.0037 0.020129,-0.0097 0.038768,-0.02982 0.042496 m 0.90359 0.4495581 c -0.07754 0.091701,-0.117795 0.1081027,-0.178929 0.1327054 l -0.01938 0.0082 c -0.0045 0.00224,-0.0097 0.00298,-0.01417 0.00298 c -0.01491 0.0,-0.02833 -0.00895,-0.0343 -0.023112 c -0.0082 -0.018638,7.46E-4 -0.041005,0.02013 -0.04846 l 0.01938 -0.0082 c 0.05592 -0.023112,0.08425 -0.03504,0.150598 -0.1118304 c 0.01342 -0.016402,0.03728 -0.017893,0.05293 -0.00447 c 0.01566 0.01342,0.01715 0.036531,0.0037 0.052188 z&#39;/%3E%3Cpath style=&#39;stroke-width:0.414187&#39; id=&#39;path61&#39; d=&#39;m 13.234636 1.2784799 c 0.0037 0.020129,-0.0097 0.038768,-0.02982 0.042496 c -0.0015 0.0,-0.02311 0.00373,-0.06561 0.00373 c -0.03355 0.0,-0.07903 -0.00224,-0.137178 -0.00969 c -0.02088 -0.00224,-0.03504 -0.020875,-0.03206 -0.04175 c 0.0022 -0.02013,0.02088 -0.034295,0.04175 -0.032058 c 0.120777 0.015656,0.179675 0.00671,0.18042 0.00671 c 0.02013 -0.00373,0.03951 0.00969,0.0425 0.030567 z&#39;/%3E%3C/svg%3E">
+        <bpmn:extensionElements>
+          <zeebe:ioMapping>
+            <zeebe:input source="= &#34;watermark&#34;" target="destinationFileName" />
+            <zeebe:input source="=cherrySourcePdfDocument" target="sourceFile" />
+            <zeebe:input source="false" target="watermarkRotation_optional" />
+            <zeebe:input source="false" target="destinationStorageDefinition_optional" />
+            <zeebe:input source="true" target="watermarkPosition_optional" />
+            <zeebe:input source="TOP" target="watermarkPosition" />
+            <zeebe:input source="true" target="destinationFile_optional" />
+            <zeebe:input source="=&#34;Top Blue Watermark&#34;" target="watermark" />
+            <zeebe:input source="true" target="watermarkColor_optional" />
+            <zeebe:input source="BLUE" target="watermarkColor" />
+            <zeebe:output source="= result.destinationFile" target="cherryDestinationPdfDocument" />
+          </zeebe:ioMapping>
+          <zeebe:taskDefinition type="c-pdf-watermark" />
+          <zeebe:taskHeaders>
+            <zeebe:header key="resultVariable" value="result" />
+          </zeebe:taskHeaders>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_19l8bzw</bpmn:incoming>
+        <bpmn:outgoing>Flow_0w3qkcw</bpmn:outgoing>
+      </bpmn:serviceTask>
+      <bpmn:sequenceFlow id="Flow_0w3qkcw" sourceRef="AddTopWatermarkInputTask" targetRef="Event_1pftu6n" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1fpydk4" name="PDF collection" sourceRef="Gateway_0j681b2" targetRef="Activity_Multi_Watermark">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1rvmuq2" name="end">
+      <bpmn:incoming>Flow_17hvt8i</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_17hvt8i" sourceRef="Activity_Multi_Watermark" targetRef="Event_1rvmuq2" />
+    <bpmn:textAnnotation id="TextAnnotation_0jkibbo">
+      <bpmn:text>This is possible because the JAR office-to-pdf-1.0.0.jar is given in the upload path</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0gykezp" sourceRef="Activity_Multi_Watermark" targetRef="TextAnnotation_0jkibbo" />
+  </bpmn:process>
+  <bpmn:error id="Error_0p53hwb" name="Error_0emqidc" errorCode="BAD_WEATHER" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="LoadTest">
+      <bpmndi:BPMNShape id="Event_1kmzos6_di" bpmnElement="Event_1kmzos6">
+        <dc:Bounds x="152" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="205" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hr9a3b_di" bpmnElement="Activity_Multi_LoadFile" isExpanded="true">
+        <dc:Bounds x="570" y="100" width="510" height="210" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0i0ubmu_di" bpmnElement="Event_0i0ubmu">
+        <dc:Bounds x="610" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="596" y="225" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_17ulpwv_di" bpmnElement="Event_17ulpwv">
+        <dc:Bounds x="992" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1001" y="225" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ao7kr6_di" bpmnElement="Event_1j1oun3">
+        <dc:Bounds x="892" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="901" y="225" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1qeid1b_di" bpmnElement="Activity_LoadFile">
+        <dc:Bounds x="740" y="160" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_12z18xw_di" bpmnElement="Flow_12z18xw">
+        <di:waypoint x="840" y="200" />
+        <di:waypoint x="892" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0er2at2_di" bpmnElement="Flow_0er2at2">
+        <di:waypoint x="928" y="200" />
+        <di:waypoint x="992" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0k1t4xv_di" bpmnElement="Flow_0k1t4xv">
+        <di:waypoint x="646" y="200" />
+        <di:waypoint x="740" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1htggxv_di" bpmnElement="Event_1htggxv">
+        <dc:Bounds x="1132" y="187" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1141" y="230" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0new8vs_di" bpmnElement="Activity_SetListofColor">
+        <dc:Bounds x="260" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0h5v7ft" bpmnElement="Activity_Multi_PingDelay" isExpanded="true">
+        <dc:Bounds x="570" y="370" width="510" height="210" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0zlnwjc" bpmnElement="Event_077svig">
+        <dc:Bounds x="610" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="601" y="495" width="54" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0mooda8" bpmnElement="Event_1er0xln">
+        <dc:Bounds x="992" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1001" y="495" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_066boqp" bpmnElement="Event_0m6vscd">
+        <dc:Bounds x="892" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="901" y="495" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0k07u92_di" bpmnElement="Activity_PingDelay">
+        <dc:Bounds x="740" y="430" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_1ev3rzc" bpmnElement="Flow_1fflfji">
+        <di:waypoint x="646" y="470" />
+        <di:waypoint x="740" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0tubn1s" bpmnElement="Flow_0wy5gtv">
+        <di:waypoint x="928" y="470" />
+        <di:waypoint x="992" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1yz4lrt" bpmnElement="Flow_1rxtbxc">
+        <di:waypoint x="840" y="470" />
+        <di:waypoint x="892" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="BPMNShape_0i6ytsc" bpmnElement="Activity_Multi_PingError" isExpanded="true">
+        <dc:Bounds x="570" y="610" width="510" height="280" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1fhkxqp" bpmnElement="Event_1s9aexo">
+        <dc:Bounds x="610" y="692" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="585" y="735" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_04m93fu" bpmnElement="Event_0kmy7xm">
+        <dc:Bounds x="992" y="692" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1001" y="662" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0p9yq3y" bpmnElement="Event_0m1hcjr">
+        <dc:Bounds x="892" y="692" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="900" y="668" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_04hkss5_di" bpmnElement="Activity_Verify">
+        <dc:Bounds x="840" y="748" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03r2mj0_di" bpmnElement="Activity_PingError">
+        <dc:Bounds x="740" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0h165pp_di" bpmnElement="Event_07kywq3">
+        <dc:Bounds x="872" y="810" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="881" y="853" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ff3hci_di" bpmnElement="Event_0hmc7cw">
+        <dc:Bounds x="752" y="732" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="737" y="763" width="26" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_170x3e5" bpmnElement="Flow_1ra45vv">
+        <di:waypoint x="646" y="710" />
+        <di:waypoint x="740" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_1mwr893" bpmnElement="Flow_1uytppr">
+        <di:waypoint x="928" y="710" />
+        <di:waypoint x="992" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0ipwuqx" bpmnElement="Flow_0qrqpmx">
+        <di:waypoint x="840" y="710" />
+        <di:waypoint x="892" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pxxkgw_di" bpmnElement="Flow_0pxxkgw">
+        <di:waypoint x="770" y="768" />
+        <di:waypoint x="770" y="788" />
+        <di:waypoint x="840" y="788" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i2890a_di" bpmnElement="Flow_1i2890a">
+        <di:waypoint x="910" y="748" />
+        <di:waypoint x="910" y="728" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ajbvwe_di" bpmnElement="Flow_1ajbvwe">
+        <di:waypoint x="890" y="846" />
+        <di:waypoint x="890" y="866" />
+        <di:waypoint x="1010" y="866" />
+        <di:waypoint x="1010" y="728" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1m0lgnt_di" bpmnElement="Event_1m0lgnt">
+        <dc:Bounds x="1132" y="457" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1141" y="500" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xun8kn_di" bpmnElement="Event_0xun8kn">
+        <dc:Bounds x="1132" y="697" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1141" y="740" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_08hj2n7_di" bpmnElement="Gateway_0j681b2">
+        <dc:Bounds x="405" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="404" y="125" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1cvpyll_di" bpmnElement="Activity_Multi_Watermark" isExpanded="true">
+        <dc:Bounds x="570" y="940" width="690" height="260" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1v2nicb_di" bpmnElement="Event_1v2nicb">
+        <dc:Bounds x="610" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="604" y="1125" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1f1if66_di" bpmnElement="Event_1f1if66">
+        <dc:Bounds x="1122" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1131" y="1125" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0h9ff03_di" bpmnElement="Event_1pftu6n">
+        <dc:Bounds x="1022" y="1082" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1030" y="1125" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0g7hzkm_di" bpmnElement="LoadPdfFileTask">
+        <dc:Bounds x="690" y="1060" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0722z8h_di" bpmnElement="AddTopWatermarkInputTask">
+        <dc:Bounds x="860" y="1060" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_02elou0_di" bpmnElement="Flow_02elou0">
+        <di:waypoint x="646" y="1100" />
+        <di:waypoint x="690" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02124ke_di" bpmnElement="Flow_02124ke">
+        <di:waypoint x="1058" y="1100" />
+        <di:waypoint x="1122" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19l8bzw_di" bpmnElement="Flow_19l8bzw">
+        <di:waypoint x="790" y="1100" />
+        <di:waypoint x="860" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0w3qkcw_di" bpmnElement="Flow_0w3qkcw">
+        <di:waypoint x="960" y="1100" />
+        <di:waypoint x="1022" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1rvmuq2_di" bpmnElement="Event_1rvmuq2">
+        <dc:Bounds x="1402" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1411" y="1095" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0jkibbo_di" bpmnElement="TextAnnotation_0jkibbo">
+        <dc:Bounds x="1260" y="860" width="100" height="98" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0xx59ph_di" bpmnElement="Flow_0xx59ph">
+        <di:waypoint x="188" y="180" />
+        <di:waypoint x="260" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0aol72p_di" bpmnElement="Flow_0aol72p">
+        <di:waypoint x="455" y="180" />
+        <di:waypoint x="570" y="180" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="492" y="162" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12vkk2c_di" bpmnElement="Flow_12vkk2c">
+        <di:waypoint x="1080" y="205" />
+        <di:waypoint x="1132" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0oq0x4v_di" bpmnElement="Flow_0oq0x4v">
+        <di:waypoint x="360" y="180" />
+        <di:waypoint x="405" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jrm6vx_di" bpmnElement="Flow_1jrm6vx">
+        <di:waypoint x="430" y="205" />
+        <di:waypoint x="430" y="475" />
+        <di:waypoint x="570" y="475" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="462" y="453" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1x97t4c_di" bpmnElement="Flow_1x97t4c">
+        <di:waypoint x="430" y="205" />
+        <di:waypoint x="430" y="715" />
+        <di:waypoint x="570" y="715" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="460" y="693" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0j0crhx_di" bpmnElement="Flow_0j0crhx">
+        <di:waypoint x="1080" y="475" />
+        <di:waypoint x="1132" y="475" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19a9bjd_di" bpmnElement="Flow_19a9bjd">
+        <di:waypoint x="1080" y="715" />
+        <di:waypoint x="1132" y="715" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fpydk4_di" bpmnElement="Flow_1fpydk4">
+        <di:waypoint x="430" y="205" />
+        <di:waypoint x="430" y="1070" />
+        <di:waypoint x="570" y="1070" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="464" y="1053" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17hvt8i_di" bpmnElement="Flow_17hvt8i">
+        <di:waypoint x="1260" y="1070" />
+        <di:waypoint x="1402" y="1070" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0gykezp_di" bpmnElement="Association_0gykezp">
+        <di:waypoint x="1178" y="940" />
+        <di:waypoint x="1260" y="900" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

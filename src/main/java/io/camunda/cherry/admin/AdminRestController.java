@@ -9,8 +9,8 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.runtime.CherryHistoricFactory;
-import io.camunda.cherry.runtime.CherryJobRunnerFactory;
+import io.camunda.cherry.runner.JobRunnerFactory;
+import io.camunda.cherry.runtime.HistoryFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +31,10 @@ public class AdminRestController {
   Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
   @Autowired
-  CherryJobRunnerFactory cherryJobRunnerFactory;
+  JobRunnerFactory cherryJobRunnerFactory;
 
   @Autowired
-  CherryHistoricFactory cherryHistoricFactory;
+  HistoryFactory historyFactory;
   /**
    * Spring populate the list of all workers
    */

@@ -75,7 +75,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
     // context.validate(pingConnectorInput);
     int delay = pingConnectorInput.getDelay();
     if (delay < 0) {
-      delay = random.nextInt(10000) + 1500;
+      delay = random.nextInt(30000) + 1500;
     }
 
     Thread.sleep(delay);

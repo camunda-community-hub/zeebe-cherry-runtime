@@ -1,3 +1,9 @@
+
+cherry.connectorslib:
+  uploadpath: ./localstorage/upload
+  classloaderpath: ./localstorage/classloader
+  forcerefresh: true
+
 # use a OnPremise Zeebe engine
 zeebe.client:
   broker.gateway-address: 127.0.0.1:26500
@@ -24,20 +30,48 @@ spring.application.name: ZeebeCherry
 # server.servlet.context-path: /
 # spring.mustache.prefix: classpath:static/templates/
 
+# spring.datasource:
+#   url: "jdbc:h2:file:./cherry.db"
+#   driver-class-name: "org.h2.Driver"
+#   username: "sa"
+#   password: "password"
+# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
 
   # Save statistics and information
 spring.datasource:
-  url: "jdbc:h2:file:./cherry.db"
-  driver-class-name: "org.h2.Driver"
-  username: "sa"
-  password: "password"
+  url: "jdbc:postgresql://localhost/cherrydb"
+  username: "camunda"
+  password: "camunda"
+  driver-class-name: "org.postgresql.Driver"
+spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+
+org:
+  hibernate:
+    dialect:
+      PostgreSQL94Dialect:
+
+# spring.datasource.validation-query: SELECT 1;
 
 spring.jpa:
-  database-platform: "org.hibernate.dialect.H2Dialect"
   generate-ddl: true
   hibernate.ddl-auto: "update"
 
+  properties:
+    hibernate:
+      format_sql: true
+      show-sql: true
+
+
+# logging.level.org.hibernate.SQL: TRACE
+# logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+# logging.level.org.hibernate.postgresql : TRACE
+# spring.jpa.properties.hibernate.show_sql: true
+# spring.jpa.properties.hibernate.use_sql_comments: true
+# spring.jpa.properties.hibernate.format_sql: true
+
+
 # Example of Watcher configuration
+
 
 #watchers:
 #  execution:

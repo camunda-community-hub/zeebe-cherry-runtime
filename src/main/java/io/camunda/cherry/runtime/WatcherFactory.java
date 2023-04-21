@@ -4,6 +4,7 @@ import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWatcher;
 import io.camunda.cherry.definition.WatcherOrderInformation;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.ZeebeFuture;
 import io.camunda.zeebe.client.api.response.ProcessInstanceEvent;
@@ -30,17 +31,15 @@ import java.util.concurrent.TimeUnit;
 public class WatcherFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(WatcherFactory.class.getName());
-
+  private final List<AbstractWatcher.WatcherExecution> listWatchersExecution = new ArrayList<>();
   @Autowired
-  CherryHistoricFactory cherryHistoricFactory;
-
+  HistoryFactory historyFactory;
   @Autowired
   ZeebeContainer zeebeContainer;
   @Autowired
   WatcherPropertyList watcherPropertyList;
   @Autowired
   private List<AbstractWatcher> listDefinitionWatchers;
-  private final List<AbstractWatcher.WatcherExecution> listWatchersExecution = new ArrayList<>();
 
   WatcherFactory() {
   }
@@ -113,10 +112,10 @@ public class WatcherFactory {
       long endExecution = System.currentTimeMillis();
       logger.info(
           "Watcher[" + watcherExecution.getWatcher().getName() + "] executed in " + (endExecution - beginExecution)
-              + " ms for "+listOrdersInformation.size()+" orders");
+              + " ms for " + listOrdersInformation.size() + " orders");
 
-      if (! listOrdersInformation.isEmpty()) {
-        cherryHistoricFactory.saveExecution(executionInstant, RunnerExecutionEntity.TypeExecutor.WATCHER,
+      if (!listOrdersInformation.isEmpty()) {
+        historyFactory.saveExecution(executionInstant, RunnerExecutionEntity.TypeExecutor.WATCHER,
             watcherExecution.getWatcher().getType(), status, connectorException, endExecution - beginExecution);
       }
     }
@@ -229,7 +228,8 @@ public class WatcherFactory {
       logger.debug("Start Tour Or Duty[" + watcherExecution.getName() + "]");
       List<WatcherOrderInformation> listOrderInformation = watcherExecution.getWatcher().tourOfDuty(watcherExecution);
       this.watcherFactory.executeOrders(watcherExecution, listOrderInformation);
-      logger.info("End Tour Or Duty [" + watcherExecution.getName() + "] - "+listOrderInformation.size()+" orders executed");
+      logger.info("End Tour Or Duty [" + watcherExecution.getName() + "] - " + listOrderInformation.size()
+          + " orders executed");
     }
   }
 

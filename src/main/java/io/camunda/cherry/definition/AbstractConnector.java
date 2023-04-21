@@ -238,4 +238,11 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     return listOfErrors;
   }
 
+  public boolean isWorker() {
+    return false;
+  }
+
+  public boolean isConnector() {
+    return true;
+  }
 }

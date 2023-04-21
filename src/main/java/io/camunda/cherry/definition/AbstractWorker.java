@@ -8,7 +8,7 @@
 package io.camunda.cherry.definition;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
-import io.camunda.cherry.runtime.CherryHistoricFactory;
+import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -25,7 +25,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
   Logger loggerAbstractWorker = LoggerFactory.getLogger(AbstractWorker.class.getName());
 
   @Autowired
-  CherryHistoricFactory cherryHistoricFactory;
+  HistoryFactory historyFactory;
 
 
   /* -------------------------------------------------------- */
@@ -107,7 +107,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms (long)");
 
     // save execution
-    cherryHistoricFactory.saveExecution(executionInstant, // save this instant
+    historyFactory.saveExecution(executionInstant, // save this instant
         RunnerExecutionEntity.TypeExecutor.WORKER, // this is a worker
         getType(), // type of worker
         status, // status of execution
@@ -144,7 +144,13 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
     loggerAbstractWorker.info("CherryWorker[" + getIdentification() + "]:" + message);
   }
 
+  public boolean isWorker() {
+    return true;
+  }
 
+  public boolean isConnector() {
+    return false;
+  }
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Contracts operation on input/output                     */
