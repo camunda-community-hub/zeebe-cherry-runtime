@@ -86,6 +86,16 @@ public class HistoryFactory {
   /*  get information                                          */
   /*                                                          */
   /* -------------------------------------------------------- */
+  public List<RunnerExecutionEntity> getExecutions(String runnerType, Instant instantNow, Instant dateThreshold) {
+    return runnerExecutionRepository.selectRunnerRecords(runnerType, dateThreshold);
+  }
+
+
+    /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  Save                                          */
+  /*                                                          */
+  /* -------------------------------------------------------- */
 
   /**
    * save the execution statistics
@@ -128,29 +138,7 @@ public class HistoryFactory {
     public long executionsSucceeded;
     public long executionsBpmnErrors;
   }
-  /* -------------------------------------------------------- */
-  /*                                                          */
-  /*  Save                                          */
-  /*                                                          */
-  /* -------------------------------------------------------- */
 
-  public static class Interval {
-    /**
-     * Name is something like 16:00 / 16:15
-     */
-    public String slot;
-    public long executions = 0;
-    public long sumOfExecutionTime = 0;
-    public long executionsSucceeded = 0;
-    public long executionsFailed = 0;
-    public long executionsBpmnErrors = 0;
-    public long picTimeInMs = 0;
-    public long averageTimeInMs = 0;
 
-    public Interval(String slot) {
-      this.slot = slot;
-    }
-
-  }
 
 }

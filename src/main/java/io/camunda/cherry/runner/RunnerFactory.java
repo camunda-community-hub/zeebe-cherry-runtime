@@ -5,6 +5,9 @@
 /*  manipulate all runners.                                             */
 /* main API for RunnerEmbedded, RunnerUpload to manipulate different    */
 /* kind of runner, and interface to RunnerStorage                       */
+/*                                                                      */
+/* This is the main entrance for all external access                    */
+/*                                                                      */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
@@ -73,6 +76,11 @@ public class RunnerFactory {
     return listRunners;
   }
 
+  /**
+   * Get the runner by it's entity
+   * @param runnerDefinitionEntity  runnerEntity
+   * @return the runner
+   */
   public AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
     try {
       // if this class is embedded?

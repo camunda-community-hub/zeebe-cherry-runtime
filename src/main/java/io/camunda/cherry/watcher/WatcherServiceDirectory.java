@@ -64,14 +64,10 @@ public class WatcherServiceDirectory extends AbstractWatcher {
                 RunnerParameter.Level.OPTIONAL,
                 "File is saved in this storage definition, and saved under the fileReference variable. If not specified, then file is not saved")
 
-        ),
-        Arrays.asList(
-        RunnerParameter.getInstance(INPUT_VARIABLE_FILE_NAME, "Variable file name", String.class,
-            RunnerParameter.Level.OPTIONAL,
-            "Variable name where the file name will be saved"),
-        RunnerParameter.getInstance(INPUT_VARIABLE_FILE_REFERENCE, "Variable file reference", String.class,
-            RunnerParameter.Level.OPTIONAL,
-            "Variable name where the file reference is saved")),
+        ), Arrays.asList(RunnerParameter.getInstance(INPUT_VARIABLE_FILE_NAME, "Variable file name", String.class,
+                RunnerParameter.Level.OPTIONAL, "Variable name where the file name will be saved"),
+            RunnerParameter.getInstance(INPUT_VARIABLE_FILE_REFERENCE, "Variable file reference", String.class,
+                RunnerParameter.Level.OPTIONAL, "Variable name where the file reference is saved")),
 
         Collections.emptyList(),
 
@@ -160,8 +156,6 @@ public class WatcherServiceDirectory extends AbstractWatcher {
     String storageDefinitionSt = (String) watcherExecution.getInput(INPUT_STORAGE_DEFINITION);
     String filterFile = (String) watcherExecution.getInput(INPUT_FILTER_FILE);
 
-
-
     StorageDefinition storageDefinition;
     try {
       storageDefinition = storageDefinitionSt == null ? null : StorageDefinition.getFromString(storageDefinitionSt);
@@ -201,7 +195,8 @@ public class WatcherServiceDirectory extends AbstractWatcher {
 
       try {
         FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariable);
-        watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_REFERENCE, fileVariableReference.toJson());
+        watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_REFERENCE,
+            fileVariableReference.toJson());
         watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_NAME, fileToProcess.getName());
       } catch (Exception e) {
         throw new ConnectorException(ERROR_CANT_SAVE_FILE, "File [" + fileToProcess.getName() + "]");

@@ -2,7 +2,7 @@
 /*                                                                      */
 /*  StorageRunner                                                       */
 /*                                                                      */
-/* This class manage the Storage Connector                              */
+/* This class manage the Storage Service                              */
 /* A connector can be provided from the upload Path, or uploader, or    */
 /* come from the marker place. It will be saved in the Storage.         */
 /* ******************************************************************** */
@@ -110,7 +110,7 @@ import java.util.List;
 
   public RunnerDefinitionEntity saveUploadRunner(String name, String type, Class clazz, JarStorageEntity jarDefinition)
       throws IOException {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.findByName(name);
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(name);
     if (runnerDefinition != null)
       return runnerDefinition;
 
@@ -130,7 +130,7 @@ import java.util.List;
 
   public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition)
       throws IOException {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.findByName(runner.getName());
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
     if (runnerDefinition != null)
       return runnerDefinition;
 
@@ -166,7 +166,7 @@ import java.util.List;
    * @throws IOException in case of error during the operation
    */
   public RunnerDefinitionEntity saveEmbeddedRunner(AbstractRunner runner) throws IOException {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.findByName(runner.getName());
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
     if (runnerDefinition != null)
       return runnerDefinition;
 
@@ -206,11 +206,15 @@ import java.util.List;
           if (filter.filterName == null)
             return true;
           return t.name.equals(filter.filterName);
+        }).filter(t -> {
+          if (filter.filterType == null)
+            return true;
+          return t.type.equals(filter.filterType);
         }).toList();
   }
 
   public boolean existRunner(String runnerName) {
-    return runnerDefinitionRepository.findByName(runnerName) != null;
+    return runnerDefinitionRepository.selectByName(runnerName) != null;
   }
 
   public static class Filter {
@@ -219,6 +223,7 @@ import java.util.List;
      */
     Boolean activeOnly;
     String filterName;
+    String filterType;
 
     public Filter isActive(boolean activeOnly) {
       this.activeOnly = activeOnly;
@@ -227,6 +232,10 @@ import java.util.List;
 
     public Filter name(String name) {
       this.filterName = name;
+      return this;
+    }
+    public Filter type(String type) {
+      this.filterType = type;
       return this;
     }
   }

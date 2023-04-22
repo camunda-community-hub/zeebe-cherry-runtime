@@ -26,7 +26,7 @@ public class RunnerDecorationTemplate {
   public static final String GROUP_OUTPUT = "Output";
   public static final String GROUP_OUTPUT_LABEL = "Output";
   public static final String GROUP_INPUT = "Input";
-  public static final String GROUP_INPUT_LABEL ="Input";
+  public static final String GROUP_INPUT_LABEL = "Input";
   public static final String ATTR_LABEL = "label";
   public static final String ATTR_TYPE = "type";
   public static final String ZEEBE_TASK_HEADER = "zeebe:taskHeader";

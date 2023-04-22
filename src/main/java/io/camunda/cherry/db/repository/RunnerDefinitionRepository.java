@@ -9,6 +9,6 @@ public interface RunnerDefinitionRepository extends JpaRepository<RunnerDefiniti
 
   @Query("select connectorDefinition from RunnerDefinitionEntity connectorDefinition"
       + " where connectorDefinition.name = :name ")
-  RunnerDefinitionEntity findByName(@Param("name") String name);
+  RunnerDefinitionEntity selectByName(@Param("name") String name);
 
 }

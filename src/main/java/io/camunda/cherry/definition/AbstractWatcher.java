@@ -18,9 +18,9 @@ public abstract class AbstractWatcher {
   private final List<RunnerParameter> listOutput;
   private final List<BpmnError> listBpmnErrors;
   private final String type;
+  private final List<WatcherExecution> listWatcherExecutions = new ArrayList<>();
   WatcherFactory watcherFactory;
   private String name;
-  private final List<WatcherExecution> listWatcherExecutions = new ArrayList<>();
 
   /**
    * Constructor
@@ -30,9 +30,9 @@ public abstract class AbstractWatcher {
    * - VARIABLE_FILENAME must exist as a String in the configuration. Value if "DocumentApplicant"
    * - the watcher save the filename under the "DocumentApplicant" variable
    *
-   * @param listInput  list of Input parameters for the worker
-   * @param listInputForOutputVariableName  list the different variable name for output.
-   * @param listOutput list of Output parameters for the worker
+   * @param listInput                      list of Input parameters for the worker
+   * @param listInputForOutputVariableName list the different variable name for output.
+   * @param listOutput                     list of Output parameters for the worker
    */
   protected AbstractWatcher(String type,
                             List<RunnerParameter> listInput,
@@ -59,7 +59,9 @@ public abstract class AbstractWatcher {
     return listInput;
   }
 
-  public List<RunnerParameter> getListInputForOutputVariableName() { return listInputForOutputVariableName;}
+  public List<RunnerParameter> getListInputForOutputVariableName() {
+    return listInputForOutputVariableName;
+  }
 
   public List<RunnerParameter> getListOutput() {
     return listOutput;
@@ -108,7 +110,6 @@ public abstract class AbstractWatcher {
    */
   public abstract long getDefaultSleepTimeMs();
 
-
   /**
    * Watcher specify if he needs a "tourOfDuty".
    * Some watcher need a TourOfDuty every XX ms to detect if new orders are coming.
@@ -143,8 +144,9 @@ public abstract class AbstractWatcher {
 
   /**
    * This order Information was completed with success, a process instance is created
-   * @param watcherExecution  watcherExecution who created the order
-   * @param orderInformation order Information executed
+   *
+   * @param watcherExecution   watcherExecution who created the order
+   * @param orderInformation   order Information executed
    * @param operationInSuccess the order required was realised with success
    */
   public abstract void orderExecuted(WatcherExecution watcherExecution,
@@ -171,8 +173,6 @@ public abstract class AbstractWatcher {
   public List<WatcherExecution> getListWatcherExecutions() {
     return listWatcherExecutions;
   }
-
-
 
   public void start(WatcherExecution watcherExecution) {
     try {
@@ -286,23 +286,28 @@ public abstract class AbstractWatcher {
     /**
      * Populate an order information from an InputVariable with a value.
      * If the InputVariable is not given, nothing arrived
-     * @param orderInformation order information to populate
+     *
+     * @param orderInformation  order information to populate
      * @param inputVariableName InputVariable name. The value of this input is the name of the output
-     * @param value value to populated
+     * @param value             value to populated
      */
-    public void populateOrderInformation(WatcherOrderInformation orderInformation, String inputVariableName, Object value) {
+    public void populateOrderInformation(WatcherOrderInformation orderInformation,
+                                         String inputVariableName,
+                                         Object value) {
       if (mapInputs.get(inputVariableName) instanceof String inputVariableValue) {
         orderInformation.setVariable(inputVariableValue, value);
       }
     }
+
     /**
      * Return the variable name for an InputForOutput
      * Example, INPUT is "VARIABLE_FILENAME". Configuration give for this value "DocumentApplicant"
      * The method return "DocumentApplicant".
+     *
      * @param inputVariable
      * @return
      */
-    public String getOutputVariableName( String inputVariable) {
+    public String getOutputVariableName(String inputVariable) {
       return (mapInputs.get(inputVariable) instanceof String) ? (String) mapInputs.get(inputVariable) : null;
     }
 

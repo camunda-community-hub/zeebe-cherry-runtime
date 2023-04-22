@@ -23,8 +23,11 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
                                               @Param("dateToSearch") Instant dateToSearch);
 
   @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType")
+      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+      + " order by runnerexecution.executionTime desc")
   List<RunnerExecutionEntity> selectRunnerRecords(@Param("runnerType") String runnerType,
                                                   @Param("dateToSearch") Instant dateToSearch);
+
+
 
 }

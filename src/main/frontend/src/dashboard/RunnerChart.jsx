@@ -49,6 +49,42 @@ class RunnerChart extends React.Component {
                  }}
                  title="execution"/>
         }
+        {this.state.type === "DurationsAvg" && this.state.runner && this.state.runner.performance &&
+          <Chart type="HorizontalBar" dataList={this.getDurationsAvg()} oneColor={true}
+                 options={{
+                   title: this.state.title,
+                   showXLabel: false,
+                   showYLabel: false,
+                   width: 200,
+                   height: 100,
+                   showGrid: false
+                 }}
+                 title="Duration (average)"/>
+        }
+        {this.state.type === "DurationsPic" && this.state.runner && this.state.runner.performance &&
+          <Chart type="HorizontalBar" dataList={this.getDurationsPic()} oneColor={true}
+                 options={{
+                   title: this.state.title,
+                   showXLabel: false,
+                   showYLabel: false,
+                   width: 200,
+                   height: 100,
+                   showGrid: false
+                 }}
+                 title="Duration (pic)"/>
+        }
+        {this.state.type === "Errors" && this.state.runner && this.state.runner.performance &&
+          <Chart type="HorizontalBar" dataList={this.getErrors()} oneColor={true}
+                 options={{
+                   title: this.state.title,
+                   showXLabel: false,
+                   showYLabel: false,
+                   width: 200,
+                   height: 100,
+                   showGrid: false
+                 }}
+                 title="Errors"/>
+        }
       </div>
     )
 
@@ -70,6 +106,32 @@ class RunnerChart extends React.Component {
     });
     return result;
 
+  }
+
+  getDurationsAvg() {
+    const result = [];
+    this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+      let record = {label: element.slot, value: element.averageTimeInMs};
+      result.push(record);
+    });
+    return result;
+  }
+  getDurationsPic() {
+    const result = [];
+    this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+      let record = {label: element.slot, value: element.picTimeInMs};
+      result.push(record);
+    });
+    return result;
+  }
+
+  getErrors() {
+    const result = [];
+    this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+      let record = {label: element.slot, value: element.executionsBpmnErrors+element.executionsFailed};
+      result.push(record);
+    });
+    return result;
   }
 }
 

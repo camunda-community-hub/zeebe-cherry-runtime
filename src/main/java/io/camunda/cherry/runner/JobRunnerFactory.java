@@ -50,6 +50,9 @@ public class JobRunnerFactory {
   @Autowired
   LogOperation logOperation;
 
+  /**
+   * Key is runnerType
+   */
   Map<String, Running> mapRunning = new HashMap<>();
 
   public void startAll() {
@@ -72,7 +75,7 @@ public class JobRunnerFactory {
               "") + "]");
           logOperation.log(LogOperation.TYPEOPERATION.START, runner, "");
 
-          mapRunning.put(runner.getName(), new Running(runner, new ContainerJobWorker(jobWorker)));
+          mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
         }
 
       } catch (Exception e) {
@@ -99,17 +102,17 @@ public class JobRunnerFactory {
   /**
    * Stop a runner
    *
-   * @param runnerName name of the runner (connector/worker)
+   * @param runnerType name of the runner (connector/worker)
    * @return true if the runner is stopped
    */
-  public boolean stopRunner(String runnerName) throws OperationException {
-    Running running = mapRunning.get(runnerName);
+  public boolean stopRunner(String runnerType) throws OperationException {
+    Running running = mapRunning.get(runnerType);
     if (running == null) {
       throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
     }
     closeJobWorker(running.containerJobWorker.getJobWorker());
     running.containerJobWorker.setJobWorker(null);
-    mapRunning.remove(runnerName);
+    mapRunning.remove(runnerType);
     logOperation.log(LogOperation.TYPEOPERATION.STOP, running.runner, "");
 
     return true;
@@ -119,21 +122,21 @@ public class JobRunnerFactory {
   /**
    * Start a runner
    *
-   * @param runnerName name of the runner (connector/worker)
+   * @param runnerType name of the runner (connector/worker)
    * @return true if the runner started
    * @throws OperationException runner can't start
    */
-  public boolean startRunner(String runnerName) throws OperationException {
-    if (mapRunning.containsKey(runnerName))
+  public boolean startRunner(String runnerType) throws OperationException {
+    if (mapRunning.containsKey(runnerType))
       return true; // already started
 
-    List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().name(runnerName));
+    List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
     // we expect only one runner
     if (listRunners.isEmpty()) {
       throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
     }
     if (listRunners.size() > 1) {
-      throw new OperationException(TOO_MANY_RUNNERS, "Too many runner with this name [" + runnerName + "]");
+      throw new OperationException(TOO_MANY_RUNNERS, "Too many runner with this runnerType [" + runnerType + "]");
     }
     AbstractRunner runner = listRunners.get(0);
     List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
@@ -142,17 +145,17 @@ public class JobRunnerFactory {
           "Worker has error in the definition : " + String.join(";", listOfErrors));
 
     JobWorker jobWorker = createJobWorker(runner);
-    mapRunning.put(runner.getName(), new Running(runner, new ContainerJobWorker(jobWorker)));
+    mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
     logOperation.log(LogOperation.TYPEOPERATION.START, runner, "");
 
     return true;
 
   }
 
-  public boolean isRunnerActive(String runnerName) throws OperationException {
-    if (!mapRunning.containsKey(runnerName))
+  public boolean isRunnerActive(String runnerType) throws OperationException {
+    if (!mapRunning.containsKey(runnerType))
       return false;
-    Running running = mapRunning.get(runnerName);
+    Running running = mapRunning.get(runnerType);
     return running.containerJobWorker.getJobWorker() != null;
   }
 

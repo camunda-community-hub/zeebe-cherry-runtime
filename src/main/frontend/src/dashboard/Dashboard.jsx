@@ -51,9 +51,8 @@ class Dashboard extends React.Component {
 
 
   render() {
-    console.log("dashboard.render display="+JSON.stringify(this.state.display));
+    // console.log("dashboard.render display="+JSON.stringify(this.state.display));
     return (<div class={"container"}>
-      active={JSON.stringify(this.state.display)} - {this.state.display.period} class={this.getButtonClass(this.state.display.showActive)}
       <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this} timestamp={this.state.dashboard.timestamp}/>
       <div class="row">
         <div className="col-md-2">

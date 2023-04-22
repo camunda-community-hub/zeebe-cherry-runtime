@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.admin;
 
+import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerDecorationTemplate;
@@ -16,6 +17,7 @@ import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runner.StorageRunner;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
+import io.camunda.cherry.runtime.OperationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +59,9 @@ public class RunnerRestController {
 
   @Autowired
   RunnerFactory runnerFactory;
+
+  @Autowired
+  OperationFactory operationFactory;
 
   /**
    * Get list of worker. Multiple result is possibles
@@ -121,7 +126,7 @@ public class RunnerRestController {
 
       infoRunner.put("logo", runner.getLogo());
       try {
-        infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getName()));
+        infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getType()));
       } catch (JobRunnerFactory.OperationException e) {
         infoRunner.put("active", false);
       }
@@ -164,7 +169,7 @@ public class RunnerRestController {
   }
 
   @GetMapping(value = "/api/runner/detail", produces = "application/json")
-  public Optional<RunnerInformation> getWorker(@RequestParam(name = "name") String runnerName,
+  public Optional<RunnerInformation> getWorker(@RequestParam(name = "runnertype") String runnerType,
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "period", required = false) String period) {
@@ -175,7 +180,7 @@ public class RunnerRestController {
     List<AbstractRunner> listRunners = getListRunners(true);
 
     return listRunners.stream()
-        .filter(worker -> worker.getIdentification().equals(runnerName))
+        .filter(worker -> worker.getIdentification().equals(runnerType))
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
             // false if not asked
@@ -184,24 +189,72 @@ public class RunnerRestController {
   }
 
   /**
+   * Get operations for a runner. We get one week of operation
+   *
+   * @param runnerType        type of the runner we search the operations
+   * @param nbHoursMonitoring from now to now-nbHoursMonitoring
+   * @return
+   */
+  @GetMapping(value = "/api/runner/operations", produces = "application/json")
+  public Map<String, Object> getOperation(@RequestParam(name = "runnertype") String runnerType,
+                                          @RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring) {
+    Map<String, Object> info = new HashMap<>();
+    Instant instantNow = Instant.now();
+    int nbHours = 24;
+    if (nbHoursMonitoring != null)
+      nbHours = nbHoursMonitoring.intValue();
+    if (nbHours < 1)
+      nbHours = 1;
+    if (nbHours > 30 * 7 * 24)
+      nbHours = 30 * 7 * 24;
+
+    Instant dateThreshold = instantNow.minusSeconds(nbHours * 60 * 60);
+    List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, instantNow, dateThreshold);
+
+    // the errors
+    List<RunnerExecutionEntity> listErrors = listExecutions.stream()
+        .filter(t -> AbstractRunner.ExecutionStatusEnum.FAIL.equals(t.status)
+            || AbstractRunner.ExecutionStatusEnum.BPMNERROR.equals(t.status))
+        .toList();
+    info.put("errors", listErrors);
+
+    // operation
+
+    info.put("executions", listExecutions.stream() // Stream
+        .map(t -> {
+          Map<String, Object> item = new HashMap<>();
+          item.put("status", t.status.toString());
+          item.put("executionTime", t.executionTime);
+          item.put("durationms", t.executionMs);
+          return item;
+        }).toList());
+
+    List<RunnerExecutionEntity> listOperations = operationFactory.getOperations(runnerType, instantNow, dateThreshold);
+    info.put("operations", listOperations);
+
+    return info;
+
+  }
+
+  /**
    * Ask to stop a specific worker
    *
-   * @param runnerName worker to stop
+   * @param runnerType runner to stop, by the type
    * @return NOTFOUND or the worker information on this worker
    */
   @PutMapping(value = "/api/runner/stop", produces = "application/json")
-  public RunnerInformation stopWorker(@RequestParam(name = "name") String runnerName) {
-    logger.info("Stop requested for [" + runnerName + "]");
+  public RunnerInformation stopWorker(@RequestParam(name = "runnertype") String runnerType) {
+    logger.info("Stop requested for runnerType[" + runnerType + "]");
     try {
-      boolean isStopped = cherryJobRunnerFactory.stopRunner(runnerName);
-      logger.info("Stop executed for [" + runnerName + "]: " + isStopped);
-      AbstractRunner runner = getRunnerByName(runnerName);
+      boolean isStopped = cherryJobRunnerFactory.stopRunner(runnerType);
+      logger.info("Stop executed for runnerType[" + runnerType + "]: " + isStopped);
+      AbstractRunner runner = getRunnerByName(runnerType);
       RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
       return completeRunnerInformation(runnerInfo, false, false, null, null);
     } catch (JobRunnerFactory.OperationException e) {
       if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerName + "] error " + e);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerType + "] not found");
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerType + "] error " + e);
     }
   }
 

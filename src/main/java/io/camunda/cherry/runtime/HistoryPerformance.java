@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +46,7 @@ public class HistoryPerformance {
    */
   public Performance getPerformance(String runnerType, Instant instantNow, PeriodStatistic periodStatistic) {
     Performance performance = new Performance();
-    Map<String, HistoryFactory.Interval> mapInterval = new LinkedHashMap<>();
+    Map<String, Interval> mapInterval = new LinkedHashMap<>();
 
     Instant dateThreshold = getInstantByPeriod(instantNow, periodStatistic);
     IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
@@ -62,7 +63,7 @@ public class HistoryPerformance {
 
     for (int index = 0; index <= intervalRule.numberOfIntervals; index++) {
       String slotString = intervalRule.getSlotFromDate(indexTime);
-      mapInterval.put(slotString, new HistoryFactory.Interval(slotString));
+      mapInterval.put(slotString, new Interval(slotString,indexTime));
       indexTime = indexTime.plusMinutes(intervalRule.intervalInMinutes);
     }
 
@@ -73,7 +74,7 @@ public class HistoryPerformance {
       Instant executionTime = runnerExecutionEntity.executionTime;
       LocalDateTime slotTime = LocalDateTime.ofInstant(executionTime, ZoneOffset.UTC);
       String slotString = intervalRule.getSlotFromDate(slotTime);
-      HistoryFactory.Interval interval = mapInterval.get(slotString);
+      Interval interval = mapInterval.get(slotString);
       if (interval == null) {
         // this must not arrive
         logger.error("Interval is not populated [" + slotString + "]");
@@ -93,7 +94,7 @@ public class HistoryPerformance {
     // build the list and calculate average
     long sumTotalExecutionTimeInMs = 0;
     long sumTotalExecutions = 0;
-    for (HistoryFactory.Interval interval : mapInterval.values()) {
+    for (Interval interval : mapInterval.values()) {
       if (interval.executions > 0)
         interval.averageTimeInMs = interval.sumOfExecutionTime / interval.executions;
       performance.listIntervals.add(interval);
@@ -172,15 +173,43 @@ public class HistoryPerformance {
     return reference.minusSeconds((long) delayStatInHour * 60 * 60);
   }
 
+
+  /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  Class definitions                                         */
+  /*                                                          */
+  /* -------------------------------------------------------- */
+
   public enum PeriodStatistic {FOURHOUR, ONEDAY, ONEWEEK, ONEMONTH, ONEYEAR}
 
   public static class Performance {
     public long picTimeInMs;
     public long executions;
     public long averageTimeInMs;
-    public List<HistoryFactory.Interval> listIntervals = new ArrayList<>();
+    public List<Interval> listIntervals = new ArrayList<>();
   }
 
+  public static class Interval {
+    /**
+     * Name is something like 16:00 / 16:15
+     */
+    public String slot;
+    public String humanTimeSlot;
+    public long executions = 0;
+    public long sumOfExecutionTime = 0;
+    public long executionsSucceeded = 0;
+    public long executionsFailed = 0;
+    public long executionsBpmnErrors = 0;
+    public long picTimeInMs = 0;
+    public long averageTimeInMs = 0;
+
+    public Interval(String slot, LocalDateTime slotTime) {
+      this.slot = slot;
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+      this.humanTimeSlot = formatter.format(slotTime);
+    }
+
+  }
   public class IntervalRule {
     public int numberOfIntervals;
     public int intervalInMinutes;
