@@ -6,6 +6,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
@@ -73,7 +74,7 @@ public class JobRunnerFactory {
           logger.info("CherryJobRunnerFactory: start [" + runner.getType() + (runner.getName() != null ?
               " (" + runner.getName() + ")" :
               "") + "]");
-          logOperation.log(LogOperation.TYPEOPERATION.START, runner, "");
+          logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
 
           mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
         }
@@ -113,7 +114,7 @@ public class JobRunnerFactory {
     closeJobWorker(running.containerJobWorker.getJobWorker());
     running.containerJobWorker.setJobWorker(null);
     mapRunning.remove(runnerType);
-    logOperation.log(LogOperation.TYPEOPERATION.STOP, running.runner, "");
+    logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
 
     return true;
 
@@ -146,7 +147,7 @@ public class JobRunnerFactory {
 
     JobWorker jobWorker = createJobWorker(runner);
     mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
-    logOperation.log(LogOperation.TYPEOPERATION.START, runner, "");
+    logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
 
     return true;
 
@@ -206,7 +207,7 @@ public class JobRunnerFactory {
    *
    * @param runner runner to start
    * @return the JobWorker
-   * @throws OperationException
+   * @throws OperationException in case of error
    */
   private JobWorker createJobWorker(AbstractRunner runner) throws OperationException {
 
