@@ -37,6 +37,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,6 +50,8 @@ import java.util.Optional;
 @RequestMapping("cherry")
 public class RunnerRestController {
 
+  public static final String PARAM_NBEXEC = "nbexec";
+  public static final String PARAM_NBFAIL = "nbfail";
   Logger logger = LoggerFactory.getLogger(RunnerRestController.class.getName());
   @Autowired
   JobRunnerFactory cherryJobRunnerFactory;
@@ -78,7 +81,7 @@ public class RunnerRestController {
   public List<RunnerInformation> getRunnersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "period", required = false) String period) {
-    LocalDateTime dateNow = LocalDateTime.now();
+    LocalDateTime dateNow = getLocalDateTimeNow();
     List<AbstractRunner> listRunners = getListRunners(true);
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -102,7 +105,7 @@ public class RunnerRestController {
     } catch (Exception e) {
       logger.error("getDashboard: bad value for orderByParam[" + orderByParam + "]");
     }
-    LocalDateTime dateNow = LocalDateTime.now();
+    LocalDateTime dateNow = getLocalDateTimeNow();
 
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -131,8 +134,8 @@ public class RunnerRestController {
         infoRunner.put("active", false);
       }
       infoRunner.put("statistic", statisticRunner);
-      infoRunner.put("nbexec", statisticRunner.executions);
-      infoRunner.put("nbfail", statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
+      infoRunner.put(PARAM_NBEXEC, statisticRunner.executions);
+      infoRunner.put(PARAM_NBFAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
       infoRunner.put("nboverthreshold", 0);
       infoRunner.put("performance", performanceRunner);
       listDetails.add(infoRunner);
@@ -146,10 +149,10 @@ public class RunnerRestController {
     orderComparator = switch (orderBy) {
       case NAMEACS -> (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
       case NAMEDES -> (h1, h2) -> ((String) h2.get("name")).compareTo((String) h1.get("name"));
-      case EXECASC -> (h1, h2) -> ((Long) h1.get("nbexec")).compareTo((Long) h2.get("nbexec"));
-      case EXECDES -> (h1, h2) -> ((Long) h2.get("nbexec")).compareTo((Long) h1.get("nbexec"));
-      case FAILASC -> (h1, h2) -> ((Long) h1.get("nbfail")).compareTo((Long) h2.get("nbfail"));
-      case FAILDES -> (h1, h2) -> ((Long) h2.get("nbfail")).compareTo((Long) h1.get("nbfail"));
+      case EXECASC -> (h1, h2) -> ((Long) h1.get(PARAM_NBEXEC)).compareTo((Long) h2.get(PARAM_NBEXEC));
+      case EXECDES -> (h1, h2) -> ((Long) h2.get(PARAM_NBEXEC)).compareTo((Long) h1.get(PARAM_NBEXEC));
+      case FAILASC -> (h1, h2) -> ((Long) h1.get(PARAM_NBFAIL)).compareTo((Long) h2.get(PARAM_NBFAIL));
+      case FAILDES -> (h1, h2) -> ((Long) h2.get(PARAM_NBFAIL)).compareTo((Long) h1.get(PARAM_NBFAIL));
     };
 
     listDetails = listDetails.stream().sorted(orderComparator).toList();
@@ -172,7 +175,7 @@ public class RunnerRestController {
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "period", required = false) String period) {
-    LocalDateTime dateNow = LocalDateTime.now();
+    LocalDateTime dateNow = getLocalDateTimeNow();
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
     List<AbstractRunner> listRunners = getListRunners(true);
@@ -205,7 +208,7 @@ public class RunnerRestController {
                                           @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
                                           @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
     Map<String, Object> info = new HashMap<>();
-    LocalDateTime dateNow = LocalDateTime.now();
+    LocalDateTime dateNow = getLocalDateTimeNow();
     int nbHours;
     try {
       nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring.intValue(), 1);
@@ -220,7 +223,7 @@ public class RunnerRestController {
     if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
 
-    LocalDateTime dateThreshold = LocalDateTime.now().minusHours(nbHours);
+    LocalDateTime dateThreshold = getLocalDateTimeNow().minusHours(nbHours);
     List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
 
     // the errors
@@ -507,5 +510,11 @@ public class RunnerRestController {
     return localDateTime.format(sdt);
   }
 
+  private LocalDateTime getLocalDateTimeNow() {
+    return LocalDateTime.now(ZoneOffset.UTC);
+  }
+
   public enum DisplayOrderBy {NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES}
+
+
 }

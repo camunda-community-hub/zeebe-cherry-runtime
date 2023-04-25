@@ -53,7 +53,7 @@ public class HistoryPerformance {
     IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
 
     //--- populate all the map
-    LocalDateTime indexTime = dateNow;
+    LocalDateTime indexTime = dateThreshold;
 
     // according the period, we determine theses parameters:
     // - the number of interval (example, FOURHOUR => 24 interval every 10 mn), 1Y =>365 interval every 1 day)

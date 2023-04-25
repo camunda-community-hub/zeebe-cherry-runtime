@@ -23,6 +23,9 @@ public class OperationEntity {
 
   /**
    * execution (in UTC)
+   * Instant will saved the date.. in the local timezone (example 15:04), that we don't want (and make no sense)
+   * We want to save the date in UTC, so let's use a LocalDateTime, and the code is reponsible to provide this time
+   * in the UTC time zone.
    */
   @Column(name = "execution_time")
   public LocalDateTime executionTime;
