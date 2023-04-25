@@ -11,7 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "RUNNEREXECUTION")
@@ -24,8 +24,11 @@ public class RunnerExecutionEntity {
   @Column(name = "runner_type", length = 100)
   public String runnerType;
 
+  /**
+   * execution (in UTC)
+   */
   @Column(name = "execution_time")
-  public Instant executionTime;
+  public LocalDateTime executionTime;
 
   @Column(name = "execution_ms")
   public Long executionMs;

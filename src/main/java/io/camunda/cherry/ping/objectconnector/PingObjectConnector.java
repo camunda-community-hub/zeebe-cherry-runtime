@@ -32,7 +32,7 @@ public class PingObjectConnector extends AbstractConnector implements IntFramewo
 
   private final Random random = new Random();
 
-  protected PingObjectConnector() {
+  public PingObjectConnector() {
     super("c-pingobjectconnector", PingConnectorInput.class, PingObjectConnectorOutput.class,
         Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
   }

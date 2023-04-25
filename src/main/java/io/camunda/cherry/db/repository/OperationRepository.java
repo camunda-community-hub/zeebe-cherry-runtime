@@ -5,15 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface OperationRepository extends JpaRepository<OperationEntity, Long> {
 
   @Query("select operationEntity from OperationEntity operationEntity"
-      + " where operationEntity.executionTime >= :dateToSearch"
-      + " and operationEntity.runnerType = :runnerType ")
+      + " where operationEntity.executionTime >= :dateToSearch" + " and operationEntity.runnerType = :runnerType ")
   List<OperationEntity> selectByRunnerType(@Param("runnerType") String runnerType,
-                                                 @Param("dateToSearch") Instant dateToSearch);
+                                           @Param("dateToSearch") LocalDateTime dateToSearch);
 
 }

@@ -34,7 +34,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
 
   private final Random random = new Random();
 
-  protected PingConnector() {
+  public PingConnector() {
     super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
         Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
   }

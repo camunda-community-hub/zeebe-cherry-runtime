@@ -2,7 +2,7 @@
 cherry.connectorslib:
   uploadpath: ./localstorage/upload
   classloaderpath: ./localstorage/classloader
-  forcerefresh: true
+  forcerefresh: false
 
 # use a OnPremise Zeebe engine
 zeebe.client:

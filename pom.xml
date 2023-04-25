@@ -4,16 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.camunda.community</groupId>
-  <artifactId>zeebe-cherry-framework</artifactId>
-  <version>2.5.0</version>
+  <groupId>io.camunda.community</groupId>
+  <artifactId>zeebe-cherry-runtime</artifactId>
+  <version>3.0.0</version>
 
   <properties>
     <java.version>17</java.version>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven.compiler.source>${java.version}</maven.compiler.source>
 
-    <zeebe.version>8.1.9</zeebe.version>
+    <!-- 8.1.9 -->
+    <zeebe.version>8.2.0</zeebe.version>
+    <zeebe-client.version>8.2.3</zeebe-client.version>
     <connector-core.version>0.8.1</connector-core.version>
     <connector-validation.version>0.8.1</connector-validation.version>
 
@@ -57,7 +59,7 @@
     <dependency>
       <groupId>io.camunda</groupId>
       <artifactId>zeebe-client-java</artifactId>
-      <version>${zeebe.version}</version>
+      <version>${zeebe-client.version}</version>
     </dependency>
 
 
@@ -143,6 +145,9 @@
       <version>2.10</version>
     </dependency>
 
+
+    <!-- Thanks for using https://jar-download.com -->
+
     <!-- tests -->
     <dependency>
       <groupId>io.zeebe</groupId>
@@ -167,61 +172,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-surefire-provider</artifactId>
-            <version>1.3.2</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
-        <configuration>
-          <source>17</source>
-          <target>17</target>
-        </configuration>
-      </plugin>
-
-      <!-- allow mvn spring-boot:run -->
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>2.7.5</version>
-        <configuration>
-          <mainClass>io.camunda.CherryApplication</mainClass>
-        </configuration>
-      </plugin>
-
-      <!-- build the jar with all dependencies -->
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>install</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-          <archive>
-            <manifest>
-              <mainClass>io.camunda.CherryApplication</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-
       <!-- connect the React application in the Springboot application -->
       <plugin>
         <groupId>com.github.eirslett</groupId>
@@ -283,6 +233,82 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-surefire-provider</artifactId>
+            <version>1.3.2</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.1</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
+
+      <!-- allow mvn spring-boot:run -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>2.7.5</version>
+        <configuration>
+          <mainClass>io.camunda.CherryApplication</mainClass>
+        </configuration>
+      </plugin>
+
+      <!-- build the jar with HTML -->
+      <!--
+      <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-dependency-plugin</artifactId>
+      <executions>
+        <execution>
+          <id>unpack-resources</id>
+          <goals>
+            <goal>unpack-dependencies</goal>
+          </goals>
+          <phase>generate-sources</phase>
+          <configuration>
+            <outputDirectory>resources</outputDirectory>
+            <includeArtifactIds>target/classes</includeArtifactIds>
+          </configuration>
+        </execution>
+      </executions>
+      </plugin>
+      -->
+      <!-- build the jar with all dependencies -->
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>install</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>io.camunda.CherryApplication</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
 
 
     </plugins>

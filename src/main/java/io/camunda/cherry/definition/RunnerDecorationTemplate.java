@@ -8,7 +8,7 @@ package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.camunda.connector.runtime.util.ConnectorHelper;
+import io.camunda.connector.impl.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -167,7 +167,7 @@ public class RunnerDecorationTemplate {
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
       errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
       errorParameters.put(ATTR_BINDING,
-          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ConnectorHelper.ERROR_EXPRESSION_HEADER_NAME));
+          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, Constants.ERROR_EXPRESSION_KEYWORD));
 
       listProperties.add(errorParameters);
     }

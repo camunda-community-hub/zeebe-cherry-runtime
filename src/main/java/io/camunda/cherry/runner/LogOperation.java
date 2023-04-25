@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.net.InetAddress;
+
 @Service
 public class LogOperation {
 
@@ -110,7 +112,13 @@ public class LogOperation {
   }
 
   private String getHostName() {
-    return "cherry";
+    try {
+      InetAddress IP = InetAddress.getLocalHost();
+
+      return IP.getHostName();
+    } catch (Exception e) {
+      return "CherryHostName";
+    }
   }
 
   private void saveOperationEntity(OperationEntity operationEntity) {

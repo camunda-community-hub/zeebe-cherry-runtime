@@ -109,10 +109,10 @@ public abstract class AbstractRunner {
    * @param listBpmnErrors list of potential BPMN Error the worker can generate
    */
 
-  protected AbstractRunner(String type,
-                           List<RunnerParameter> listInput,
-                           List<RunnerParameter> listOutput,
-                           List<BpmnError> listBpmnErrors) {
+  public AbstractRunner(String type,
+                        List<RunnerParameter> listInput,
+                        List<RunnerParameter> listOutput,
+                        List<BpmnError> listBpmnErrors) {
 
     this.type = type;
     this.listInput = listInput;

@@ -12,9 +12,13 @@ import io.camunda.connector.api.error.ConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.awt.print.Pageable;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -35,17 +39,18 @@ public class HistoryFactory {
    * get main statistics for the runner type in the last <delayStatInHour> period
    *
    * @param runnerType      type of runner
+   * @param dateNow         dateNow to get a correct synchronization
    * @param periodStatistic Period of statistic
    * @return statistic object
    */
   public Statistic getStatistic(String runnerType,
-                                Instant instantNow,
+                                LocalDateTime dateNow,
                                 HistoryPerformance.PeriodStatistic periodStatistic) {
     Statistic statistic = new Statistic();
 
     HistoryPerformance.IntervalRule intervalRule = historyPerformance.getIntervalRuleByPeriod(periodStatistic);
-    Instant dateThreshold = instantNow.minusMillis(
-        intervalRule.intervalInMinutes * intervalRule.numberOfIntervals * 60L * 1000L);
+    LocalDateTime dateThreshold = LocalDateTime.now();
+    dateThreshold = dateThreshold.minusMinutes(intervalRule.intervalInMinutes * intervalRule.numberOfIntervals);
 
     List<Map<String, Object>> listStats = runnerExecutionRepository.selectStatusStats(runnerType, dateThreshold);
     for (Map<String, Object> recordStats : listStats) {
@@ -76,9 +81,9 @@ public class HistoryFactory {
   }
 
   public HistoryPerformance.Performance getPerformance(String runnerType,
-                                                       Instant instantNow,
+                                                       LocalDateTime dateNow,
                                                        HistoryPerformance.PeriodStatistic periodStatistic) {
-    return historyPerformance.getPerformance(runnerType, instantNow, periodStatistic);
+    return historyPerformance.getPerformance(runnerType, dateNow, periodStatistic);
   }
 
   /* -------------------------------------------------------- */
@@ -86,12 +91,19 @@ public class HistoryFactory {
   /*  get information                                          */
   /*                                                          */
   /* -------------------------------------------------------- */
-  public List<RunnerExecutionEntity> getExecutions(String runnerType, Instant instantNow, Instant dateThreshold) {
-    return runnerExecutionRepository.selectRunnerRecords(runnerType, dateThreshold);
+  public List<RunnerExecutionEntity> getExecutions(String runnerType,
+                                                   LocalDateTime dateNow,
+                                                   LocalDateTime dateThreshold,
+                                                   int pageNumberInt, int rowsPerPageInt) {
+
+
+    return runnerExecutionRepository.selectRunnerRecords(runnerType,
+        dateThreshold, PageRequest.of(pageNumberInt, rowsPerPageInt));
+
   }
 
 
-    /* -------------------------------------------------------- */
+  /* -------------------------------------------------------- */
   /*                                                          */
   /*  Save                                          */
   /*                                                          */
@@ -104,26 +116,29 @@ public class HistoryFactory {
    * @param typeExecutor  type of executor
    * @param runnerType    name of runner
    * @param status        status of execution
-   * @param error         if the execution get an error, provide it
+   * @param errorMessage         if the execution get an error, provide it
    * @param durationInMs  duration of this execution
    */
   public void saveExecution(Instant executionTime,
                             RunnerExecutionEntity.TypeExecutor typeExecutor,
                             String runnerType,
                             ExecutionStatusEnum status,
-                            ConnectorException error,
+                            String errorCode,
+                            String errorMessage,
                             long durationInMs) {
     try {
       RunnerExecutionEntity runnerExecutionEntity = new RunnerExecutionEntity();
       runnerExecutionEntity.typeExecutor = typeExecutor;
 
       runnerExecutionEntity.executionMs = durationInMs;
-      runnerExecutionEntity.executionTime = executionTime;
+      // Save it at the UTC mode, so we can display in any time zone after
+      runnerExecutionEntity.executionTime = LocalDateTime.ofInstant(executionTime, ZoneOffset.UTC);
+
       runnerExecutionEntity.runnerType = runnerType;
       runnerExecutionEntity.status = status;
-      if (error != null) {
-        runnerExecutionEntity.errorCode = error.getErrorCode();
-        runnerExecutionEntity.errorExplanation = error.getMessage();
+      if (errorCode != null) {
+        runnerExecutionEntity.errorCode = errorCode;
+        runnerExecutionEntity.errorExplanation = errorMessage;
       }
 
       runnerExecutionRepository.save(runnerExecutionEntity);
@@ -138,7 +153,5 @@ public class HistoryFactory {
     public long executionsSucceeded;
     public long executionsBpmnErrors;
   }
-
-
 
 }

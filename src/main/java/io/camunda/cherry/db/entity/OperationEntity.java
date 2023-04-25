@@ -18,7 +18,6 @@ public class OperationEntity {
   @Column(name = "hostname", length = 100)
   public String hostName;
 
-
   @Column(name = "runner_type", length = 100)
   public String runnerType;
 
@@ -28,22 +27,18 @@ public class OperationEntity {
   @Column(name = "execution_time")
   public LocalDateTime executionTime;
 
-
   @Column(name = "operationname", length = 50)
   @Enumerated(EnumType.STRING)
   public Operation operation;
 
-
   @Column(name = "message", length = 3000)
   public String message;
-
-
 
   @Id
   @SequenceGenerator(name = "seqoperation", sequenceName = "seqoperation", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   private Long id;
 
-  public enum Operation {HOSTNAME, STARTRUNNER, STOPRUNNER, SETTHRESOLD, STOPRUNTIME, STARTRUNTIME, SERVERINFO, ERROR }
+  public enum Operation {HOSTNAME, STARTRUNNER, STOPRUNNER, SETTHRESOLD, STOPRUNTIME, STARTRUNTIME, SERVERINFO, ERROR}
 
 }

@@ -46,12 +46,12 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
    * @param listOutput     list of Output parameters for the worker
    * @param listBpmnErrors list of potential BPMN Error the worker can generate
    */
-  protected AbstractConnector(String type,
-                              List<RunnerParameter> listInput,
-                              Class<?> connectorInputClass,
-                              List<RunnerParameter> listOutput,
-                              Class<?> connectorOutputClass,
-                              List<BpmnError> listBpmnErrors) {
+  public AbstractConnector(String type,
+                           List<RunnerParameter> listInput,
+                           Class<?> connectorInputClass,
+                           List<RunnerParameter> listOutput,
+                           Class<?> connectorOutputClass,
+                           List<BpmnError> listBpmnErrors) {
     super(type, listInput, listOutput, listBpmnErrors);
     this.connectorInputClass = connectorInputClass;
     this.connectorOutputClass = connectorOutputClass;

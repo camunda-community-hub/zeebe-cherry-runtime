@@ -94,6 +94,8 @@ public class WatcherFactory {
       Instant executionInstant = Instant.now();
       long beginExecution = System.currentTimeMillis();
       AbstractRunner.ExecutionStatusEnum status = AbstractRunner.ExecutionStatusEnum.SUCCESS;
+      String errorCode = null;
+      String errorMessage = null;
       ConnectorException connectorException = null;
       try {
         switch (orderInformation.orderAction) {
@@ -103,11 +105,14 @@ public class WatcherFactory {
       } catch (ConnectorException ce) {
         watcherExecution.getWatcher().orderExecuted(watcherExecution, orderInformation, false);
         status = AbstractRunner.ExecutionStatusEnum.BPMNERROR;
+        errorCode = ce.getErrorCode();
+        errorMessage = ce.getMessage();
         connectorException = ce;
       } catch (Exception e) {
         watcherExecution.getWatcher().orderExecuted(watcherExecution, orderInformation, false);
         status = AbstractRunner.ExecutionStatusEnum.FAIL;
-
+        errorCode = "Exception";
+        errorMessage = e.getMessage();
       }
       long endExecution = System.currentTimeMillis();
       logger.info(
@@ -116,7 +121,7 @@ public class WatcherFactory {
 
       if (!listOrdersInformation.isEmpty()) {
         historyFactory.saveExecution(executionInstant, RunnerExecutionEntity.TypeExecutor.WATCHER,
-            watcherExecution.getWatcher().getType(), status, connectorException, endExecution - beginExecution);
+            watcherExecution.getWatcher().getType(), status, errorCode, errorMessage, endExecution - beginExecution);
       }
     }
 

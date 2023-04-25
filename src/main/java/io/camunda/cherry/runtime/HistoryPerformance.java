@@ -11,11 +11,10 @@ import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,31 +27,33 @@ public class HistoryPerformance {
   public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
   @Autowired
   RunnerExecutionRepository runnerExecutionRepository;
+
   Logger logger = LoggerFactory.getLogger(HistoryPerformance.class.getName());
 
-  public Instant getInstantThresholdFromPeriod(Instant instantNow, HistoryPerformance.PeriodStatistic periodStatistic) {
+  public LocalDateTime getInstantThresholdFromPeriod(LocalDateTime dateNow,
+                                                     HistoryPerformance.PeriodStatistic periodStatistic) {
     HistoryPerformance.IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
 
-    return instantNow.minusMillis(intervalRule.intervalInMinutes * intervalRule.numberOfIntervals * 60 * 1000);
+    return dateNow.minusMinutes((long) intervalRule.intervalInMinutes * intervalRule.numberOfIntervals);
   }
 
   /**
    * Get performance for a runnerType. Return a record per 15 minutes. Do not ask 1 year !
    *
    * @param runnerType      type of runner
-   * @param instantNow      Reference time
+   * @param dateNow         Reference time
    * @param periodStatistic period of statistics, to calculate the thresold and interval
    * @return performance object
    */
-  public Performance getPerformance(String runnerType, Instant instantNow, PeriodStatistic periodStatistic) {
+  public Performance getPerformance(String runnerType, LocalDateTime dateNow, PeriodStatistic periodStatistic) {
     Performance performance = new Performance();
     Map<String, Interval> mapInterval = new LinkedHashMap<>();
 
-    Instant dateThreshold = getInstantByPeriod(instantNow, periodStatistic);
+    LocalDateTime dateThreshold = getInstantByPeriod(dateNow, periodStatistic);
     IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
 
     //--- populate all the map
-    LocalDateTime indexTime = LocalDateTime.ofInstant(dateThreshold, ZoneOffset.UTC);
+    LocalDateTime indexTime = dateNow;
 
     // according the period, we determine theses parameters:
     // - the number of interval (example, FOURHOUR => 24 interval every 10 mn), 1Y =>365 interval every 1 day)
@@ -63,16 +64,15 @@ public class HistoryPerformance {
 
     for (int index = 0; index <= intervalRule.numberOfIntervals; index++) {
       String slotString = intervalRule.getSlotFromDate(indexTime);
-      mapInterval.put(slotString, new Interval(slotString,indexTime));
+      mapInterval.put(slotString, new Interval(slotString, indexTime));
       indexTime = indexTime.plusMinutes(intervalRule.intervalInMinutes);
     }
 
     //---  now we can fetch and explode data
     List<RunnerExecutionEntity> listExecutions = runnerExecutionRepository.selectRunnerRecords(runnerType,
-        dateThreshold);
+        dateThreshold, PageRequest.of(0,10000));
     for (RunnerExecutionEntity runnerExecutionEntity : listExecutions) {
-      Instant executionTime = runnerExecutionEntity.executionTime;
-      LocalDateTime slotTime = LocalDateTime.ofInstant(executionTime, ZoneOffset.UTC);
+      LocalDateTime slotTime = runnerExecutionEntity.executionTime;
       String slotString = intervalRule.getSlotFromDate(slotTime);
       Interval interval = mapInterval.get(slotString);
       if (interval == null) {
@@ -148,29 +148,18 @@ public class HistoryPerformance {
   /*                                                          */
   /* -------------------------------------------------------- */
 
-  public Instant getInstantByPeriod(Instant reference, PeriodStatistic period) {
-    switch (period) {
-    case FOURHOUR -> {
-      return getInstantByDelay(reference, 4);
-    }
-    case ONEDAY -> {
-      return getInstantByDelay(reference, 24);
-    }
-    case ONEWEEK -> {
-      return getInstantByDelay(reference, 7 * 24);
-    }
-    case ONEMONTH -> {
-      return getInstantByDelay(reference, 30 * 24);
-    }
-    case ONEYEAR -> {
-      return getInstantByDelay(reference, 365 * 24);
-    }
-    }
-    return getInstantByDelay(reference, 4);
+  public LocalDateTime getInstantByPeriod(LocalDateTime reference, PeriodStatistic period) {
+    return switch (period) {
+    case FOURHOUR -> getInstantByDelay(reference, 4);
+    case ONEDAY -> getInstantByDelay(reference, 24);
+    case ONEWEEK -> getInstantByDelay(reference, 7 * 24);
+    case ONEMONTH ->  getInstantByDelay(reference, 30 * 24);
+    case ONEYEAR -> getInstantByDelay(reference, 365 * 24);
+    };
   }
 
-  public Instant getInstantByDelay(Instant reference, int delayStatInHour) {
-    return reference.minusSeconds((long) delayStatInHour * 60 * 60);
+  public LocalDateTime getInstantByDelay(LocalDateTime reference, int delayStatInHour) {
+    return reference.minusHours(delayStatInHour);
   }
 
 
@@ -210,6 +199,7 @@ public class HistoryPerformance {
     }
 
   }
+
   public class IntervalRule {
     public int numberOfIntervals;
     public int intervalInMinutes;

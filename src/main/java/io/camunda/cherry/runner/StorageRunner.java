@@ -234,6 +234,7 @@ import java.util.List;
       this.filterName = name;
       return this;
     }
+
     public Filter type(String type) {
       this.filterType = type;
       return this;

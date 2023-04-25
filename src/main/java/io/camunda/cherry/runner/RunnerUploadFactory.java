@@ -1,6 +1,7 @@
 package io.camunda.cherry.runner;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.slf4j.Logger;
@@ -25,11 +26,15 @@ public class RunnerUploadFactory {
   Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
   @Autowired
   StorageRunner storageRunner;
-  @Value("${cherry.connectorslib.uploadpath}")
+
+  @Autowired
+  LogOperation logOperation;
+
+  @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
-  @Value("${cherry.connectorslib.classloaderpath}")
+  @Value("${cherry.connectorslib.classloaderpath:@null}")
   private String classLoaderPath;
-  @Value("${cherry.connectorslib.forcerefresh}")
+  @Value("${cherry.connectorslib.forcerefresh:false}")
   private Boolean forceRefresh;
 
   public void loadConnectorsFromClassLoaderPath() {
@@ -67,6 +72,10 @@ public class RunnerUploadFactory {
 
     logger.info("Load from directory[" + uploadPath + "]");
 
+    if (uploadPath == null) {
+      logOperation.log(OperationEntity.Operation.SERVERINFO, "No Uploadpath is provided");
+      return;
+    }
     File uploadFileDir = new File(uploadPath);
     if (uploadFileDir == null || !uploadFileDir.exists()) {
       String defaultDir = System.getProperty("user.dir");

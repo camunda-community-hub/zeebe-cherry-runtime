@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.admin;
 
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.IntFrameworkRunner;
@@ -35,7 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,18 +78,16 @@ public class RunnerRestController {
   public List<RunnerInformation> getRunnersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "period", required = false) String period) {
-    Instant instantNow = Instant.now();
+    LocalDateTime dateNow = LocalDateTime.now();
     List<AbstractRunner> listRunners = getListRunners(true);
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
-
-    Instant dateThreshold = cherryHistoricPerformance.getInstantThresholdFromPeriod(instantNow, periodStatistic);
 
     return listRunners.stream()
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, // this
             logo == null || logo,  // logo
             stats != null && stats, // stats
-            instantNow, periodStatistic))
+            dateNow, periodStatistic))
         .toList();
   }
 
@@ -102,7 +102,7 @@ public class RunnerRestController {
     } catch (Exception e) {
       logger.error("getDashboard: bad value for orderByParam[" + orderByParam + "]");
     }
-    Instant instantNow = Instant.now();
+    LocalDateTime dateNow = LocalDateTime.now();
 
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -114,9 +114,9 @@ public class RunnerRestController {
 
     for (AbstractRunner runner : listRunners) {
       Map<String, Object> infoRunner = new HashMap<>();
-      HistoryFactory.Statistic statisticRunner = historyFactory.getStatistic(runner.getType(), instantNow,
+      HistoryFactory.Statistic statisticRunner = historyFactory.getStatistic(runner.getType(), dateNow,
           periodStatistic);
-      HistoryPerformance.Performance performanceRunner = historyFactory.getPerformance(runner.getType(), instantNow,
+      HistoryPerformance.Performance performanceRunner = historyFactory.getPerformance(runner.getType(), dateNow,
           periodStatistic);
 
       infoRunner.put("name", (runner.getName() == null ? "" : runner.getName()));
@@ -141,21 +141,20 @@ public class RunnerRestController {
       totalFailed += statisticRunner.executionsFailed;
       totalBpmnError += statisticRunner.executionsBpmnErrors;
     }
-    Comparator<Map<String, Object>> orderComparator = (h1, h2) -> ((String) h1.get("name")).compareTo(
-        (String) h2.get("name"));
+    Comparator<Map<String, Object>> orderComparator;
 
-    switch (orderBy) {
-    case NAMEACS -> orderComparator = (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
-    case NAMEDES -> orderComparator = (h1, h2) -> ((String) h2.get("name")).compareTo((String) h1.get("name"));
-    case EXECASC -> orderComparator = (h1, h2) -> ((Long) h1.get("nbexec")).compareTo((Long) h2.get("nbexec"));
-    case EXECDES -> orderComparator = (h1, h2) -> ((Long) h2.get("nbexec")).compareTo((Long) h1.get("nbexec"));
-    case FAILASC -> orderComparator = (h1, h2) -> ((Long) h1.get("nbfail")).compareTo((Long) h2.get("nbfail"));
-    case FAILDES -> orderComparator = (h1, h2) -> ((Long) h2.get("nbfail")).compareTo((Long) h1.get("nbfail"));
-    }
+    orderComparator = switch (orderBy) {
+      case NAMEACS -> (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
+      case NAMEDES -> (h1, h2) -> ((String) h2.get("name")).compareTo((String) h1.get("name"));
+      case EXECASC -> (h1, h2) -> ((Long) h1.get("nbexec")).compareTo((Long) h2.get("nbexec"));
+      case EXECDES -> (h1, h2) -> ((Long) h2.get("nbexec")).compareTo((Long) h1.get("nbexec"));
+      case FAILASC -> (h1, h2) -> ((Long) h1.get("nbfail")).compareTo((Long) h2.get("nbfail"));
+      case FAILDES -> (h1, h2) -> ((Long) h2.get("nbfail")).compareTo((Long) h1.get("nbfail"));
+    };
 
     listDetails = listDetails.stream().sorted(orderComparator).toList();
-    if (listDetails.size() > 0) {
-      logger.info("RunnerRestController.orderBy[" + orderBy + "] First[" + listDetails.get(0).get("name") + "]");
+    if (! listDetails.isEmpty()) {
+      logger.info("RunnerRestController.orderBy[{}] First[{}]", orderBy, listDetails.get(0).get("name"));
     }
 
     info.put("details", listDetails);
@@ -173,9 +172,8 @@ public class RunnerRestController {
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "period", required = false) String period) {
-    Instant instantNow = Instant.now();
+    LocalDateTime dateNow = LocalDateTime.now();
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
-    Instant dateThreshold = cherryHistoricPerformance.getInstantThresholdFromPeriod(instantNow, periodStatistic);
 
     List<AbstractRunner> listRunners = getListRunners(true);
 
@@ -184,7 +182,7 @@ public class RunnerRestController {
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
             // false if not asked
-            instantNow, periodStatistic)) // 23 hours is not set
+            dateNow, periodStatistic)) // 23 hours is not set
         .findFirst();
   }
 
@@ -192,46 +190,82 @@ public class RunnerRestController {
    * Get operations for a runner. We get one week of operation
    *
    * @param runnerType        type of the runner we search the operations
-   * @param nbHoursMonitoring from now to now-nbHoursMonitoring
-   * @return
+   * @param nbHoursMonitoring from now to now-nbHoursMonitoring. Max im 30*7*24, default is 24
+   * @param operationType     ERRORS, EXECUTIONS, OPERATIONS are accepted
+   * @param pageNumber        page number, start a 0
+   * @param rowsPerPage       number of row per page. Maximum is 10000 (if someone request more than that, it will be maximum by this number
+   * @param timezoneOffset    time zone offset for the browser, so return a date according this offset
+   * @return operation according the type
    */
   @GetMapping(value = "/api/runner/operations", produces = "application/json")
   public Map<String, Object> getOperation(@RequestParam(name = "runnertype") String runnerType,
-                                          @RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring) {
+                                          @RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring,
+                                          @RequestParam(name = "operationtype") String operationType,
+                                          @RequestParam(name = "pagenumber", required = false) Integer pageNumber,
+                                          @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
+                                          @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
     Map<String, Object> info = new HashMap<>();
-    Instant instantNow = Instant.now();
-    int nbHours = 24;
-    if (nbHoursMonitoring != null)
-      nbHours = nbHoursMonitoring.intValue();
-    if (nbHours < 1)
-      nbHours = 1;
-    if (nbHours > 30 * 7 * 24)
-      nbHours = 30 * 7 * 24;
+    LocalDateTime dateNow = LocalDateTime.now();
+    int nbHours;
+    try {
+      nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring.intValue(), 1);
+      nbHours = Math.min(30 * 7 * 24, nbHours);
+    } catch (Exception e) {
+      logger.error("RunnerRestController.getOperation: value not acceptable [{}]",nbHoursMonitoring);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value not acceptable [" + nbHoursMonitoring + "]");
+    }
 
-    Instant dateThreshold = instantNow.minusSeconds(nbHours * 60 * 60);
-    List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, instantNow, dateThreshold);
+    int pageNumberInt = pageNumber == null ? 0 : pageNumber.intValue();
+    int rowsPerPageInt = rowsPerPage == null ? 20 : rowsPerPage.intValue();
+    if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
+
+    LocalDateTime dateThreshold = LocalDateTime.now().minusHours(nbHours);
+    List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
 
     // the errors
-    List<RunnerExecutionEntity> listErrors = listExecutions.stream()
-        .filter(t -> AbstractRunner.ExecutionStatusEnum.FAIL.equals(t.status)
-            || AbstractRunner.ExecutionStatusEnum.BPMNERROR.equals(t.status))
-        .toList();
-    info.put("errors", listErrors);
-
+    if ("ERRORS".equals(operationType)) {
+      List<Map<String, Object>> listErrors = listExecutions.stream()
+          .filter(t -> AbstractRunner.ExecutionStatusEnum.FAIL.equals(t.status)
+              || AbstractRunner.ExecutionStatusEnum.BPMNERROR.equals(t.status))
+          .map(t -> {
+            Map<String, Object> infoExecution = new HashMap<>();
+            infoExecution.put("typeExecutor", t.typeExecutor);
+            infoExecution.put("runnerType", t.runnerType);
+            infoExecution.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+            infoExecution.put("executionMs", t.executionMs);
+            infoExecution.put("status", t.status.toString());
+            infoExecution.put("errorCode", t.errorCode);
+            infoExecution.put("errorExplanation", t.errorExplanation);
+            return infoExecution;
+          })
+          .toList();
+      info.put("errors", listErrors);
+    }
     // operation
+    if ("EXECUTIONS".equals(operationType)) {
+      info.put("executions", listExecutions.stream() // Stream
+          .map(t -> {
+            Map<String, Object> item = new HashMap<>();
+            item.put("status", t.status.toString());
+            item.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+            item.put("durationms", t.executionMs);
+            return item;
+          }).toList());
+    }
 
-    info.put("executions", listExecutions.stream() // Stream
-        .map(t -> {
-          Map<String, Object> item = new HashMap<>();
-          item.put("status", t.status.toString());
-          item.put("executionTime", t.executionTime);
-          item.put("durationms", t.executionMs);
-          return item;
-        }).toList());
-
-    List<RunnerExecutionEntity> listOperations = operationFactory.getOperations(runnerType, instantNow, dateThreshold);
-    info.put("operations", listOperations);
-
+    if ("OPERATIONS".equals(operationType)) {
+      List<OperationEntity> listOperations = operationFactory.getOperations(runnerType, dateNow, dateThreshold);
+      List<Map<String, Object>> listOperationsMap = listOperations.stream().map(t -> {
+        Map<String, Object> infoOperation = new HashMap<>();
+        infoOperation.put("hostname", t.hostName);
+        infoOperation.put("runnerType", t.runnerType);
+        infoOperation.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+        infoOperation.put("operation", t.operation.toString());
+        return infoOperation;
+      }).toList();
+      info.put("operations", listOperationsMap);
+    }
     return info;
 
   }
@@ -410,7 +444,7 @@ public class RunnerRestController {
   private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation,
                                                       boolean withLogo,
                                                       boolean withStats,
-                                                      Instant instantNow,
+                                                      LocalDateTime dateNow,
                                                       HistoryPerformance.PeriodStatistic periodStatistic) {
     try {
       runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getName()));
@@ -418,9 +452,9 @@ public class RunnerRestController {
 
       if (withStats) {
         runnerInformation.setStatistic(
-            historyFactory.getStatistic(runnerInformation.getType(), instantNow, periodStatistic));
+            historyFactory.getStatistic(runnerInformation.getType(), dateNow, periodStatistic));
         runnerInformation.setPerformance(
-            historyFactory.getPerformance(runnerInformation.getType(), instantNow, periodStatistic));
+            historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic));
       }
 
     } catch (JobRunnerFactory.OperationException e) {
@@ -454,6 +488,23 @@ public class RunnerRestController {
       logger.error("Unknow PeriodStatisctic[" + period + "]");
       return HistoryPerformance.PeriodStatistic.FOURHOUR;
     }
+  }
+
+  /**
+   * Return from a local Time a string,according the offset of the user
+   *
+   * @param time           time to transform
+   * @param timezoneOffset offset of the user
+   * @return the date as a String
+   */
+  private String dateTimeToHumanString(LocalDateTime time, long timezoneOffset) {
+    if (time == null)
+      return null;
+    // Attention, we have to get the time in UTC first
+    //  datecreation: "2021-01-30T18:52:10.973"
+    LocalDateTime localDateTime = time.minusMinutes(timezoneOffset);
+    DateTimeFormatter sdt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    return localDateTime.format(sdt);
   }
 
   public enum DisplayOrderBy {NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES}

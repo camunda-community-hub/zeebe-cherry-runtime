@@ -22,7 +22,10 @@ class RunnerMonitoring extends React.Component {
       runner: props.runnerDisplay,
       timestamp: props.timestamp,
       display: {
-        loading: false
+        loading: false,
+        pageNumberErrors:0,
+        pageNumberEExecutions:0,
+        pageNumberOperations:0,
       }
     };
     this.refreshState = this.refreshState.bind(this);
@@ -31,7 +34,8 @@ class RunnerMonitoring extends React.Component {
   componentDidMount() {
     console.log("RunnerMonitoring.componentDidMount: BEGIN runner={" + this.state.runner.name);
     this.refreshState();
-    this.loadStatistics();
+    this.refreshLoadAllStatistics();
+
     console.log("RunnerMonitoring.componentDidMount: END");
   }
 
@@ -60,7 +64,7 @@ class RunnerMonitoring extends React.Component {
       <div>
         <div style={{position: "absolute", top: "0", right: "0"}}>
           <Button className="btn btn-sm"
-                  onClick={() => this.loadStatistics()}
+                  onClick={() => this.refreshLoadAllStatistics()}
                   disabled={this.state.display.loading}
           >
             <ArrowRepeat/> Refresh
@@ -273,8 +277,20 @@ class RunnerMonitoring extends React.Component {
     }
   }
 
-  loadStatistics() {
-    let uri = 'cherry/api/runner/operations?runnertype=' + this.state.runner.type+"&nbhoursmonitoring=2";
+  refreshLoadAllStatistics() {
+    this.loadStatistics("ERRORS",24,this.state.display.pageNumberErrors);
+    this.loadStatistics("EXECUTIONS",24,this.state.display.pageNumberEExecutions);
+    this.loadStatistics("OPERATIONS",24,this.state.display.pageNumberOperations);
+
+
+  }
+  loadStatistics(operationtype, numberOfMonitoring, pageNumber) {
+    let uri = 'cherry/api/runner/operations?runnertype=' + this.state.runner.type
+      +"&nbhoursmonitoring="+numberOfMonitoring
+    +"&operationtype="+operationtype
+      +"pagenumber="+pageNumber
+      +"rowsperpage=20"
+    +"&timezoneoffset="+(new Date()).getTimezoneOffset();
     console.log("RunnerMonitoring.loadStatisticsCallbackCallback http[" + uri + "]");
 
     this.setDisplayProperty("loading", true);
@@ -291,7 +307,12 @@ class RunnerMonitoring extends React.Component {
       console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
       this.setState({status: "Error"});
     } else {
-      this.setState({operations: httpPayload.getData()});
+      let operationsContent=this.state.operations;
+      // Complete the variable
+      for (let [key, value] of httpPayload.getData()) {
+        operationsContent[key]=value;
+      }
+      this.setState({operations: operationsContent});
 
     }
   }

@@ -78,7 +78,8 @@ public class RunnerFactory {
 
   /**
    * Get the runner by it's entity
-   * @param runnerDefinitionEntity  runnerEntity
+   *
+   * @param runnerDefinitionEntity runnerEntity
    * @return the runner
    */
   public AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
