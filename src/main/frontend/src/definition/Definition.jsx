@@ -7,7 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import { Modal, Button } from "react-bootstrap";
+import {Button, Modal} from "react-bootstrap";
 
 import RestCallService from "../services/RestCallService";
 import RunnerDefinition from "./RunnerDefinition";
@@ -17,7 +17,7 @@ class Definition extends React.Component {
 
   constructor(_props) {
     super();
-    this.state = {runners: [], isOpen:false};
+    this.state = {runners: [], isOpen: false};
     this.openModal = this.openModal.bind(this);
     this.closeModal = this.closeModal.bind(this);
   }
@@ -46,9 +46,9 @@ class Definition extends React.Component {
             </thead>
             <tbody>
             {this.state.runners ? this.state.runners.map((runner, _index) =>
-              <tr onClick={()=>this.openModal(runner)}>
+              <tr onClick={() => this.openModal(runner)}>
                 <td>
-                  <img style={{width: "30px"}} src={runner.logo}/>
+                  <img style={{width: "30px"}} src={runner.logo} alt="logo runner"/>
                   &nbsp;
                   {runner.name}</td>
                 <td>{runner.type}</td>
@@ -67,7 +67,7 @@ class Definition extends React.Component {
           <div className="card-body">
 
             <div className="block" style={{paddingTop: "10px"}}>
-              <a target="_cherryElementTemplate" href="/cherry/api/runner/templatefile?"
+              <a target="_cherryElementTemplate" href={this.getDownloadUrl()}
                  className="button is-info"
                  download>Download Collection Element Template</a>
             </div>
@@ -113,14 +113,27 @@ class Definition extends React.Component {
     }
   }
 
-  openModal ( runner ) {
+  openModal(runner) {
     console.log("Open modal");
 
-    this.setState({ isOpen: true, currentrunner: runner })}
-  closeModal () {
-    console.log("Close modal");
-    this.setState({ isOpen: false })}
+    this.setState({isOpen: true, currentrunner: runner})
+  }
 
+  closeModal() {
+    console.log("Close modal");
+    this.setState({isOpen: false})
+  }
+
+  getDownloadUrl() {
+    let position = window.location.href.indexOf(":", 7); // skype http: or https:
+    let urlHref = window.location.href.substring(0,position);
+
+    if (urlHref === "http://localhost")
+      return "http://localhost:9081/cherry/api/runner/templatefile?"
+    else
+      return "/cherry/api/runner/templatefile?"
+
+  }
 }
 
 export default Definition;

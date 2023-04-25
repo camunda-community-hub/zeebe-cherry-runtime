@@ -26,8 +26,7 @@ class RunnerDefinition extends React.Component {
           <tbody>
           <tr>
             <td>
-              <div style={{border: "1px solid", padding: "5px", textAlign: "center", boxShadow: "5px 5px"}}
-                   bis_skin_checked="1">
+              <div style={{border: "1px solid", padding: "5px", textAlign: "center", boxShadow: "5px 5px"}}>
                 <img style={{width: "50px"}} src={this.state.runner.logo} alt="logo"/>
               </div>
             </td>
@@ -76,7 +75,7 @@ class RunnerDefinition extends React.Component {
                     <Card.Header style={{backgroundColor: "rgba(0,0,0,.03)"}}>Element template</Card.Header>
                     <Card.Body>
 
-                      <a target="_cherryElementTemplate" href="/cherry/api/runner/templatefile?name={this.state.runner.name}"
+                      <a target="_cherryElementTemplate" href={this.getDownloadUrlRunner(this.state.runner.name)}
                          className="button is-info"
                          download>Download {this.state.runner.name} Element Template</a>
 
@@ -159,6 +158,17 @@ class RunnerDefinition extends React.Component {
 
 
       </div>);
+  }
+
+  getDownloadUrlRunner(runner) {
+    let position = window.location.href.indexOf(":", 7); // skype http: or https:
+    let urlHref = window.location.href.substring(0,position);
+
+    if (urlHref === "http://localhost")
+      return "http://localhost:9081/cherry/api/runner/templatefile?name="+runner.name;
+    else
+      return "/cherry/api/runner/templatefile?name="+runner.name;
+
   }
 }
 
