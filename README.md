@@ -113,11 +113,11 @@ mvn spring-boot:run
 Build the image with 
 ````
 mvn install
-docker build -t zeebe-cherryframework:1.0.0 .
+docker build -t zeebe-cherryruntime:3.0.0 .
 ````
 Run it with 
 `````
-docker run -p 8888:8080 zeebe-cherryframework:1.0.0 .
+docker run -p 8888:8080 zeebe-cherryruntime:3.0.0 .
 
 `````
 ## Docker Compose
