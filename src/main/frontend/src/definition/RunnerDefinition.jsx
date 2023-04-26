@@ -75,7 +75,7 @@ class RunnerDefinition extends React.Component {
                     <Card.Header style={{backgroundColor: "rgba(0,0,0,.03)"}}>Element template</Card.Header>
                     <Card.Body>
 
-                      <a target="_cherryElementTemplate" href={this.getDownloadUrlRunner(this.state.runner.name)}
+                      <a target="top" href={this.getDownloadUrlRunner(this.state.runner)}
                          className="button is-info"
                          download>Download {this.state.runner.name} Element Template</a>
 

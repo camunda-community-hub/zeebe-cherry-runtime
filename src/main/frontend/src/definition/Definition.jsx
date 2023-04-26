@@ -67,7 +67,7 @@ class Definition extends React.Component {
           <div className="card-body">
 
             <div className="block" style={{paddingTop: "10px"}}>
-              <a target="_cherryElementTemplate" href={this.getDownloadUrl()}
+              <a target="top" href={this.getDownloadUrl()}
                  className="button is-info"
                  download>Download Collection Element Template</a>
             </div>
