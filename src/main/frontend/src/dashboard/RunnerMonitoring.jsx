@@ -23,10 +23,11 @@ class RunnerMonitoring extends React.Component {
       timestamp: props.timestamp,
       display: {
         loading: false,
-        pageNumberErrors:0,
-        pageNumberEExecutions:0,
-        pageNumberOperations:0,
-      }
+        pageNumberErrors: 0,
+        pageNumberEExecutions: 0,
+        pageNumberOperations: 0,
+      },
+      operations:{}
     };
     this.refreshState = this.refreshState.bind(this);
   }
@@ -59,7 +60,6 @@ class RunnerMonitoring extends React.Component {
   /* className row does not work height gross and gross */
   render() {
     console.log("RunnerMonitoring.render ");
-    debugger;
     return (
       <div>
         <div style={{position: "absolute", top: "0", right: "0"}}>
@@ -114,18 +114,16 @@ class RunnerMonitoring extends React.Component {
                   <td style={{padding: "20px", maxHeight: "50px"}}>
                     <RunnerChart type="Executions" runnerDisplay={this.state.runner} title={true}/>
                   </td>
-                </tr>
-                <tr>
                   <td style={{padding: "20px", maxHeight: "50px"}}>
                     <RunnerChart type="Errors" runnerDisplay={this.state.runner} title={true}/>
                   </td>
                 </tr>
                 <tr>
+                </tr>
+                <tr>
                   <td style={{padding: "20px", maxHeight: "50px"}}>
                     <RunnerChart type="DurationsAvg" runnerDisplay={this.state.runner} title={true}/>
                   </td>
-                </tr>
-                <tr>
                   <td style={{padding: "20px", maxHeight: "50px"}}>
                     <RunnerChart type="DurationsPic" runnerDisplay={this.state.runner} title={true}/>
                   </td>
@@ -163,48 +161,29 @@ class RunnerMonitoring extends React.Component {
             </table>
 
           </Tab>
-          <Tab eventKey="error" title="Errors">
+          <Tab eventKey="errors" title="Errors">
             <h1>Errors</h1>
             <table className="table">
               <thead>
               <tr>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Errors</th>
+                <th>Code</th>
                 <th>Explanation</th>
               </tr>
               </thead>
               {this.state.operations && this.state.operations.errors &&
                 this.state.operations.errors.map((error, _index) =>
                   <tr>
-                    <td>{error.humanTimeSlot}</td>
+                    <td>{error.executionTime}</td>
                     <td>{error.status}</td>
-                    <td>{error.explanations}</td>
+                    <td>{error.errorCode}</td>
+                    <td>{error.errorExplanation}</td>
                   </tr>
                 )}
             </table>
-
           </Tab>
-          <Tab eventKey="operation" title="Operations">
-            <h1>Operations</h1>
-            <table className="table">
-              <thead>
-              <tr>
-                <th>Date</th>
-                <th>Operation</th>
-              </tr>
-              </thead>
-              {this.state.operations && this.state.operations.errors &&
-                this.state.operations.errors.map((operation, _index) =>
-                  <tr>
-                    <td>{operation.humanTimeSlot}</td>
-                    <td>{operation.name}</td>
-                  </tr>
-                )}
 
-            </table>
-
-          </Tab>
           <Tab eventKey="Executions" title="Executions">
             <table className="table">
               <thead>
@@ -222,6 +201,29 @@ class RunnerMonitoring extends React.Component {
                     <td style={{textAlign: "right"}}>{exec.durationms} ms</td>
                   </tr>
                 )}
+            </table>
+          </Tab>
+
+          <Tab eventKey="operation" title="Operations">
+            <h1>Operations</h1>
+            <table className="table">
+              <thead>
+              <tr>
+                <th>Date</th>
+                <th>Operation</th>
+                <th>Host name</th>
+              </tr>
+              </thead>
+              {this.state.operations && this.state.operations.operations &&
+                this.state.operations.operations.map((operation, _index) =>
+                  <tr>
+                    <td>{operation.executionTime}</td>
+                    <td>{operation.operation}</td>
+                    <td>{operation.hostname}</td>
+
+                  </tr>
+                )}
+
             </table>
 
           </Tab>
@@ -278,19 +280,20 @@ class RunnerMonitoring extends React.Component {
   }
 
   refreshLoadAllStatistics() {
-    this.loadStatistics("ERRORS",24,this.state.display.pageNumberErrors);
-    this.loadStatistics("EXECUTIONS",24,this.state.display.pageNumberEExecutions);
-    this.loadStatistics("OPERATIONS",24,this.state.display.pageNumberOperations);
+    this.loadStatistics("ERRORS", 24, this.state.display.pageNumberErrors);
+    this.loadStatistics("EXECUTIONS", 24, this.state.display.pageNumberEExecutions);
+    this.loadStatistics("OPERATIONS", 24, this.state.display.pageNumberOperations);
 
 
   }
+
   loadStatistics(operationtype, numberOfMonitoring, pageNumber) {
     let uri = 'cherry/api/runner/operations?runnertype=' + this.state.runner.type
-      +"&nbhoursmonitoring="+numberOfMonitoring
-    +"&operationtype="+operationtype
-      +"pagenumber="+pageNumber
-      +"rowsperpage=20"
-    +"&timezoneoffset="+(new Date()).getTimezoneOffset();
+      + "&operationtype=" + operationtype
+      + "&nbhoursmonitoring=" + numberOfMonitoring
+      + "&pagenumber=" + pageNumber
+      + "&rowsperpage=20"
+      + "&timezoneoffset=" + (new Date()).getTimezoneOffset();
     console.log("RunnerMonitoring.loadStatisticsCallbackCallback http[" + uri + "]");
 
     this.setDisplayProperty("loading", true);
@@ -301,16 +304,20 @@ class RunnerMonitoring extends React.Component {
 
   loadStatisticsCallback(httpPayload) {
     console.log("DashBoard.loadStatisticsCallbackCallback");
-
     this.setDisplayProperty("loading", false);
     if (httpPayload.isError()) {
       console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
       this.setState({status: "Error"});
     } else {
-      let operationsContent=this.state.operations;
+
+      let operationsContent = this.state.operations;
+      if (! operationsContent) {
+        operationsContent={};
+      }
       // Complete the variable
-      for (let [key, value] of httpPayload.getData()) {
-        operationsContent[key]=value;
+      let operationsServer = httpPayload.getData();
+      for (var i in operationsServer) {
+        operationsContent[i] = operationsServer[i];
       }
       this.setState({operations: operationsContent});
 

@@ -63,13 +63,14 @@ class RunnerDashboard extends React.Component {
 
                         </td>
                         <td style={{padding: "5px 0px 0px 25px"}}> {this.state.runner.name}
-                          {this.state.runner.nbfail > 0 && <Tag type="red" title="Errors"> {this.state.runner.nbfail} Errors </Tag>}
+                          {this.state.runner.statistic && this.state.runner.statistic.executionsFailed > 0 && <Tag type="red" title="Fails"> {this.state.runner.statistic.executionsFailed} Fails </Tag>}
+                          {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors > 0 && <Tag type="red" title="BPMN Error"> {this.state.runner.statistic.executionsBpmnErrors} BPMN Errors </Tag>}
                           {this.state.runner.nboverthreshold > 0 && <Tag type="purple" title="Over threshold"> {this.state.runner.nboverthreshold} Errors </Tag>}
                           <br/>
                           <br/>
                           {this.state.runner.statistic && this.state.runner.statistic.executionsSucceeded} Successful,
                           {this.state.runner.statistic && this.state.runner.statistic.executionsFailed} failed,
-                          {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors} BPMN Error<br/>
+                          {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors} BPMN Errors<br/>
 
                           <span style={{fontStyle: "italic", fontSize: "small"}}>{this.state.runner.collectionname}&nbsp;({this.state.runner.classrunner})</span>
 

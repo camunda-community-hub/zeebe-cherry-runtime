@@ -25,6 +25,7 @@ import java.util.Map;
 public class HistoryPerformance {
 
   public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
+  public static final String HUMAN_DATE_FORMATER = "yyyy-MM-dd HH:mm";
   @Autowired
   RunnerExecutionRepository runnerExecutionRepository;
 
@@ -194,7 +195,7 @@ public class HistoryPerformance {
 
     public Interval(String slot, LocalDateTime slotTime) {
       this.slot = slot;
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(HUMAN_DATE_FORMATER);
       this.humanTimeSlot = formatter.format(slotTime);
     }
 

@@ -8,14 +8,13 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
-import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -94,11 +93,34 @@ public class HistoryFactory {
   public List<RunnerExecutionEntity> getExecutions(String runnerType,
                                                    LocalDateTime dateNow,
                                                    LocalDateTime dateThreshold,
-                                                   int pageNumberInt, int rowsPerPageInt) {
+                                                   int pageNumberInt,
+                                                   int rowsPerPageInt) {
 
+    return runnerExecutionRepository.selectRunnerRecords(runnerType, dateThreshold,
+        PageRequest.of(pageNumberInt, rowsPerPageInt));
 
-    return runnerExecutionRepository.selectRunnerRecords(runnerType,
-        dateThreshold, PageRequest.of(pageNumberInt, rowsPerPageInt));
+  }
+
+  /**
+   * Get only error (BPMNERROR or FAIL)
+   *
+   * @param runnerType     runner type
+   * @param dateNow        Date now for the reference
+   * @param dateThreshold  date from
+   * @param pageNumberInt  Page number
+   * @param rowsPerPageInt number of rows per page
+   * @return list of Errors
+   */
+  public List<RunnerExecutionEntity> getExecutionsErrors(String runnerType,
+                                                         LocalDateTime dateNow,
+                                                         LocalDateTime dateThreshold,
+                                                         int pageNumberInt,
+                                                         int rowsPerPageInt) {
+
+    return runnerExecutionRepository.selectRunnerRecordsByStates(runnerType, dateThreshold,
+        List.of(AbstractRunner.ExecutionStatusEnum.FAIL,
+            AbstractRunner.ExecutionStatusEnum.BPMNERROR), // FAIL and ERROR
+        PageRequest.of(pageNumberInt, rowsPerPageInt));
 
   }
 
@@ -116,7 +138,7 @@ public class HistoryFactory {
    * @param typeExecutor  type of executor
    * @param runnerType    name of runner
    * @param status        status of execution
-   * @param errorMessage         if the execution get an error, provide it
+   * @param errorMessage  if the execution get an error, provide it
    * @param durationInMs  duration of this execution
    */
   public void saveExecution(Instant executionTime,

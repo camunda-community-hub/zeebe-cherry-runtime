@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Service
 public class LogOperation {
@@ -34,6 +37,7 @@ public class LogOperation {
     logger.info("Operation " + operation.toString() + " [" + message);
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = operation;
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.hostName = getHostName();
     operationEntity.message = message;
     saveOperationEntity(operationEntity);
@@ -50,6 +54,7 @@ public class LogOperation {
     logger.info("Operation " + operation.toString() + " on Runner[" + runner.getName() + "] " + message);
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = operation;
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.runnerType = runner.getType();
     operationEntity.hostName = getHostName();
     operationEntity.message = message;
@@ -68,6 +73,7 @@ public class LogOperation {
     logger.error("Error " + message + " on Runner[" + runner.getName() + "] :" + e.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = OperationEntity.Operation.ERROR;
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.runnerType = runner.getType();
     operationEntity.hostName = getHostName();
     operationEntity.message = message + ": " + e.getMessage();
@@ -79,6 +85,7 @@ public class LogOperation {
     logger.error("Error " + message + " on Runner[" + runnerType + "] :" + er.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = OperationEntity.Operation.ERROR;
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.runnerType = runnerType;
     operationEntity.hostName = getHostName();
     operationEntity.message = message + ": " + er.getMessage();
@@ -88,6 +95,7 @@ public class LogOperation {
   public void logException(String runnerType, String message, Exception ex) {
     logger.error("Error " + message + " on Runner[" + runnerType + "] :" + ex.getMessage());
     OperationEntity operationEntity = new OperationEntity();
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.operation = OperationEntity.Operation.ERROR;
     operationEntity.runnerType = runnerType;
     operationEntity.hostName = getHostName();
@@ -104,6 +112,12 @@ public class LogOperation {
    */
   public void logError(String message, Exception e) {
     logger.error("Error " + message + " :" + e.getMessage());
+    OperationEntity operationEntity = new OperationEntity();
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+    operationEntity.operation = OperationEntity.Operation.ERROR;
+    operationEntity.hostName = getHostName();
+    operationEntity.message = message + ": " + e.getMessage();
+    saveOperationEntity(operationEntity);
 
   }
 

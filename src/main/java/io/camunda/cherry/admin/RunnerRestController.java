@@ -224,13 +224,11 @@ public class RunnerRestController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
 
     LocalDateTime dateThreshold = getLocalDateTimeNow().minusHours(nbHours);
-    List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
 
     // the errors
     if ("ERRORS".equals(operationType)) {
+      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutionsErrors(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
       List<Map<String, Object>> listErrors = listExecutions.stream()
-          .filter(t -> AbstractRunner.ExecutionStatusEnum.FAIL.equals(t.status)
-              || AbstractRunner.ExecutionStatusEnum.BPMNERROR.equals(t.status))
           .map(t -> {
             Map<String, Object> infoExecution = new HashMap<>();
             infoExecution.put("typeExecutor", t.typeExecutor);
@@ -247,6 +245,8 @@ public class RunnerRestController {
     }
     // operation
     if ("EXECUTIONS".equals(operationType)) {
+      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
+
       info.put("executions", listExecutions.stream() // Stream
           .map(t -> {
             Map<String, Object> item = new HashMap<>();
@@ -488,7 +488,7 @@ public class RunnerRestController {
         return HistoryPerformance.PeriodStatistic.FOURHOUR;
       return HistoryPerformance.PeriodStatistic.valueOf(period);
     } catch (Exception e) {
-      logger.error("Unknow PeriodStatisctic[" + period + "]");
+      logger.error("Unknow PeriodStatistic[" + period + "]");
       return HistoryPerformance.PeriodStatistic.FOURHOUR;
     }
   }
@@ -506,7 +506,7 @@ public class RunnerRestController {
     // Attention, we have to get the time in UTC first
     //  datecreation: "2021-01-30T18:52:10.973"
     LocalDateTime localDateTime = time.minusMinutes(timezoneOffset);
-    DateTimeFormatter sdt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    DateTimeFormatter sdt = DateTimeFormatter.ofPattern(HistoryPerformance.HUMAN_DATE_FORMATER);
     return localDateTime.format(sdt);
   }
 
