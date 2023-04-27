@@ -171,6 +171,7 @@
   </dependencies>
 
   <build>
+
     <plugins>
       <!-- connect the React application in the Springboot application -->
       <plugin>
@@ -182,6 +183,7 @@
         <executions>
           <execution>
             <id>install node and npm</id>
+            <phase>install</phase>
             <goals>
               <goal>install-node-and-npm</goal>
             </goals>
@@ -246,6 +248,7 @@
           </dependency>
         </dependencies>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -266,26 +269,6 @@
         </configuration>
       </plugin>
 
-      <!-- build the jar with HTML -->
-      <!--
-      <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-dependency-plugin</artifactId>
-      <executions>
-        <execution>
-          <id>unpack-resources</id>
-          <goals>
-            <goal>unpack-dependencies</goal>
-          </goals>
-          <phase>generate-sources</phase>
-          <configuration>
-            <outputDirectory>resources</outputDirectory>
-            <includeArtifactIds>target/classes</includeArtifactIds>
-          </configuration>
-        </execution>
-      </executions>
-      </plugin>
-      -->
       <!-- build the jar with all dependencies -->
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
@@ -308,7 +291,6 @@
           </archive>
         </configuration>
       </plugin>
-
 
 
     </plugins>

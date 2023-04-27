@@ -21,13 +21,13 @@ zeebe.client:
   worker:
     maxJobsActive: 32
     threads: 1
-server.port: 8080
+server.port: 9081
 logging.level.root: INFO
 
   # Spring Boot Configuration
 spring.application.name: ZeebeCherry
   # TODO change this to /cherry. Need to figure out how to access this from mustache templates
-# server.servlet.context-path: /
+server.servlet.context-path: /
 # spring.mustache.prefix: classpath:static/templates/
 
 # spring.datasource:
