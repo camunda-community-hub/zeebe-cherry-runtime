@@ -23,9 +23,7 @@ class Definition extends React.Component {
   }
 
   componentDidMount() {
-    console.log("Definition.componentDidMount: BEGIN");
     this.refreshList();
-    console.log("Definition.componentDidMount: END");
   }
 
   /*           {JSON.stringify(this.state.runners, null, 2) } */
@@ -125,14 +123,9 @@ class Definition extends React.Component {
   }
 
   getDownloadUrl() {
-    let position = window.location.href.indexOf(":", 7); // skype http: or https:
-    let urlHref = window.location.href.substring(0,position);
-
-    if (urlHref === "http://localhost")
-      return "http://localhost:9081/cherry/api/runner/templatefile?"
-    else
-      return "/cherry/api/runner/templatefile?"
-
+    let restCallService = RestCallService.getInstance();
+    let urlServer = restCallService.getUrlServer();
+    return urlServer+"/cherry/api/runner/templatefile?";
   }
 }
 

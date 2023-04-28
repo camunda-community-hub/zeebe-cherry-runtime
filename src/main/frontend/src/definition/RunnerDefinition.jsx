@@ -8,6 +8,7 @@
 
 import React from 'react';
 import {Card, Tab, Tabs} from 'react-bootstrap';
+import RestCallService from "../services/RestCallService";
 
 
 class RunnerDefinition extends React.Component {
@@ -161,14 +162,9 @@ class RunnerDefinition extends React.Component {
   }
 
   getDownloadUrlRunner(runner) {
-    let position = window.location.href.indexOf(":", 7); // skype http: or https:
-    let urlHref = window.location.href.substring(0,position);
-
-    if (urlHref === "http://localhost")
-      return "http://localhost:9081/cherry/api/runner/templatefile?name="+runner.name;
-    else
-      return "/cherry/api/runner/templatefile?name="+runner.name;
-
+    let restCallService = RestCallService.getInstance();
+    let urlServer = restCallService.getUrlServer();
+    return urlServer+"/cherry/api/runner/templatefile?name="+runner.name;
   }
 }
 

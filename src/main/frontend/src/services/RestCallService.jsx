@@ -13,13 +13,34 @@ import HttpResponse from './HttpResponse';
 class RestCallService {
 
   constructor() {
-    console.log("RestCallService: ------------ constructor ");
+    // console.log("RestCallService: ------------ constructor ");
   }
 
 
   static getInstance() {
     // console.log("FactoryService.getInstance")
     return new RestCallService();
+  }
+
+
+  /**
+   * The React proxy does not work for Href, so we have to simulate it here
+   * proxy is configured in package.json, and it is actif when react is working under localhost:3000
+   * "proxy": "http://127.0.0.1:9081"
+   * @returns {string}
+   */
+  getUrlServer() {
+    console.log("RestCallService.getUrlServer");
+    debugger;
+    let position = window.location.href.indexOf(":", 7); // skype http: or https:
+    let urlHref = window.location.href.substring(0, position);
+
+    if (window.location.host === "http://localhost:3000") {
+      // put the same value here as in the package.json
+      return "http://localhost:9081";
+    }
+    else
+      return "";
   }
 
 
@@ -30,7 +51,6 @@ class RestCallService {
       headers: headers
     };
     uri = uri + "&timezoneoffset=" + (new Date()).getTimezoneOffset();
-    console.log("RestCallService.getJson: uri=" + uri);
     axios.get(uri, requestOptions)
       .then(axiosPayload => {
         // console.log("RestCallService.getJson: payload:"+JSON.stringify(axiosPayload.data));
@@ -63,7 +83,7 @@ class RestCallService {
     axios.post(uri, param, requestOptions)
       .then(axiosPayload => {
         // console.log("RestCallService.getJson: payload:"+JSON.stringify(axiosPayload.data));
-        if (fctToCallback !=null) {
+        if (fctToCallback != null) {
           let httpResponse = new HttpResponse(axiosPayload, null);
           fctToCallback.call(objToCall, httpResponse);
         } else {
@@ -78,7 +98,7 @@ class RestCallService {
           window.location = homeTogh;
           return;
         }
-        if (fctToCallback !=null) {
+        if (fctToCallback != null) {
           let httpResponse = new HttpResponse({}, error)
           fctToCallback.call(objToCall, httpResponse);
         } else {
@@ -101,8 +121,8 @@ class RestCallService {
     var selfUri = uri;
     axios.put(uri, param, requestOptions)
       .then(axiosPayload => {
-        console.log("RestCallService.putJson: payload:"+JSON.stringify(axiosPayload.data));
-        if (fctToCallback !=null) {
+        console.log("RestCallService.putJson: payload:" + JSON.stringify(axiosPayload.data));
+        if (fctToCallback != null) {
           let httpResponse = new HttpResponse(axiosPayload, null);
           fctToCallback.call(objToCall, httpResponse);
         } else {
@@ -117,7 +137,7 @@ class RestCallService {
           window.location = homeTogh;
           return;
         }
-        if (fctToCallback !=null) {
+        if (fctToCallback != null) {
           let httpResponse = new HttpResponse({}, error)
           fctToCallback.call(objToCall, httpResponse);
         } else {
