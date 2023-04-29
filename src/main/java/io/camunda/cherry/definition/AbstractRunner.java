@@ -5,7 +5,7 @@
 /*  The Runner is the basis for Workers and Connector to operate in   */
 /* the Cherry Framework. A Runner defined                            */
 /*   - a type                                                           */
-/*   - list of Input/Output/Error                                       */
+/*   - list of Input/Output/ControllerPage                                       */
 /*   - optionally, description, logo                              */
 /* The execution depends on the class: Worker or Connector              */
 /*                                                                      */
@@ -106,7 +106,7 @@ public abstract class AbstractRunner {
    * @param type           name of the worker
    * @param listInput      list of Input parameters for the worker
    * @param listOutput     list of Output parameters for the worker
-   * @param listBpmnErrors list of potential BPMN Error the worker can generate
+   * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
 
   public AbstractRunner(String type,
@@ -476,17 +476,7 @@ public abstract class AbstractRunner {
   // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
   // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
 
-  /**
-   * Set the value. Worker must use this method, then the class can verify the output contract is respected
-   *
-   * @param parameterName name of the variable
-   * @param value         value of the variable
-   * @deprecated use setOutputValue() instead
-   */
-  @Deprecated
-  public void setValue(String parameterName, Object value, AbstractWorker.ContextExecution contextExecution) {
-    setOutputValue(parameterName, value, contextExecution);
-  }
+
 
   /**
    * Set a fileVariable value
@@ -508,7 +498,7 @@ public abstract class AbstractRunner {
       FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariableValue);
       contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
     } catch (Exception e) {
-      logError("parameterName[" + parameterName + "] Error during setFileVariable read: " + e);
+      logError("parameterName[" + parameterName + "] ControllerPage during setFileVariable read: " + e);
       throw new ZeebeBpmnError(BPMNERROR_SAVE_FILEVARIABLE,
           "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
     }

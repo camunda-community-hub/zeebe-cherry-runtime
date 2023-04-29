@@ -1,19 +1,21 @@
 // -----------------------------------------------------------
 //
-// Parameters
+// Log
 //
-// List of all runners available
+// Access the log of the runtime
 //
 // -----------------------------------------------------------
 
 import React from 'react';
 
-class Parameters extends React.Component {
+class Log extends React.Component {
 
 
   constructor(_props) {
     super();
-    this.state = {};
+    this.state = {
+      display: {loading:false}
+    };
   }
 
   componentDidMount() {
@@ -23,7 +25,7 @@ class Parameters extends React.Component {
 
   /*           {JSON.stringify(this.state.runners, null, 2) } */
   render() {
-    return(<div className={"container"}><h1>Parameters</h1></div>)
+    return(<div className={"container"}><h1>Log</h1></div>)
   }
 
   /**
@@ -38,4 +40,4 @@ class Parameters extends React.Component {
   }
 }
 
-export default Parameters;
+export default Log;

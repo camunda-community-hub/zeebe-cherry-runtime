@@ -54,7 +54,7 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
         Arrays.asList(BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Load file error"),
             BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
                 "Folder does not exist, or not visible from the server"),
-            BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "Error during writing the file"),
+            BpmnError.getInstance(BPMNERROR_WRITE_FILE_ERROR, "ControllerPage during writing the file"),
             BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION,
                 "Incorrect storage definition")));
   }

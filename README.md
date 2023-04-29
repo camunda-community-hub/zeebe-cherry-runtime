@@ -154,7 +154,7 @@ Each Runner follows the same pattern:
   For example, the OfficeToPdf worker produces a PDF document
 
 * it may produce some BPM errors.
-  If the conversion to a PDF document fails, a BPMN Error is thrown.
+  If the conversion to a PDF document fails, a BPMN ControllerPage is thrown.
 
 * Check out each collection and Runner to see the detail.
 
@@ -607,7 +607,7 @@ Same as input, a list of outputs is required. This list will explain what your c
 
 
 **List of BPMN Errors**
-Give the list of BPMN Error that your provide. This list will be available in the documentation.
+Give the list of BPMN ControllerPage that your provide. This list will be available in the documentation.
 
 
 **Optional method**

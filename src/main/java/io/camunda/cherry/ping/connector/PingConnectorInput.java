@@ -30,7 +30,7 @@ public class PingConnectorInput extends AbstractConnectorInput {
     return Arrays.asList(RunnerParameter.getInstance("message", "Message", String.class, RunnerParameter.Level.OPTIONAL,
             "Message to log"),
         RunnerParameter.getInstance("delay", "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
-        RunnerParameter.getInstance("throwErrorPlease", "Throw Error Please", Boolean.class,
+        RunnerParameter.getInstance("throwErrorPlease", "Throw ControllerPage Please", Boolean.class,
             RunnerParameter.Level.OPTIONAL, "If true, then the connector throw an error").setVisibleInTemplate());
   }
 

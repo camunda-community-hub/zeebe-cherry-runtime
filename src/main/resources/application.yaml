@@ -24,6 +24,9 @@ zeebe.client:
 server.port: 9081
 logging.level.root: INFO
 
+# return message with BAD_REQUEST to the client
+server.error.include-message: always
+
   # Spring Boot Configuration
 spring.application.name: ZeebeCherry
   # TODO change this to /cherry. Need to figure out how to access this from mustache templates

@@ -152,7 +152,7 @@ public class RunnerDecorationTemplate {
     // check if the runner generates error
     if (!runner.getListBpmnErrors().isEmpty()) {
       //
-      //            "label": "Error Expression",
+      //            "label": "ControllerPage Expression",
       //            "description": "Expression to define BPMN Errors to throw",
       //            "group": "errors",
       //            "type": "Hidden",
@@ -162,7 +162,7 @@ public class RunnerDecorationTemplate {
       //                "key": "errorExpression"
       //
       HashMap<String, Object> errorParameters = new HashMap<>();
-      errorParameters.put(ATTR_LABEL, "Error Expression");
+      errorParameters.put(ATTR_LABEL, "ControllerPage Expression");
       errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
       errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");

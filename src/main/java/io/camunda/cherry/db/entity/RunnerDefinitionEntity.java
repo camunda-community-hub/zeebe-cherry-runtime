@@ -32,9 +32,17 @@ public class RunnerDefinitionEntity {
   @Column(name = "origin", length = 1000)
   @Enumerated(EnumType.STRING)
   public Origin origin;
+
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "jarid")
   public JarStorageEntity jar;
+
+  @Column(name="githubrepo", length=1000)
+  public String githubRepo;
+
+  @Column(name="release", length=50)
+  public String release;
+
   @Column(name = "activerunner")
   public boolean activeRunner;
   @Id
@@ -42,6 +50,6 @@ public class RunnerDefinitionEntity {
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   public Long id;
 
-  public enum Origin {EMBEDED, JARFILE}
+  public enum Origin {EMBEDDED, JARFILE, STORE}
 
 }

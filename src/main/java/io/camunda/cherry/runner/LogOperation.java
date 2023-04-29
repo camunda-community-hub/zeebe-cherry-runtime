@@ -70,7 +70,7 @@ public class LogOperation {
    * @param e       exception during the error
    */
   public void logException(AbstractRunner runner, String message, Exception e) {
-    logger.error("Error " + message + " on Runner[" + runner.getName() + "] :" + e.getMessage());
+    logger.error("ControllerPage " + message + " on Runner[" + runner.getName() + "] :" + e.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = OperationEntity.Operation.ERROR;
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -82,7 +82,7 @@ public class LogOperation {
   }
 
   public void logError(String runnerType, String message, Error er) {
-    logger.error("Error " + message + " on Runner[" + runnerType + "] :" + er.getMessage());
+    logger.error("ControllerPage " + message + " on Runner[" + runnerType + "] :" + er.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = OperationEntity.Operation.ERROR;
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -93,7 +93,7 @@ public class LogOperation {
   }
 
   public void logException(String runnerType, String message, Exception ex) {
-    logger.error("Error " + message + " on Runner[" + runnerType + "] :" + ex.getMessage());
+    logger.error("ControllerPage " + message + " on Runner[" + runnerType + "] :" + ex.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.operation = OperationEntity.Operation.ERROR;
@@ -111,7 +111,7 @@ public class LogOperation {
    * @param e       exception
    */
   public void logError(String message, Exception e) {
-    logger.error("Error " + message + " :" + e.getMessage());
+    logger.error("ControllerPage " + message + " :" + e.getMessage());
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.operation = OperationEntity.Operation.ERROR;

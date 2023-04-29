@@ -149,7 +149,7 @@ public class WatcherFactory {
           + response.toString());
 
     } catch (Exception e) {
-      logger.info("WatcherFactory.createProcessInstance  Error=" + e.getMessage());
+      logger.info("WatcherFactory.createProcessInstance  ControllerPage=" + e.getMessage());
       throw e;
     }
   }

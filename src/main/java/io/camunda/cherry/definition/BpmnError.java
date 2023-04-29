@@ -20,7 +20,7 @@ public class BpmnError {
   }
 
   /**
-   * Create a Bpmn Error explanation
+   * Create a Bpmn ControllerPage explanation
    *
    * @param code        Code of error
    * @param explanation Explanation for this code

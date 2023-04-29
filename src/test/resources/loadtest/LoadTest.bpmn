@@ -239,7 +239,7 @@
         <bpmn:extensionElements>
           <zeebe:taskDefinition type="c-files-load-from-disk" />
           <zeebe:ioMapping>
-            <zeebe:input source="= &#34;D:\dev\intellij\community\zeebe-cherry-runtime\src\test\resources\loadtest&#34;" target="folder" />
+            <zeebe:input source="= &#34;./src/test/resources/files/loadtest&#34;" target="folder" />
             <zeebe:input source="true" target="fileName_optional" />
             <zeebe:input source="largeDocument.pdf" target="fileName" />
             <zeebe:input source="false" target="filterFile_optional" />

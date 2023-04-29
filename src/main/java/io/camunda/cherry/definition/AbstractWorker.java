@@ -40,7 +40,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
    * @param type           type of the worker
    * @param listInput      list of Input parameters for the worker
    * @param listOutput     list of Output parameters for the worker
-   * @param listBpmnErrors list of potential BPMN Error the worker can generate
+   * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
 
   protected AbstractWorker(String type,
@@ -91,14 +91,14 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       checkOutput(contextExecution);
       status = ExecutionStatusEnum.SUCCESS;
     } catch (ConnectorException ce) {
-      loggerAbstractWorker.error("Error during execution " + ce.getMessage() + " " + ce.getMessage());
+      loggerAbstractWorker.error("ControllerPage during execution " + ce.getMessage() + " " + ce.getMessage());
       status = ExecutionStatusEnum.BPMNERROR;
       errorCode = ce.getErrorCode();
       errorMessage=ce.getMessage();
       connectorException = ce;
 
     } catch (Exception e) {
-      loggerAbstractWorker.error("Error during execution " + e.getMessage() + " " + e.getCause());
+      loggerAbstractWorker.error("ControllerPage during execution " + e.getMessage() + " " + e.getCause());
       status = ExecutionStatusEnum.FAIL;
       errorCode="Exception";
       errorMessage=e.getMessage();

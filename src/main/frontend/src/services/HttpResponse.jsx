@@ -22,6 +22,9 @@ class HttpResponse {
       return true;
     return false;
   }
+  getError() {
+    return this.err.response.data.message;
+  }
   getData() {
     if (this.axiosHttpPayload)
       return this.axiosHttpPayload.data;
@@ -47,7 +50,7 @@ class HttpResponse {
         // http.ClientRequest in node.js
         console.log("HttpResponse.trace: ERROR REQ"+label+" ERRORREQUEST="+this.err.request);
       } else {
-        // Something happened in setting up the request that triggered an Error
+        // Something happened in setting up the request that triggered an ControllerPage
         console.log("HttpResponse.trace: ERROR ELSE "+label+" ERRORMESSAGE=", this.err.message);
       }
       // console.log(this.err.config);

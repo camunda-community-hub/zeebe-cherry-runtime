@@ -50,7 +50,7 @@ class RunnerDashboard extends React.Component {
                       <tr>
                         <td >
                           <table style={{border: "1px solid", padding: "5px", textAlign: "center", boxShadow: "5px 5px"}}>
-                            <tr><td><img width="30px" src={this.state.runner.logo}/></td></tr>
+                            <tr><td><img width="30px" src={this.state.runner.logo} alt={this.state.runner.name}/></td></tr>
                             <tr><td style={{border: "1px solid", padding: "0px"}}>
                               {this.state.runner.active &&
                               <button className="start-runner button is-selected is-primary"
@@ -64,7 +64,7 @@ class RunnerDashboard extends React.Component {
                         </td>
                         <td style={{padding: "5px 0px 0px 25px"}}> {this.state.runner.name}
                           {this.state.runner.statistic && this.state.runner.statistic.executionsFailed > 0 && <Tag type="red" title="Fails"> {this.state.runner.statistic.executionsFailed} Fails </Tag>}
-                          {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors > 0 && <Tag type="red" title="BPMN Error"> {this.state.runner.statistic.executionsBpmnErrors} BPMN Errors </Tag>}
+                          {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors > 0 && <Tag type="red" title="BPMN ControllerPage"> {this.state.runner.statistic.executionsBpmnErrors} BPMN Errors </Tag>}
                           {this.state.runner.nboverthreshold > 0 && <Tag type="purple" title="Over threshold"> {this.state.runner.nboverthreshold} Errors </Tag>}
                           <br/>
                           <br/>
@@ -76,8 +76,7 @@ class RunnerDashboard extends React.Component {
 
                         </td>
                       </tr>
-                      <tr><td>
-                      </td></tr>
+
                       </tbody>
                     </table>
                   </h1>

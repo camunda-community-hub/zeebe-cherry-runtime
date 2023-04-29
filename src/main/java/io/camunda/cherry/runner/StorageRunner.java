@@ -176,7 +176,7 @@ import java.util.List;
     runnerDefinition.classname = runner.getClass().getCanonicalName();
     runnerDefinition.type = runner.getType();
     runnerDefinition.collectionName = runner.getCollectionName();
-    runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDED;
+    runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
 
     // start it by default
     runnerDefinition.activeRunner = true;
@@ -203,6 +203,12 @@ import java.util.List;
             return t.activeRunner == filter.activeOnly;
           }
         }).filter(t -> {
+            if (filter.storeOnly == null) {
+              return true;
+            } else {
+              return t.origin == RunnerDefinitionEntity.Origin.STORE;
+            }
+          }).filter(t -> {
           if (filter.filterName == null)
             return true;
           return t.name.equals(filter.filterName);
@@ -224,9 +230,18 @@ import java.util.List;
     Boolean activeOnly;
     String filterName;
     String filterType;
+    /**
+     * We just want the store
+     */
+    Boolean storeOnly;
 
     public Filter isActive(boolean activeOnly) {
       this.activeOnly = activeOnly;
+      return this;
+    }
+
+    public Filter isStore(boolean storeOnly) {
+      this.storeOnly = storeOnly;
       return this;
     }
 

@@ -77,12 +77,22 @@ public class RunnerFactory {
   }
 
   /**
+   * Return the list store in the entity. This part contains different information, like the origin of the runner (store? Embedded?)
+   * @param filter to select part of the runner
+   * @return the list of entity
+   */
+  public List<RunnerDefinitionEntity> getAllRunnersEntity(StorageRunner.Filter filter) {
+    return storageRunner.getRunners(filter);
+
+  }
+
+  /**
    * Get the runner by it's entity
    *
    * @param runnerDefinitionEntity runnerEntity
    * @return the runner
    */
-  public AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
+  private AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
     try {
       // if this class is embedded?
       AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByName(runnerDefinitionEntity.name);
@@ -112,11 +122,11 @@ public class RunnerFactory {
       logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
       return null;
     } catch (Error er) {
-      // Error getting the information
+      // ControllerPage getting the information
       logOperation.logError(runnerDefinitionEntity.name, "Instantiate the runner ", er);
       return null;
     } catch (Exception e) {
-      // Error getting the informations
+      // ControllerPage getting the informations
       logOperation.logException(runnerDefinitionEntity.name, "Instantiate the runner ", e);
       return null;
     }

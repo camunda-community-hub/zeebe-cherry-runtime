@@ -126,8 +126,8 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
                 RunnerParameter.Level.OPTIONAL, "MimeType of the loaded file")), Arrays.asList(
             BpmnError.getInstance(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
                 "Folder does not exist, or not visible from the server"),
-            BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "Error during the load"),
-            BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "Error when the file is moved to the archive directory"),
+            BpmnError.getInstance(BPMNERROR_LOAD_FILE_ERROR, "ControllerPage during the load"),
+            BpmnError.getInstance(BPMNERROR_MOVE_FILE_ERROR, "ControllerPage when the file is moved to the archive directory"),
             BpmnError.getInstance(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION,
                 "Storage definition is incorrect"), BpmnError.getInstance(BPMNERROR_INCORRECT_CMIS_PARAMETERS,
                 "GSON expected to get information to connect the repository")));

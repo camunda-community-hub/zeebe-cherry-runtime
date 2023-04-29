@@ -40,14 +40,10 @@ class RunnerMonitoring extends React.Component {
     console.log("RunnerMonitoring.componentDidMount: END");
   }
 
-  componentDidUpdate() {
-    console.log("RunnerMonitoring.componentDidUpdate: BEGIN");
-    console.log("RunnerMonitoring.componentDidUpdate: END");
-  }
 
   componentDidUpdate(prevProps) {
     if (prevProps.timestamp !== this.props.timestamp) {
-      // console.log("RunnerDashboard.componentDidUpdate: Change");
+      // console.log("RunnerMonitoring.componentDidUpdate: Change");
       this.setState({
         runner: this.props.runnerDisplay,
         timestamp: this.props.timestamp
@@ -63,10 +59,9 @@ class RunnerMonitoring extends React.Component {
     return (
       <div>
         <div style={{position: "absolute", top: "0", right: "0"}}>
-          <Button className="btn btn-sm"
-                  onClick={() => this.refreshLoadAllStatistics()}
-                  disabled={this.state.display.loading}
-          >
+          <Button className="btn btn-success btn-sm"
+                  onClick={() =>  this.refreshLoadAllStatistics()}
+                  disabled={this.state.display.loading}>
             <ArrowRepeat/> Refresh
           </Button>
         </div>

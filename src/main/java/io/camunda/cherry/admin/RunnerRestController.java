@@ -126,6 +126,7 @@ public class RunnerRestController {
       infoRunner.put("type", runner.getType());
       infoRunner.put("classrunner", runner.isWorker() ? "worker" : "connector");
       infoRunner.put("collectionname", runner.getCollectionName());
+      infoRunner.put("frameworkrunner", runner instanceof  IntFrameworkRunner? "true": "false");
 
       infoRunner.put("logo", runner.getLogo());
       try {

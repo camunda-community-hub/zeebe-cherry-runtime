@@ -1,14 +1,14 @@
 // -----------------------------------------------------------
 //
-// Parameters
+// Content
 //
-// List of all runners available
+// List of all jar file uploaded
 //
 // -----------------------------------------------------------
 
 import React from 'react';
 
-class Parameters extends React.Component {
+class Content extends React.Component {
 
 
   constructor(_props) {
@@ -23,7 +23,7 @@ class Parameters extends React.Component {
 
   /*           {JSON.stringify(this.state.runners, null, 2) } */
   render() {
-    return(<div className={"container"}><h1>Parameters</h1></div>)
+    return(<div className={"container"}><h1>Content</h1></div>)
   }
 
   /**
@@ -38,4 +38,4 @@ class Parameters extends React.Component {
   }
 }
 
-export default Parameters;
+export default Content;

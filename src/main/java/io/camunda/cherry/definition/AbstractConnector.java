@@ -44,7 +44,7 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
    * @param type           type of the connector
    * @param listInput      list of Input parameters for the worker
    * @param listOutput     list of Output parameters for the worker
-   * @param listBpmnErrors list of potential BPMN Error the worker can generate
+   * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
   public AbstractConnector(String type,
                            List<RunnerParameter> listInput,

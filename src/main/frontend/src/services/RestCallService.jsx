@@ -31,7 +31,6 @@ class RestCallService {
    */
   getUrlServer() {
     console.log("RestCallService.getUrlServer");
-    debugger;
     let position = window.location.href.indexOf(":", 7); // skype http: or https:
     let urlHref = window.location.href.substring(0, position);
 
@@ -93,9 +92,9 @@ class RestCallService {
       .catch(error => {
         console.error("RestCallService.getJson: Uri[" + selfUri + "] catch error:" + error);
         if (error.response && error.response.status && error.response.status === 401) {
-          let homeTogh = window.location.href;
-          console.log("Redirect : to[" + homeTogh + "]");
-          window.location = homeTogh;
+          let homeCherry= window.location.href;
+          console.log("Redirect : to[" + homeCherry + "]");
+          window.location = homeCherry;
           return;
         }
         if (fctToCallback != null) {
@@ -132,9 +131,9 @@ class RestCallService {
       .catch(error => {
         console.error("RestCallService.putJson: Uri[" + selfUri + "] catch error:" + error);
         if (error.response && error.response.status && error.response.status === 401) {
-          let homeTogh = window.location.href;
-          console.log("Redirect : to[" + homeTogh + "]");
-          window.location = homeTogh;
+          let homeCherry = window.location.href;
+          console.log("Redirect : to[" + homeCherry + "]");
+          window.location = homeCherry;
           return;
         }
         if (fctToCallback != null) {

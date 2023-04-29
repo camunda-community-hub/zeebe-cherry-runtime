@@ -26,6 +26,7 @@ public class JarStorageEntity {
   @Column(name = "loadlog", length = 2000)
   public String loadLog;
 
+
   @Id
   @SequenceGenerator(name = "jarconnectors", sequenceName = "jarconnectors", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE)

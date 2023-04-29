@@ -92,7 +92,7 @@ public class JobRunnerFactory {
           stopRunner(running.runner.getIdentification());
 
         } catch (Exception e) {
-          logger.error("Error on runner [" + running.runner.getIdentification() + "] : " + e);
+          logger.error("ControllerPage on runner [" + running.runner.getIdentification() + "] : " + e);
         }
       }
     }
