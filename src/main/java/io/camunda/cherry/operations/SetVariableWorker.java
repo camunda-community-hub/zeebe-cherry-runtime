@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -51,10 +52,11 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
             RunnerParameter.getInstance(INPUT_OPERATIONS, "Operation", String.class, RunnerParameter.Level.REQUIRED,
                 "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
             RunnerParameter.getInstance(INPUT_ANYTHING, "Input Anything", Object.class, RunnerParameter.Level.OPTIONAL,
-                "Any variables can be accessed")), Arrays.asList(
+                "Any variables can be accessed")),
+        Collections.singletonList(
             RunnerParameter.getInstance(OUTPUT_RESULT, "Result", Object.class, RunnerParameter.Level.REQUIRED,
                 "Result of operations. Multiple variables are updated")),
-        Arrays.asList(BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR, "Operation error")));
+        Collections.singletonList(BpmnError.getInstance(BPMERROR_SYNTAXE_OPERATION_ERROR, "Operation error")));
   }
 
   /**
@@ -93,7 +95,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         if (content == null || content.isEmpty())
           throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
               "Worker [" + getName() + "] Operation [" + oneOperationSt + "] must have name=value: value is missing.");
-        Object contentVariable = null;
+        Object contentVariable;
         FunctionDescription function = getFunction(content);
         if (function != null)
           contentVariable = getValueFunction(function, activatedJob);
@@ -101,7 +103,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
           contentVariable = getValue(content, activatedJob);
 
         // ok, now update the variable
-        setValue(variableName, contentVariable, contextExecution);
+        setOutputValue(variableName, contentVariable, contextExecution);
       }
     } catch (Exception e) {
       throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
@@ -149,7 +151,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
    * @return the value by the function
    * @throws Exception any errors arrive during the execution
    */
-  private Object getValueFunction(FunctionDescription function, final ActivatedJob activatedJob) throws Exception {
+  private Object getValueFunction(FunctionDescription function, final ActivatedJob activatedJob) throws ZeebeBpmnError {
     if (function.isFunction(CST_FUNCTION_DATE)) {
       Object dateValue = getValue(function.getParameter(0), activatedJob);
       if (CST_NOW.equals(dateValue) || dateValue == null)
@@ -223,7 +225,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
    *
    * @param valueSt      value to return
    * @param activatedJob job to get variable
-   * @return
+   * @return the value
    */
   private Object getValue(String valueSt, final ActivatedJob activatedJob) {
     if (valueSt == null)
