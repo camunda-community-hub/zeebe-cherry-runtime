@@ -79,8 +79,8 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
 
     // ok, this is correct, execute it now
     ExecutionStatusEnum status;
-    String errorCode=null;
-    String errorMessage=null;
+    String errorCode = null;
+    String errorMessage = null;
     ConnectorException connectorException = null;
     try {
       execute(jobClient, activatedJob, contextExecution);
@@ -94,14 +94,14 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       loggerAbstractWorker.error("ControllerPage during execution " + ce.getMessage() + " " + ce.getMessage());
       status = ExecutionStatusEnum.BPMNERROR;
       errorCode = ce.getErrorCode();
-      errorMessage=ce.getMessage();
+      errorMessage = ce.getMessage();
       connectorException = ce;
 
     } catch (Exception e) {
       loggerAbstractWorker.error("ControllerPage during execution " + e.getMessage() + " " + e.getCause());
       status = ExecutionStatusEnum.FAIL;
-      errorCode="Exception";
-      errorMessage=e.getMessage();
+      errorCode = "Exception";
+      errorMessage = e.getMessage();
     }
     // save the output in the process instance
     jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
@@ -117,8 +117,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
         RunnerExecutionEntity.TypeExecutor.WORKER, // this is a worker
         getType(), // type of worker
         status, // status of execution
-        errorCode,
-        errorMessage, // if an error is detected
+        errorCode, errorMessage, // if an error is detected
         contextExecution.endExecution - contextExecution.beginExecution);
   }
 

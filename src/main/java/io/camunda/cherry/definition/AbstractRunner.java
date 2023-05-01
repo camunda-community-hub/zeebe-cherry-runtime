@@ -476,8 +476,6 @@ public abstract class AbstractRunner {
   // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are ambiguous. For example,
   // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a Long.
 
-
-
   /**
    * Set a fileVariable value
    *

@@ -16,9 +16,10 @@ import java.nio.file.Path;
 
 public class JsonUtils {
 
-  private JsonUtils() {}
-
   private static ObjectMapper mapper;
+
+  private JsonUtils() {
+  }
 
   public static JsonNode toJsonNode(InputStream is) throws IOException {
     return getObjectMapper().readTree(is);
@@ -56,7 +57,7 @@ public class JsonUtils {
   }
 
   public static <T> T fromJsonFile(Path path, Class<T> type)
-      throws StreamReadException, DatabindException, IOException {
+      throws IOException {
     return getObjectMapper().readValue(path.toFile(), type);
   }
 

@@ -32,13 +32,9 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
                                                   @Param("dateToSearch") LocalDateTime dateToSearch,
                                                   Pageable pageable);
 
-
-
   @Query(value = "select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch "
-      + " and runnerexecution.runnerType = :runnerType"
-      + " and runnerexecution.status in (:listStates)"
-      + " order by runnerexecution.executionTime desc")
+      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+      + " and runnerexecution.status in (:listStates)" + " order by runnerexecution.executionTime desc")
   List<RunnerExecutionEntity> selectRunnerRecordsByStates(@Param("runnerType") String runnerType,
                                                           @Param("dateToSearch") LocalDateTime dateToSearch,
                                                           @Param("listStates") List<AbstractRunner.ExecutionStatusEnum> listStates,

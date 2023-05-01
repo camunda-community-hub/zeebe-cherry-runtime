@@ -78,7 +78,7 @@ public class SecretEnvService {
       return Optional.of(keyValueEntity);
 
     }
-    return Optional.of(null);
+    return Optional.ofNullable(null);
   }
 
   public void deleteKeyValue(Long id) {

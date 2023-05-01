@@ -126,7 +126,7 @@ public class RunnerRestController {
       infoRunner.put("type", runner.getType());
       infoRunner.put("classrunner", runner.isWorker() ? "worker" : "connector");
       infoRunner.put("collectionname", runner.getCollectionName());
-      infoRunner.put("frameworkrunner", runner instanceof  IntFrameworkRunner? "true": "false");
+      infoRunner.put("frameworkrunner", runner instanceof IntFrameworkRunner ? "true" : "false");
 
       infoRunner.put("logo", runner.getLogo());
       try {
@@ -157,7 +157,7 @@ public class RunnerRestController {
     };
 
     listDetails = listDetails.stream().sorted(orderComparator).toList();
-    if (! listDetails.isEmpty()) {
+    if (!listDetails.isEmpty()) {
       logger.info("RunnerRestController.orderBy[{}] First[{}]", orderBy, listDetails.get(0).get("name"));
     }
 
@@ -215,7 +215,7 @@ public class RunnerRestController {
       nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring.intValue(), 1);
       nbHours = Math.min(30 * 7 * 24, nbHours);
     } catch (Exception e) {
-      logger.error("RunnerRestController.getOperation: value not acceptable [{}]",nbHoursMonitoring);
+      logger.error("RunnerRestController.getOperation: value not acceptable [{}]", nbHoursMonitoring);
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value not acceptable [" + nbHoursMonitoring + "]");
     }
 
@@ -228,25 +228,25 @@ public class RunnerRestController {
 
     // the errors
     if ("ERRORS".equals(operationType)) {
-      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutionsErrors(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
-      List<Map<String, Object>> listErrors = listExecutions.stream()
-          .map(t -> {
-            Map<String, Object> infoExecution = new HashMap<>();
-            infoExecution.put("typeExecutor", t.typeExecutor);
-            infoExecution.put("runnerType", t.runnerType);
-            infoExecution.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
-            infoExecution.put("executionMs", t.executionMs);
-            infoExecution.put("status", t.status.toString());
-            infoExecution.put("errorCode", t.errorCode);
-            infoExecution.put("errorExplanation", t.errorExplanation);
-            return infoExecution;
-          })
-          .toList();
+      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutionsErrors(runnerType, dateNow,
+          dateThreshold, pageNumberInt, rowsPerPageInt);
+      List<Map<String, Object>> listErrors = listExecutions.stream().map(t -> {
+        Map<String, Object> infoExecution = new HashMap<>();
+        infoExecution.put("typeExecutor", t.typeExecutor);
+        infoExecution.put("runnerType", t.runnerType);
+        infoExecution.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+        infoExecution.put("executionMs", t.executionMs);
+        infoExecution.put("status", t.status.toString());
+        infoExecution.put("errorCode", t.errorCode);
+        infoExecution.put("errorExplanation", t.errorExplanation);
+        return infoExecution;
+      }).toList();
       info.put("errors", listErrors);
     }
     // operation
     if ("EXECUTIONS".equals(operationType)) {
-      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold, pageNumberInt, rowsPerPageInt);
+      List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold,
+          pageNumberInt, rowsPerPageInt);
 
       info.put("executions", listExecutions.stream() // Stream
           .map(t -> {
@@ -516,6 +516,5 @@ public class RunnerRestController {
   }
 
   public enum DisplayOrderBy {NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES}
-
 
 }

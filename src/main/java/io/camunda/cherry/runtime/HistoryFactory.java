@@ -118,8 +118,8 @@ public class HistoryFactory {
                                                          int rowsPerPageInt) {
 
     return runnerExecutionRepository.selectRunnerRecordsByStates(runnerType, dateThreshold,
-        List.of(AbstractRunner.ExecutionStatusEnum.FAIL,
-            AbstractRunner.ExecutionStatusEnum.BPMNERROR), // FAIL and ERROR
+        List.of(AbstractRunner.ExecutionStatusEnum.FAIL, AbstractRunner.ExecutionStatusEnum.BPMNERROR),
+        // FAIL and ERROR
         PageRequest.of(pageNumberInt, rowsPerPageInt));
 
   }

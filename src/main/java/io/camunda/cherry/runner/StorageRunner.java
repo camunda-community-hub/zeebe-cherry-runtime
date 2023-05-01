@@ -203,12 +203,12 @@ import java.util.List;
             return t.activeRunner == filter.activeOnly;
           }
         }).filter(t -> {
-            if (filter.storeOnly == null) {
-              return true;
-            } else {
-              return t.origin == RunnerDefinitionEntity.Origin.STORE;
-            }
-          }).filter(t -> {
+          if (filter.storeOnly == null) {
+            return true;
+          } else {
+            return t.origin == RunnerDefinitionEntity.Origin.STORE;
+          }
+        }).filter(t -> {
           if (filter.filterName == null)
             return true;
           return t.name.equals(filter.filterName);

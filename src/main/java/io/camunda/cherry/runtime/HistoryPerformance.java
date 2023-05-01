@@ -71,7 +71,7 @@ public class HistoryPerformance {
 
     //---  now we can fetch and explode data
     List<RunnerExecutionEntity> listExecutions = runnerExecutionRepository.selectRunnerRecords(runnerType,
-        dateThreshold, PageRequest.of(0,10000));
+        dateThreshold, PageRequest.of(0, 10000));
     for (RunnerExecutionEntity runnerExecutionEntity : listExecutions) {
       LocalDateTime slotTime = runnerExecutionEntity.executionTime;
       String slotString = intervalRule.getSlotFromDate(slotTime);
@@ -151,11 +151,11 @@ public class HistoryPerformance {
 
   public LocalDateTime getInstantByPeriod(LocalDateTime reference, PeriodStatistic period) {
     return switch (period) {
-    case FOURHOUR -> getInstantByDelay(reference, 4);
-    case ONEDAY -> getInstantByDelay(reference, 24);
-    case ONEWEEK -> getInstantByDelay(reference, 7 * 24);
-    case ONEMONTH ->  getInstantByDelay(reference, 30 * 24);
-    case ONEYEAR -> getInstantByDelay(reference, 365 * 24);
+      case FOURHOUR -> getInstantByDelay(reference, 4);
+      case ONEDAY -> getInstantByDelay(reference, 24);
+      case ONEWEEK -> getInstantByDelay(reference, 7 * 24);
+      case ONEMONTH -> getInstantByDelay(reference, 30 * 24);
+      case ONEYEAR -> getInstantByDelay(reference, 365 * 24);
     };
   }
 
