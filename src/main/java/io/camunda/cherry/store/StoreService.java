@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  StoreService                                                        */
+/*                                                                      */
+/*  Access the Store Service - download new connector                   */
+/* ******************************************************************** */
 package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,7 +13,6 @@ import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.util.JsonUtils;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,9 +52,9 @@ public class StoreService {
   public static final String REPO = "camunda/connectors-bundle";
   public static final List<String> IGNORE = List.of("github");
 
-  private Map<String, Map<String, String>> releaseConnectors = new HashMap<>();
+  private final Map<String, Map<String, String>> releaseConnectors = new HashMap<>();
 
-  private RestTemplate restTemplate = new RestTemplate();
+  private final RestTemplate restTemplate = new RestTemplate();
 
   public String getLatestRelease() {
     JsonNode response = get("https://api.github.com/repos/" + REPO + "/releases/latest");
@@ -60,7 +65,7 @@ public class StoreService {
     try {
       return JsonUtils.toJsonNode(restTemplate.getForObject(url, String.class));
     } catch (RestClientException | IOException e) {
-      throw new TechnicalException("ControllerPage reading " + url+" : "+e.getMessage(), e);
+      throw new TechnicalException("ControllerPage reading " + url + " : " + e.getMessage(), e);
     }
   }
 
@@ -69,14 +74,13 @@ public class StoreService {
     JsonNode subtrees = tree.get("tree");
     for (JsonNode subtree : subtrees) {
       if ("connectors".equals(subtree.get("path").asText())) {
-        return (String) subtree.get("url").asText();
+        return subtree.get("url").asText();
       }
     }
     return null;
   }
 
   /**
-   *
    * @param release release
    * @return list of connector
    */
@@ -94,10 +98,9 @@ public class StoreService {
     return connectorUrls;
   }
 
-
-  public ConnectorStore downloadConnector(String name, String release ) {
+  public ConnectorStore downloadConnector(String name, String release) {
     String mavenJarUrl = getMavenCentralUrl(release, name);
-    String jarName = mavenJarUrl.substring(mavenJarUrl.lastIndexOf("/") + 1, mavenJarUrl.length());
+    String jarName = mavenJarUrl.substring(mavenJarUrl.lastIndexOf("/") + 1);
     try {
       ConnectorStore connectorStore = new ConnectorStore();
       URL url = new URL(mavenJarUrl);
@@ -106,17 +109,17 @@ public class StoreService {
 
       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       IOUtils.copy(is, byteArrayOutputStream);
-      connectorStore.jarContent = new ByteArrayInputStream( byteArrayOutputStream.toByteArray() );
+      connectorStore.jarContent = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
-      Path tempPath = Files.createTempFile(name+"-"+release, ".jar");
+      Path tempPath = Files.createTempFile(name + "-" + release, ".jar");
       File tempFile = new File(tempPath.toString());
       FileOutputStream tempOut = new FileOutputStream(tempFile);
       IOUtils.copy(connectorStore.jarContent, tempOut);
       connectorStore.listConnectors = fetchDetails(tempFile);
       tempFile.delete();
       // get the element Template now
-      JsonNode jsonNode= getElementTemplate(name, release);
-      connectorStore.elementTemplate= new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+      JsonNode jsonNode = getElementTemplate(name, release);
+      connectorStore.elementTemplate = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
 
       return connectorStore;
 
@@ -125,40 +128,28 @@ public class StoreService {
     }
   }
 
-  public class ConnectorStore{
-    ByteArrayInputStream jarContent;
-    List<ConnectorDetail> listConnectors;
-    public String elementTemplate;
-  }
-  public class ConnectorDetail {
-    public String className;
-    public List<String>fetchVariables;
-    public String name;
-    public String type;
-
-  }
-  public List<ConnectorDetail>  fetchDetails(File connectorFile) throws TechnicalException {
-   List<ConnectorDetail> listConnectorDetails = new ArrayList<>();
+  public List<ConnectorDetail> fetchDetails(File connectorFile) throws TechnicalException {
+    List<ConnectorDetail> listConnectorDetails = new ArrayList<>();
     try {
       ZipFile jarFile = new ZipFile(connectorFile);
       Enumeration<? extends ZipEntry> entries = jarFile.entries();
 
-      URLClassLoader loader = new URLClassLoader(new URL[] {connectorFile.toURI().toURL()});
+      URLClassLoader loader = new URLClassLoader(new URL[] { connectorFile.toURI().toURL() });
 
-      while ( entries.hasMoreElements()) {
+      while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
         String entryName = entry.getName();
         if (entryName != null && entryName.endsWith(".class")) {
           String className = entryName.replace(".class", "").replace('/', '.');
-          Class<?> clazz = (Class<?>) loader.loadClass(className);
+          Class<?> clazz = loader.loadClass(className);
           OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
           if (connectorAnnotation != null) {
             ConnectorDetail connectorDetail = new ConnectorDetail();
             listConnectorDetails.add(connectorDetail);
             connectorDetail.className = className;
-            connectorDetail.fetchVariables= Lists.newArrayList(connectorAnnotation.inputVariables());
-            connectorDetail.name=connectorAnnotation.name();
-            connectorDetail.type=connectorAnnotation.type();
+            connectorDetail.fetchVariables = Lists.newArrayList(connectorAnnotation.inputVariables());
+            connectorDetail.name = connectorAnnotation.name();
+            connectorDetail.type = connectorAnnotation.type();
           }
         }
       }
@@ -169,29 +160,13 @@ public class StoreService {
     }
     return listConnectorDetails;
   }
-  /**
-   * public Connector getConnector(String name, String release) {
-   * try {
-   * Connector connector = new Connector();
-   * connector.setJarFile(downloadMavenJar(release, name));
-   * connectorStorageService.fetchDetails(connector);
-   * connector.setName(name + "-" + release);
-   * if (connector.getFetchVariables() == null || connector.getJobType() == null) {
-   * getVariablesAndJobType(connector, name, release);
-   * }
-   * return connector;
-   * } catch (Exception e) {
-   * return null;
-   * }
-   * }
-   **/
 
   /**
-  public void downloadElementTemplate(Connector connector, String name, String release) {
-    JsonNode elementTemplateTree = getElementTemplate(name, release);
-    // connectorStorageService.saveElementTemplate(connector, elementTemplateTree);
-  }
-**/
+   * public void downloadElementTemplate(Connector connector, String name, String release) {
+   * JsonNode elementTemplateTree = getElementTemplate(name, release);
+   * // connectorStorageService.saveElementTemplate(connector, elementTemplateTree);
+   * }
+   **/
   private JsonNode getElementTemplate(String name, String release) {
     String connectorUrl = releaseConnectors.get(release).get(name);
     JsonNode tree = get(connectorUrl);
@@ -258,10 +233,39 @@ public class StoreService {
           + "/" + artifactId + "-" + release + "-with-dependencies.jar";
     } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
       throw new TechnicalException("ControllerPage building the maven url from the pom", e);
-    }
-    catch(Exception ex) {
+    } catch (Exception ex) {
       throw new TechnicalException("Can't access the repository", ex);
     }
+  }
+  /**
+   * public Connector getConnector(String name, String release) {
+   * try {
+   * Connector connector = new Connector();
+   * connector.setJarFile(downloadMavenJar(release, name));
+   * connectorStorageService.fetchDetails(connector);
+   * connector.setName(name + "-" + release);
+   * if (connector.getFetchVariables() == null || connector.getJobType() == null) {
+   * getVariablesAndJobType(connector, name, release);
+   * }
+   * return connector;
+   * } catch (Exception e) {
+   * return null;
+   * }
+   * }
+   **/
+
+  public class ConnectorStore {
+    public String elementTemplate;
+    ByteArrayInputStream jarContent;
+    List<ConnectorDetail> listConnectors;
+  }
+
+  public class ConnectorDetail {
+    public String className;
+    public List<String> fetchVariables;
+    public String name;
+    public String type;
+
   }
 }
 

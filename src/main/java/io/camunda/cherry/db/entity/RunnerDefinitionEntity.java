@@ -14,7 +14,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "RUNNERDEF")
+@Table(name = "ChRunnerdef")
 public class RunnerDefinitionEntity {
 
   @Column(name = "name", length = 300)
@@ -37,10 +37,10 @@ public class RunnerDefinitionEntity {
   @JoinColumn(name = "jarid")
   public JarStorageEntity jar;
 
-  @Column(name="githubrepo", length=1000)
+  @Column(name = "githubrepo", length = 1000)
   public String githubRepo;
 
-  @Column(name="release", length=50)
+  @Column(name = "release", length = 50)
   public String release;
 
   @Column(name = "activerunner")

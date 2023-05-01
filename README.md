@@ -2,12 +2,12 @@
 [![Community extension badge](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
 ![Compatible with: Camunda Platform 8](https://img.shields.io/badge/Compatible%20with-Camunda%20Platform%208-0072Ce)
 
-# What is the Cherry Framework?
+# What is the Cherry Runtime?
 
-The Cherry Framework is a framework dedicated to execute Camunda 8 Connectors and Workers. 
+The Cherry Runtime is dedicated to execute Camunda 8 Connectors and Workers. 
 it is dedicated to administrators and developers. it provides administrative functions to monitor executions.
 
-![Cherry Framework Overview](src/main/resources/static/img/CherryFrameworkOverview.png?raw=true)
+![Cherry Runtime Overview](src/main/resources/static/img/CherryFrameworkOverview.png?raw=true)
 
 For a quick execution, access the Tutorial chapter.
 
@@ -18,7 +18,7 @@ This documentation gives information:
 
 
 ## Administrator
-Multiple collections used the Cherry Framework (Office PDF, CMIS). Each collection embedded multiple connectors or runners.
+Multiple collections used the Cherry Runtime (Office PDF, CMIS). Each collection embedded multiple connectors or runners.
 
 Each collection is an application, available as a Java application or as a Docker image.
 
@@ -52,7 +52,27 @@ Execution is managed by the Framework, and a lot of administrative function is i
 
 
 
-# Administrator and BPMN Designer
+# Installation
+
+Check the Installation guide
+
+# Developer guide
+
+Check the Developer guide:
+* a tutorial to start a first project
+* the reference guide
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Introduction
 

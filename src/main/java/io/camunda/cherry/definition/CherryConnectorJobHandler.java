@@ -2,6 +2,7 @@ package io.camunda.cherry.definition;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.connector.api.error.BpmnError;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.runtime.util.outbound.ConnectorJobHandler;
@@ -25,15 +26,19 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
   Logger logger = LoggerFactory.getLogger(CherryConnectorJobHandler.class.getName());
   HistoryFactory historyFactory;
 
-  public CherryConnectorJobHandler(AbstractConnector abstractConnector, HistoryFactory historyFactory) {
-    super(abstractConnector);
+  public CherryConnectorJobHandler(AbstractConnector abstractConnector,
+                                   HistoryFactory historyFactory,
+                                   SecretProvider secretProvider) {
+    super(abstractConnector, secretProvider);
     this.abstractConnector = abstractConnector;
     this.sdkRunnerConnector = null;
     this.historyFactory = historyFactory;
   }
 
-  public CherryConnectorJobHandler(SdkRunnerConnector sdkRunnerConnector, HistoryFactory historyFactory) {
-    super(sdkRunnerConnector.getTransportedConnector());
+  public CherryConnectorJobHandler(SdkRunnerConnector sdkRunnerConnector,
+                                   HistoryFactory historyFactory,
+                                   SecretProvider secretProvider) {
+    super(sdkRunnerConnector.getTransportedConnector(), secretProvider);
     this.sdkRunnerConnector = sdkRunnerConnector;
     this.abstractConnector = null;
     this.historyFactory = historyFactory;
@@ -52,7 +57,7 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
       status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.BPMNERROR, ce);
       connectorException = ce;
     } catch (Exception e) {
-      status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.FAIL,e);
+      status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.FAIL, e);
     }
     long endExecution = System.currentTimeMillis();
 
@@ -63,21 +68,20 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     }
     String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
     String errorCode = null;
-    String errorMessage=null;
-    if (status.bpmnError!=null) {
+    String errorMessage = null;
+    if (status.bpmnError != null) {
       errorCode = status.bpmnError.getCode();
-          errorMessage = status.bpmnError.getMessage();
+      errorMessage = status.bpmnError.getMessage();
     }
-    if (status.exception!=null) {
-      errorCode="Exception";
-      errorMessage=status.exception.getMessage();
+    if (status.exception != null) {
+      errorCode = "Exception";
+      errorMessage = status.exception.getMessage();
     }
     historyFactory.saveExecution(executionInstant, // this instance
         RunnerExecutionEntity.TypeExecutor.CONNECTOR, // this is a connector
         type, // type of connector
         status.status, // status of execution
-        errorCode,
-        errorMessage,// error
+        errorCode, errorMessage,// error
         endExecution - beginExecution);
 
   }
@@ -102,7 +106,7 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
   protected void completeJob(JobClient client, ActivatedJob job, ConnectorResult result) {
 
     synchronized (statusPerJob) {
-      statusPerJob.put(job.getKey(),new StatusContainer(AbstractRunner.ExecutionStatusEnum.SUCCESS));
+      statusPerJob.put(job.getKey(), new StatusContainer(AbstractRunner.ExecutionStatusEnum.SUCCESS));
     }
     super.completeJob(client, job, result);
 
@@ -112,14 +116,17 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
     AbstractRunner.ExecutionStatusEnum status;
     BpmnError bpmnError;
     Exception exception;
-    StatusContainer( AbstractRunner.ExecutionStatusEnum status) {
+
+    StatusContainer(AbstractRunner.ExecutionStatusEnum status) {
       this.status = status;
     }
-    StatusContainer( AbstractRunner.ExecutionStatusEnum status,BpmnError bpmnError) {
+
+    StatusContainer(AbstractRunner.ExecutionStatusEnum status, BpmnError bpmnError) {
       this.status = status;
       this.bpmnError = bpmnError;
     }
-    StatusContainer( AbstractRunner.ExecutionStatusEnum status,Exception exception) {
+
+    StatusContainer(AbstractRunner.ExecutionStatusEnum status, Exception exception) {
       this.status = status;
       this.exception = exception;
     }

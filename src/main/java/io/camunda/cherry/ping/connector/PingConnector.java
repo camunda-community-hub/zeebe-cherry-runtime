@@ -68,6 +68,7 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
   public Object execute(OutboundConnectorContext context) throws Exception {
 
     PingConnectorInput pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
+    context.replaceSecrets(pingConnectorInput);
 
     if (pingConnectorInput.isThrowErrorPlease()) {
       throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");

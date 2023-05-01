@@ -14,7 +14,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "RUNNEREXECUTION")
+@Table(name = "ChRunnerexecution")
 public class RunnerExecutionEntity {
 
   @Column(name = "type_executor", length = 10)

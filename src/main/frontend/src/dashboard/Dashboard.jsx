@@ -184,11 +184,9 @@ class Dashboard extends React.Component {
       return {display: "none"};
     if (!this.state.display.showFrameworkRunner && runner.frameworkrunner === "true")
       return {display: "none"};
-    debugger;
 
     if (this.state.display.filterSearch
       && !runner.name.toLowerCase().includes(this.state.display.filterSearch.toLowerCase())) {
-   console.log("filtered")
     return {display: "none"};
   }
 

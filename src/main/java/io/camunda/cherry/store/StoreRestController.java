@@ -1,3 +1,9 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  StoreRestController                                                 */
+/*                                                                      */
+/*  Rest controller to access the Store Service                         */
+/* ******************************************************************** */
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.db.entity.OperationEntity;
@@ -52,7 +58,7 @@ public class StoreRestController {
 
       List<Map<String, Object>> result = new ArrayList<>();
       return connectors.keySet().stream().sorted().map(t -> {
-        Map<String, Object> mapConnector = new HashMap<String, Object>();
+        Map<String, Object> mapConnector = new HashMap<>();
         mapConnector.put("name", t);
         RunnerDefinitionEntity runnerEntity = mapRunners.get(t);
         if (runnerEntity == null) {
@@ -84,7 +90,8 @@ public class StoreRestController {
 
       return connectorDownloaded;
     } catch (TechnicalException e) {
-      logOperation.log(OperationEntity.Operation.ERROR, "Can't download connector["+connectorName+"] " + e.getMessage());
+      logOperation.log(OperationEntity.Operation.ERROR,
+          "Can't download connector[" + connectorName + "] " + e.getMessage());
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     }
 

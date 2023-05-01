@@ -12,7 +12,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "OPERATION")
+@Table(name = "ChOperation")
 public class OperationEntity {
 
   @Column(name = "hostname", length = 100)

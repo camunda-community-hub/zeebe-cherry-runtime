@@ -12,7 +12,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "JARSTORAGE")
+@Table(name = "ChJarstorage")
 public class JarStorageEntity {
 
   @Column(name = "name", length = 1000, unique = true)
@@ -25,7 +25,6 @@ public class JarStorageEntity {
 
   @Column(name = "loadlog", length = 2000)
   public String loadLog;
-
 
   @Id
   @SequenceGenerator(name = "jarconnectors", sequenceName = "jarconnectors", allocationSize = 1)

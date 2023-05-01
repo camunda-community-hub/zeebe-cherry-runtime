@@ -13,6 +13,7 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.CherryConnectorJobHandler;
 import io.camunda.cherry.definition.SdkRunnerConnector;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.zeebe.client.api.worker.JobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
@@ -51,6 +52,8 @@ public class JobRunnerFactory {
   @Autowired
   LogOperation logOperation;
 
+  @Autowired
+  SecretProvider secretProvider;
   /**
    * Key is runnerType
    */
@@ -215,9 +218,9 @@ public class JobRunnerFactory {
     if (runner instanceof AbstractWorker abstractWorker)
       jobHandler = abstractWorker;
     else if (runner instanceof AbstractConnector abstractConnector)
-      jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory);
+      jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory, secretProvider);
     else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
-      jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory);
+      jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider);
     } else
       throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
 

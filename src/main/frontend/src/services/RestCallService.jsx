@@ -69,7 +69,7 @@ class RestCallService {
   }
 
 // PostJson
-  postJson(uri, objToCall, param, fctToCallback) {
+  postJson(uri, param, objToCall,  fctToCallback) {
     let headers = {'Content-Type': 'application/json'};
     param.timezoneoffset = (new Date()).getTimezoneOffset();
     console.log("RestCallService.postJson: timezoneoffset=" + param.timezoneoffset);
@@ -108,7 +108,7 @@ class RestCallService {
       });
   }
 
-  putJson(uri, objToCall, param, fctToCallback) {
+  putJson(uri,  param, objToCall, fctToCallback) {
     let headers = {'Content-Type': 'application/json'};
     param.timezoneoffset = (new Date()).getTimezoneOffset();
     console.log("RestCallService.putJson: timezoneoffset=" + param.timezoneoffset);
@@ -125,7 +125,7 @@ class RestCallService {
           let httpResponse = new HttpResponse(axiosPayload, null);
           fctToCallback.call(objToCall, httpResponse);
         } else {
-          console.log("RestCallService.postJson: No call back defined");
+          console.log("RestCallService.putJson: No call back defined");
         }
       })
       .catch(error => {
@@ -140,7 +140,7 @@ class RestCallService {
           let httpResponse = new HttpResponse({}, error)
           fctToCallback.call(objToCall, httpResponse);
         } else {
-          console.log("RestCallService.postJson: No call back defined");
+          console.log("RestCallService.putJson: No call back defined");
         }
 
       });
