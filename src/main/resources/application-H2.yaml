@@ -27,9 +27,9 @@ logging.level.root: INFO
 # return message with BAD_REQUEST to the client
 server.error.include-message: always
 
-# Spring Boot Configuration
+  # Spring Boot Configuration
 spring.application.name: ZeebeCherry
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
+  # TODO change this to /cherry. Need to figure out how to access this from mustache templates
 server.servlet.context-path: /
 # spring.mustache.prefix: classpath:static/templates/
 
@@ -65,6 +65,8 @@ spring.datasource:
 spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
 org.hibernate.dialect: "H2Dialect"
 
+# allow CLOB in Postgres
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
 
 
 

@@ -20,8 +20,10 @@ public class JarStorageEntity {
   public String name;
 
   @Lob
-  @Column(name = "jarfile", columnDefinition = "BLOB")
-  @Type(type = "org.hibernate.type.BinaryType")
+  @Column(name = "jarfile")
+  // @ T y  p e(type = "org.hibernate.type.BinaryType") for Postgres
+
+
   public byte[] jarfile;
 
   @Column(name = "load_log", length = 2000)

@@ -2,13 +2,12 @@ version: "3"
 services:
 
 
-  cherry-framework:
+  cherry-runtime:
     image: "zeebe-cherryruntime:3.0.0"
     container_name: "Cherry-runtime"
     ports:
-      - "9082:8080"
+      - "9091:9091"
     environment:
-      - SERVER_PORT=8080
       - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
       - ZEEBE_CLIENT_CLOUD_REGION=

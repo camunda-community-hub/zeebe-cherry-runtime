@@ -138,7 +138,8 @@ docker build -t zeebe-cherryruntime:3.0.0 .
 ````
 Run it with 
 `````
-docker run -p 8888:8080 zeebe-cherryruntime:3.0.0 .
+docker run -p 8888:9081 zeebe-cherryruntime:3.0.0 .
+`````
 
 Note: the github repository produce automatically a Docker image.
 To produce this docker image from your own collection, copy

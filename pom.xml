@@ -184,7 +184,7 @@
        <executions>
          <execution>
            <id>install node and npm</id>
-           <phase>generate-sources</phase>
+           <phase>compile</phase>
            <goals>
              <goal>install-node-and-npm</goal>
            </goals>
@@ -195,7 +195,7 @@
          </execution>
          <execution>
            <id>npm install</id>
-           <phase>process-sources</phase>
+           <phase>compile</phase>
            <goals>
              <goal>npm</goal>
            </goals>
@@ -205,7 +205,7 @@
          </execution>
          <execution>
            <id>npm run build</id>
-           <phase>generate-resources</phase>
+           <phase>compile</phase>
            <goals>
              <goal>npm</goal>
            </goals>
@@ -220,7 +220,7 @@
         <executions>
           <execution>
             <id>copy-resources</id>
-            <phase>install</phase>
+            <phase>compile</phase>
             <goals>
               <goal>copy-resources</goal>
             </goals>
