@@ -86,7 +86,5 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
       throw new ZeebeBpmnError(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION,
           "Worker [" + getName() + "] File[" + fileVariable.content + "] can't purge");
     }
-
   }
-
 }

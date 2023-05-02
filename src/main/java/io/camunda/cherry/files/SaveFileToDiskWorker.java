@@ -101,7 +101,6 @@ public class SaveFileToDiskWorker extends AbstractWorker implements IntFramework
       logError("File behind input[" + INPUT_SOURCE_FILE + "] does not exist ");
       throw new ZeebeBpmnError(BPMNERROR_LOAD_FILE_ERROR,
           getSignature() + " file behind input[" + INPUT_SOURCE_FILE + "] does not exist");
-
     }
     File folder = new File(folderToSave);
     if (!(folder.exists() && folder.isDirectory())) {

@@ -59,7 +59,6 @@ public class LogOperation {
     operationEntity.hostName = getHostName();
     operationEntity.message = message;
     saveOperationEntity(operationEntity);
-
   }
 
   /**
@@ -78,7 +77,6 @@ public class LogOperation {
     operationEntity.hostName = getHostName();
     operationEntity.message = message + ": " + e.getMessage();
     saveOperationEntity(operationEntity);
-
   }
 
   public void logError(String runnerType, String message, Error er) {
@@ -101,7 +99,6 @@ public class LogOperation {
     operationEntity.hostName = getHostName();
     operationEntity.message = message + ": " + ex.getMessage();
     saveOperationEntity(operationEntity);
-
   }
 
   /**
@@ -118,7 +115,6 @@ public class LogOperation {
     operationEntity.hostName = getHostName();
     operationEntity.message = message + ": " + e.getMessage();
     saveOperationEntity(operationEntity);
-
   }
 
   private String getServerIdentification() {

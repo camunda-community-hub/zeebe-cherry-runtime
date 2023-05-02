@@ -16,5 +16,4 @@ public interface RunnerDefinitionRepository extends JpaRepository<RunnerDefiniti
   @Query("select runnerDefinition from RunnerDefinitionEntity runnerDefinition"
       + " where runnerDefinition.jar is not null")
   List<RunnerDefinitionEntity> selectAllByJarNotNull();
-
 }

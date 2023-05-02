@@ -88,7 +88,7 @@ public class RunnerRestController {
     return listRunners.stream()
         .map(RunnerInformation::getRunnerInformation)
         .map(w -> this.completeRunnerInformation(w, // this
-            logo == null || logo,  // logo
+            logo == null || logo, // logo
             stats != null && stats, // stats
             dateNow, periodStatistic))
         .toList();
@@ -197,7 +197,8 @@ public class RunnerRestController {
    * @param nbHoursMonitoring from now to now-nbHoursMonitoring. Max im 30*7*24, default is 24
    * @param operationType     ERRORS, EXECUTIONS, OPERATIONS are accepted
    * @param pageNumber        page number, start a 0
-   * @param rowsPerPage       number of row per page. Maximum is 10000 (if someone request more than that, it will be maximum by this number
+   * @param rowsPerPage       number of row per page. Maximum is 10000 (if someone request more than that,
+   *                          it will be maximum by this number
    * @param timezoneOffset    time zone offset for the browser, so return a date according this offset
    * @return operation according the type
    */
@@ -271,7 +272,6 @@ public class RunnerRestController {
       info.put("operations", listOperationsMap);
     }
     return info;
-
   }
 
   /**
@@ -322,7 +322,9 @@ public class RunnerRestController {
    * Download the Template for a runner
    *
    * @param runnerName           worker to start. If not present, all runners are part of the result
-   * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
+   * @param withFrameworkRunners if true, then runners from the framework are included. In general
+   *                             we don't want, else these runners will be present in each collection, and Modeler will
+   *                             throw a duplicate errors
    * @return NOTFOUND or the worker information on this worker
    */
   @GetMapping(value = "/api/runner/template", produces = "application/json")
@@ -349,7 +351,9 @@ public class RunnerRestController {
 
   /**
    * @param runnerName           worker to start. If not present, all runners are part of the result
-   * @param withFrameworkRunners if true, then runners from the framework are included. In general we don't want, else these runners will be present in each collection, and Modeler will throw a duplicate errors
+   * @param withFrameworkRunners if true, then runners from the framework are included. In general
+   *                             we don't want, else these runners will be present in each collection, and Modeler will
+   *                             throw a duplicate errors
    * @param separateTemplate     if true, the ZIP file contains one file per runner
    * @return a File to download
    * @throws IOException can't write the content to the HTTP response
@@ -431,9 +435,7 @@ public class RunnerRestController {
           "Download template error for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
               + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "] :" + e);
       return ResponseEntity.internalServerError().body(null);
-
     }
-
   }
 
   private AbstractRunner getRunnerByName(String runnerName) {
@@ -442,7 +444,6 @@ public class RunnerRestController {
     if (listFiltered.size() != 1)
       return null;
     return listFiltered.get(0);
-
   }
 
   private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation,
@@ -494,6 +495,7 @@ public class RunnerRestController {
     }
   }
 
-  public enum DisplayOrderBy {NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES}
-
+  public enum DisplayOrderBy {
+    NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES
+  }
 }

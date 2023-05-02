@@ -20,6 +20,4 @@ public interface JarDefinitionRepository extends JpaRepository<JarStorageEntity,
 
   @Query("select jarDefinition from JarStorageEntity jarDefinition")
   List<JarStorageEntity> getAll();
-
 }
-

@@ -22,10 +22,9 @@ public class OperationEntity {
   public String runnerType;
 
   /**
-   * execution (in UTC)
-   * Instant will saved the date.. in the local timezone (example 15:04), that we don't want (and make no sense)
-   * We want to save the date in UTC, so let's use a LocalDateTime, and the code is reponsible to provide this time
-   * in the UTC time zone.
+   * execution (in UTC) Instant will saved the date.. in the local timezone (example 15:04), that we
+   * don't want (and make no sense) We want to save the date in UTC, so let's use a LocalDateTime,
+   * and the code is reponsible to provide this time in the UTC time zone.
    */
   @Column(name = "execution_time")
   public LocalDateTime executionTime;
@@ -42,6 +41,7 @@ public class OperationEntity {
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   private Long id;
 
-  public enum Operation {HOSTNAME, STARTRUNNER, STOPRUNNER, SETTHRESOLD, STOPRUNTIME, STARTRUNTIME, SERVERINFO, ERROR}
-
+  public enum Operation {
+    HOSTNAME, STARTRUNNER, STOPRUNNER, SETTHRESOLD, STOPRUNTIME, STARTRUNTIME, SERVERINFO, ERROR
+  }
 }

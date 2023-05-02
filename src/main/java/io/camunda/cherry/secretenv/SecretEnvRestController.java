@@ -41,7 +41,7 @@ public class SecretEnvRestController {
       return listKeyValue.stream().map(t -> {
         Map<String, Object> record = new HashMap<>();
         record.put("name", t.name == null ? "" : t.name);
-        record.put("value", t.isSecret ? "" : t.value);
+        record.put("value", t.isSecret ? "" : t.valueKey);
         record.put("issecret", t.isSecret);
         record.put("id", String.valueOf(t.id));
         return record;

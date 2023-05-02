@@ -100,7 +100,6 @@ public class JobRunnerFactory {
       }
     }
     zeebeContainer.stopZeebeeClient();
-
   }
 
   /**
@@ -120,7 +119,6 @@ public class JobRunnerFactory {
     logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
 
     return true;
-
   }
 
   /**
@@ -153,7 +151,6 @@ public class JobRunnerFactory {
     logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
 
     return true;
-
   }
 
   public boolean isRunnerActive(String runnerType) throws OperationException {
@@ -180,7 +177,6 @@ public class JobRunnerFactory {
         logger.error("Can't restart [" + running.runner.getName() + "] " + e.getMessage());
       }
       running.containerJobWorker.setJobWorker(jobWorker);
-
     }
   }
   /* -------------------------------------------------------- */
@@ -201,7 +197,6 @@ public class JobRunnerFactory {
       } catch (Exception e) {
         // do nothing
       }
-
     }
   }
 
@@ -278,6 +273,5 @@ public class JobRunnerFactory {
     public String getExplanation() {
       return explanation;
     }
-
   }
 }

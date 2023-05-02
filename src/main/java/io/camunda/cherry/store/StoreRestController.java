@@ -94,7 +94,5 @@ public class StoreRestController {
           "Can't download connector[" + connectorName + "] " + e.getMessage());
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     }
-
   }
-
 }

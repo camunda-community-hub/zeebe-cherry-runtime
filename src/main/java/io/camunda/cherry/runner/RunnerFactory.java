@@ -54,7 +54,6 @@ public class RunnerFactory {
     // Upload the ClassLoaderPath, and load the class
     logger.info("----- RunnerFactory.3 Load JavaMachine from storage");
     runnerUploadFactory.loadJavaFromStorage();
-
   }
 
   /**
@@ -77,14 +76,14 @@ public class RunnerFactory {
   }
 
   /**
-   * Return the list store in the entity. This part contains different information, like the origin of the runner (store? Embedded?)
+   * Return the list store in the entity. This part contains different information, like the origin
+   * of the runner (store? Embedded?)
    *
    * @param filter to select part of the runner
    * @return the list of entity
    */
   public List<RunnerDefinitionEntity> getAllRunnersEntity(StorageRunner.Filter filter) {
     return storageRunner.getRunners(filter);
-
   }
 
   /**
@@ -132,5 +131,4 @@ public class RunnerFactory {
       return null;
     }
   }
-
 }

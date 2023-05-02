@@ -59,7 +59,7 @@ public class SecretEnvService {
     }
     // name may have change
     keyValueEntity.name = name;
-    keyValueEntity.value = value;
+    keyValueEntity.valueKey = value;
     keyValueEntity.isSecret = isSecret;
     keyValueRepository.save(keyValueEntity);
     return keyValueEntity;
@@ -74,9 +74,8 @@ public class SecretEnvService {
     if (value != null) {
       keyValueEntity = new KeyValueEntity();
       keyValueEntity.name = name;
-      keyValueEntity.value = value;
+      keyValueEntity.valueKey = value;
       return Optional.of(keyValueEntity);
-
     }
     return Optional.ofNullable(null);
   }
@@ -90,11 +89,9 @@ public class SecretEnvService {
   }
 
   public Object getValueFromEntity(KeyValueEntity keyValueEntity) {
-    if (keyValueEntity.value == null)
+    if (keyValueEntity.valueKey == null)
       return null;
     // the key may have a function to change the type, else it's a string
-    return keyValueEntity.value;
-
+    return keyValueEntity.valueKey;
   }
-
 }

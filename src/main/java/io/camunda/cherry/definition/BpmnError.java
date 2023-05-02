@@ -12,6 +12,7 @@ public class BpmnError {
    * Describe a BPMNError : code and explanation
    */
   private final String code;
+
   private final String explanation;
 
   public BpmnError(String code, String explanation) {
@@ -37,7 +38,4 @@ public class BpmnError {
   public String getExplanation() {
     return explanation;
   }
-
 }
-
-

@@ -32,19 +32,19 @@ public class RunnerUploadFactory {
 
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
+
   @Value("${cherry.connectorslib.classloaderpath:@null}")
   private String classLoaderPath;
+
   @Value("${cherry.connectorslib.forcerefresh:false}")
   private Boolean forceRefresh;
 
   public void loadConnectorsFromClassLoaderPath() {
-
   }
 
   /**
    * get the list from the database, and compare what we have locally. Refresh the local file
    */
-
   public void loadJavaFromStorage() {
     // All JAR file in the database must be load in the JavaMachine
     for (JarStorageEntity jarStorageEntity : storageRunner.getAll()) {
@@ -134,7 +134,6 @@ public class RunnerUploadFactory {
                 logLoadJar.append("], type[");
                 logLoadJar.append(runner.getType());
                 logLoadJar.append("]; ");
-
               }
             } catch (Error er) {
               logger.info("Can't load class [" + className + "] : " + er.getMessage());
@@ -152,7 +151,6 @@ public class RunnerUploadFactory {
               logLoadJar.append("]:");
               logLoadJar.append(e.getMessage());
               logLoadJar.append("; ");
-
             }
           }
         }
@@ -162,7 +160,6 @@ public class RunnerUploadFactory {
       } catch (Exception e) {
         logger.error("Can't register JAR [" + jarFile.getName() + "] " + e.getMessage());
       }
-
     }
   }
 }

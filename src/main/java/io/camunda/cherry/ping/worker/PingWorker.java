@@ -37,7 +37,6 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
             "Delay to sleep")), Collections.singletonList(
         RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
             "Produce a timestamp")), Collections.emptyList());
-
   }
 
   /**
@@ -85,7 +84,5 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
     String formattedDate = formatter.format(new Date());
     setOutputValue(OUTPUT_TIMESTAMP, formattedDate, contextExecution);
-
   }
-
 }

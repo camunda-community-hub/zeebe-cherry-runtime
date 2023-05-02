@@ -24,8 +24,8 @@ public class RunnerInformation {
   private AbstractRunner runner;
 
   /**
-   * The runner has to status. When it asked to be stopped, the call waits until the jobs is done, so technically
-   * we can consider it with this two status active or inactive
+   * The runner has to status. When it asked to be stopped, the call waits until the jobs is done,
+   * so technically we can consider it with this two status active or inactive
    */
   private boolean active;
 
@@ -121,7 +121,6 @@ public class RunnerInformation {
    */
   public String getDefinitionErrors() {
     return String.join(", ", runner.checkValidDefinition().listOfErrors());
-
   }
 
   public HistoryFactory.Statistic getStatistic() {
@@ -140,5 +139,7 @@ public class RunnerInformation {
     this.performance = performance;
   }
 
-  public enum TYPE_RUNNER {WORKER, CONNECTOR}
+  public enum TYPE_RUNNER {
+    WORKER, CONNECTOR
+  }
 }

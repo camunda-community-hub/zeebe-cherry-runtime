@@ -30,5 +30,4 @@ public class OperationFactory {
   public List<OperationEntity> getOperations(String runnerType, LocalDateTime dateNow, LocalDateTime dateThreshold) {
     return operationRepository.selectByRunnerType(runnerType, dateThreshold);
   }
-
 }

@@ -73,7 +73,6 @@ public class HistoryFactory {
         // should not arrived here
         statistic.executionsFailed += recordNumber;
       }
-
     }
     statistic.executions = statistic.executionsSucceeded + statistic.executionsFailed + statistic.executionsBpmnErrors;
     return statistic;
@@ -98,7 +97,6 @@ public class HistoryFactory {
 
     return runnerExecutionRepository.selectRunnerRecords(runnerType, dateThreshold,
         PageRequest.of(pageNumberInt, rowsPerPageInt));
-
   }
 
   /**
@@ -121,9 +119,7 @@ public class HistoryFactory {
         List.of(AbstractRunner.ExecutionStatusEnum.FAIL, AbstractRunner.ExecutionStatusEnum.BPMNERROR),
         // FAIL and ERROR
         PageRequest.of(pageNumberInt, rowsPerPageInt));
-
   }
-
 
   /* -------------------------------------------------------- */
   /*                                                          */
@@ -175,5 +171,4 @@ public class HistoryFactory {
     public long executionsSucceeded;
     public long executionsBpmnErrors;
   }
-
 }

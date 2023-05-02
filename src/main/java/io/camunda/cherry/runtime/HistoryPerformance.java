@@ -53,11 +53,12 @@ public class HistoryPerformance {
     LocalDateTime dateThreshold = getInstantByPeriod(dateNow, periodStatistic);
     IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
 
-    //--- populate all the map
+    // --- populate all the map
     LocalDateTime indexTime = dateThreshold;
 
     // according the period, we determine theses parameters:
-    // - the number of interval (example, FOURHOUR => 24 interval every 10 mn), 1Y =>365 interval every 1 day)
+    // - the number of interval (example, FOURHOUR => 24 interval every 10 mn), 1Y =>365 interval
+    // every 1 day)
     // - the time to move from one intervalle to the next one (FOURHOUR: + 10 mn)
     // - the rule to round a time, to find the intervalle
 
@@ -69,7 +70,7 @@ public class HistoryPerformance {
       indexTime = indexTime.plusMinutes(intervalRule.intervalInMinutes);
     }
 
-    //---  now we can fetch and explode data
+    // ---  now we can fetch and explode data
     List<RunnerExecutionEntity> listExecutions = runnerExecutionRepository.selectRunnerRecords(runnerType,
         dateThreshold, PageRequest.of(0, 10000));
     for (RunnerExecutionEntity runnerExecutionEntity : listExecutions) {
@@ -142,7 +143,6 @@ public class HistoryPerformance {
     return intervalRule;
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Interval calculation                                          */
@@ -163,14 +163,15 @@ public class HistoryPerformance {
     return reference.minusHours(delayStatInHour);
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Class definitions                                         */
   /*                                                          */
   /* -------------------------------------------------------- */
 
-  public enum PeriodStatistic {FOURHOUR, ONEDAY, ONEWEEK, ONEMONTH, ONEYEAR}
+  public enum PeriodStatistic {
+    FOURHOUR, ONEDAY, ONEWEEK, ONEMONTH, ONEYEAR
+  }
 
   public static class Performance {
     public long picTimeInMs;
@@ -184,6 +185,7 @@ public class HistoryPerformance {
      * Name is something like 16:00 / 16:15
      */
     public String slot;
+
     public String humanTimeSlot;
     public long executions = 0;
     public long sumOfExecutionTime = 0;
@@ -198,7 +200,6 @@ public class HistoryPerformance {
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern(HUMAN_DATE_FORMATER);
       this.humanTimeSlot = formatter.format(slotTime);
     }
-
   }
 
   public class IntervalRule {
@@ -220,8 +221,6 @@ public class HistoryPerformance {
       }
 
       return String.format(SLOT_FORMATTER, result.getDayOfYear(), result.getHour(), result.getMinute());
-
     }
   }
-
 }

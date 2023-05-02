@@ -61,4 +61,3 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
     return parameters;
   }
 }
-

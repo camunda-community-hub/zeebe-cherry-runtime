@@ -81,9 +81,8 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
         RunnerExecutionEntity.TypeExecutor.CONNECTOR, // this is a connector
         type, // type of connector
         status.status, // status of execution
-        errorCode, errorMessage,// error
+        errorCode, errorMessage, // error
         endExecution - beginExecution);
-
   }
 
   @Override
@@ -109,7 +108,6 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
       statusPerJob.put(job.getKey(), new StatusContainer(AbstractRunner.ExecutionStatusEnum.SUCCESS));
     }
     super.completeJob(client, job, result);
-
   }
 
   private class StatusContainer {
@@ -131,5 +129,4 @@ public class CherryConnectorJobHandler extends ConnectorJobHandler {
       this.exception = exception;
     }
   }
-
 }

@@ -73,7 +73,6 @@ public class RunnerDecorationTemplate {
    *
    * @return the template
    */
-
   public Map<String, Object> getTemplate() {
 
     Map<String, Object> templateContent = new HashMap<>();
@@ -195,9 +194,7 @@ public class RunnerDecorationTemplate {
       condition.put("property", runnerParameter.conditionProperty);
       condition.put("oneOf", runnerParameter.conditionOneOf);
     }
-    /**
-     * To have a checkbox, the parameter must be optionnal AND does not have already a condition
-     */
+    /** To have a checkbox, the parameter must be optionnal AND does not have already a condition */
     boolean addConditionCheckbox =
         (runnerParameter.conditionProperty == null) && (RunnerParameter.Level.OPTIONAL.equals(
             runnerParameter.getLevel()));
@@ -271,7 +268,6 @@ public class RunnerDecorationTemplate {
     } else {
       propertyParameter.put(ATTR_BINDING,
           Map.of(ATTR_TYPE, "zeebe:output", "source", "= " + prefixName + runnerParameter.name));
-
     }
     if (runnerParameter.group != null)
       propertyParameter.put(ATTR_GROUP, runnerParameter.group.id());
@@ -290,17 +286,16 @@ public class RunnerDecorationTemplate {
       propertyParameter.put(ATTR_CONSTRAINTS, constraints);
 
     // if this is a OPTIONAL, then the display depends on the check box.
-    // if there is a condition on the OPTIONAL, then the condition is part of the checkbox, else will be on the parameters
+    // if there is a condition on the OPTIONAL, then the condition is part of the checkbox, else
+    // will be on the parameters
     if (addConditionCheckbox) {
       propertyParameter.put(ATTR_CONDITION, Map.of("property", runnerParameter.name + "_optional", "equals", "true"));
 
     } else {
       if (condition != null)
         propertyParameter.put(ATTR_CONDITION, condition);
-
     }
 
     return listProperties;
   }
-
 }

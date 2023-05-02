@@ -39,5 +39,4 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
                                                           @Param("dateToSearch") LocalDateTime dateToSearch,
                                                           @Param("listStates") List<AbstractRunner.ExecutionStatusEnum> listStates,
                                                           Pageable pageable);
-
 }

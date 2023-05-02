@@ -18,5 +18,4 @@ public interface KeyValueRepository extends JpaRepository<KeyValueEntity, Long> 
 
   @Query("update KeyValueEntity c set c.name = :name WHERE c.id = :name")
   void setCustomerName(@Param("name") String name);
-
 }

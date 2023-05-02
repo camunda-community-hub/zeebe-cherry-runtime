@@ -27,8 +27,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
-/**
- */ public class StorageRunner {
+/** */ public class StorageRunner {
 
   Logger logger = LoggerFactory.getLogger(StorageRunner.class.getName());
 
@@ -38,9 +37,6 @@ import java.util.List;
   @Autowired
   JarDefinitionRepository jarDefinitionRepository;
 
-
-
-
   /* ******************************************************************** */
   /*                                                                      */
   /*  jarDefinition function                                              */
@@ -49,8 +45,7 @@ import java.util.List;
   /* ******************************************************************** */
 
   /**
-   * Save the connector to the storage
-   * The JAR file may contain multiple runner.
+   * Save the connector to the storage The JAR file may contain multiple runner.
    *
    * @param jarFile jarfile to save
    * @throws IOException error during saving
@@ -130,7 +125,6 @@ import java.util.List;
     // start it by default
     runnerDefinition.activeRunner = true;
     return runnerDefinitionRepository.save(runnerDefinition);
-
   }
 
   public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition)
@@ -151,11 +145,7 @@ import java.util.List;
     // start it by default
     runnerDefinition.activeRunner = true;
     return runnerDefinitionRepository.save(runnerDefinition);
-
   }
-
-
-
 
   /* ******************************************************************** */
   /*                                                                      */
@@ -187,9 +177,6 @@ import java.util.List;
     runnerDefinition.activeRunner = true;
     return runnerDefinitionRepository.save(runnerDefinition);
   }
-
-
-
 
   /* ******************************************************************** */
   /*                                                                      */
@@ -233,6 +220,7 @@ import java.util.List;
      * Null: all runners, else True or False
      */
     Boolean activeOnly;
+
     String filterName;
     String filterType;
     /**

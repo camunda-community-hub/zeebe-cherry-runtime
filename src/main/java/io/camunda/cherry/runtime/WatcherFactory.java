@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @ConfigurationProperties(prefix = "watcher")
-
 public class WatcherFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(WatcherFactory.class.getName());
@@ -124,7 +123,6 @@ public class WatcherFactory {
             watcherExecution.getWatcher().getType(), status, errorCode, errorMessage, endExecution - beginExecution);
       }
     }
-
   }
 
   /**
@@ -237,5 +235,4 @@ public class WatcherFactory {
           + " orders executed");
     }
   }
-
 }

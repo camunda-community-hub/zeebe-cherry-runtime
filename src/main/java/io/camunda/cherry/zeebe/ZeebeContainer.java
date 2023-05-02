@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Configuration
-
 public class ZeebeContainer {
 
   Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
@@ -95,8 +94,8 @@ public class ZeebeContainer {
   }
 
   /**
-   * Return the current ZeebeClient
-   * Attention: do not save it, it may be deleted and recreated on demand
+   * Return the current ZeebeClient Attention: do not save it, it may be deleted and recreated on
+   * demand
    *
    * @return the zeebeClient
    */

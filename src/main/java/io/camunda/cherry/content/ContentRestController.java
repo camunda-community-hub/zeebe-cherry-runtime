@@ -51,5 +51,4 @@ public class ContentRestController {
     }
     return listContent;
   }
-
 }

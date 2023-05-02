@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 @Component
-
 public class SetVariableWorker extends AbstractWorker implements IntFrameworkRunner {
 
   /**
@@ -108,7 +107,6 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
       throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
           "Worker [" + getName() + "] Syntax error on operation[" + operations + "] : " + e);
     }
-
   }
 
   /* ******************************************************************** */
@@ -215,7 +213,6 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
     } else {
       throw new ZeebeBpmnError(BPMERROR_UNKNOWFUNCTION_ERROR,
           "Worker [" + getName() + "] function[" + function.name + "] unknown");
-
     }
   }
 
@@ -257,8 +254,6 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
     return activatedJob.getVariablesAsMap().get(valueSt);
   }
 
-
-
   /* ******************************************************************** */
   /*                                                                      */
   /*  Value                                                               */
@@ -285,8 +280,6 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
 
     public String getParameter(int range) {
       return range < parameters.size() ? parameters.get(range) : null;
-
     }
   }
-
 }

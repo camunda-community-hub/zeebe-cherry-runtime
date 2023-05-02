@@ -46,7 +46,6 @@ public class AdminRestController {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("timestamp", System.currentTimeMillis());
     return parameters;
-
   }
 
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
@@ -54,19 +53,15 @@ public class AdminRestController {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
     return parameters;
-
   }
 
   @GetMapping(value = "/api/runtime/threads", produces = "application/json")
   public Integer getNumberOfThreads() {
     return cherryJobRunnerFactory.getNumberOfThreads();
-
   }
 
   @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
   public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
     cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
-
   }
-
 }

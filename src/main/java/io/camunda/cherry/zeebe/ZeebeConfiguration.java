@@ -39,8 +39,8 @@ public class ZeebeConfiguration {
   }
 
   /**
-   * Check the configuration. If it is not complete, return false.
-   * Attention, this method does not check if the connection works, just it is valid or not
+   * Check the configuration. If it is not complete, return false. Attention, this method does not
+   * check if the connection works, just it is valid or not
    *
    * @return null if all is correct, else an explanation
    */
@@ -70,5 +70,4 @@ public class ZeebeConfiguration {
   private boolean empty(String value) {
     return value == null || value.trim().isEmpty();
   }
-
 }

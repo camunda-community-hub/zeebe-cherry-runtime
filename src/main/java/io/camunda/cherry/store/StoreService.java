@@ -163,10 +163,9 @@ public class StoreService {
 
   /**
    * public void downloadElementTemplate(Connector connector, String name, String release) {
-   * JsonNode elementTemplateTree = getElementTemplate(name, release);
-   * // connectorStorageService.saveElementTemplate(connector, elementTemplateTree);
-   * }
-   **/
+   * JsonNode elementTemplateTree = getElementTemplate(name, release); //
+   * connectorStorageService.saveElementTemplate(connector, elementTemplateTree); }
+   */
   private JsonNode getElementTemplate(String name, String release) {
     String connectorUrl = releaseConnectors.get(release).get(name);
     JsonNode tree = get(connectorUrl);
@@ -189,27 +188,17 @@ public class StoreService {
 
   /**
    * private void getVariablesAndJobType(Connector connector, String name, String release) {
-   * connector.setFetchVariables(new ArrayList<>());
-   * JsonNode template = getElementTemplate(name, release);
-   * JsonNode properties = template.get("properties");
-   * for (JsonNode prop : properties) {
-   * JsonNode binding = prop.get("binding");
-   * if ("zeebe:taskDefinition:type".equals(binding.get("type").asText())) {
-   * connector.setJobType(prop.get("value").asText());
-   * } else if ("zeebe:input".equals(binding.get("type").asText())) {
-   * String input = binding.get("name").asText();
-   * String variable = input;
-   * if (input.indexOf(".") > 0) {
-   * variable = input.substring(0, input.indexOf("."));
-   * }
-   * if (!connector.getFetchVariables().contains(variable)) {
-   * connector.getFetchVariables().add(variable);
-   * }
-   * }
-   * }
-   * }
-   **/
-
+   * connector.setFetchVariables(new ArrayList<>()); JsonNode template = getElementTemplate(name,
+   * release); JsonNode properties = template.get("properties"); for (JsonNode prop : properties) {
+   * JsonNode binding = prop.get("binding"); if
+   * ("zeebe:taskDefinition:type".equals(binding.get("type").asText())) {
+   * connector.setJobType(prop.get("value").asText()); } else if
+   * ("zeebe:input".equals(binding.get("type").asText())) { String input =
+   * binding.get("name").asText(); String variable = input; if (input.indexOf(".") > 0) { variable =
+   * input.substring(0, input.indexOf(".")); } if
+   * (!connector.getFetchVariables().contains(variable)) {
+   * connector.getFetchVariables().add(variable); } } } }
+   */
   private String getMavenCentralUrl(String release, String name) {
     String groupId = "";
     String artifactId = "";
@@ -239,22 +228,13 @@ public class StoreService {
   }
 
   /**
-   * public Connector getConnector(String name, String release) {
-   * try {
-   * Connector connector = new Connector();
-   * connector.setJarFile(downloadMavenJar(release, name));
-   * connectorStorageService.fetchDetails(connector);
-   * connector.setName(name + "-" + release);
-   * if (connector.getFetchVariables() == null || connector.getJobType() == null) {
-   * getVariablesAndJobType(connector, name, release);
-   * }
-   * return connector;
-   * } catch (Exception e) {
-   * return null;
-   * }
-   * }
-   **/
-
+   * public Connector getConnector(String name, String release) { try { Connector connector = new
+   * Connector(); connector.setJarFile(downloadMavenJar(release, name));
+   * connectorStorageService.fetchDetails(connector); connector.setName(name + "-" + release); if
+   * (connector.getFetchVariables() == null || connector.getJobType() == null) {
+   * getVariablesAndJobType(connector, name, release); } return connector; } catch (Exception e) {
+   * return null; } }
+   */
   public class ConnectorStore {
     public String elementTemplate;
     ByteArrayInputStream jarContent;
@@ -266,8 +246,5 @@ public class StoreService {
     public List<String> fetchVariables;
     public String name;
     public String type;
-
   }
 }
-
-

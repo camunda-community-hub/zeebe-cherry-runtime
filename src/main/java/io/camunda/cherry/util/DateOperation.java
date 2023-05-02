@@ -11,7 +11,9 @@ public class DateOperation {
   /**
    * Class util
    */
-  private DateOperation() {}
+  private DateOperation() {
+  }
+
   /**
    * Return from a local Time a string,according the offset of the user
    *

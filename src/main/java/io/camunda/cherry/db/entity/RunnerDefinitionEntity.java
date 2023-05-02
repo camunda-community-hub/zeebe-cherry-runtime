@@ -45,11 +45,13 @@ public class RunnerDefinitionEntity {
 
   @Column(name = "activerunner")
   public boolean activeRunner;
+
   @Id
   @SequenceGenerator(name = "seqconnectors", sequenceName = "seqconnectors", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   public Long id;
 
-  public enum Origin {EMBEDDED, JARFILE, STORE}
-
+  public enum Origin {
+    EMBEDDED, JARFILE, STORE
+  }
 }

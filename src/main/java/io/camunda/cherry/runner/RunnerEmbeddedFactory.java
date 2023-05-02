@@ -6,7 +6,6 @@
 /*  the internal database with all detection                            */
 /* ******************************************************************** */
 
-
 package io.camunda.cherry.runner;
 
 import io.camunda.cherry.definition.AbstractConnector;
@@ -52,7 +51,6 @@ public class RunnerEmbeddedFactory {
             " (" + runner.getName() + ")" :
             "") + "]  error " + e.getMessage());
         continue;
-
       }
     }
   }
@@ -68,6 +66,5 @@ public class RunnerEmbeddedFactory {
         .filter(t -> t.getName().equals(name))
         .toList();
     return listRunners.isEmpty() ? null : listRunners.get(0);
-
   }
 }

@@ -27,7 +27,6 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
   @Autowired
   HistoryFactory historyFactory;
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Administration                                          */
@@ -42,7 +41,6 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
    * @param listOutput     list of Output parameters for the worker
    * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
-
   protected AbstractWorker(String type,
                            List<RunnerParameter> listInput,
                            List<RunnerParameter> listOutput,
@@ -121,20 +119,20 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
         contextExecution.endExecution - contextExecution.beginExecution);
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Log worker                                             */
   /*                                                          */
-    /* to normalize the log use these methods
-    /* -------------------------------------------------------- */
+  /* to normalize the log use these methods
+  /* -------------------------------------------------------- */
 
   /**
    * Worker must implement this method. Real job has to be done here.
    *
    * @param jobClient        connection to Zeebe
    * @param activatedJob     information on job to execute
-   * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
+   * @param contextExecution the same object is used for all call. The contextExecution is an object
+   *                         for each execution
    */
   public abstract void execute(final JobClient jobClient,
                                final ActivatedJob activatedJob,

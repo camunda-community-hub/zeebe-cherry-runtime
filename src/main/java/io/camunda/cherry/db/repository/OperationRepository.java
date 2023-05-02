@@ -14,5 +14,4 @@ public interface OperationRepository extends JpaRepository<OperationEntity, Long
       + " where operationEntity.executionTime >= :dateToSearch" + " and operationEntity.runnerType = :runnerType ")
   List<OperationEntity> selectByRunnerType(@Param("runnerType") String runnerType,
                                            @Param("dateToSearch") LocalDateTime dateToSearch);
-
 }

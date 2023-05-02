@@ -20,7 +20,7 @@ public class SecretProvider implements io.camunda.connector.api.secret.SecretPro
 
     Optional<KeyValueEntity> keyValue = secretEnvService.getKeyValue(KeyValueEntity.KeyValueType.SECRET, key);
     if (keyValue.isPresent()) {
-      return keyValue.get().value;
+      return keyValue.get().valueKey;
     }
     return null;
   }

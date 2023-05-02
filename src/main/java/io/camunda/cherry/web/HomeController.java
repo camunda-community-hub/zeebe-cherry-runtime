@@ -27,5 +27,4 @@ public class HomeController {
   String worker() {
     return "worker";
   }
-
 }
