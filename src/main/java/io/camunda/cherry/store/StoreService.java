@@ -237,6 +237,7 @@ public class StoreService {
       throw new TechnicalException("Can't access the repository", ex);
     }
   }
+
   /**
    * public Connector getConnector(String name, String release) {
    * try {

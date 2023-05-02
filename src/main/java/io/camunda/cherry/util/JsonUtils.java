@@ -1,9 +1,7 @@
 package io.camunda.cherry.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,8 +54,7 @@ public class JsonUtils {
     getObjectMapper().writerWithDefaultPrettyPrinter().writeValue(path.toFile(), object);
   }
 
-  public static <T> T fromJsonFile(Path path, Class<T> type)
-      throws IOException {
+  public static <T> T fromJsonFile(Path path, Class<T> type) throws IOException {
     return getObjectMapper().readValue(path.toFile(), type);
   }
 
