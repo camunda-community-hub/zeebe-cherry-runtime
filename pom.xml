@@ -263,35 +263,17 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>2.7.5</version>
-        <configuration>
-          <mainClass>io.camunda.CherryApplication</mainClass>
-        </configuration>
-      </plugin>
-
-      <!-- build the jar with all dependencies -->
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
         <executions>
           <execution>
-            <phase>install</phase>
             <goals>
-              <goal>single</goal>
+              <goal>repackage</goal>
             </goals>
           </execution>
         </executions>
         <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-          <archive>
-            <manifest>
-              <mainClass>io.camunda.CherryApplication</mainClass>
-            </manifest>
-          </archive>
+          <classifier>exec</classifier>
         </configuration>
       </plugin>
-
 
     </plugins>
   </build>
