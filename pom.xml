@@ -188,10 +188,10 @@
               <goal>install-node-and-npm</goal>
             </goals>
             <configuration>
-              <nodeVersion>v16.13.0</nodeVersion>
-              <!-- 18.14.0 is the last version -->
-              <npmVersion>8.2.0</npmVersion>
-              <!-- last is 9.6.2 is the last version-->
+              <nodeVersion>v18.14.0</nodeVersion>
+              <!-- 16.13.0 or 18.14.0 is the last version -->
+              <npmVersion>9.6.0</npmVersion>
+              <!-- 8.2.0 or last is 9.6.2 is the last version-->
             </configuration>
           </execution>
           <execution>
