@@ -7,7 +7,7 @@ services:
     image: "zeebe-cherryruntime:3.0.0"
     container_name: "Cherry-runtime"
     ports:
-      - "9091:9091"
+      - "9081:9081"
     environment:
       - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
