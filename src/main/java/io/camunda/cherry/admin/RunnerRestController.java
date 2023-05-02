@@ -19,6 +19,8 @@ import io.camunda.cherry.runner.StorageRunner;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
 import io.camunda.cherry.runtime.OperationFactory;
+import io.camunda.cherry.util.DateOperation;
+import io.camunda.cherry.util.ZipOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +39,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -81,7 +81,7 @@ public class RunnerRestController {
   public List<RunnerInformation> getRunnersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                 @RequestParam(name = "stats", required = false) Boolean stats,
                                                 @RequestParam(name = "period", required = false) String period) {
-    LocalDateTime dateNow = getLocalDateTimeNow();
+    LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
     List<AbstractRunner> listRunners = getListRunners(true);
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -105,7 +105,7 @@ public class RunnerRestController {
     } catch (Exception e) {
       logger.error("getDashboard: bad value for orderByParam[" + orderByParam + "]");
     }
-    LocalDateTime dateNow = getLocalDateTimeNow();
+    LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
 
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -176,7 +176,7 @@ public class RunnerRestController {
                                                @RequestParam(name = "logo", required = false) Boolean logo,
                                                @RequestParam(name = "stats", required = false) Boolean stats,
                                                @RequestParam(name = "period", required = false) String period) {
-    LocalDateTime dateNow = getLocalDateTimeNow();
+    LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
     HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
     List<AbstractRunner> listRunners = getListRunners(true);
@@ -209,7 +209,7 @@ public class RunnerRestController {
                                           @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
                                           @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
     Map<String, Object> info = new HashMap<>();
-    LocalDateTime dateNow = getLocalDateTimeNow();
+    LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
     int nbHours;
     try {
       nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring.intValue(), 1);
@@ -224,7 +224,7 @@ public class RunnerRestController {
     if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
 
-    LocalDateTime dateThreshold = getLocalDateTimeNow().minusHours(nbHours);
+    LocalDateTime dateThreshold = DateOperation.getLocalDateTimeNow().minusHours(nbHours);
 
     // the errors
     if ("ERRORS".equals(operationType)) {
@@ -234,7 +234,7 @@ public class RunnerRestController {
         Map<String, Object> infoExecution = new HashMap<>();
         infoExecution.put("typeExecutor", t.typeExecutor);
         infoExecution.put("runnerType", t.runnerType);
-        infoExecution.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+        infoExecution.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
         infoExecution.put("executionMs", t.executionMs);
         infoExecution.put("status", t.status.toString());
         infoExecution.put("errorCode", t.errorCode);
@@ -252,7 +252,7 @@ public class RunnerRestController {
           .map(t -> {
             Map<String, Object> item = new HashMap<>();
             item.put("status", t.status.toString());
-            item.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+            item.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
             item.put("durationms", t.executionMs);
             return item;
           }).toList());
@@ -264,7 +264,7 @@ public class RunnerRestController {
         Map<String, Object> infoOperation = new HashMap<>();
         infoOperation.put("hostname", t.hostName);
         infoOperation.put("runnerType", t.runnerType);
-        infoOperation.put("executionTime", dateTimeToHumanString(t.executionTime, timezoneOffset));
+        infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
         infoOperation.put("operation", t.operation.toString());
         return infoOperation;
       }).toList();
@@ -492,27 +492,6 @@ public class RunnerRestController {
       logger.error("Unknow PeriodStatistic[" + period + "]");
       return HistoryPerformance.PeriodStatistic.FOURHOUR;
     }
-  }
-
-  /**
-   * Return from a local Time a string,according the offset of the user
-   *
-   * @param time           time to transform
-   * @param timezoneOffset offset of the user
-   * @return the date as a String
-   */
-  private String dateTimeToHumanString(LocalDateTime time, long timezoneOffset) {
-    if (time == null)
-      return null;
-    // Attention, we have to get the time in UTC first
-    //  datecreation: "2021-01-30T18:52:10.973"
-    LocalDateTime localDateTime = time.minusMinutes(timezoneOffset);
-    DateTimeFormatter sdt = DateTimeFormatter.ofPattern(HistoryPerformance.HUMAN_DATE_FORMATER);
-    return localDateTime.format(sdt);
-  }
-
-  private LocalDateTime getLocalDateTimeNow() {
-    return LocalDateTime.now(ZoneOffset.UTC);
   }
 
   public enum DisplayOrderBy {NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES}

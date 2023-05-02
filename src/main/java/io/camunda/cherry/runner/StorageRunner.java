@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -62,6 +65,8 @@ import java.util.List;
 
     jarStorageEntity.name = connectorName;
     jarStorageEntity.jarfile = new byte[(int) jarFile.length()];
+    jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+
     try (FileInputStream fis = new FileInputStream(jarFile)) {
       fis.read(jarStorageEntity.jarfile);
     }
@@ -92,7 +97,7 @@ import java.util.List;
   /**
    * Return all JAR available
    *
-   * @return
+   * @return all StorageEntity in the database
    */
   public List<JarStorageEntity> getAll() {
     return jarDefinitionRepository.getAll();

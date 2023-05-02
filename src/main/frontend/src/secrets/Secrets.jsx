@@ -59,7 +59,7 @@ class Secrets extends React.Component {
                   <th>Name</th>
                   <th>Secret</th>
                   <th>Value</th>
-                  <th>Operation</th>
+                  <th> </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -137,7 +137,7 @@ class Secrets extends React.Component {
     return {};
   }
 
-  refreshListSecrets(period, orderBy) {
+  refreshListSecrets() {
     let uri = 'cherry/api/secretenv/list?type=SECRET';
     console.log("Secrets.refreshListSecrets http[" + uri + "]");
 

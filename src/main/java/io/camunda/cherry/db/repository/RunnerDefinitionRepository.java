@@ -5,10 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface RunnerDefinitionRepository extends JpaRepository<RunnerDefinitionEntity, Long> {
 
-  @Query("select connectorDefinition from RunnerDefinitionEntity connectorDefinition"
-      + " where connectorDefinition.name = :name ")
+  @Query(
+      "select runnerDefinition from RunnerDefinitionEntity runnerDefinition" + " where runnerDefinition.name = :name ")
   RunnerDefinitionEntity selectByName(@Param("name") String name);
+
+  @Query("select runnerDefinition from RunnerDefinitionEntity runnerDefinition"
+      + " where runnerDefinition.jar is not null")
+  List<RunnerDefinitionEntity> selectAllByJarNotNull();
 
 }

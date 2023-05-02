@@ -1,4 +1,4 @@
-package io.camunda.cherry.admin;
+package io.camunda.cherry.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
