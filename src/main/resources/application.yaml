@@ -43,27 +43,25 @@ server.servlet.context-path: /
 # Save statistics and information
 
 # --------------------- Postgres
-# spring.datasource:
-#  url: "jdbc:postgresql://localhost/cherrydb"
-#  username: "camunda"
-#  password: "camunda"
-#  driver-class-name: "org.postgresql.Driver"
-#spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
-
-#org:
-#  hibernate:
-#    dialect:
-#      PostgreSQL94Dialect:
+spring.datasource:
+  url: "jdbc:postgresql://localhost/cherrydb"
+  username: "camunda"
+  password: "camunda"
+  driver-class-name: "org.postgresql.Driver"
+spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+# hibernate.jdbc.use_streams_for_binary: true
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
-spring.datasource:
-  url: "jdbc:h2:file:./cherry.db"
-  driver-class-name: "org.h2.Driver"
-  username: "sa"
-  password: "password"
-spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
-org.hibernate.dialect: "H2Dialect"
+# spring.datasource:
+#  url: "jdbc:h2:file:./cherry.db"
+#  driver-class-name: "org.h2.Driver"
+#  username: "sa"
+#  password: "password"
+# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+# org.hibernate.dialect: H2Dialect
+
 
 
 
@@ -85,34 +83,3 @@ spring.jpa:
 # spring.jpa.properties.hibernate.show_sql: true
 # spring.jpa.properties.hibernate.use_sql_comments: true
 # spring.jpa.properties.hibernate.format_sql: true
-
-
-# Example of Watcher configuration
-
-
-#watchers:
-#  execution:
-#    - type: "WatchDirectory"
-#      name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchservice"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-
-
-#   - type: "Directory"
-#     name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchdir"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-#      timeBetweenDutyInMS: 30000
-

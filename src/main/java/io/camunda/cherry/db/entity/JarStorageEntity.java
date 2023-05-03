@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.sql.Blob;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,12 +20,23 @@ public class JarStorageEntity {
   @Column(name = "name", length = 1000, unique = true)
   public String name;
 
+  /**
+   * Database H2, save the JAR
+   * in H2, the byte[] have an issue, and large file can't be saved by this way.
+   */
   @Lob
   @Column(name = "jarfile")
-  // @ T y  p e(type = "org.hibernate.type.BinaryType") for Postgres
+  public Blob jarfileBlob;
 
+  /**
+   * Database Postgres, save the JAR
+   * Blob is saved as a OID in Postgres if this is not explicitly a byte[] colum
+   */
+  @Lob
+  @Column(name = "jarfilebyte")
+  @Type(type = "org.hibernate.type.BinaryType")
+  public byte[] jarfileByte;
 
-  public byte[] jarfile;
 
   @Column(name = "load_log", length = 2000)
   public String loadLog;

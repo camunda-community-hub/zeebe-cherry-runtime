@@ -50,6 +50,7 @@ spring.datasource:
   driver-class-name: "org.postgresql.Driver"
 spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+# hibernate.jdbc.use_streams_for_binary: true
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
