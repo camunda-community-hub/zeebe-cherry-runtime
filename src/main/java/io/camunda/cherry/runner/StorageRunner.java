@@ -74,7 +74,9 @@ public class StorageRunner {
     JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
     if (jarStorageEntity != null)
       return jarStorageEntity;
-    try (FileInputStream fis = new FileInputStream(jarFile);Session session = sessionFactory.openSession();Connection con = dataSource.getConnection()) {
+    try (FileInputStream fis = new FileInputStream(jarFile);
+        Session session = sessionFactory.openSession();
+        Connection con = dataSource.getConnection()) {
 
       jarStorageEntity = new JarStorageEntity();
       jarStorageEntity.name = connectorName;
@@ -91,8 +93,8 @@ public class StorageRunner {
       // session.persist(jarStorageEntity);
       jarDefinitionRepository.save(jarStorageEntity);
     } catch (Exception e) {
-      logOperation.log(
-          OperationEntity.Operation.ERROR, "Can't load jarFile[" + jarFile.getAbsolutePath()+ "]" + e.getMessage());
+      logOperation.log(OperationEntity.Operation.ERROR,
+          "Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
       throw new TechnicalException(e);
     }
 
@@ -139,14 +141,17 @@ public class StorageRunner {
 
   /**
    * Save a runner for the class. For example when the JAR contains multiple class.
-   * @param name name of the runner
-   * @param type type of the runner
-   * @param clazz class of the runner
+   *
+   * @param name          name of the runner
+   * @param type          type of the runner
+   * @param clazz         class of the runner
    * @param jarDefinition jar where the runner is
    * @return a RunnerDefinitionEntity, saved.
-
    */
-  public RunnerDefinitionEntity saveUploadRunner(String name, String type, Class clazz, JarStorageEntity jarDefinition) {
+  public RunnerDefinitionEntity saveUploadRunner(String name,
+                                                 String type,
+                                                 Class clazz,
+                                                 JarStorageEntity jarDefinition) {
     RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(name);
     if (runnerDefinition != null)
       return runnerDefinition;
@@ -167,7 +172,7 @@ public class StorageRunner {
   /**
    * Save a RunnerDefinitionEntity in for the Runner and the JarEntity
    *
-   * @param runner Runner to use to create the DefinitionEntity
+   * @param runner        Runner to use to create the DefinitionEntity
    * @param jarDefinition Entity which contain the Jar File
    * @return a RunnerDefinitionEntity, saved.
    */

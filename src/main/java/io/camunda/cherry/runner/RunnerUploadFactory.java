@@ -56,9 +56,8 @@ public class RunnerUploadFactory {
       String jarFileName = classLoaderPath + File.separator + jarStorageEntity.name;
       File saveJarFile = new File(jarFileName);
 
-
       try (FileOutputStream outputStream = new FileOutputStream(saveJarFile)) {
-        if (jarStorageEntity.jarfileByte!=null) {
+        if (jarStorageEntity.jarfileByte != null) {
           outputStream.write(jarStorageEntity.jarfileByte);
         } else {
           storageRunner.readJarBlob(jarStorageEntity, outputStream);
@@ -66,7 +65,8 @@ public class RunnerUploadFactory {
         outputStream.flush();
 
       } catch (Exception e) {
-        logOperation.log(OperationEntity.Operation.ERROR, "Can't save jarFile[" + jarStorageEntity.name + "] to file [" + jarFileName + "] : " + e.getMessage());
+        logOperation.log(OperationEntity.Operation.ERROR,
+            "Can't save jarFile[" + jarStorageEntity.name + "] to file [" + jarFileName + "] : " + e.getMessage());
       }
     }
   }
@@ -87,9 +87,9 @@ public class RunnerUploadFactory {
       return;
     }
     File uploadFileDir = new File(uploadPath);
-    if ( !uploadFileDir.exists() || uploadFileDir.listFiles() ==null) {
+    if (!uploadFileDir.exists() || uploadFileDir.listFiles() == null) {
       String defaultDir = System.getProperty("user.dir");
-      logger.error("Upload file does not exist [{}] (default is [{}])",uploadPath,defaultDir);
+      logger.error("Upload file does not exist [{}] (default is [{}])", uploadPath, defaultDir);
       return;
     }
     for (File jarFile : uploadFileDir.listFiles()) {
@@ -109,74 +109,75 @@ public class RunnerUploadFactory {
           jarStorageEntity = storageRunner.saveJarRunner(jarFile);
         }
       } catch (Exception e) {
-        logOperation.log(OperationEntity.Operation.ERROR,"Can't load JAR [" + jarFile.getName() + "] " + e.getMessage());
+        logOperation.log(OperationEntity.Operation.ERROR,
+            "Can't load JAR [" + jarFile.getName() + "] " + e.getMessage());
         return;
       }
 
       StringBuilder logLoadJar = new StringBuilder();
 
-        // Explore the JAR file and detect any connector inside
-        try(ZipFile zipJarFile = new ZipFile(jarFile);
-            URLClassLoader loader = new URLClassLoader(new URL[] { jarFile.toURI().toURL() },
-        this.getClass().getClassLoader())) {
+      // Explore the JAR file and detect any connector inside
+      try (ZipFile zipJarFile = new ZipFile(jarFile);
+          URLClassLoader loader = new URLClassLoader(new URL[] { jarFile.toURI().toURL() },
+              this.getClass().getClassLoader())) {
 
-          Enumeration<? extends ZipEntry> entries = zipJarFile.entries();
+        Enumeration<? extends ZipEntry> entries = zipJarFile.entries();
 
-          while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            String entryName = entry.getName();
-            if ( entryName.endsWith(".class")) {
-              String className = entryName.replace(".class", "").replace('/', '.');
-              try {
-                Class<?> clazz = loader.loadClass(className);
-                OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
-                if (connectorAnnotation != null) {
-                  // this is a Outbound connector
-                  logLoadJar.append("ConnectorDetection[");
-                  logLoadJar.append(connectorAnnotation.name());
-                  logLoadJar.append("], type[");
-                  logLoadJar.append(connectorAnnotation.type());
-                  logLoadJar.append("]; ");
-                  storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
-                      jarStorageEntity);
-                }
-                if (AbstractRunner.class.isAssignableFrom(clazz)) {
-                  Object instanceClass = clazz.getDeclaredConstructor().newInstance();
-                  // this is a AbstractConnector
-                  AbstractRunner runner = (AbstractRunner) instanceClass;
-                  storageRunner.saveUploadRunner(runner, jarStorageEntity);
-                  logLoadJar.append("RunnerDectection[");
-                  logLoadJar.append(runner.getName());
-                  logLoadJar.append("], type[");
-                  logLoadJar.append(runner.getType());
-                  logLoadJar.append("]; ");
-                }
-              } catch (Error er) {
-                logger.info("Can't load class [" + className + "] : " + er.getMessage());
-                logLoadJar.append("ERROR,Class[");
-                logLoadJar.append(className);
-                logLoadJar.append("]:");
-                logLoadJar.append(er.getMessage());
-                logLoadJar.append("; ");
-
-              } catch (Exception e) {
-                // the class may extends some class which are not present at this moment
-                logger.info("Can't load class [" + className + "] : " + e.getMessage());
-                logLoadJar.append("ERROR,Class[");
-                logLoadJar.append(className);
-                logLoadJar.append("]:");
-                logLoadJar.append(e.getMessage());
-                logLoadJar.append("; ");
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          String entryName = entry.getName();
+          if (entryName.endsWith(".class")) {
+            String className = entryName.replace(".class", "").replace('/', '.');
+            try {
+              Class<?> clazz = loader.loadClass(className);
+              OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
+              if (connectorAnnotation != null) {
+                // this is a Outbound connector
+                logLoadJar.append("ConnectorDetection[");
+                logLoadJar.append(connectorAnnotation.name());
+                logLoadJar.append("], type[");
+                logLoadJar.append(connectorAnnotation.type());
+                logLoadJar.append("]; ");
+                storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
+                    jarStorageEntity);
               }
+              if (AbstractRunner.class.isAssignableFrom(clazz)) {
+                Object instanceClass = clazz.getDeclaredConstructor().newInstance();
+                // this is a AbstractConnector
+                AbstractRunner runner = (AbstractRunner) instanceClass;
+                storageRunner.saveUploadRunner(runner, jarStorageEntity);
+                logLoadJar.append("RunnerDectection[");
+                logLoadJar.append(runner.getName());
+                logLoadJar.append("], type[");
+                logLoadJar.append(runner.getType());
+                logLoadJar.append("]; ");
+              }
+            } catch (Error er) {
+              logger.info("Can't load class [" + className + "] : " + er.getMessage());
+              logLoadJar.append("ERROR,Class[");
+              logLoadJar.append(className);
+              logLoadJar.append("]:");
+              logLoadJar.append(er.getMessage());
+              logLoadJar.append("; ");
+
+            } catch (Exception e) {
+              // the class may extends some class which are not present at this moment
+              logger.info("Can't load class [" + className + "] : " + e.getMessage());
+              logLoadJar.append("ERROR,Class[");
+              logLoadJar.append(className);
+              logLoadJar.append("]:");
+              logLoadJar.append(e.getMessage());
+              logLoadJar.append("; ");
             }
           }
-          // update the Jar information
-          jarStorageEntity.loadLog = logLoadJar.toString();
-          storageRunner.updateJarStorage(jarStorageEntity);
-        }catch (Exception e) {
-          logOperation.log(OperationEntity.Operation.ERROR,"Can't register JAR [" + jarFile.getName() + "] " + e.getMessage());
-        } // end manage Zip file
-
+        }
+        // update the Jar information
+        jarStorageEntity.loadLog = logLoadJar.toString();
+        storageRunner.updateJarStorage(jarStorageEntity);
+      } catch (Exception e) {
+        logOperation.log(OperationEntity.Operation.ERROR,
+            "Can't register JAR [" + jarFile.getName() + "] " + e.getMessage());
+      } // end manage Zip file
 
     }
   }
