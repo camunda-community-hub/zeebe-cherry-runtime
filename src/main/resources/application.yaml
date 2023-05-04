@@ -20,7 +20,7 @@ zeebe.client:
 
   worker:
     maxJobsActive: 32
-    threads: 1
+    threads: 2
 server.port: 9081
 logging.level.root: INFO
 

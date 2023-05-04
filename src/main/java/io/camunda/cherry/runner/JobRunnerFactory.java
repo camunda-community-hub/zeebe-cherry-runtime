@@ -17,6 +17,7 @@ import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
+import io.camunda.cherry.zeebe.ZeebeConfiguration;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.zeebe.client.api.worker.JobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
@@ -50,8 +51,12 @@ public class JobRunnerFactory {
 
   @Autowired
   RunnerFactory runnerFactory;
+
   @Autowired
   ZeebeContainer zeebeContainer;
+
+  @Autowired
+  ZeebeConfiguration zeebeConfiguration;
 
   @Autowired
   LogOperation logOperation;
@@ -64,6 +69,10 @@ public class JobRunnerFactory {
   Map<String, Running> mapRunning = new HashMap<>();
 
   public void startAll() {
+    // read the configuration
+    zeebeConfiguration.init();
+
+    // now start the Zeebe Client
     zeebeContainer.startZeebeeClient();
     if (!zeebeContainer.isOk()) {
       logger.error("ZeebeClient is not started, can't start runner");
@@ -168,12 +177,22 @@ public class JobRunnerFactory {
     return running.containerJobWorker.getJobWorker() != null;
   }
 
+  /**
+   * We ask the container what is the number of job active configured
+   * @return number of job active
+   */
+  public int getMaxJobActive() {
+    return zeebeContainer.getMaxJobsActive();
+  }
   public int getNumberOfThreads() {
-    return zeebeContainer.getNumberOfhreads();
+    return zeebeContainer.getNumberOfThreads();
   }
 
   public void setNumberOfThreads(int numberOfThreadsRequired) {
-    zeebeContainer.setNumberOfThreadsRequired(numberOfThreadsRequired);
+    zeebeConfiguration.setNumberOfThreads(numberOfThreadsRequired);
+    zeebeContainer.stopZeebeeClient();
+    zeebeContainer.startZeebeeClient();
+
 
     // stop all running and restart them
     for (Running running : mapRunning.values()) {

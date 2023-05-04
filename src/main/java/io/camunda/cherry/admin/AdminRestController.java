@@ -11,6 +11,7 @@ package io.camunda.cherry.admin;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.zeebe.ZeebeConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,10 @@ public class AdminRestController {
 
   @Autowired
   HistoryFactory historyFactory;
+
+  @Autowired
+  ZeebeConfiguration zeebeConfiguration;
+
   /**
    * Spring populate the list of all workers
    */
@@ -51,7 +56,17 @@ public class AdminRestController {
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
+    parameters.put("zeebekindconnection", zeebeConfiguration.isCouldConfiguration() ? "SAAS" : "GATEWAY");
+    parameters.put("gatewayaddress", zeebeConfiguration.gateway);
+    parameters.put("plaintext", zeebeConfiguration.plaintext.toUpperCase());
+    parameters.put("cloudregion", zeebeConfiguration.region);
+    parameters.put("cloudclusterid", zeebeConfiguration.clusterId);
+    parameters.put("cloudclientid", zeebeConfiguration.clientId);
+    parameters.put("cloudclientsecret", ""); // never send the client Secret
+
+    // we don't want the configuration here, but the running information
+    parameters.put("maxjobsactive", cherryJobRunnerFactory.getMaxJobActive());
+    parameters.put("nbthreads", cherryJobRunnerFactory.getNumberOfThreads());
     return parameters;
   }
 
@@ -64,4 +79,5 @@ public class AdminRestController {
   public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
     cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
   }
+
 }

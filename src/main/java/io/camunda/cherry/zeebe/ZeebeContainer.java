@@ -13,11 +13,17 @@ import io.camunda.zeebe.client.api.response.Topology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Nullable;
 
 @Component
 @Configuration
+@PropertySource("classpath:application.yaml")
+
 public class ZeebeContainer {
 
   Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
@@ -30,12 +36,7 @@ public class ZeebeContainer {
   /**
    * Number of thread currently used at the Zeebe Client
    */
-  private int numberOfThreads = 1;
 
-  /**
-   * Number of thread required when the zeebe client will restart
-   */
-  private int numberOfThreadsRequired = 1;
 
   /**
    * Start the ZeebeClient
@@ -61,12 +62,11 @@ public class ZeebeContainer {
           .gatewayAddress(zeebeConfiguration.getGatewayAddress())
           .usePlaintext();
     }
-    zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(numberOfThreadsRequired).build();
+    zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
 
     pingZeebeClient();
 
-    numberOfThreads = numberOfThreadsRequired;
-    logger.info("ZeebeClient number of thread=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+    logger.info("ZeebeClient number of threads=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
   }
 
   /**
@@ -108,21 +108,20 @@ public class ZeebeContainer {
   }
 
   /**
-   * Protected because the main interface for this information is the CherryJobRunningFactory
-   *
+   * get the number of jobs in the
    * @return the number of threads used when the ZeebeClient is started
    */
-  public int getNumberOfhreads() {
-    return numberOfThreads;
+  public int getNumberOfThreads() {
+    return zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads();
   }
 
   /**
-   * Protected because the main interface for this information is the CherryJobRunningFactory
-   * Setting this information does not recreate a zeebeclient. All runners must be stop before.
    *
-   * @param numberOfThreads number of threads used at the next startup
+   * @return the number of threads used when the ZeebeClient is started
    */
-  public void setNumberOfThreadsRequired(int numberOfThreads) {
-    this.numberOfThreadsRequired = numberOfThreads;
+  public int getMaxJobsActive() {
+    return zeebeClient.getConfiguration().getDefaultJobWorkerMaxJobsActive();
   }
+
+
 }
