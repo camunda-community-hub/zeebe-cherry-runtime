@@ -12,6 +12,7 @@ import {Button, Tab, Tabs} from "react-bootstrap";
 import RestCallService from "../services/RestCallService";
 import RunnerChart from "./RunnerChart";
 import {ArrowRepeat} from "react-bootstrap-icons";
+import ControllerPage from "../component/ControllerPage";
 
 class RunnerMonitoring extends React.Component {
 
@@ -21,6 +22,7 @@ class RunnerMonitoring extends React.Component {
     this.state = {
       runner: props.runnerDisplay,
       timestamp: props.timestamp,
+      status:"",
       display: {
         loading: false,
         pageNumberErrors: 0,
@@ -67,6 +69,9 @@ class RunnerMonitoring extends React.Component {
         </div>
         <Tabs defaultActiveKey="overview">
           <Tab eventKey="overview" title="Overview">
+            <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
+
+
             <div style={{paddingTop: "10px"}}>
               <div>
                 <Button className={this.getCssStartButton()}
@@ -246,23 +251,28 @@ class RunnerMonitoring extends React.Component {
 
   stopRunner() {
     console.log("RunnerMonitoring.stopRunner");
-    this.setState({labelBtnStop: "Stopping..."});
+    this.setState({labelBtnStop: "Stopping...", status:""});
     var restCallService = RestCallService.getInstance();
-    restCallService.putJson('cherry/api/runner/stop?runnertype=' + this.state.runner.type, this, {}, this.operationRunnerCallback);
+    restCallService.putJson('cherry/api/runner/stop?runnertype=' + this.state.runner.type, {}, this, this.operationRunnerCallback);
   }
 
   startRunner() {
     console.log("RunnerMonitoring.startRunner");
-    this.setState({labelBtnStart: "Starting..."});
+    this.setState({labelBtnStart: "Starting...",status: ""});
     var restCallService = RestCallService.getInstance();
-    restCallService.putJson('cherry/api/runner/start?runnertype=' + this.state.runner.type, this, {}, this.operationRunnerCallback);
+    restCallService.putJson('cherry/api/runner/start?runnertype=' + this.state.runner.type, {}, this,this.operationRunnerCallback);
   }
 
   operationRunnerCallback(httpResponse) {
-    let runnerinfo = this.state.runner;
-    runnerinfo.active = httpResponse.getData().active;
 
-    this.setState({runner: runnerinfo})
+    if (httpResponse.isError()) {
+      console.log("RunnerMonitoring.operationRunnerCallback: error " + httpResponse.getError());
+      this.setState({status: httpResponse.getError()});
+    } else {
+      let runnerinfo = this.state.runner;
+      runnerinfo.active = httpResponse.getData().active;
+      this.setState({runner:runnerinfo})
+    }
     this.refreshState();
   }
 

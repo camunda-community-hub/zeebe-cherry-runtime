@@ -1,4 +1,4 @@
-package io.camunda.cherry.ping.objectconnector;
+package io.camunda.cherry.embeddedrunner.ping.objectconnector;
 
 public class PingObjectConnectorOutput {
 

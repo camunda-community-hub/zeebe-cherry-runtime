@@ -121,7 +121,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
 
   /* -------------------------------------------------------- */
   /*                                                          */
-  /*  Log worker                                             */
+  /*  OperationLog worker                                             */
   /*                                                          */
   /* to normalize the log use these methods
   /* -------------------------------------------------------- */

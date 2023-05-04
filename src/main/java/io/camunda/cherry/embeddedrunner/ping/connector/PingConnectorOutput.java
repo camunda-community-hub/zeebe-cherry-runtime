@@ -9,7 +9,7 @@
 /*    gettimeStampMS(), getipAddress()                                  */
 /*  if you don't do that, then the engine can't retrieve the value      */
 /* -------------------------------------------------------------------- */
-package io.camunda.cherry.ping.connector;
+package io.camunda.cherry.embeddedrunner.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorOutput;
 import io.camunda.cherry.definition.RunnerParameter;

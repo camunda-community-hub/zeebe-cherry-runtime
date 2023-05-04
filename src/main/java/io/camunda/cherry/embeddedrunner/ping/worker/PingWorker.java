@@ -4,7 +4,7 @@
 /*                                                                      */
 /* Realize a simple ping                                                */
 /* ******************************************************************** */
-package io.camunda.cherry.ping.worker;
+package io.camunda.cherry.embeddedrunner.ping.worker;
 
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.IntFrameworkRunner;
@@ -70,7 +70,7 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
     Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
     logInfo(message);
     if (delay != null && delay < 0) {
-      delay = Long.valueOf(random.nextInt(10000) + 1500);
+      delay = random.nextLong(10000) + 1500L;
     }
     if (delay != null) {
       try {

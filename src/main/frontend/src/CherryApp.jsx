@@ -18,7 +18,7 @@ import Parameters from "./parameter/Parameters"
 import Secrets from "./secrets/Secrets"
 import Content from "./content/Content"
 import Store from "./store/Store"
-import Log from "./log/Log"
+import OperationLog from "./operationlog/OperationLog"
 
 const FRAME_NAME = {
   DASHBOARD: "Dashboard",
@@ -28,7 +28,7 @@ const FRAME_NAME = {
   CONTENT: "Content",
   PARAMETERS: "Parameters",
   STORE: "Store",
-  LOG : "Log"
+  OPERATIONLOG : "OperationLog"
 
 }
 
@@ -75,7 +75,7 @@ class CherryApp extends React.Component {
               }}>Store</Nav.Link>
 
               <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.LOG)
+                this.clickMenu(FRAME_NAME.OPERATIONLOG)
               }}>Log</Nav.Link>
 
               <Nav.Link onClick={() => {
@@ -89,7 +89,7 @@ class CherryApp extends React.Component {
         {this.state.frameContent === FRAME_NAME.SECRET && <Secrets/>}
         {this.state.frameContent === FRAME_NAME.CONTENT && <Content/>}
         {this.state.frameContent === FRAME_NAME.STORE && <Store/>}
-        {this.state.frameContent === FRAME_NAME.LOG && <Log/>}
+        {this.state.frameContent === FRAME_NAME.OPERATIONLOG && <OperationLog/>}
         {this.state.frameContent === FRAME_NAME.PARAMETERS && <Parameters/>}
 
 

@@ -1,5 +1,5 @@
-
 # Developer guide
+the purpose of this document is to explain how to develop with the runtime. The target audience are the developers.
 
 This section focus on the development part, to create a new collection of connector/worker.
 The developer can choose two different pattern:
@@ -11,79 +11,36 @@ The connector pattern embed the Connector SDK
 
 In the next part of the documentation, we use the term of **Runner**. A Runner is a Connector or a Worker.
 
-## Step-by-step guide
-Create your new Spring Boot Maven project.
-Include in your pom.xml the library
+## Tutorial
 
-````
-<dependency>
-    <groupId>org.camunda.community</groupId>
-    <artifactId>zeebe-cherry-framework</artifactId>
-    <version>${Cherry.version}</version>
-</dependency>
-````
-
-Library is deployed in https://artifacts.camunda.com/ui/native/camunda-bpm-community-extensions/org/camunda/community/zeebe-cherry-framework
-
-## Includes artefacts
-
-Check the pom.xml, and add the different artefacts
-
-* use spring-boot:run
-  Add the spring-boot-maven-plugin dependency and the spring parent dependency
-
-* start.sh/start.bat
-  Copy this two files in your collection
-
-## Setup the applications.properties
-
-````
-spring.application.name=ZeebeCherry
-server.servlet.context-path=/
-spring.mustache.prefix=classpath:static/templates/
-````
-
-## Embeded an existing connector
-See the documentation relative to this pattern
-
-
-## Develop your own runner
-Create a new Java class for your runner. Extends the class AbstractWorker for a Worker, AbstractConnector for a Connector
-
-In doing that, you have to respect some rules:
-
-* Define the input and output of your runner.
-  Which input does it need? Which output will it produce? This information is used to help the designer to understand how to use your runner
-  and provide you comfort: if you declare that an input LONG is mandatory, then the framework checks for you its existence.
-  When your code is called, you can be sure to have all you need.
-
-* Define the different BPMN Errors that your worker can return
-
-
-The abstract class offer some additional function, as a collection of getInput<TypedValue>() and setOutputValue() to access input and produce output data.
-To normalize log messages, logInfo() and logError() methods are available.
-
-Camunda 8 does not manipulate files. The library offers a mechanism to manipulate them via different implementations.
-The designer can choose how he wants to save the file itself (in a JSON variable? On a shared disk? In a CMIS system, or in a database).
-Your runner does not need to handle that complexity. Just declare you need a file as Input or Output, and the library does the work.
-
-For your information, the framework comes with some generic runner. It should be started by itself as a server.
+Check the [Tutorial](../Tutorial/Tutorial.md) chapter to see how to create a connector / worker.
 
 ## Connector or Worker?
 
-What is the difference between a ``Worker`` and a ``Connector``?
-Actually, a ``Connector`` is used behind the scene for the ``Worker`` implementation.
+What is the difference between a `Worker` and a `Connector`?
 
-The ``AbstractConnector`` implement the interface ``OutboundConnectorFunction``.
-The main difference comes from parameters.
+Actually, a `Connector` is used behind the scene for the `Worker` implementation.
+For the concept point of view, a `Connector` is reusable and generic, where a `Worker` is more specific to your company. 
+This is why all component you can find on the community hub are connector.
 
-In a ``Worker``, you access a list of variables. The worker's signature gets an object to access anything.
-The ``connector`` accepts one input, which is an object. This object may have multiple parameters.
-Same as output: a ``worker`` produces a list of Output values when the ``connector`` provides one object.
+The second technical difference is on the structure. A Connector take as Input a class, where all parameters are a member of the class.
+A `Worker` access a list of variables. 
 
-From the Designer's point of view, there is no difference in the usage.
 
-From the Cherry Framework, it will handle both element in the same ways: this is a ``Runner``
+A Connector has then three class: 
+* the function, where the core of the code is located
+* an Input class
+* an Output class
+
+Keep in mind at any time you can move from a Worker structure to a Connector structure. The Cherry runtime execute both components
+without distinction. The runtime call it a ``Runner``
+
+To take advantage of the different tool, two abstract class are present in the library:
+
+* The `AbstractConnector` implement the interface `OutboundConnectorFunction`.
+
+* The `AbstractWorker` is the second abstract class.
+
 
 
 ## Principle
@@ -109,198 +66,120 @@ The model is the collection message (``org.camunda.cherry.message``), and the wo
     - Outputs
     - Errors the runner can throw.
 
-## Tutorial - step by step
-
-Follow this tutorial to start your first Cherry collection
-
-### Maven
-Create a project under Eclipse/Intellij, and use this skeleton to create your first project
-
-````
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>org.camunda.community</groupId>
-    <artifactId>zeebe-cherry-officepdf-workers</artifactId>
-    <version>1.0.0</version>
+# Reference guide
 
 
-
-    <properties>
-    
-        <!-- Update this version to the last information -->
-        <zeebe.version>8.1.0</zeebe.version>
-        <cherry.version>1.3.2</cherry.version>
-        <connector.version>0.2.0</connector.version>
-        <connectorvalidation.version>0.2.2</connectorvalidation.version>
-        <junit.jupiter.version>5.9.0</junit.jupiter.version>
-
-        <java.version>17</java.version>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <spring.boot.version>2.7.5</spring.boot.version>
-
-    </properties>
-
-    <!-- Inherit defaults from Spring Boot -->
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.5</version>
-    </parent>
-
-    <dependencies>
-
-        <!-- Cherry framework -->    
-        <dependency>
-            <groupId>org.camunda.community</groupId>
-            <artifactId>zeebe-cherry-framework</artifactId>
-            <version>${cherry.version}</version>
-        </dependency>
+## Input declaration
 
 
-        <!-- Zeebe Client -->
-        <dependency>
-            <groupId>io.camunda</groupId>
-            <artifactId>spring-zeebe-starter</artifactId>
-            <version>${zeebe.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.camunda</groupId>
-            <artifactId>zeebe-client-java</artifactId>
-            <version>${zeebe.version}</version>
-        </dependency>
-
-        <!-- Accept Camunda Connector -->
-        <dependency>
-            <groupId>io.camunda.connector</groupId>
-            <artifactId>connector-core</artifactId>
-            <version>${connector.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.camunda.connector</groupId>
-            <artifactId>connector-runtime-job-worker</artifactId>
-            <version>${connector.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.camunda.connector</groupId>
-            <artifactId>connector-validation</artifactId>
-            <version>${connectorvalidation.version}</version>
-        </dependency>
-
-        <!-- Manipulate variables -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>2.9.0</version>
-        </dependency>
-
-        <!-- JSON LocalDateTime -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.13.3</version>
-        </dependency>
-
-        <!-- tests -->
-        <dependency>
-            <groupId>io.zeebe</groupId>
-            <artifactId>zeebe-worker-java-testutils</artifactId>
-            <version>8.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+Give a list of Input that your connector / worker expect.
+Each parameter has:
+- a name (message)
+- a label (Message to log). This label is visible in the Element Template for example
+- a type. Multiple getter are available to access variables
+- a scope: OPTIONAL, MANDATORY
+- a description
 
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.21.0</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.platform</groupId>
-                        <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.2.0</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                </configuration>
-            </plugin>
-            <!-- allow mvn run -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>CherryApplication</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+       Arrays.asList(
+            RunnerParameter.getInstance("message", "Message to log", String.class, RunnerParameter.Level.OPTIONAL, "Message to log, to ensure the worker was called"),
+            RunnerParameter.getInstance("delay", "Delay in ms", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep, in milliseconds")
+        ),
 
 
 
-</project>
+### Declaration in a Worker
+The worker has only one class, and get directly the information from the context.
 
-````
+Declare in the constructor the different input.
+(see `src/main/java/io/camunda/cherry/embeddedrunner/ping/worker/PingWorker.java`)
 
-### Application.properties
-Set up in the application.properties the connection the Zeebe server
+`````java
+@Component
+public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
 
-````
-# use a OnPremise Zeebe engine
-zeebe.client.broker.gateway-address=127.0.0.1:26500
-zeebe.client.security.plaintext=true
-````
+  public PingWorker() {
+    super("c-ping", 
+          Arrays.asList(
+              RunnerParameter.getInstance(INPUT_MESSAGE, 
+                  "Message", 
+                  String.class, 
+                  RunnerParameter.Level.OPTIONAL,
+                  "Message to log"),
+              RunnerParameter.getInstance(INPUT_DELAY, 
+                  "Delay", 
+                  Long.class, 
+                  RunnerParameter.Level.OPTIONAL,
+                  "Delay to sleep")),
+          Collections.singletonList(
+              RunnerParameter.getInstance(OUTPUT_TIMESTAMP, 
+                  "Time stamp", 
+                  String.class,
+                  RunnerParameter.Level.REQUIRED,
+                  "Produce a timestamp")), 
+          Collections.emptyList());
+    }
+`````
+In the execute, you can access parameters via the different `getInput...Value()` methoids
 
-and setup the Mustache Spring framework
-
-````
-# Spring Boot Configuration
-spring.application.name=ZeebeCherry
-server.servlet.context-path=/
-spring.mustache.prefix=classpath:static/templates/
-````
-
-### Copy start.sh / start.bat
-Copy these two files from the cherry framework
-
-### Start the framework
-Start the framework by using the start.sh/start.bat, or run
-````
-mvn spring-boot:run
-````
-
-Access the page `localhost:8080`
+`````java
+String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
+Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
+`````
 
 
 
-### Your first connector/worker
-Create a Java Class.
-Check the example `src/main/java/org/camunda/cherry/ping/PingWorker.java`
+### Declaration in a Connector
+The declaration in the connector is different. The Input is an object. Second, a notatino `@OutboundConnector` must be declared.
+
+In the annotation, you must give the different inputVariables. 
+These variables are defined in the InputObject, and the name of the variable in the notation and the name in the object **must be identical**
+
+To
+
+
+`````java
+public class PingConnectorInput extends AbstractConnectorInput {
+
+// see
+// https://docs.camunda.io/docs/components/integration-framework/connectors/custom-built-connectors/connector-sdk/#validation
+
+@NotEmpty
+protected final static String INPUT_MESSAGE="message";
+private String message;
+
+protected final static String INPUT_DELAY="delay";
+private int delay;
+
+protected final static String INPUT_THROWERRORPLEASE="throwErrorPlease";
+private boolean throwErrorPlease;
+`````
+
+
+
+@Component
+@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { "message", "delay",
+"throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
+public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
+
+public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
+
+private final Random random = new Random();
+
+public PingConnector() {
+super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
+Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
+}
+
+### Different parameters
+
+### Decorator
+
+** addChoice()**
+
+**addCondition()**
+
 
 **Declare the class**
 In your Java Class, add the @Component, and extends the AbstractWorker or the AbstractConnector
@@ -308,42 +187,6 @@ In your Java Class, add the @Component, and extends the AbstractWorker or the Ab
 @Component
 public class PingWorker extends AbstractWorker {
 ````
-
-**Constructor**
-Declare in the constructor all the mandatory parameters
-````
-public PingWorker() {
-    super("c-ping",
-        Arrays.asList(
-            RunnerParameter.getInstance("message", "Message to log", String.class, RunnerParameter.Level.OPTIONAL, "Message to log, to ensure the worker was called"),
-            RunnerParameter.getInstance("delay", "Delay in ms", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep, in milliseconds")
-        ),
-        Arrays.asList(
-            RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")
-        ),
-        Collections.emptyList()
-    );
- }
-````
-
-Let's review parameters per parameters
-**"c-ping"**
-The first parameter is the type. This is referenced in the service task, and the worker will catch all jobs related to this type
-
-**List of Inputs**
-````
-Arrays.asList(
-RunnerParameter.getInstance("message", "Message to log", String.class, RunnerParameter.Level.OPTIONAL, "Message to log, to ensure the worker was called"),
-RunnerParameter.getInstance("delay", "Delay in ms", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep, in milliseconds")
-),
-````
-Give a list of Input that your worker expect.
-Each parameter has:
-- a name (message)
-- a label (Message to log). This label is visible in the Element Template for example
-- a type. Multiple getter are available to access variables
-- a scope: OPTIONAL, MANDATORY
-- a description
 
 **List of outputs**
 Same as input, a list of outputs is required. This list will explain what your connector returns.
@@ -357,7 +200,9 @@ Same as input, a list of outputs is required. This list will explain what your c
 Give the list of BPMN Error that your provide. This list will be available in the documentation.
 
 
-**Optional method**
+
+## Optional method
+
 You can override different method:
 ````
      @Override
@@ -390,8 +235,14 @@ You can override different method:
 ````
 The logo must be a SVG image.
 
-**Execute**
+## Execution
 Then here you are: the execute method!
+
+To simplify the implementation, a set of getter() is provided to access any input.
+````
+public String getInputStringValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) {
+public Double getInputDoubleValue(String parameterName, Double defaultValue, final ActivatedJob activatedJob) {
+````
 
 ````
 @Override
@@ -407,7 +258,8 @@ public void execute(final JobClient jobClient, final ActivatedJob activatedJob, 
 You have different method to access the input, in the correct class.
 To produce the result, use a setOutput method. This method verify that you respect the Output contract.
 
-**File management**
+
+## File management
 C8 does not propose any solution to manipulate file.
 Cherry propose a solution, to store files in different location, and to access it.
 The storage can be
@@ -430,73 +282,6 @@ FileVariable fileVariable = getInputFileVariableValue("MyFile", activatedJob);
 ````
 Cherry will do the job to load the file where it is.
 
-**Access the Element Template**
-
-Restart the Cherry framework. Your connector appears in the dashboard, and the Element Template file can be download.
-
-You can download the complete collection, to save for the desktop Modeler
-
-Or you can access the definition worker per worker, to create a connector template in the Web Modeler. One connector template must be created one by obne.
-
-## Tests
-Java class test follows the same architecture, ``test/java/org.camunda.cherry.<CollectionName>``.
-
-Process test should be saved under ``test/resources/<collectionName>``. For example, the `SendMessage.bpmn` test process is saved under `main/resources/message`
-
-
-
-## Contract
-
-Implementation works with the Contract concept.
-
-A runner implementation is based on a skeleton, the abstract class ``AbstractWorker``. A typical implementation immediately call the parent class for each ``handleWorkerExecution``:
-````
-@ZeebeWorker(type = "v-pdf-convert-to", autoComplete = true)
-public void handleWorkerExecution(final JobClient jobClient, final ActivatedJob activatedJob) {
-super.handleWorkerExecution(jobClient, activatedJob);
-}
-````
-A Runner defines a set of expected variables, the INPUT. For each input, a level (OPTIONAL,REQUIRED), and a type (String? Double?) are provided.
-
-The abstract class checks the requirement. If the contract is not respected, then a BPMN error is thrown.
-
-So, when the method execution is called, implementation is sure that all required information is provided
-
-````
-public void execute(final JobClient jobClient, final ActivatedJob activatedJob) {
-````
-
-On the opposite, the Runner declares the list of Output variables it will be created. The abstract class checks that all output variables is correctly produced by the Runner, no more, no less. Suppose the output contract is not respected (you forgot one variable, or you provided an undeclared variable), a BPMN error is thrown.
-
-A contract is very useful:
-* As a developer, you don't need to worry about the existence of the variable. If you ask it, you will have it during the execution.
-* As a designer, all Input and Output variables for a Runner are declared and documented.
-
-This implied the implementation declare Inputs and Outputs
-````
-public OfficeToPdfWorker() {
-  super("v-pdf-convert-to",
-  Arrays.asList(
-    AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_FILE, Object.class, Level.REQUIRED, "FileVariable for the file to convert"),
-    AbstractWorker.WorkerParameter.getInstance(INPUT_SOURCE_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to access the file"),
-    AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_FILE_NAME, String.class, Level.REQUIRED, "Destination file name"),
-    AbstractWorker.WorkerParameter.getInstance(INPUT_DESTINATION_STORAGEDEFINITION, String.class, Level.REQUIRED, "Storage Definition use to describe how to save the file")
-  ),
-  Arrays.asList(
-    AbstractWorker.WorkerParameter.getInstance(OUTPUT_DESTINATION_FILE, Object.class, Level.REQUIRED, "FileVariable converted")
-  ),
-  Arrays.asList(BPMERROR_CONVERSION_ERROR, BPMERROR_LOAD_FILE_ERROR));
-}
-````
-
-To simplify the implementation, a set of getter() is provided to access any input.
-````
-public String getInputStringValue(String parameterName, String defaultValue, final ActivatedJob activatedJob) {
-public Double getInputDoubleValue(String parameterName, Double defaultValue, final ActivatedJob activatedJob) {
-````
-
-and a **setValue()** is provided too.
-This method must be used to set any output: the contract verification track the information you produce here.
 
 ## Manipulating files
 
@@ -511,6 +296,71 @@ public void setFileVariableValue(String parameterName, String storageDefinition,
 ````
 These methods exploit the storageDefinition and save or retrieve the file for the Runner.
 
+
+
+
+## Manage files (or documents)
+
+Zeebe does not store files as it.
+
+The Cherry project offers different approaches to manipulating files across Runners.
+For example, OfficeToPdf needs an MS office or an Open Office document as input and will produce a PDF document as a result.
+
+How to give this document? How to store the result?
+
+The Cherry project introduces the StorageDefinition concept. This information explains how to access files (same concept as a JDBC URL).
+Then the Runner LoadFileFromDisk required a storageDefinition, and produced as output a "fileLoaded".
+Note: the storage definition is the way to access where files are stored, not the file itself.
+
+Existing storage definitions are:
+* **JSON**: files are stored as JSON, as a process variable. This is simple, but if your file is large, not very efficient. The file is encoded in base 64, which implies a 20 to 40% overload, and the file is stored in the C8 engine, which may cause some overlap.
+
+Example with LoadFileFromDisk:
+````
+storageDefinition: JSON
+````
+fileLoaded contains a JSON information with the file
+````
+{"name": "...", "mimeType": "application/txt", value="..."}
+````
+
+* **FOLDER:<path>**. File is store on the folder, with a unique name to avoid any collision.
+
+Example with LoadFileFromDisk:
+````
+storageDefinition: FOLDER:/c8/fileprocess
+````
+fileLoaded contains
+````
+"contractMay_554343435533.docx"
+````
+Note: the folder is accessible by Runners. If you run a multiple Cherry application on different hosts, the folder must be visible by all applications.
+
+* **TEMPFOLDER**, the temporary folder on the host, is used to store the file, with a unique name to avoid any collision
+
+Example with LoadFileFromDisk:
+````
+storageDefinition: TEMPFOLDER
+````
+fileLoaded contains
+````
+"contractMay_554343435533.docx"
+````
+This file is visible in the temporary folder on the host
+
+Note: the temporary folder is accessible only on one host, and each host has a different temporary folder. This implies your Runners run only on the same host, not in a cluster.
+
+## Access the Element Template
+
+Restart the Cherry runtime. Your connector appears in the dashboard, and the Element Template file can be download.
+
+You can download the complete collection, to save for the desktop Modeler
+
+Or you can access the definition worker per worker, to create a connector template in the Web Modeler. One connector template must be created one by obne.
+
+
+and a **setValue()** is provided too.
+This method must be used to set any output: the contract verification track the information you produce here.
 
 
 

@@ -110,8 +110,8 @@
             <zeebe:input source="false" target="parameters_optional" />
           </zeebe:ioMapping>
           <zeebe:taskHeaders>
-            <zeebe:header key="resultVariable" value="result" />
-            <zeebe:header key="errorExpression" value="bpmnError(error.code, error.message)" />
+            <zeebe:header key="Result Variable" value="result" />
+            <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
           </zeebe:taskHeaders>
         </bpmn:extensionElements>
         <bpmn:incoming>Flow_1fflfji</bpmn:incoming>
@@ -162,19 +162,26 @@
         <bpmn:incoming>Flow_0pxxkgw</bpmn:incoming>
         <bpmn:outgoing>Flow_1i2890a</bpmn:outgoing>
       </bpmn:userTask>
-      <bpmn:serviceTask id="Activity_PingError" name="Ping Delay">
+      <bpmn:sequenceFlow id="Flow_1ajbvwe" sourceRef="Event_07kywq3" targetRef="Event_0kmy7xm" />
+      <bpmn:boundaryEvent id="Event_07kywq3" name="30s" attachedToRef="Activity_Verify">
+        <bpmn:outgoing>Flow_1ajbvwe</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_17bv8ve">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:boundaryEvent>
+      <bpmn:serviceTask id="Activity_PingError" name="Ping Delay" zeebe:modelerTemplate="io.camunda.cherry.ping.connector.PingConnector" zeebe:modelerTemplateIcon="data:image/svg+xml,%3C?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39; standalone=&#39;no&#39;?%3E%3Csvg   xmlns:dc=&#39;http://purl.org/dc/elements/1.1/&#39;   xmlns:cc=&#39;http://creativecommons.org/ns%23&#39;   xmlns:rdf=&#39;http://www.w3.org/1999/02/22-rdf-syntax-ns%23&#39;   xmlns:svg=&#39;http://www.w3.org/2000/svg&#39;   xmlns=&#39;http://www.w3.org/2000/svg&#39;   width=&#39;18&#39;   height=&#39;18&#39;   viewBox=&#39;0 0 16.875 16.875&#39;   id=&#39;svg15795&#39;   version=&#39;1.1&#39;%3E  %3Cdefs     id=&#39;defs15797&#39;%3E    %3CradialGradient       r=&#39;255.59&#39;       gradientTransform=&#39;matrix(-0.12272793,0,0,0.12272793,-1807.3634,-1063.9497)&#39;       cx=&#39;-464.92001&#39;       cy=&#39;873.19&#39;       gradientUnits=&#39;userSpaceOnUse&#39;       id=&#39;radialGradient3026-9-1&#39;%3E      %3Cstop         offset=&#39;.5&#39;         style=&#39;stop-color:%23ffd046;stop-opacity:1&#39;         id=&#39;stop48-0-2&#39; /%3E      %3Cstop         offset=&#39;1&#39;         style=&#39;stop-color:%23f0a957;stop-opacity:1&#39;         id=&#39;stop50-8-9&#39; /%3E    %3C/radialGradient%3E  %3C/defs%3E  %3Cmetadata     id=&#39;metadata15800&#39;%3E    %3Crdf:RDF%3E      %3Ccc:Work         rdf:about=&#39;&#39;%3E        %3Cdc:format%3Eimage/svg+xml%3C/dc:format%3E        %3Cdc:type           rdf:resource=&#39;http://purl.org/dc/dcmitype/StillImage&#39; /%3E        %3Cdc:title%3E%3C/dc:title%3E      %3C/cc:Work%3E    %3C/rdf:RDF%3E  %3C/metadata%3E  %3Cg     id=&#39;layer1&#39;     transform=&#39;translate(-333.12983,-288.31523)&#39;%3E    %3Cg       transform=&#39;matrix(0.36709704,0,0,0.36709704,986.33222,642.92532)&#39;       style=&#39;display:inline&#39;       id=&#39;g15745&#39;%3E      %3Cpath         d=&#39;m -1764.6075,-935.9985 c 0,0 3.8003,2.04759 9.6285,4.07616 3.5202,1.22728 9.7726,-0.84277 13.0276,-1.70481 3.26,-0.86511 8.8927,-2.65449 7.3298,-4.21743 -1.5631,-1.56257 -6.0571,-4.89537 -6.0571,-4.89537 0,0 4.2789,7.06582 -23.9295,6.74145 z&#39;         style=&#39;fill:%23ffffff;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path9-1-4&#39; /%3E      %3Cpath         id=&#39;path13-3-8&#39;         style=&#39;fill:%23ffffff;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1738.5952,-941.13712 c 0,2.98008 -8.9157,5.39684 -19.915,5.39684 -10.9985,0 -19.9126,-2.41639 -19.9126,-5.39684 2.2937,-1.66297 1.9624,-3.06329 1.9624,-3.06329 h 35.9961 c 0,0 -0.3197,1.39983 1.8691,3.06255 z&#39; /%3E      %3Cpath         d=&#39;m -1774.2711,-954.86792 c 0.4453,-1.01594 2.1705,-4.52486 5.6775,-6.995 6.3577,-4.4835 14.2414,-3.62821 18.8768,-0.93691 3.1324,1.82227 5.2903,4.17054 7.0001,7.61821 0.4172,0.84216 1.1951,2.63915 1.7282,5.20993 0.4613,2.22972 0.5058,3.63581 0.58,5.97108 0,1.95125 -3.7069,3.71117 -10.0877,4.56818 -8.93,1.19586 -19.7224,0.15709 -24.1026,-2.3198 -1.2534,-0.70839 -1.8451,-1.46218 -1.8426,-2.19634 0.092,-3.01727 0.204,-6.43549 2.1707,-10.91935 z&#39;         style=&#39;fill:%23ffffff;stroke-linejoin:round&#39;         id=&#39;path19-3-0&#39; /%3E      %3Cpath         d=&#39;m -1774.2711,-954.86792 c 0.4453,-1.01594 2.1705,-4.52486 5.6775,-6.995 6.3577,-4.4835 14.2414,-3.62821 18.8768,-0.93691 3.1324,1.82227 5.2903,4.17054 7.0001,7.61821 0.4172,0.84216 1.1951,2.63915 1.7282,5.20993 0.4613,2.22972 0.5058,3.63581 0.58,5.97108 0,1.95125 -3.7069,3.71117 -10.0877,4.56818 -8.93,1.19586 -19.7224,0.15709 -24.1026,-2.3198 -1.2534,-0.70839 -1.8451,-1.46218 -1.8426,-2.19634 0.092,-3.01727 0.204,-6.43549 2.1707,-10.91935 z&#39;         style=&#39;fill:%2374fc00;fill-opacity:1;stroke:%23000000;stroke-width:1.89946;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path23-1-6&#39; /%3E      %3Cpath         d=&#39;m -1764.7572,-936.08809 c 0,0 3.8014,2.04415 9.6284,4.07591 3.5189,1.22483 9.7706,-0.84277 13.0263,-1.70788 3.2599,-0.86192 8.8934,-2.65141 7.3303,-4.21754 -1.5629,-1.56233 -6.0547,-4.89329 -6.0547,-4.89329 0,0 4.277,7.06618 -23.9307,6.7428 z&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:0.633166;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path27-6-0&#39; /%3E      %3Cpath         id=&#39;path31-3-3&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:0.633166;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1738.7453,-941.22671 c 0,2.98032 -8.913,5.39499 -19.9138,5.39499 -10.998,0 -19.9138,-2.41405 -19.9138,-5.39499 2.2952,-1.66272 1.961,-3.06243 1.961,-3.06243 h 35.9986 c 0,0 -0.214,1.63369 1.9731,3.29629 z&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:%23ffd520;stroke-linejoin:round&#39;         id=&#39;path37-0-6&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:none;stroke:%23000000;stroke-width:0.633166;stroke-linejoin:round&#39;         id=&#39;path41-6-5&#39; /%3E      %3Cpath         d=&#39;m -1774.422,-954.95874 c 0.4452,-1.01521 2.1713,-4.52265 5.6774,-6.99513 6.357,-4.48337 14.2401,-3.6271 18.8767,-0.93616 3.1344,1.82238 5.2911,4.17041 6.9995,7.61526 0.418,0.84216 1.1977,2.63915 1.7282,5.21128 0.46,2.22825 0.505,3.63557 0.5804,5.96789 0,1.95137 -3.7087,3.71424 -10.0905,4.5683 -8.9296,1.19893 -19.7211,0.15697 -24.1,-2.31993 -1.2535,-0.70838 -1.8464,-1.45948 -1.8437,-2.19633 0.096,-3.01248 0.2077,-6.43119 2.1721,-10.91518 z&#39;         style=&#39;fill:url(%23radialGradient3026-9-1);stroke:%23fac44b;stroke-linejoin:round;stroke-opacity:1&#39;         id=&#39;path52-0-7&#39; /%3E      %3Cpath         d=&#39;m -1767.915,-962.62629 c 13.3737,-8.528 26.9474,8.98687 26.5227,20.23415 l 1.2441,0.50196 c -7e-4,-12.25929 -13.2853,-30.32975 -27.7672,-20.73611&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         id=&#39;path60-2-9&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon62-6-3&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         points=&#39;76.865,262.06 61.197,281.15 66.729,266.15 &#39; /%3E      %3Cpath         d=&#39;m -1745.3502,-940.13566 c 0,-11.09583 -6.6212,-28.38329 -18.6117,-24.45845 12.8582,-4.35218 23.8104,11.56833 23.8104,22.70098 l 0.6789,1.84129 -5.2013,1.75427 -0.6765,-1.83772 z&#39;         style=&#39;fill:%23ffd467;fill-opacity:1;stroke:none;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round&#39;         id=&#39;path64-7-7&#39; /%3E      %3Cpath         d=&#39;m -1745.349,-940.13566 0.6782,1.84141 -3.0497,-2.13755 c 0.4259,-11.24802 -6.82,-30.72126 -20.1949,-22.19658 14.4819,-9.59106 22.566,10.23183 22.566,22.49358 z&#39;         style=&#39;fill:%23cccccc;stroke-linejoin:round&#39;         id=&#39;path70-9-2&#39; /%3E      %3Cpath         d=&#39;m -1745.349,-940.13566 0.6782,1.84141 -3.0497,-2.13755 c 0.4259,-11.24802 -6.82,-30.72126 -20.1949,-22.19658 14.4819,-9.59106 22.566,10.23183 22.566,22.49358 z&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:none;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round&#39;         id=&#39;path74-7-4&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon78-8-4&#39;         style=&#39;fill:%23ffbd34;fill-opacity:1;stroke:%23ffbd34;stroke-width:5.1591;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         points=&#39;267.24,277.31 253.03,251.64 254.68,222.57 265.49,233.41 &#39; /%3E      %3Cpolygon         style=&#39;stroke-linejoin:round&#39;         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon80-2-4&#39;         points=&#39;329.73,266.98 320.7,241.3 322.32,217.4 327.99,223.07 &#39; /%3E      %3Cpath         id=&#39;path82-9-3&#39;         style=&#39;fill:%23ffd467;fill-opacity:1;stroke:%23ffd467;stroke-width:0.633166;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         d=&#39;m -1764.7572,-940.52103 c 0,0 -7.3005,-0.90536 -7.6667,-1.27121 -0.3672,-0.36291 0.2126,-5.38788 0.2126,-5.38788 l 7.6696,1.26802 z&#39; /%3E      %3Cpolygon         transform=&#39;matrix(-0.12272793,0,0,0.12272793,-1731.9594,-974.55471)&#39;         id=&#39;polygon84-9-0&#39;         style=&#39;fill:%23f4b253;fill-opacity:1;stroke:%23f4b253;stroke-width:5.1591;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1&#39;         points=&#39;254.68,222.57 265.49,233.41 327.99,223.07 317.16,212.24 &#39; /%3E    %3C/g%3E    %3Cg       id=&#39;g48&#39;       transform=&#39;matrix(0.29730774,0,0,0.29730774,336.52636,289.85483)&#39;%3E      %3Cpath         d=&#39;m 16.7328,13.29858 c -0.1476,1.8864 -1.6524,2.7918 -1.9584,2.9574 -1.629,0.8892 -4.3704,0.5796 -5.6952001,-1.2852 -0.7308,-1.026 -1.098,-2.6586 -0.387,-3.789 l 0.009,-0.018 c 0.2556,-0.4158 0.8478,-1.1178 1.9404001,-1.1412 h 0.0396 c 0.3906,0 0.8406,0.1188 1.2384,0.2232 0.279,0.0738 0.5202,0.1368 0.7002,0.1494 0.1134,0.0072 0.2754,-0.0216 0.4806,-0.0576 0.6138,-0.108 1.638,-0.288 2.5344,0.3456 1.2204,0.865801 1.1052,2.5452 1.098,2.6154 z&#39;         id=&#39;path2&#39;         style=&#39;fill:%23aa0000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 9.2718,10.287181 c -0.351,0.2484 -0.5832,0.5562 -0.7236,0.783 l -0.009,0.0144 c -0.3636001,0.5796 -0.4644,1.2528 -0.3960001,1.9116 -0.0072,0.0036 -0.0144,0.0072 -0.0198,0.0126 -1.3338001,1.089 -2.8404,0.8082 -3.4254003,0.6372 l -0.0342,-0.009 c -1.8630002,-0.4644 -3.70259996,-2.4768 -3.3642,-4.6206 0.1872,-1.1808001 1.08,-2.538 2.4264,-2.8476 0.2322,-0.054 1.4454,-0.279 2.421,0.5382 0.2988,0.252 0.5202,0.6192001 0.7146,0.9432 0.1386,0.234 0.2592,0.4338 0.3906001,0.5652 0.0846,0.0846 0.2322,0.1674 0.4194,0.2736 0.549,0.3078001 1.3770001,0.7740001 1.5930002,1.7784 0.0018,0.0072 0.0036,0.0144 0.0072,0.0198 z&#39;         id=&#39;path4&#39;         style=&#39;fill:%23aa0000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 12.9294,10.18638 c -0.1062,0.018 -0.1998,0.0306 -0.2664,0.0306 -0.0108,0 -0.0216,-0.0018 -0.0306,-0.0018 -0.0504,-0.0036 -0.1098,-0.0108 -0.1728,-0.0234 0.5526,-1.4112 0.7812,-3.6684 -1.1394,-6.5268 -0.0036,-0.0072 -0.009,-0.0126 -0.0162,-0.018 0.1116,-0.4428 0.1494,-0.7524 0.1584,-0.828 0.0054,-0.0504 -0.0306,-0.0936 -0.0792,-0.099 -0.0504,-0.0072 -0.0936,0.0306 -0.099,0.0792 -0.0216,0.1926 -0.2376,1.9296001 -1.4490001,3.4722004 -0.7578001,0.9648001 -1.9512001,1.6830001 -2.3634002,1.8882 -0.0378,-0.0252 -0.0702,-0.0504 -0.0918,-0.072 -0.0594,-0.0594 -0.117,-0.1368 -0.1764,-0.2286 0.0342,-0.018 0.0702,-0.0378 0.108,-0.0576 0.4302,-0.2304 1.1502,-0.6138001 2.0286002,-1.5336001 1.0386001,-1.0872 1.2366001,-2.7522001 0.9450001,-3.2058 -0.1404,-0.2196 -0.3654001,-0.2412 -0.5454001,-0.2574 -0.2358,-0.0198 -0.378,-0.0342 -0.4032,-0.3546 -0.0234,-0.279 0.108,-0.5256 0.369,-0.6912 0.3510001,-0.225 0.9792001,-0.297 1.5876001,0.0486 0.3798,0.2142 0.3762,0.5796 0.3744,0.9324 -0.0018,0.2358 -0.0036,0.459 0.1134,0.6192 l 0.0504,0.0684 c 0.288,0.3906001 0.9612,1.3014001 1.3644,2.8908 C 13.626,8.01918 13.2192,9.56898 12.9294,10.18638 Z&#39;         id=&#39;path6&#39;         style=&#39;fill:%23502d16;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 7.6338,2.8045802 c -0.0144,0.0072 -0.0288,0.0108 -0.0432,0.0108 -0.0324,0 -0.063,-0.018 -0.0792,-0.0468 -0.0018,-0.0018 -0.1278,-0.2268 -0.3546,-0.4338 -0.0378,-0.0324 -0.0396,-0.09 -0.0072,-0.126 0.0342,-0.0378 0.09,-0.0396 0.1278,-0.0072 0.2502,0.2268 0.3852,0.4698 0.3906,0.4806 0.025201,0.0432 0.009,0.0972 -0.0342,0.1224 z&#39;         id=&#39;path8&#39; /%3E      %3Cpath         d=&#39;m 7.8156,4.51998 c -0.1872,0.2214 -0.2844,0.261 -0.432,0.3204 l -0.0468,0.0198 c -0.0108,0.0054 -0.0234,0.0072 -0.0342,0.0072 -0.036,0 -0.0684,-0.0216 -0.0828,-0.0558 -0.0198,-0.045 0.0018,-0.099 0.0486,-0.117 l 0.0468,-0.0198 c 0.135,-0.0558 0.2034,-0.0846 0.3636,-0.27 0.0324,-0.0396 0.09,-0.0432 0.1278,-0.0108 0.0378,0.0324 0.0414,0.0882 0.009,0.126 z&#39;         id=&#39;path10&#39; /%3E      %3Cpath         d=&#39;m 10.134,3.1591802 c -0.0468,-0.0738 -0.108,-0.1134 -0.1764,-0.135 -0.2394,0.3222 -1.0818001,0.81 -1.9278,0.81 -0.225,0 -0.4518,-0.0342 -0.666,-0.1152 -0.576,-0.2196 -0.9702,-0.5256 -1.3518001,-0.8208 -0.3024,-0.2358 -0.5886,-0.4572 -0.9378,-0.6084001 -0.0468,-0.0216 -0.0666,-0.0738 -0.0468,-0.1188 0.0198,-0.0468 0.072,-0.0666 0.1188,-0.0468 0.369,0.162 0.6642,0.3888001 0.9756,0.6318 0.3708,0.2880001 0.756,0.5850001 1.3050001,0.7938 0.5598,0.2124 1.1880001,0.0738 1.6650001,-0.1404 -0.2052,-0.6336 -1.5318002,-2.56139997 -3.7188,-2.0700002 -0.3384,0.0756 -0.6336,0.1458 -0.8928,0.207 -1.098,0.2574 -1.5678,0.3672001 -2.0556002,0.2376 0.045,0.2268001 0.1638,0.4194 0.3528,0.5742001 0.378,0.3042 0.927,0.3798 1.1880001,0.3834 C 3.8322,2.59038 3.69,2.49318 3.5154,2.43198 3.4686,2.41578 3.4434,2.36538 3.4596,2.31858 c 0.0162,-0.0486 0.0684,-0.072 0.1152,-0.0558 0.567,0.1998 0.828,0.7074 1.2492001,1.7424002 0.441,1.0836 1.9836001,2.0934 3.2346,1.7190001 1.2744,-0.3816 1.2528001,-1.7244 1.251,-1.7388 0,-0.036 0.0216,-0.0702 0.054,-0.0846 0.0846,-0.0378 0.5184,-0.2358 0.8243999,-0.5238 0.0054,-0.0054 0.0108,-0.009 0.0162,-0.009 v -0.0018 C 10.1898,3.27798 10.1646,3.20778 10.134,3.1591802 M 7.1496005,2.20878 c 0.0342,-0.0378 0.09,-0.0396 0.1278,-0.0072 0.2502,0.2268 0.3852,0.4698 0.3906,0.4806 0.0252,0.0432 0.009,0.0972 -0.0342,0.1224 -0.0144,0.0072 -0.0288,0.0108 -0.0432,0.0108 -0.0324,0 -0.063,-0.018 -0.0792,-0.0468 -0.0018,-0.0018 -0.1278,-0.2268 -0.3546,-0.4338 -0.037801,-0.0324 -0.0396,-0.09 -0.0072,-0.126 m -1.5156002,1.2258 c -0.0036,0 -0.0558,0.009 -0.1584,0.009 -0.081,0 -0.1908,-0.0054 -0.3312,-0.0234 -0.0504,-0.0054 -0.0846,-0.0504 -0.0774,-0.1008 0.0054,-0.0486 0.0504,-0.0828 0.1008,-0.0774 0.2916,0.0378 0.4338,0.0162 0.4356,0.0162 0.0486,-0.009 0.0954,0.0234 0.1026,0.0738 0.009,0.0486 -0.0234,0.0936 -0.072,0.1026 M 7.8156,4.51998 c -0.1872,0.2214 -0.2844,0.261 -0.432,0.3204 l -0.0468,0.0198 c -0.0108,0.0054 -0.0234,0.0072 -0.0342,0.0072 -0.036,0 -0.0684,-0.0216 -0.0828,-0.0558 -0.0198,-0.045 0.0018,-0.099 0.0486,-0.117 l 0.0468,-0.0198 c 0.135,-0.0558 0.2034,-0.0846 0.3636,-0.27 0.0324,-0.0396 0.09,-0.0432 0.1278,-0.0108 0.0378,0.0324 0.0414,0.0882 0.009,0.126 z&#39;         id=&#39;path12&#39;         style=&#39;fill:%23008000;fill-opacity:1&#39; /%3E      %3Cpath         d=&#39;m 5.7060003,3.33198 c 0.009,0.0486 -0.0234,0.0936 -0.072,0.1026 -0.0036,0 -0.0558,0.009 -0.1584,0.009 -0.081,0 -0.1908,-0.0054 -0.3312,-0.0234 -0.0504,-0.0054 -0.0846,-0.0504 -0.0774,-0.1008 0.0054,-0.0486 0.0504,-0.0828 0.1008,-0.0774 0.2916,0.0378 0.4338,0.0162 0.4356,0.0162 0.0486,-0.009 0.0954,0.0234 0.1026,0.0738 z&#39;         id=&#39;path14&#39; /%3E    %3C/g%3E  %3C/g%3E%3C/svg%3E">
         <bpmn:extensionElements>
           <zeebe:taskDefinition type="c-pingconnector" />
           <zeebe:ioMapping>
             <zeebe:input source="false" target="message_optional" />
             <zeebe:input source="false" target="delay_optional" />
-            <zeebe:input source="=true" target="throwErrorPlease" />
+            <zeebe:input source="false" target="throwErrorPlease" />
             <zeebe:input source="false" target="timeStampMS_optional" />
             <zeebe:input source="false" target="ipAddress_optional" />
             <zeebe:input source="false" target="parameters_optional" />
           </zeebe:ioMapping>
           <zeebe:taskHeaders>
-            <zeebe:header key="resultVariable" value="result" />
+            <zeebe:header key="Result Variable" value="result" />
             <zeebe:header key="errorExpression" value="if is defined(error) then bpmnError(error.code, error.message) else null" />
           </zeebe:taskHeaders>
         </bpmn:extensionElements>
@@ -186,13 +193,6 @@
           </bpmn:extensionElements>
         </bpmn:multiInstanceLoopCharacteristics>
       </bpmn:serviceTask>
-      <bpmn:sequenceFlow id="Flow_1ajbvwe" sourceRef="Event_07kywq3" targetRef="Event_0kmy7xm" />
-      <bpmn:boundaryEvent id="Event_07kywq3" name="30s" attachedToRef="Activity_Verify">
-        <bpmn:outgoing>Flow_1ajbvwe</bpmn:outgoing>
-        <bpmn:timerEventDefinition id="TimerEventDefinition_17bv8ve">
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30S</bpmn:timeDuration>
-        </bpmn:timerEventDefinition>
-      </bpmn:boundaryEvent>
     </bpmn:subProcess>
     <bpmn:sequenceFlow id="Flow_1x97t4c" name="BPMN Error" sourceRef="Gateway_LoadDecision" targetRef="Activity_Multi_PingError">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=true</bpmn:conditionExpression>
@@ -346,9 +346,6 @@
           <dc:Bounds x="159" y="205" width="23" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1xh19tt_di" bpmnElement="Event_1xh19tt">
-        <dc:Bounds x="1042" y="1302" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0hr9a3b_di" bpmnElement="Activity_Multi_LoadFile" isExpanded="true">
         <dc:Bounds x="570" y="100" width="510" height="210" />
       </bpmndi:BPMNShape>
@@ -370,7 +367,7 @@
           <dc:Bounds x="901" y="225" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1trf8n0_di" bpmnElement="Activity_LoadFile">
+      <bpmndi:BPMNShape id="Activity_0nw270j_di" bpmnElement="Activity_LoadFile">
         <dc:Bounds x="740" y="160" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_12z18xw_di" bpmnElement="Flow_12z18xw">
@@ -415,7 +412,7 @@
           <dc:Bounds x="901" y="495" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0qc17lb_di" bpmnElement="Activity_PingDelay">
+      <bpmndi:BPMNShape id="Activity_0njzcg3_di" bpmnElement="Activity_PingDelay">
         <dc:Bounds x="740" y="430" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_1ev3rzc" bpmnElement="Flow_1fflfji">
@@ -455,7 +452,7 @@
         <dc:Bounds x="840" y="748" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_03r2mj0_di" bpmnElement="Activity_PingError">
+      <bpmndi:BPMNShape id="Activity_0vlf5ht_di" bpmnElement="Activity_PingError">
         <dc:Bounds x="740" y="670" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0h165pp_di" bpmnElement="Event_07kywq3">
@@ -564,10 +561,6 @@
           <dc:Bounds x="1411" y="1095" width="19" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_0jkibbo_di" bpmnElement="TextAnnotation_0jkibbo">
-        <dc:Bounds x="1260" y="860" width="100" height="98" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0bqydrm_di" bpmnElement="Activity_0bqydrm" isExpanded="true">
         <dc:Bounds x="570" y="1220" width="350" height="200" />
       </bpmndi:BPMNShape>
@@ -589,6 +582,13 @@
         <di:waypoint x="800" y="1320" />
         <di:waypoint x="862" y="1320" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1xh19tt_di" bpmnElement="Event_1xh19tt">
+        <dc:Bounds x="1042" y="1302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0jkibbo_di" bpmnElement="TextAnnotation_0jkibbo">
+        <dc:Bounds x="1260" y="860" width="100" height="98" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0xx59ph_di" bpmnElement="Flow_0xx59ph">
         <di:waypoint x="188" y="180" />
         <di:waypoint x="260" y="180" />
@@ -644,10 +644,6 @@
         <di:waypoint x="1260" y="1070" />
         <di:waypoint x="1402" y="1070" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Association_0gykezp_di" bpmnElement="Association_0gykezp">
-        <di:waypoint x="1178" y="940" />
-        <di:waypoint x="1260" y="900" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0e7egkp_di" bpmnElement="Flow_0e7egkp">
         <di:waypoint x="430" y="205" />
         <di:waypoint x="430" y="1320" />
@@ -656,6 +652,10 @@
       <bpmndi:BPMNEdge id="Flow_0sln9l6_di" bpmnElement="Flow_0sln9l6">
         <di:waypoint x="920" y="1320" />
         <di:waypoint x="1042" y="1320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0gykezp_di" bpmnElement="Association_0gykezp">
+        <di:waypoint x="1178" y="940" />
+        <di:waypoint x="1260" y="900" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

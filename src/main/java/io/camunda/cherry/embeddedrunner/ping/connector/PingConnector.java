@@ -1,17 +1,15 @@
 /* -------------------------------------------------------------------- */
-/* PingObjectConnector                                                  */
-/* This connector return an Object as the output variable               */
-/* This is the same Input/execution as the PingConnector                */
+/* PingConnector                                                        */
+/* This connector return a list of output variable, not an object       */
+/* This is the same Input/execution as the PingObjectConnector          */
 /* but the result is different.                                         */
 /* See PingConnectorOutput versus PingObjectConnectorOutput             */
 /* -------------------------------------------------------------------- */
-package io.camunda.cherry.ping.objectconnector;
+package io.camunda.cherry.embeddedrunner.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
-import io.camunda.cherry.ping.connector.PingConnector;
-import io.camunda.cherry.ping.connector.PingConnectorInput;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
@@ -20,19 +18,23 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Random;
+
+/* ------------------------------------------------------------------- */
 
 @Component
 @OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { "message", "delay",
     "throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
-public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
+public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+  public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
 
   private final Random random = new Random();
 
-  public PingObjectConnector() {
-    super("c-pingobjectconnector", PingConnectorInput.class, PingObjectConnectorOutput.class,
+  public PingConnector() {
+    super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
         Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
   }
 
@@ -48,17 +50,17 @@ public class PingObjectConnector extends AbstractConnector implements IntFramewo
 
   @Override
   public String getName() {
-    return "Ping Object connector";
+    return "Ping connector";
   }
 
   @Override
   public String getLabel() {
-    return "Ping (Object ConnectorSDK)";
+    return "Ping (ConnectorSDK)";
   }
 
   @Override
   public String getDescription() {
-    return "Do a simple ping as a connector, and return object containing timestamp, ipAddress. A Delay can be set as parameter";
+    return "Do a simple ping as a connector, and return timestamp, ipAdress. A Delay can be set as parameter";
   }
 
   @Override
@@ -67,17 +69,19 @@ public class PingObjectConnector extends AbstractConnector implements IntFramewo
     PingConnectorInput pingConnectorInput = context.getVariablesAsType(PingConnectorInput.class);
     context.replaceSecrets(pingConnectorInput);
 
-    if (pingConnectorInput.isThrowErrorPlease())
+    if (pingConnectorInput.isThrowErrorPlease()) {
       throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
-
+    }
     // context.validate(pingConnectorInput);
     int delay = pingConnectorInput.getDelay();
     if (delay < 0) {
-      delay = random.nextInt(10000) + 1500;
+      delay = random.nextInt(30000) + 1500;
     }
-    Thread.sleep(delay);
-    InetAddress IP = InetAddress.getLocalHost();
 
-    return new PingObjectConnectorOutput(System.currentTimeMillis(), IP.getHostAddress());
+    Thread.sleep(delay);
+    InetAddress ipAddress = InetAddress.getLocalHost();
+
+    return new PingConnectorOutput(System.currentTimeMillis(), ipAddress.getHostAddress(),
+        Map.of("JDK", System.getProperty("java.version")));
   }
 }

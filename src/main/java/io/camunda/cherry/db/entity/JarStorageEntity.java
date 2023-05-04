@@ -37,7 +37,6 @@ public class JarStorageEntity {
   @Type(type = "org.hibernate.type.BinaryType")
   public byte[] jarfileByte;
 
-
   @Column(name = "load_log", length = 2000)
   public String loadLog;
 

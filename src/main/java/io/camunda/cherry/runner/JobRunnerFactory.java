@@ -12,6 +12,9 @@ import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.CherryConnectorJobHandler;
 import io.camunda.cherry.definition.SdkRunnerConnector;
+import io.camunda.cherry.exception.OperationAlreadyStartedException;
+import io.camunda.cherry.exception.OperationAlreadyStoppedException;
+import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.cherry.zeebe.ZeebeContainer;
@@ -32,6 +35,7 @@ import java.util.Map;
 @Service
 public class JobRunnerFactory {
   public static final String RUNNER_NOT_FOUND = "RunnerNotFound";
+
   public static final String TOO_MANY_RUNNERS = "TooManyRunners";
   public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
   public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
@@ -66,6 +70,8 @@ public class JobRunnerFactory {
       return;
     }
 
+    logOperation.log(OperationEntity.Operation.STARTRUNTIME, "");
+
     // get the list from the storage
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
 
@@ -89,6 +95,8 @@ public class JobRunnerFactory {
   }
 
   public void stopAll() {
+    logOperation.log(OperationEntity.Operation.STOPRUNTIME, "");
+
     for (Running running : mapRunning.values()) {
       if (running.runner != null) {
         try {
@@ -111,7 +119,7 @@ public class JobRunnerFactory {
   public boolean stopRunner(String runnerType) throws OperationException {
     Running running = mapRunning.get(runnerType);
     if (running == null) {
-      throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
+      throw new OperationAlreadyStoppedException();
     }
     closeJobWorker(running.containerJobWorker.getJobWorker());
     running.containerJobWorker.setJobWorker(null);
@@ -129,9 +137,9 @@ public class JobRunnerFactory {
    * @throws OperationException runner can't start
    */
   public boolean startRunner(String runnerType) throws OperationException {
-    if (mapRunning.containsKey(runnerType))
-      return true; // already started
-
+    if (mapRunning.containsKey(runnerType)) {
+      throw new OperationAlreadyStartedException();
+    }
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
     // we expect only one runner
     if (listRunners.isEmpty()) {
@@ -254,24 +262,4 @@ public class JobRunnerFactory {
   record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
   }
 
-  /**
-   * Declare an exception on an operation
-   */
-  public static class OperationException extends Exception {
-    private final String exceptionCode;
-    private final String explanation;
-
-    OperationException(String exceptionCode, String explanation) {
-      this.exceptionCode = exceptionCode;
-      this.explanation = explanation;
-    }
-
-    public String getExceptionCode() {
-      return exceptionCode;
-    }
-
-    public String getExplanation() {
-      return explanation;
-    }
-  }
 }

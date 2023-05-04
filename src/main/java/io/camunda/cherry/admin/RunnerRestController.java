@@ -13,6 +13,9 @@ import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerDecorationTemplate;
+import io.camunda.cherry.exception.OperationAlreadyStartedException;
+import io.camunda.cherry.exception.OperationAlreadyStoppedException;
+import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runner.StorageRunner;
@@ -131,7 +134,7 @@ public class RunnerRestController {
       infoRunner.put("logo", runner.getLogo());
       try {
         infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getType()));
-      } catch (JobRunnerFactory.OperationException e) {
+      } catch (OperationException e) {
         infoRunner.put("active", false);
       }
       infoRunner.put("statistic", statisticRunner);
@@ -284,12 +287,18 @@ public class RunnerRestController {
   public RunnerInformation stopWorker(@RequestParam(name = "runnertype") String runnerType) {
     logger.info("Stop requested for runnerType[" + runnerType + "]");
     try {
-      boolean isStopped = cherryJobRunnerFactory.stopRunner(runnerType);
+      boolean isStopped = false;
+      try {
+        isStopped = cherryJobRunnerFactory.stopRunner(runnerType);
+      } catch (OperationAlreadyStoppedException e) {
+        // ok, it was already stopped
+        isStopped = true;
+      }
       logger.info("Stop executed for runnerType[" + runnerType + "]: " + isStopped);
-      AbstractRunner runner = getRunnerByName(runnerType);
+      AbstractRunner runner = getRunnerByType(runnerType);
       RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
       return completeRunnerInformation(runnerInfo, false, false, null, null);
-    } catch (JobRunnerFactory.OperationException e) {
+    } catch (OperationException e) {
       if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerType + "] not found");
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerType + "] error " + e);
@@ -299,22 +308,27 @@ public class RunnerRestController {
   /**
    * Ask to start a specific worker
    *
-   * @param runnerName worker to start
+   * @param runnerType worker to start
    * @return NOTFOUND or the worker information on this worker
    */
   @PutMapping(value = "/api/runner/start", produces = "application/json")
-  public RunnerInformation startWorker(@RequestParam(name = "name") String runnerName) {
-    logger.info("Start requested for [" + runnerName + "]");
+  public RunnerInformation startWorker(@RequestParam(name = "runnertype") String runnerType) {
+    logger.info("Start requested for [" + runnerType + "]");
     try {
-      boolean isStarted = cherryJobRunnerFactory.startRunner(runnerName);
-      logger.info("Start executed for [" + runnerName + "]: " + isStarted);
-      AbstractRunner runner = getRunnerByName(runnerName);
+      boolean isStarted = false;
+      try {
+        isStarted = cherryJobRunnerFactory.startRunner(runnerType);
+      } catch (OperationAlreadyStartedException e) {
+        isStarted = true;
+      }
+      logger.info("Start executed for [" + runnerType + "]: " + isStarted);
+      AbstractRunner runner = getRunnerByType(runnerType);
       RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
       return completeRunnerInformation(runnerInfo, false, false, null, null);
-    } catch (JobRunnerFactory.OperationException e) {
+    } catch (OperationException e) {
       if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerName + "] not found");
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerName + "] error " + e);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerType + "] not found");
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "WorkerName [" + runnerType + "] error " + e);
     }
   }
 
@@ -446,13 +460,21 @@ public class RunnerRestController {
     return listFiltered.get(0);
   }
 
+  private AbstractRunner getRunnerByType(String runnerType) {
+    List<AbstractRunner> listFiltered = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
+
+    if (listFiltered.size() != 1)
+      return null;
+    return listFiltered.get(0);
+  }
+
   private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation,
                                                       boolean withLogo,
                                                       boolean withStats,
                                                       LocalDateTime dateNow,
                                                       HistoryPerformance.PeriodStatistic periodStatistic) {
     try {
-      runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getName()));
+      runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getType()));
       runnerInformation.setDisplayLogo(withLogo);
 
       if (withStats) {
@@ -462,7 +484,7 @@ public class RunnerRestController {
             historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic));
       }
 
-    } catch (JobRunnerFactory.OperationException e) {
+    } catch (OperationException e) {
       // definitively not expected
     }
     return runnerInformation;

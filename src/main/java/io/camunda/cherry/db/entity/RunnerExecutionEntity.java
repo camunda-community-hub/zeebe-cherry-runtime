@@ -54,6 +54,6 @@ public class RunnerExecutionEntity {
     CONNECTOR, WORKER, WATCHER
   }
 
-  // Save Log information: https://github.com/janzyka/blobs-jpa/
+  // Save OperationLog information: https://github.com/janzyka/blobs-jpa/
 
 }

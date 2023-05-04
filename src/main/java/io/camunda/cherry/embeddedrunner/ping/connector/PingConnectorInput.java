@@ -1,4 +1,4 @@
-package io.camunda.cherry.ping.connector;
+package io.camunda.cherry.embeddedrunner.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorInput;
 import io.camunda.cherry.definition.RunnerParameter;
@@ -13,6 +13,9 @@ public class PingConnectorInput extends AbstractConnectorInput {
   // https://docs.camunda.io/docs/components/integration-framework/connectors/custom-built-connectors/connector-sdk/#validation
 
   @NotEmpty
+  protected final static String INPUT_MESSAGE = "message";
+  protected final static String INPUT_DELAY = "delay";
+  protected final static String INPUT_THROWERRORPLEASE = "throwErrorPlease";
   private String message;
   private int delay;
   private boolean throwErrorPlease;

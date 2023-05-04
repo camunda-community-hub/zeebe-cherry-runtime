@@ -30,4 +30,15 @@ public class OperationFactory {
   public List<OperationEntity> getOperations(String runnerType, LocalDateTime dateNow, LocalDateTime dateThreshold) {
     return operationRepository.selectByRunnerType(runnerType, dateThreshold);
   }
+
+  /**
+   * Select for a runner type all operations registered
+   *
+   * @param dateNow       instant now for reference
+   * @param dateThreshold date from which operations are searched
+   * @return list of operations
+   */
+  public List<OperationEntity> getAllOperations(LocalDateTime dateNow, LocalDateTime dateThreshold) {
+    return operationRepository.selectAll(dateThreshold);
+  }
 }

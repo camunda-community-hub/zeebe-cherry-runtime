@@ -109,10 +109,10 @@ public abstract class AbstractRunner {
    * @param listOutput     list of Output parameters for the worker
    * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
-  public AbstractRunner(String type,
-                        List<RunnerParameter> listInput,
-                        List<RunnerParameter> listOutput,
-                        List<BpmnError> listBpmnErrors) {
+  protected AbstractRunner(String type,
+                           List<RunnerParameter> listInput,
+                           List<RunnerParameter> listOutput,
+                           List<BpmnError> listBpmnErrors) {
 
     this.type = type;
     this.listInput = listInput;
@@ -527,7 +527,7 @@ public abstract class AbstractRunner {
   }
 
   /**
-   * Log an error
+   * OperationLog an error
    *
    * @param message message to log
    */
@@ -547,7 +547,7 @@ public abstract class AbstractRunner {
   // Long.
 
   /**
-   * Log an info
+   * OperationLog an info
    *
    * @param message message to log
    */
@@ -848,10 +848,15 @@ public abstract class AbstractRunner {
   /**
    * Qualify the runner
    *
-   * @return
+   * @return true if this object is a worker
    */
   public abstract boolean isWorker();
 
+  /**
+   * Qualify the connector
+   *
+   * @return true if this object is a connector
+   */
   public abstract boolean isConnector();
 
   /* -------------------------------------------------------- */
