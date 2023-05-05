@@ -1,8 +1,7 @@
 version: "3"
 services:
 
-# Attention, this configuration does not work at this moment.
-# It is not possible to create a table with the byte[] inside
+# Attention, this configuration is not validated
   cherry-runtime:
     image: "zeebe-cherryruntime:3.0.0"
     container_name: "Cherry-runtime"

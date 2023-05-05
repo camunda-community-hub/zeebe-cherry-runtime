@@ -71,7 +71,7 @@ The model is the collection message (``org.camunda.cherry.message``), and the wo
 
 ## Input declaration
 
-
+![Inputs](TemplateModeler.png?raw=true)
 Give a list of Input that your connector / worker expect.
 Each parameter has:
 - a name (message)
@@ -80,13 +80,62 @@ Each parameter has:
 - a scope: OPTIONAL, MANDATORY
 - a description
 
-
+````
        Arrays.asList(
             RunnerParameter.getInstance("message", "Message to log", String.class, RunnerParameter.Level.OPTIONAL, "Message to log, to ensure the worker was called"),
             RunnerParameter.getInstance("delay", "Delay in ms", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep, in milliseconds")
         ),
+````
+
+This information build the documentation and the Element-Template
+
+![InputDocumentation](InputDocumentation.png?raw=true)
+
+### Decorators
 
 
+A parameter has multiple decorators. These are used to generate a rich Element-Template.
+
+**setVisibleInTemplate()**
+A Mandatory parameter is visible every time.
+An Optional parameter has a checkbox. The designer has to select the checkbox to be able to give the value.
+With this decoration, the optional parameter is visible at any time.
+
+
+**getAccessAllVariables()**
+A connector/worker accesses a list of predefined variables.
+You may need to have dynamic access: a variable is a prefix (designer says "_green"), and the connector/worker will access the `temparature_green` variable.
+When a parameter adds this decorator, then all variables in the process instance will be fetched to the connector/worker.
+
+**addCondition()**
+To condition the visibility of a parameter by another parameter.
+Let's say that you have a parameter COUNTRY and a parameter STATE. You want to show the parameter STATE only when COUNTRY equals USA or BRAZIL.
+Then, on the parameter STATE, add
+
+````
+.addCondition("COUNTRY", Arrays.asList("USA", "BRAZIL"));
+````
+
+**addChoice()**
+A parameter can be a list of choice, and the designer will choose one in the dropdown. Add all choice via this decorator
+
+````
+.addChoice("USA", "United State Of America")
+.addChoice("Brazil", "Brazil")
+.addChoice("FR", "France")
+````
+
+
+### List of BPMN Errors
+
+![Bpmn Errors documentation](BpmnErrorsDocumentation.png?raw=true)
+
+Give the list of BPMN Errors that the connector/worker can throw. This list will be available in the documentation.
+The Element-Template will contain the FEEL expression to transform a `ConnectorException` to a BPMN Error.
+Without this list, all `ConnectorException` will be transformed into a Fail.
+
+### Output declaration
+Output follow the same rule as the input
 
 ### Declaration in a Worker
 The worker has only one class, and get directly the information from the context.
@@ -120,9 +169,9 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
           Collections.emptyList());
     }
 `````
-In the execute, you can access parameters via the different `getInput...Value()` methoids
+In the execution, you can access parameters via the different `getInput...Value()` methods
 
-`````java
+`````
 String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
 Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
 `````
@@ -130,15 +179,15 @@ Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
 
 
 ### Declaration in a Connector
-The declaration in the connector is different. The Input is an object. Second, a notatino `@OutboundConnector` must be declared.
+The declaration in the connector is different. The Input is an object. Second, a notation `@OutboundConnector` must be declared.
 
-In the annotation, you must give the different inputVariables. 
+In the annotation, you must give the different inputVariables.
 These variables are defined in the InputObject, and the name of the variable in the notation and the name in the object **must be identical**
 
-To
+The recommendation is to declare a constant for each Input to ensure consistency. Attention, the value in the constant must be the exact name as the variable name.
 
 
-`````java
+`````
 public class PingConnectorInput extends AbstractConnectorInput {
 
 // see
@@ -154,50 +203,170 @@ private int delay;
 protected final static String INPUT_THROWERRORPLEASE="throwErrorPlease";
 private boolean throwErrorPlease;
 `````
+Then the value can be used in the declaration
 
-
-
+`````java
 @Component
-@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { "message", "delay",
-"throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
-public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
+@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR,
+    inputVariables = { PingConnectorInput.INPUT_MESSAGE,
+                       PingConnectorInput.INPUT_DELAY,
+                       PingConnectorInput.INPUT_THROWERRORPLEASE },
+    type = PingConnector.TYPE_PINGCONNECTOR)
+public class PingConnector extends AbstractConnector implements OutboundConnectorFunction 
+`````
 
-public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
-public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
+In the constructor, reference the Input class and the Output class. The Cherry runtime will introspect these class to create the documentation and the Element-template
 
-private final Random random = new Random();
+`````java
 
 public PingConnector() {
-super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
-Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
+  super(TYPE_PINGCONNECTOR, 
+        PingConnectorInput.class, 
+        PingConnectorOutput.class,
+        Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
+
+`````
+
+Doing this ways, the Cherry framework will not find the documentation to build the documentation or the Element-template.
+
+Do do that, the Input object need to extends the `AbstractConnectorInput` class
+
+````
+public class PingConnectorInput extends AbstractConnectorInput {
+````
+
+and override a `getInputParameters` method
+
+````
+@Override
+public List<RunnerParameter> getInputParameters() {
+  return Arrays.asList(
+    RunnerParameter.getInstance("message", "Message", String.class, RunnerParameter.Level.OPTIONAL, "Message to log"),
+    RunnerParameter.getInstance("delay", "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
+    RunnerParameter.getInstance("throwErrorPlease", "Throw ControllerPage Please", Boolean.class,
+    RunnerParameter.Level.OPTIONAL, "If true, then the connector throw an error"));
 }
-
-### Different parameters
-
-### Decorator
-
-** addChoice()**
-
-**addCondition()**
-
-
-**Declare the class**
-In your Java Class, add the @Component, and extends the AbstractWorker or the AbstractConnector
-````
-@Component
-public class PingWorker extends AbstractWorker {
 ````
 
-**List of outputs**
-Same as input, a list of outputs is required. This list will explain what your connector returns.
+Same with the Output object
 
 ````
-     Arrays.asList(RunnerParameter.getInstance("timestamp", "Time stamp", String.class, RunnerParameter.Level.REQUIRED, "Produce a timestamp")
+public class PingConnectorOutput extends AbstractConnectorOutput {
+````
+
+and
+
+````
+@Override
+public List<RunnerParameter> getOutputParameters() {
+  return Arrays.asList(
+    RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED,
+"Produce a timestamp"),
+    RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED,
+"Returm the IpAddress"),
+    RunnerParameter.getInstance("parameters", "Parameters", Map.class, RunnerParameter.Level.REQUIRED,
+"Returm parameters"));
+}
+````
+
+### Output as a list of variable or as an object?
+The output of your connector may be
+* a list of parameters. Then you can match one parameter by one in the Element-template, in multiple variables. Or if you don't want a result, just do not match it.
+* an object saved in one process variable
+
+**Save the result as an object**
+![Output as an object](OutputConnectorObject.png?raw=true)
+
+This is the default behavior.
+
+Just reference the Output object.
+
+````java
+
+public class PingObjectConnectorOutput {
+
+  private final Long internalTimeStampMS;
+  private final String internalIpAddress;
+
+  public PingObjectConnectorOutput(long currentTimestamp, String ipAddress) {
+    super();
+    this.internalTimeStampMS = currentTimestamp;
+    this.internalIpAddress = ipAddress;
+  }
+
+  /* Return an objet, getter can be regular */
+  public long getTimeStampMS() {
+    return internalTimeStampMS;
+  }
+
+  /* Return an objet, getter can be regular */
+  public String getIpAddress() {
+    return internalIpAddress;
+  }
+}
 ````
 
 
-**List of BPMN Errors**
-Give the list of BPMN Error that your provide. This list will be available in the documentation.
+**In multiple output parameters**
+
+![Output as a list of variable](OutputConnectorFields.png?raw=true)
+
+Then, you have to specify the list of outputs in the method `getOutputParameters()` and
+**You must create a getter for each member, starting with a lower case**
+For example, for the object
+
+````java
+private long internalTimeStampMS;
+````
+
+the method must be
+````
+public long gettimeStampMS() {
+````
+if the *time* does not start by a lower case, then Zeebe will not find the value and can't do the correct mapping.
+
+`````java
+public class PingConnectorOutput extends AbstractConnectorOutput {
+
+  private long internalTimeStampMS;
+  private String internalIpAddress;
+
+  private Map<String, Object> parameters;
+
+  public PingConnectorOutput() {
+    super();
+  }
+
+  public PingConnectorOutput(long currentTimestamp, String ipAddress, Map<String, Object> parameters) {
+    super();
+    this.internalTimeStampMS = currentTimestamp;
+    this.internalIpAddress = ipAddress;
+    this.parameters = parameters;
+  }
+
+@Override
+  public List<RunnerParameter> getOutputParameters() {
+    return Arrays.asList(
+      RunnerParameter.getInstance("timeStampMS", "Time stamp", Long.class, RunnerParameter.Level.REQUIRED,"Produce a timestamp"),
+      RunnerParameter.getInstance("ipAddress", "Ip Address", String.class, RunnerParameter.Level.REQUIRED,"Returm the IpAddress"),
+      RunnerParameter.getInstance("parameters", "Parameters", Map.class, RunnerParameter.Level.REQUIRED,"Returm parameters"));
+  }
+
+  /* The getter must start by a lower case */
+  public long gettimeStampMS() {
+    return internalTimeStampMS;
+  }
+
+  /* The getter must start by a lower case */
+  public String getipAddress() {
+    return internalIpAddress;
+  }
+
+  public Map<String, Object> getparameters() {
+    return parameters;
+  }
+}
+`````
 
 
 
@@ -260,71 +429,49 @@ To produce the result, use a setOutput method. This method verify that you respe
 
 
 ## File management
-C8 does not propose any solution to manipulate file.
-Cherry propose a solution, to store files in different location, and to access it.
-The storage can be
-* in the temporary folder (which is nice, except if you are working in a Kubernetes cluster with different server/pod),
-* in a specific folder. Then you can mount this location over different server/pod
-* as a process variable, encoding the variable. But Zeebe limit the variable size to 4 Mb
-* in a CMIS repository.
+Camunda 8 does not propose any solution to manipulate files.
+
+In a connector/worker, a file can be manipulated. For example, OfficeToPdf needs an MS Office or an Open Office document as input and will produce a PDF document as a result.
+
+Cherry uses the [Zeebe Cherry File Storage](https://github.com/camunda-community-hub/zebee-cherry-filestorage) library.
+
+The StorageDefinition concept specifies how to access files (same concept as a JDBC URL).
+Then the Runner LoadFileFromDisk required a storage definition and produced a "fileLoaded" as output.
+Note: the storage definition is the way to access where files are stored, not the file itself.
+
 
 When you want to save a file for the first time, you need to specify the location. This is the *Storage definition*.
-Cherry use this storage definition to do the job. A process variable is then calculated to access the file.
+Cherry uses this storage definition to do the job. A process variable is then calculated to access the file.
 
+You can access the method set and easily access the file.
 ````
 setOutputFileVariableValue("MyFile", storageDefinition, fileVariable, contextExecution);
 ````
 
-To access the file, just use the method
+To access the file, use the method.
 
 ````
 FileVariable fileVariable = getInputFileVariableValue("MyFile", activatedJob);
 ````
 Cherry will do the job to load the file where it is.
 
-
-## Manipulating files
-
-Zeebe does not provide any mechanism to manipulate files.
-
-Cherry project offers a mechanism, the storage definition.
-Two methods are available:
-````
-public FileVariable getFileVariableValue(String parameterName, String storageDefinition, final ActivatedJob activatedJob) {
-
-public void setFileVariableValue(String parameterName, String storageDefinition, FileVariable fileVariableValue) {
-````
-These methods exploit the storageDefinition and save or retrieve the file for the Runner.
+Note: the Cherry runtime contains embedded connectors `loadFile` and `saveFile` to load and save files using the storage definition.
 
 
 
-
-## Manage files (or documents)
-
-Zeebe does not store files as it.
-
-The Cherry project offers different approaches to manipulating files across Runners.
-For example, OfficeToPdf needs an MS office or an Open Office document as input and will produce a PDF document as a result.
-
-How to give this document? How to store the result?
-
-The Cherry project introduces the StorageDefinition concept. This information explains how to access files (same concept as a JDBC URL).
-Then the Runner LoadFileFromDisk required a storageDefinition, and produced as output a "fileLoaded".
-Note: the storage definition is the way to access where files are stored, not the file itself.
-
-Existing storage definitions are:
-* **JSON**: files are stored as JSON, as a process variable. This is simple, but if your file is large, not very efficient. The file is encoded in base 64, which implies a 20 to 40% overload, and the file is stored in the C8 engine, which may cause some overlap.
+Existing storage definitions are (refer to the library to have the complete list of storage):
+* **JSON**: files are stored as JSON, as a process variable. This is simple, but if your file is significant, not very efficient. The file is encoded in base 64, which implies a 20 to 40% overload, and the file is stored in the C8 engine, which may cause some overlap.
 
 Example with LoadFileFromDisk:
 ````
 storageDefinition: JSON
 ````
-fileLoaded contains a JSON information with the file
+fileLoaded contains JSON information with the file
 ````
 {"name": "...", "mimeType": "application/txt", value="..."}
 ````
 
-* **FOLDER:<path>**. File is store on the folder, with a unique name to avoid any collision.
+* **FOLDER:<path>**. The file is stored in a folder with a unique name to avoid any collision.
 
 Example with LoadFileFromDisk:
 ````
@@ -334,9 +481,9 @@ fileLoaded contains
 ````
 "contractMay_554343435533.docx"
 ````
-Note: the folder is accessible by Runners. If you run a multiple Cherry application on different hosts, the folder must be visible by all applications.
+Note: the folder is accessible by Runners. If you run multiple Cherry applications on different hosts, the folder must be visible to all applications.
 
-* **TEMPFOLDER**, the temporary folder on the host, is used to store the file, with a unique name to avoid any collision
+* **TEMPFOLDER**, the temporary folder on the host, is used to store the file with a unique name to avoid any collision
 
 Example with LoadFileFromDisk:
 ````
@@ -346,23 +493,14 @@ fileLoaded contains
 ````
 "contractMay_554343435533.docx"
 ````
-This file is visible in the temporary folder on the host
+This file is visible in the temporary folder on the host.
 
 Note: the temporary folder is accessible only on one host, and each host has a different temporary folder. This implies your Runners run only on the same host, not in a cluster.
 
 ## Access the Element Template
 
-Restart the Cherry runtime. Your connector appears in the dashboard, and the Element Template file can be download.
+Start the Cherry runtime. Your connector appears in the dashboard, and the Element Template file can be downloaded.
 
-You can download the complete collection, to save for the desktop Modeler
+You can download the complete collection to save for the desktop Modeler.
 
-Or you can access the definition worker per worker, to create a connector template in the Web Modeler. One connector template must be created one by obne.
-
-
-and a **setValue()** is provided too.
-This method must be used to set any output: the contract verification track the information you produce here.
-
-
-
-
-
+Or you can access the definition of one connector/worker to create a connector template in the Web Modeler. One connector template must be created one by one.
