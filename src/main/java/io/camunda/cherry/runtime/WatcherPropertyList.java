@@ -16,7 +16,7 @@ public class WatcherPropertyList {
   private List<Map<String, Object>> execution;
 
   public List<Map<String, Object>> getExecution() {
-    return execution==null? Collections.emptyList(): execution;
+    return execution == null ? Collections.emptyList() : execution;
   }
 
   public void setExecution(List<Map<String, Object>> execution) {

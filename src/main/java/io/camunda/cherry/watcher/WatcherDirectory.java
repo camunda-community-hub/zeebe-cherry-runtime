@@ -37,7 +37,6 @@ public class WatcherDirectory extends AbstractWatcher {
   public static final String INPUT_VARIABLE_FILE_REFERENCE = "fileReference";
   public static final String INPUT_VARIABLE_FILE_NAME = "fileName";
 
-
   public static final String ERROR_CANT_SAVE_FILE = "CANT_SAVE_FILE";
   public static final String ERROR_CANT_READ_FILE = "CANT_READ_FILE";
   public static final String ERROR_NOT_A_DIRECTORY = "Not a directory";
@@ -58,17 +57,11 @@ public class WatcherDirectory extends AbstractWatcher {
                 "Specify the archive directory. File is moved in this directory after treatment"),
             RunnerParameter.getInstance(INPUT_STORAGE_DEFINITION, "Storage definition", String.class,
                 RunnerParameter.Level.OPTIONAL,
-                "File is saved in this storage definition, and saved under the fileReference variable. If not specified, then file is not saved")
-
-        ),
-        Arrays.asList(
-            RunnerParameter.getInstance(INPUT_VARIABLE_FILE_NAME, "Variable file name", String.class,
-                RunnerParameter.Level.OPTIONAL,
-                "Variable name where the file name will be saved"),
+                "File is saved in this storage definition, and saved under the fileReference variable. If not specified, then file is not saved")),
+        Arrays.asList(RunnerParameter.getInstance(INPUT_VARIABLE_FILE_NAME, "Variable file name", String.class,
+                RunnerParameter.Level.OPTIONAL, "Variable name where the file name will be saved"),
             RunnerParameter.getInstance(INPUT_VARIABLE_FILE_REFERENCE, "Variable file reference", String.class,
-                RunnerParameter.Level.OPTIONAL,
-                "Variable name where the file reference is saved")),
-
+                RunnerParameter.Level.OPTIONAL, "Variable name where the file reference is saved")),
         Collections.emptyList(),
         Arrays.asList(BpmnError.getInstance(ERROR_CANT_SAVE_FILE, "File can't be saved. Check the directory"),
             BpmnError.getInstance(ERROR_CANT_READ_FILE, "File can't be read"),
@@ -191,8 +184,10 @@ public class WatcherDirectory extends AbstractWatcher {
 
         try {
           FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariable);
-          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_REFERENCE, fileVariableReference.toJson());
-          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_NAME, fileToProcess.getName());
+          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_REFERENCE,
+              fileVariableReference.toJson());
+          watcherExecution.populateOrderInformation(orderInformation, INPUT_VARIABLE_FILE_NAME,
+              fileToProcess.getName());
         } catch (Exception e) {
           throw new ConnectorException(ERROR_CANT_SAVE_FILE, "File [" + fileToProcess.getName() + "]");
         }
@@ -241,7 +236,7 @@ public class WatcherDirectory extends AbstractWatcher {
 
       Path path = Paths.get(directoryArchive.getCanonicalPath());
 
-      //java.nio.file.Files;
+      // java.nio.file.Files;
       Files.createDirectories(path);
       return path.toFile();
     } catch (Exception e) {

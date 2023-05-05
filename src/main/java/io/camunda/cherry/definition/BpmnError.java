@@ -12,6 +12,7 @@ public class BpmnError {
    * Describe a BPMNError : code and explanation
    */
   private final String code;
+
   private final String explanation;
 
   public BpmnError(String code, String explanation) {
@@ -20,7 +21,7 @@ public class BpmnError {
   }
 
   /**
-   * Create a Bpmn Error explanation
+   * Create a Bpmn ControllerPage explanation
    *
    * @param code        Code of error
    * @param explanation Explanation for this code
@@ -37,7 +38,4 @@ public class BpmnError {
   public String getExplanation() {
     return explanation;
   }
-
 }
-
-

@@ -1,0 +1,120 @@
+
+cherry.connectorslib:
+  uploadpath: ./localstorage/upload
+  classloaderpath: ./localstorage/classloader
+  forcerefresh: false
+
+# use a OnPremise Zeebe engine
+zeebe.client:
+  broker.gateway-address: 127.0.0.1:26500
+  # zeebe.client.broker.gateway-address=host.docker.internal:26500
+  security.plaintext: true
+
+  # use a cloud Zeebe engine
+  # zeebe.client.cloud.region=bru-2
+  # zeebe.client.cloud.clusterId=f867aa3d-5ee7-4324-96e8-21f557f104af
+  # zeebe.client.cloud.clientId=si71NBAWtUlREmfKja5oQC3M.WsT~sHa
+  # zeebe.client.cloud.clientSecret=pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
+
+
+
+  worker:
+    maxJobsActive: 32
+    threads: 1
+server.port: 9081
+logging.level.root: INFO
+
+# return message with BAD_REQUEST to the client
+server.error.include-message: always
+
+  # Spring Boot Configuration
+spring.application.name: ZeebeCherry
+  # TODO change this to /cherry. Need to figure out how to access this from mustache templates
+server.servlet.context-path: /
+# spring.mustache.prefix: classpath:static/templates/
+
+# spring.datasource:
+#   url: "jdbc:h2:file:./cherry.db"
+#   driver-class-name: "org.h2.Driver"
+#   username: "sa"
+#   password: "password"
+# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+
+# Save statistics and information
+
+# --------------------- Postgres
+# spring.datasource:
+#  url: "jdbc:postgresql://localhost/cherrydb"
+#  username: "camunda"
+#  password: "camunda"
+#  driver-class-name: "org.postgresql.Driver"
+#spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+
+#org:
+#  hibernate:
+#    dialect:
+#      PostgreSQL94Dialect:
+
+# spring.datasource.validation-query: SELECT 1;
+# --------------------- H2
+spring.datasource:
+  url: "jdbc:h2:file:./cherry.db"
+  driver-class-name: "org.h2.Driver"
+  username: "sa"
+  password: "password"
+spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+org.hibernate.dialect: "H2Dialect"
+
+# allow CLOB in Postgres
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
+
+
+
+
+spring.jpa:
+  generate-ddl: true
+  hibernate.ddl-auto: "update"
+
+  properties:
+    hibernate:
+      format_sql: true
+      show-sql: true
+
+
+# logging.level.org.hibernate.SQL: TRACE
+# logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+# logging.level.org.hibernate.postgresql : TRACE
+# spring.jpa.properties.hibernate.show_sql: true
+# spring.jpa.properties.hibernate.use_sql_comments: true
+# spring.jpa.properties.hibernate.format_sql: true
+
+
+# Example of Watcher configuration
+
+
+#watchers:
+#  execution:
+#    - type: "WatchDirectory"
+#      name: "watch my directory"
+#      directory: "./src/test/resources/watcher/watchservice"
+#      filterFile: ".*\\.txt"
+#      storageDefinition: "JSON"
+#      fileReference: "ApplicantMotivationFile"
+#      fileName: "ApplicantFileName"
+#
+#      action: "CREATEPROCESSINSTANCEPERID"
+#      processId: "watchDirectory"
+
+
+#   - type: "Directory"
+#     name: "watch my directory"
+#      directory: "./src/test/resources/watcher/watchdir"
+#      filterFile: ".*\\.txt"
+#      storageDefinition: "JSON"
+#      fileReference: "ApplicantMotivationFile"
+#      fileName: "ApplicantFileName"
+#
+#      action: "CREATEPROCESSINSTANCEPERID"
+#      processId: "watchDirectory"
+#      timeBetweenDutyInMS: 30000
+

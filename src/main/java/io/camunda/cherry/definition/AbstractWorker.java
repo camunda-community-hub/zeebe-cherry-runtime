@@ -8,7 +8,7 @@
 package io.camunda.cherry.definition;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
-import io.camunda.cherry.runtime.CherryHistoricFactory;
+import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -25,8 +25,7 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
   Logger loggerAbstractWorker = LoggerFactory.getLogger(AbstractWorker.class.getName());
 
   @Autowired
-  CherryHistoricFactory cherryHistoricFactory;
-
+  HistoryFactory historyFactory;
 
   /* -------------------------------------------------------- */
   /*                                                          */
@@ -40,9 +39,8 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
    * @param type           type of the worker
    * @param listInput      list of Input parameters for the worker
    * @param listOutput     list of Output parameters for the worker
-   * @param listBpmnErrors list of potential BPMN Error the worker can generate
+   * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
-
   protected AbstractWorker(String type,
                            List<RunnerParameter> listInput,
                            List<RunnerParameter> listOutput,
@@ -79,6 +77,8 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
 
     // ok, this is correct, execute it now
     ExecutionStatusEnum status;
+    String errorCode = null;
+    String errorMessage = null;
     ConnectorException connectorException = null;
     try {
       execute(jobClient, activatedJob, contextExecution);
@@ -89,13 +89,17 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       checkOutput(contextExecution);
       status = ExecutionStatusEnum.SUCCESS;
     } catch (ConnectorException ce) {
-      loggerAbstractWorker.error("Error during execution " + ce.getMessage() + " " + ce.getMessage());
+      loggerAbstractWorker.error("ControllerPage during execution " + ce.getMessage() + " " + ce.getMessage());
       status = ExecutionStatusEnum.BPMNERROR;
+      errorCode = ce.getErrorCode();
+      errorMessage = ce.getMessage();
       connectorException = ce;
 
     } catch (Exception e) {
-      loggerAbstractWorker.error("Error during execution " + e.getMessage() + " " + e.getCause());
+      loggerAbstractWorker.error("ControllerPage during execution " + e.getMessage() + " " + e.getCause());
       status = ExecutionStatusEnum.FAIL;
+      errorCode = "Exception";
+      errorMessage = e.getMessage();
     }
     // save the output in the process instance
     jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
@@ -107,28 +111,28 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       logInfo("End in " + (contextExecution.endExecution - contextExecution.beginExecution) + " ms (long)");
 
     // save execution
-    cherryHistoricFactory.saveExecution(executionInstant, // save this instant
+    historyFactory.saveExecution(executionInstant, // save this instant
         RunnerExecutionEntity.TypeExecutor.WORKER, // this is a worker
         getType(), // type of worker
         status, // status of execution
-        connectorException, // if an error is detected
+        errorCode, errorMessage, // if an error is detected
         contextExecution.endExecution - contextExecution.beginExecution);
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
-  /*  Log worker                                             */
+  /*  OperationLog worker                                             */
   /*                                                          */
-    /* to normalize the log use these methods
-    /* -------------------------------------------------------- */
+  /* to normalize the log use these methods
+  /* -------------------------------------------------------- */
 
   /**
    * Worker must implement this method. Real job has to be done here.
    *
    * @param jobClient        connection to Zeebe
    * @param activatedJob     information on job to execute
-   * @param contextExecution the same object is used for all call. The contextExecution is an object for each execution
+   * @param contextExecution the same object is used for all call. The contextExecution is an object
+   *                         for each execution
    */
   public abstract void execute(final JobClient jobClient,
                                final ActivatedJob activatedJob,
@@ -144,7 +148,13 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
     loggerAbstractWorker.info("CherryWorker[" + getIdentification() + "]:" + message);
   }
 
+  public boolean isWorker() {
+    return true;
+  }
 
+  public boolean isConnector() {
+    return false;
+  }
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Contracts operation on input/output                     */
