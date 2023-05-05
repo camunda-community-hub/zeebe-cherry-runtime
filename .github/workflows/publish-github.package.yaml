@@ -9,6 +9,8 @@ name: Create and publish a Docker image
 on:
   push:
     branches: [main,publish_maven]
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -22,7 +24,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
+      - name: publish-github Checkout repository
         uses: actions/checkout@v3
 
       - name: OperationLog in to the Container registry

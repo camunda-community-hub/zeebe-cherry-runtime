@@ -116,9 +116,24 @@ public class LogOperation {
     operationEntity.message = message + ": " + e.getMessage();
     saveOperationEntity(operationEntity);
   }
+  /**
+   * OperationLog an error
+   *
+   * @param message contextual message (what operation was performed)
+   */
+  public void logError(String message) {
+    logger.error("Error {} {}",  message);
+    OperationEntity operationEntity = new OperationEntity();
+    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+    operationEntity.operation = OperationEntity.Operation.ERROR;
+    operationEntity.hostName = getHostName();
+    operationEntity.message = message;
+    saveOperationEntity(operationEntity);
+  }
+
 
   private String getServerIdentification() {
-    return "";
+    return getHostName();
   }
 
   private String getHostName() {

@@ -6,6 +6,8 @@
 /* ******************************************************************** */
 package io.camunda.cherry.zeebe;
 
+import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runner.LogOperation;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
 import io.camunda.zeebe.client.api.ZeebeFuture;
@@ -13,12 +15,9 @@ import io.camunda.zeebe.client.api.response.Topology;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Nullable;
 
 @Component
 @Configuration
@@ -33,6 +32,8 @@ public class ZeebeContainer {
 
   private ZeebeClient zeebeClient;
 
+  @Autowired
+  LogOperation logOperation;
   /**
    * Number of thread currently used at the Zeebe Client
    */
@@ -41,29 +42,38 @@ public class ZeebeContainer {
   /**
    * Start the ZeebeClient
    */
-  public void startZeebeeClient() {
+  public void startZeebeeClient() throws TechnicalException {
     zeebeClient = null;
     String validation = zeebeConfiguration.checkValidation();
     if (validation != null) {
       logger.error("Incorrect configuration: " + validation);
+      logOperation.logError("Incorrect Zeebe configuration "+validation);
       return;
     }
 
+
+    logger.info("ZeebeContainer.startZeebe {} ",zeebeConfiguration.getLogConfiguration());
     ZeebeClientBuilder zeebeClientBuilder;
-    if (zeebeConfiguration.isCouldConfiguration()) {
+    if (zeebeConfiguration.isCloudConfiguration()) {
       zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
-          .withClusterId(zeebeConfiguration.clusterId)
-          .withClientId(zeebeConfiguration.clientId)
-          .withClientSecret(zeebeConfiguration.clientSecret)
-          .withRegion(zeebeConfiguration.region);
+          .withClusterId(zeebeConfiguration.getClusterId())
+          .withClientId(zeebeConfiguration.getClientId())
+          .withClientSecret(zeebeConfiguration.getClientSecret())
+          .withRegion(zeebeConfiguration.getRegion());
 
     } else {
       zeebeClientBuilder = ZeebeClient.newClientBuilder()
-          .gatewayAddress(zeebeConfiguration.getGatewayAddress())
-          .usePlaintext();
-    }
-    zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
+          .gatewayAddress(zeebeConfiguration.getGatewayAddress());
+      if (zeebeConfiguration.isPlaintext())
+        zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
 
+    }
+    try {
+      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
+    } catch(Exception e) {
+      logOperation.logError("Can't start ZeebeClient ",e);
+      throw new TechnicalException("Can't start ZeebeClient",e);
+    }
     pingZeebeClient();
 
     logger.info("ZeebeClient number of threads=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
@@ -75,7 +85,10 @@ public class ZeebeContainer {
    * @return true if the zeebe server is alive, else false
    */
   public boolean pingZeebeClient() {
+    if (zeebeClient==null)
+      return false;
     try {
+
       ZeebeFuture<Topology> send = zeebeClient.newTopologyRequest().send();
       Topology join = send.join();
 
@@ -89,6 +102,8 @@ public class ZeebeContainer {
    * Stop the zeebeClient
    */
   public void stopZeebeeClient() {
+    if (zeebeClient==null)
+      return;
     zeebeClient.close();
     zeebeClient = null;
   }

@@ -12,27 +12,28 @@ public class ZeebeConfiguration {
 
   @Value("${zeebe.client.broker.gateway-address:localhost:26500}")
   @Nullable
-  public String gateway;
+  private String gateway;
+
 
   @Value("${zeebe.client.security.plaintext:true}")
   @Nullable
-  public String plaintext;
+  private Boolean plaintext;
 
   @Value("${zeebe.client.cloud.region:}")
   @Nullable
-  public String region;
+  private String region;
 
   @Value("${zeebe.client.cloud.clusterId:}")
   @Nullable
-  public String clusterId;
+  private String clusterId;
 
   @Value("${zeebe.client.cloud.clientId:}")
   @Nullable
-  public String clientId;
+  private String clientId;
 
   @Value("${zeebe.client.cloud.clientSecret:}")
   @Nullable
-  public String clientSecret;
+  private String clientSecret;
 
   @Value("${zeebe.client.worker.threads:1}")
   private int numberOfThreads;
@@ -55,13 +56,14 @@ public class ZeebeConfiguration {
     read();
   }
 
-  public boolean isCouldConfiguration() {
+  public boolean isCloudConfiguration() {
     return clientId != null && !clientId.trim().isEmpty();
   }
 
   public String getGatewayAddress() {
     return gateway;
   }
+
 
   @Nullable
   public String getGateway() {
@@ -73,11 +75,11 @@ public class ZeebeConfiguration {
   }
 
   @Nullable
-  public String getPlaintext() {
+  public Boolean isPlaintext() {
     return plaintext;
   }
 
-  public void setPlaintext(@Nullable String plaintext) {
+  public void setPlaintext(@Nullable Boolean plaintext) {
     this.plaintext = plaintext;
   }
 
@@ -141,11 +143,13 @@ public class ZeebeConfiguration {
 
   /**
    * Detect if something change
+   *
    * @return true if the configuration change in the database
    */
-  public boolean read(){
+  public boolean read() {
     return false;
   }
+
   public void write() {
 
   }
@@ -157,7 +161,7 @@ public class ZeebeConfiguration {
    * @return null if all is correct, else an explanation
    */
   public String checkValidation() {
-    if (isCouldConfiguration()) {
+    if (isCloudConfiguration()) {
       StringBuilder check = new StringBuilder();
       if (empty(region))
         check.append("Missing region;");
@@ -171,6 +175,33 @@ public class ZeebeConfiguration {
     }
     // for a local, the gateway may be empty, we'll provide a default value
     return null;
+  }
+
+  public String getLogConfiguration() {
+
+    StringBuilder logConfiguration = new StringBuilder();
+    logConfiguration.append("Cloud? ");
+    logConfiguration.append(isCloudConfiguration());
+    if (isCloudConfiguration()) {
+      logConfiguration.append(" ClusterId[");
+      logConfiguration.append(getClusterId());
+      logConfiguration.append("] ClientId[");
+      logConfiguration.append(getClientId());
+      logConfiguration.append("] ClientSecret[");
+      String clientSecret = getClientSecret();
+      logConfiguration.append(clientSecret == null ? "null" : (clientSecret + "****").substring(0, 3) + "****");
+      logConfiguration.append("] Region[");
+      logConfiguration.append(getRegion());
+      logConfiguration.append("]");
+    } else {
+      logConfiguration.append(" Gateway[");
+      logConfiguration.append(getGateway());
+      logConfiguration.append("] usePlainText[");
+      logConfiguration.append(isPlaintext());
+      logConfiguration.append("]");
+    }
+    return logConfiguration.toString();
+
   }
 
   /**

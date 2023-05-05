@@ -3,8 +3,8 @@ services:
 
 # Attention, this configuration is not validated
   cherry-runtime:
-    image: "zeebe-cherryruntime:3.0.0"
-    container_name: "Cherry-runtime"
+    image: docker pull ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+    container_name: cherryruntime
     ports:
       - "9081:9081"
     environment:

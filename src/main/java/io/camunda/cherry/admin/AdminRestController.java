@@ -56,12 +56,13 @@ public class AdminRestController {
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("zeebekindconnection", zeebeConfiguration.isCouldConfiguration() ? "SAAS" : "GATEWAY");
-    parameters.put("gatewayaddress", zeebeConfiguration.gateway);
-    parameters.put("plaintext", zeebeConfiguration.plaintext.toUpperCase());
-    parameters.put("cloudregion", zeebeConfiguration.region);
-    parameters.put("cloudclusterid", zeebeConfiguration.clusterId);
-    parameters.put("cloudclientid", zeebeConfiguration.clientId);
+    parameters.put("zeebekindconnection", zeebeConfiguration.isCloudConfiguration() ? "SAAS" : "GATEWAY");
+    parameters.put("gatewayaddress", zeebeConfiguration.getGatewayAddress());
+    parameters.put("plaintext", zeebeConfiguration.isPlaintext()==null? null : zeebeConfiguration.isPlaintext().toString());
+
+    parameters.put("cloudregion", zeebeConfiguration.getRegion());
+    parameters.put("cloudclusterid", zeebeConfiguration.getClusterId());
+    parameters.put("cloudclientid", zeebeConfiguration.getClientId());
     parameters.put("cloudclientsecret", ""); // never send the client Secret
 
     // we don't want the configuration here, but the running information

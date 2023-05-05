@@ -2,11 +2,14 @@ name: Deploy artifacts with Maven
 on:
   push:
     branches: [main,publish_maven]
+  release:
+    types: [published]
 jobs:
   publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: mvn-release Checkout
+        uses: actions/checkout@v3
 
       - name: Cache
         uses: actions/cache@v2
@@ -43,7 +46,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: release
 
-      - name: Attach artifacts to GitHub Release (Release only)
+      - if: github.event.release
+        name: Attach artifacts to GitHub Release (Release only)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
