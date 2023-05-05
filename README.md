@@ -79,10 +79,31 @@ If you want to create your collection, visit [Create my collection](doc/CreateMy
 
 
 
+# Internal tip
+
+## Create the Docker image
+Because the library contains Java and React script, to deploy it, the machine must have two environement
+
+.github/workflows/mvn-build.yml
 
 
+`````yaml
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+          java-version: '17'
+          distribution: 'adopt'
+    - name: Set up NPM
+      uses: actions/setup-node@v3
 
+    - name: Build with Maven
+      run:  CI=false mvn --batch-mode --update-snapshots package
+`````
 
+CI=false, else any warning will stop the construction
+
+Docker image is then availabe in the package
+`https://github.com/camunda-community-hub/zeebe-cherry-runtime/pkgs/container/zeebe-cherry-runtime`
 
 
 

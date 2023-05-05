@@ -1,9 +1,7 @@
 name: Deploy artifacts with Maven
 on:
   push:
-    branches: [master]
-  release:
-    types: [published]
+    branches: [main,publish_maven]
 jobs:
   publish:
     runs-on: ubuntu-20.04
@@ -22,6 +20,12 @@ jobs:
           java-version: 17
           gpg-private-key: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
           gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE
+      - name: Set up NPM
+          uses: actions/setup-node@v3
+
+      - name: Build with Maven
+        run:  CI=false mvn --batch-mode --update-snapshots package
+
       - name: Deploy SNAPSHOT / Release
         uses: camunda-community-hub/community-action-maven-release@v1
         with:
@@ -35,8 +39,7 @@ jobs:
           maven-gpg-passphrase: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
         id: release
-      - if: github.event.release
-        name: Attach artifacts to GitHub Release (Release only)
+      - name: Attach artifacts to GitHub Release (Release only)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

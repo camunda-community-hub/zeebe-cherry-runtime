@@ -7,8 +7,8 @@
 name: Create and publish a Docker image
 
 on:
-  release:
-    types: ['published']
+  push:
+    branches: [main,publish_maven]
 
 env:
   REGISTRY: ghcr.io
