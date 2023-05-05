@@ -66,11 +66,17 @@ Execution is managed by the Cherry runtime, and a lot of administrative function
 
 # Installation
 
-Check the [Installation guide](doc/InstallationGuide/InstallationGuide.md) 
+Check the [Installation guide](doc/InstallationGuide/README.md) 
 
 # Developer guide
 
-Access the [Developer guide](doc/DeveloperGuide/DeveloperGuide.md)
+To start, visit the [Tutorial](doc/Tutorial/README.md)
+
+Access the [Developer guide](doc/DeveloperGuide/README.md)
+
+If you want to create your collection, visit [Create my collection](doc/CreateMyCollection/README.md) 
+
+
 
 
 

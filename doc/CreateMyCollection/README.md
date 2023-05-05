@@ -22,7 +22,7 @@ zeebe-cherry-cmis
 
 ## Develop your project
 
-Follow the [Tutorial}](../Tutorial/Tutorial.md)  
+Follow the [Tutorial}](../Tutorial/README.md)  
 
 
 ## Produce a Docker image 

@@ -13,7 +13,7 @@ In the next part of the documentation, we use the term of **Runner**. A Runner i
 
 ## Tutorial
 
-Check the [Tutorial](../Tutorial/Tutorial.md) chapter to see how to create a connector / worker.
+Check the [Tutorial](../Tutorial/README.md) chapter to see how to create a connector / worker.
 
 ## Connector or Worker?
 
