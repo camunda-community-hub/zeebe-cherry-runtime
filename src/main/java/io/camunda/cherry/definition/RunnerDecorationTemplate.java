@@ -8,6 +8,7 @@ package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.camunda.connector.impl.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +24,9 @@ public class RunnerDecorationTemplate {
    * */
 
   public static final String GROUP_OUTPUT = "Output";
+  public static final String GROUP_OUTPUT_LABEL = "Output";
   public static final String GROUP_INPUT = "Input";
+  public static final String GROUP_INPUT_LABEL = "Input";
   public static final String ATTR_LABEL = "label";
   public static final String ATTR_TYPE = "type";
   public static final String ZEEBE_TASK_HEADER = "zeebe:taskHeader";
@@ -70,7 +73,6 @@ public class RunnerDecorationTemplate {
    *
    * @return the template
    */
-
   public Map<String, Object> getTemplate() {
 
     Map<String, Object> templateContent = new HashMap<>();
@@ -121,11 +123,11 @@ public class RunnerDecorationTemplate {
 
     // We group all result in a Group Input
     if (!runner.getListInput().isEmpty())
-      listGroups.add(new RunnerParameter.Group(GROUP_INPUT, "Input"));
+      listGroups.add(new RunnerParameter.Group(GROUP_INPUT, GROUP_INPUT_LABEL));
 
     // We group all result in a Group Output
     if (!runner.getListOutput().isEmpty() || pleaseAddOutputGroup)
-      listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, "Output"));
+      listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
     if (listGroups != null) {
       templateContent.put(ATTR_GROUPS,
@@ -148,8 +150,8 @@ public class RunnerDecorationTemplate {
 
     // check if the runner generates error
     if (!runner.getListBpmnErrors().isEmpty()) {
-      //  {
-      //            "label": "Error Expression",
+      //
+      //            "label": "ControllerPage Expression",
       //            "description": "Expression to define BPMN Errors to throw",
       //            "group": "errors",
       //            "type": "Hidden",
@@ -157,13 +159,14 @@ public class RunnerDecorationTemplate {
       //            "binding": {
       //            "type": "zeebe:taskHeader",
       //                "key": "errorExpression"
-      //        }
+      //
       HashMap<String, Object> errorParameters = new HashMap<>();
-      errorParameters.put(ATTR_LABEL, "Error Expression");
+      errorParameters.put(ATTR_LABEL, "ControllerPage Expression");
       errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
-      errorParameters.put(ATTR_VALUE, "bpmnError(error.code, error.message)");
-      errorParameters.put(ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, "errorExpression"));
+      errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
+      errorParameters.put(ATTR_BINDING,
+          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, Constants.ERROR_EXPRESSION_KEYWORD));
 
       listProperties.add(errorParameters);
     }
@@ -191,9 +194,7 @@ public class RunnerDecorationTemplate {
       condition.put("property", runnerParameter.conditionProperty);
       condition.put("oneOf", runnerParameter.conditionOneOf);
     }
-    /**
-     * To have a checkbox, the parameter must be optionnal AND does not have already a condition
-     */
+    /** To have a checkbox, the parameter must be optionnal AND does not have already a condition */
     boolean addConditionCheckbox =
         (runnerParameter.conditionProperty == null) && (RunnerParameter.Level.OPTIONAL.equals(
             runnerParameter.getLevel()));
@@ -267,7 +268,6 @@ public class RunnerDecorationTemplate {
     } else {
       propertyParameter.put(ATTR_BINDING,
           Map.of(ATTR_TYPE, "zeebe:output", "source", "= " + prefixName + runnerParameter.name));
-
     }
     if (runnerParameter.group != null)
       propertyParameter.put(ATTR_GROUP, runnerParameter.group.id());
@@ -286,17 +286,16 @@ public class RunnerDecorationTemplate {
       propertyParameter.put(ATTR_CONSTRAINTS, constraints);
 
     // if this is a OPTIONAL, then the display depends on the check box.
-    // if there is a condition on the OPTIONAL, then the condition is part of the checkbox, else will be on the parameters
+    // if there is a condition on the OPTIONAL, then the condition is part of the checkbox, else
+    // will be on the parameters
     if (addConditionCheckbox) {
       propertyParameter.put(ATTR_CONDITION, Map.of("property", runnerParameter.name + "_optional", "equals", "true"));
 
     } else {
       if (condition != null)
         propertyParameter.put(ATTR_CONDITION, condition);
-
     }
 
     return listProperties;
   }
-
 }

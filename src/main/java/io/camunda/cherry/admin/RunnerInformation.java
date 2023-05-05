@@ -12,7 +12,8 @@ import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.cherry.runtime.CherryHistoricFactory;
+import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.runtime.HistoryPerformance;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -22,18 +23,22 @@ public class RunnerInformation {
 
   private AbstractRunner runner;
 
+  /**
+   * The runner has to status. When it asked to be stopped, the call waits until the jobs is done,
+   * so technically we can consider it with this two status active or inactive
+   */
   private boolean active;
 
   private boolean displayLogo = true;
 
-  private CherryHistoricFactory.Statistic statistic;
+  private HistoryFactory.Statistic statistic;
 
-  private CherryHistoricFactory.Performance performance;
+  private HistoryPerformance.Performance performance;
 
   /**
    * Keep the runner in the class. This class is a facade
    *
-   * @param runner
+   * @param runner runner to get information from
    * @return runner information for a runner
    */
   public static RunnerInformation getRunnerInformation(AbstractRunner runner) {
@@ -116,24 +121,25 @@ public class RunnerInformation {
    */
   public String getDefinitionErrors() {
     return String.join(", ", runner.checkValidDefinition().listOfErrors());
-
   }
 
-  public CherryHistoricFactory.Statistic getStatistic() {
+  public HistoryFactory.Statistic getStatistic() {
     return statistic;
   }
 
-  public void setStatistic(CherryHistoricFactory.Statistic statistic) {
+  public void setStatistic(HistoryFactory.Statistic statistic) {
     this.statistic = statistic;
   }
 
-  public CherryHistoricFactory.Performance getPerformance() {
+  public HistoryPerformance.Performance getPerformance() {
     return performance;
   }
 
-  public void setPerformance(CherryHistoricFactory.Performance performance) {
+  public void setPerformance(HistoryPerformance.Performance performance) {
     this.performance = performance;
   }
 
-  public enum TYPE_RUNNER {WORKER, CONNECTOR}
+  public enum TYPE_RUNNER {
+    WORKER, CONNECTOR
+  }
 }

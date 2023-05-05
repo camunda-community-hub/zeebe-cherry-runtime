@@ -16,6 +16,7 @@ public class RunnerParameter {
    * class to declare a parameter
    */
   public String name;
+
   public String label;
   public Class<?> clazz;
   public Object defaultValue;
@@ -26,6 +27,7 @@ public class RunnerParameter {
    * Declare a condition on the parameters
    */
   public String conditionProperty;
+
   public List<String> conditionOneOf;
   public List<WorkerParameterChoice> workerParameterChoiceList;
   public boolean visibleInTemplate = false;
@@ -36,7 +38,8 @@ public class RunnerParameter {
    *
    * @param parameterName parameter name
    * @param clazz         class of the expected parameter
-   * @param defaultValue  the default value for this parameter, if no value is given. Note: a required parameter may have a null as a value.
+   * @param defaultValue  the default value for this parameter, if no value is given. Note: a
+   *                      required parameter may have a null as a value.
    * @param level         level for this parameter
    * @param explanation   describe the usage of the parameter
    * @return a WorkerParameter
@@ -95,7 +98,8 @@ public class RunnerParameter {
    * @param parameterLabel label to display in the template
    * @param level          level for this parameter
    * @param explanation    describe the usage of the parameter
-   * @param gsonTemplate   Give an example of the format, to verify that the parameters meet the requirement. Format is <Parameter>:<Class>/Example {"host":"String", "Port": "Integer"}
+   * @param gsonTemplate   Give an example of the format, to verify that the parameters meet the
+   *                       requirement. Format is <Parameter>:<Class>/Example {"host":"String", "Port": "Integer"}
    * @return
    */
   public static RunnerParameter getGsonInstance(String parameterName,
@@ -129,7 +133,6 @@ public class RunnerParameter {
     parameter.level = Level.OPTIONAL;
     parameter.explanation = explanation;
     return parameter;
-
   }
 
   public String getName() {
@@ -170,7 +173,6 @@ public class RunnerParameter {
     return this;
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Choice                                                  */
@@ -205,7 +207,6 @@ public class RunnerParameter {
     return this;
   }
 
-
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Group                                                   */
@@ -215,7 +216,9 @@ public class RunnerParameter {
   /**
    * Level on the parameter.
    */
-  public enum Level {REQUIRED, OPTIONAL}
+  public enum Level {
+    REQUIRED, OPTIONAL
+  }
 
   /**
    * Parameter may define a list of choice.
@@ -237,8 +240,6 @@ public class RunnerParameter {
       if (obj instanceof Group objGroup)
         return this.id.equals(objGroup.id);
       return false;
-
     }
   }
-
 }

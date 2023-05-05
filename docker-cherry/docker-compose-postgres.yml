@@ -1,0 +1,42 @@
+version: "3"
+services:
+
+# Attention, this configuration is not validated
+  cherry-runtime:
+    image: "zeebe-cherryruntime:3.0.0"
+    container_name: "Cherry-runtime"
+    ports:
+      - "9081:9081"
+    environment:
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
+      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      - ZEEBE_CLIENT_CLOUD_REGION=
+      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
+      - LOGGING_LEVEL_ROOT=INFO
+      - spring.datasource.url=jdbc:postgresql://postgres/cherrydb
+      - spring.datasource.username=camunda
+      - spring.datasource.password=camundapassword
+      - spring.datasource.driver-class-name=org.postgresql.Driver
+      - spring.datasource.spring.jpa.database-platform=org.hibernate.dialect.PostgreSQL94Dialect
+      - spring.datasource.org.hibernate.dialect=org.hibernate.dialect.PostgreSQL94Dialect
+    depends_on:
+      - postgres
+
+  postgres: # https://hub.docker.com/_/postgres
+    container_name: postgres-cherry
+    image: postgres:${POSTGRES_VERSION:-14.5-alpine}
+    ports:
+      - "5440:5432"
+
+    environment:
+      POSTGRES_DB: cherrydb
+      POSTGRES_USER: camunda
+      POSTGRES_PASSWORD: camundapassword
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

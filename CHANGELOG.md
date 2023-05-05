@@ -10,7 +10,7 @@
 * Dashboard page
   for each worker, start/stop it
 * documentation page
-  for each worker, page which display the description, input, output, BMPN Error, examples?
+  for each worker, page which display the description, input, output, BMPN ControllerPage, examples?
 
 ### Library
 Add a function to build a ZeebeBpmnError, instead to let each workers built its own object

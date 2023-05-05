@@ -1,3 +1,9 @@
+
+cherry.connectorslib:
+  uploadpath: ./localstorage/upload
+  classloaderpath: ./localstorage/classloader
+  forcerefresh: false
+
 # use a OnPremise Zeebe engine
 zeebe.client:
   broker.gateway-address: 127.0.0.1:26500
@@ -14,58 +20,66 @@ zeebe.client:
 
   worker:
     maxJobsActive: 32
-    threads: 1
+    threads: 2
 server.port: 9081
 logging.level.root: INFO
 
-  # Spring Boot Configuration
+# return message with BAD_REQUEST to the client
+server.error.include-message: always
+
+# Spring Boot Configuration
 spring.application.name: ZeebeCherry
-  # TODO change this to /cherry. Need to figure out how to access this from mustache templates
+# TODO change this to /cherry. Need to figure out how to access this from mustache templates
 server.servlet.context-path: /
-spring.mustache.prefix: classpath:static/templates/
-  # Spring Boot Actuator endpoints
-  # Note: originally, we experimented with using this to get information about beans. But this is no longer needed
-  #management.endpoints.jmx.exposure.include=health,beans
-  #management.endpoints.web.exposure.include=health,beans
+# spring.mustache.prefix: classpath:static/templates/
 
+# spring.datasource:
+#   url: "jdbc:h2:file:./cherry.db"
+#   driver-class-name: "org.h2.Driver"
+#   username: "sa"
+#   password: "password"
+# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
 
-  # Save statistics and information
+# Save statistics and information
+
+# --------------------- Postgres
 spring.datasource:
-  url: "jdbc:h2:file:./cherry.db"
-  driver-class-name: "org.h2.Driver"
-  username: "sa"
-  password: "password"
+  url: "jdbc:postgresql://localhost/cherrydb"
+  username: "camunda"
+  password: "camunda"
+  driver-class-name: "org.postgresql.Driver"
+spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+# hibernate.jdbc.use_streams_for_binary: true
+
+# spring.datasource.validation-query: SELECT 1;
+# --------------------- H2
+# spring.datasource:
+#  url: "jdbc:h2:file:./cherry.db"
+#  driver-class-name: "org.h2.Driver"
+#  username: "sa"
+#  password: "password"
+# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+# org.hibernate.dialect: H2Dialect
+
+
+
+
+
 
 spring.jpa:
-  database-platform: "org.hibernate.dialect.H2Dialect"
   generate-ddl: true
   hibernate.ddl-auto: "update"
 
-# Example of Watcher configuration
-
-#watchers:
-#  execution:
-#    - type: "WatchDirectory"
-#      name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchservice"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
+  properties:
+    hibernate:
+      format_sql: true
+      show-sql: true
 
 
-#   - type: "Directory"
-#     name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchdir"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-#      timeBetweenDutyInMS: 30000
-
+# logging.level.org.hibernate.SQL: TRACE
+# logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+# logging.level.org.hibernate.postgresql : TRACE
+# spring.jpa.properties.hibernate.show_sql: true
+# spring.jpa.properties.hibernate.use_sql_comments: true
+# spring.jpa.properties.hibernate.format_sql: true

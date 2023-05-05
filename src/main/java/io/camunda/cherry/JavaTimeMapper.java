@@ -20,5 +20,4 @@ public class JavaTimeMapper {
     final var objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     return new ZeebeObjectMapper(objectMapper);
   }
-
 }

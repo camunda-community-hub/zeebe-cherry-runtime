@@ -9,8 +9,9 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.runtime.CherryHistoricFactory;
-import io.camunda.cherry.runtime.CherryJobRunnerFactory;
+import io.camunda.cherry.runner.JobRunnerFactory;
+import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.zeebe.ZeebeConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,34 +32,52 @@ public class AdminRestController {
   Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
   @Autowired
-  CherryJobRunnerFactory cherryJobRunnerFactory;
+  JobRunnerFactory cherryJobRunnerFactory;
 
   @Autowired
-  CherryHistoricFactory cherryHistoricFactory;
+  HistoryFactory historyFactory;
+
+  @Autowired
+  ZeebeConfiguration zeebeConfiguration;
+
   /**
    * Spring populate the list of all workers
    */
   @Autowired
   private List<AbstractRunner> listRunner;
 
+  @GetMapping(value = "/api/ping", produces = "application/json")
+  public Map<String, Object> ping() {
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("timestamp", System.currentTimeMillis());
+    return parameters;
+  }
+
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("NumberOfThreads", cherryJobRunnerFactory.getNumberOfThreads());
-    return parameters;
+    parameters.put("zeebekindconnection", zeebeConfiguration.isCouldConfiguration() ? "SAAS" : "GATEWAY");
+    parameters.put("gatewayaddress", zeebeConfiguration.gateway);
+    parameters.put("plaintext", zeebeConfiguration.plaintext.toUpperCase());
+    parameters.put("cloudregion", zeebeConfiguration.region);
+    parameters.put("cloudclusterid", zeebeConfiguration.clusterId);
+    parameters.put("cloudclientid", zeebeConfiguration.clientId);
+    parameters.put("cloudclientsecret", ""); // never send the client Secret
 
+    // we don't want the configuration here, but the running information
+    parameters.put("maxjobsactive", cherryJobRunnerFactory.getMaxJobActive());
+    parameters.put("nbthreads", cherryJobRunnerFactory.getNumberOfThreads());
+    return parameters;
   }
 
   @GetMapping(value = "/api/runtime/threads", produces = "application/json")
   public Integer getNumberOfThreads() {
     return cherryJobRunnerFactory.getNumberOfThreads();
-
   }
 
   @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
   public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
     cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
-
   }
 
 }

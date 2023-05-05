@@ -27,15 +27,19 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
   Logger logger = LoggerFactory.getLogger(AbstractConnector.class.getName());
 
   /**
-   * Theses class describe the Input and Output class. The class contains a getListParameters() function
+   * Theses class describe the Input and Output class. The class contains a getListParameters()
+   * function
    */
   private AbstractConnectorInput abstractConnectorInput;
+
   private AbstractConnectorOutput abstractConnectorOutput;
 
   /**
-   * When an existing Connector is embedded, this class saved the orginal Input and Output class. They don't contains any getListParameters() function
+   * When an existing Connector is embedded, this class saved the orginal Input and Output class.
+   * They don't contains any getListParameters() function
    */
   private Class connectorInputClass;
+
   private Class connectorOutputClass;
 
   /**
@@ -44,21 +48,22 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
    * @param type           type of the connector
    * @param listInput      list of Input parameters for the worker
    * @param listOutput     list of Output parameters for the worker
-   * @param listBpmnErrors list of potential BPMN Error the worker can generate
+   * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
    */
-  protected AbstractConnector(String type,
-                              List<RunnerParameter> listInput,
-                              Class<?> connectorInputClass,
-                              List<RunnerParameter> listOutput,
-                              Class<?> connectorOutputClass,
-                              List<BpmnError> listBpmnErrors) {
+  public AbstractConnector(String type,
+                           List<RunnerParameter> listInput,
+                           Class<?> connectorInputClass,
+                           List<RunnerParameter> listOutput,
+                           Class<?> connectorOutputClass,
+                           List<BpmnError> listBpmnErrors) {
     super(type, listInput, listOutput, listBpmnErrors);
     this.connectorInputClass = connectorInputClass;
     this.connectorOutputClass = connectorOutputClass;
   }
 
   /**
-   * Introspection constructor. Input Class and Output class are provided, and introspected to determine Inputs and Outputs
+   * Introspection constructor. Input Class and Output class are provided, and introspected to
+   * determine Inputs and Outputs
    *
    * @param type                 type of the connector
    * @param connectorInputClass  Input class, where InputParameters are defined
@@ -82,7 +87,8 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
           }
         }
       }
-      // the input is not an AbstractConnectorInput, but a simple object: reference it as it, but there is no input then.
+      // the input is not an AbstractConnectorInput, but a simple object: reference it as it, but
+      // there is no input then.
       if (this.abstractConnectorInput == null)
         this.connectorInputClass = connectorInputClass;
 
@@ -101,7 +107,8 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
             }
           }
         }
-        // the input is not an AbstractConnectorInput, but a simple object: reference it as it, but there is no ouput then.
+        // the input is not an AbstractConnectorInput, but a simple object: reference it as it, but
+        // there is no ouput then.
         if (this.abstractConnectorOutput == null)
           this.connectorOutputClass = connectorInputClass;
 
@@ -109,7 +116,6 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
         logger.error("AbstractConnector: can't create ConnectorOutput to get list OfParameters" + e);
       }
     }
-
   }
 
   @Override
@@ -147,7 +153,8 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     if (classConnectorOutputVerification == null)
       return validationResult;
 
-    // ATTENTION, the output must start with a lower case. But this is not mandatory, the connector can return the object, not each method
+    // ATTENTION, the output must start with a lower case. But this is not mandatory, the connector
+    // can return the object, not each method
     if (getListOutput().size() == 0 && classConnectorOutputVerification != null) {
       validationResult.listOfWarnings()
           .add("No Output are defined, but one object is returning by the connector - defined the output");
@@ -180,7 +187,6 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
                   + classConnectorOutputVerification.getName());
           continue;
         }
-
       }
     }
     return validationResult;
@@ -238,4 +244,11 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
     return listOfErrors;
   }
 
+  public boolean isWorker() {
+    return false;
+  }
+
+  public boolean isConnector() {
+    return true;
+  }
 }
