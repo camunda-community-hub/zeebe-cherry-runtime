@@ -12,10 +12,6 @@ import HttpResponse from './HttpResponse';
 
 class RestCallService {
 
-  constructor() {
-    // console.log("RestCallService: ------------ constructor ");
-  }
-
 
   static getInstance() {
     // console.log("FactoryService.getInstance")
@@ -31,14 +27,10 @@ class RestCallService {
    */
   getUrlServer() {
     console.log("RestCallService.getUrlServer");
-    let position = window.location.href.indexOf(":", 7); // skype http: or https:
-    let urlHref = window.location.href.substring(0, position);
-
     if (window.location.host === "http://localhost:3000") {
       // put the same value here as in the package.json
       return "http://localhost:9081";
-    }
-    else
+    } else
       return "";
   }
 
@@ -69,7 +61,7 @@ class RestCallService {
   }
 
 // PostJson
-  postJson(uri, param, objToCall,  fctToCallback) {
+  postJson(uri, param, objToCall, fctToCallback) {
     let headers = {'Content-Type': 'application/json'};
     param.timezoneoffset = (new Date()).getTimezoneOffset();
     console.log("RestCallService.postJson: timezoneoffset=" + param.timezoneoffset);
@@ -92,7 +84,7 @@ class RestCallService {
       .catch(error => {
         console.error("RestCallService.getJson: Uri[" + selfUri + "] catch error:" + error);
         if (error.response && error.response.status && error.response.status === 401) {
-          let homeCherry= window.location.href;
+          let homeCherry = window.location.href;
           console.log("Redirect : to[" + homeCherry + "]");
           window.location = homeCherry;
           return;
@@ -108,7 +100,7 @@ class RestCallService {
       });
   }
 
-  putJson(uri,  param, objToCall, fctToCallback) {
+  putJson(uri, param, objToCall, fctToCallback) {
     let headers = {'Content-Type': 'application/json'};
     param.timezoneoffset = (new Date()).getTimezoneOffset();
     console.log("RestCallService.putJson: timezoneoffset=" + param.timezoneoffset);
