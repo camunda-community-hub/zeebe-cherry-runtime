@@ -1,0 +1,83 @@
+version: "3"
+services:
+
+  # Cherry got an error Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [io.camunda.zeebe.client.ZeebeClient]:
+  # Factory method 'zeebeClient' threw exception; nested exception is java.lang.NullPointerException: target
+  cherryruntime:
+    image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+    container_name: cherryruntime
+    ports:
+      - "9081:9081"
+    environment:
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
+      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      - ZEEBE_CLIENT_CLOUD_REGION=
+      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTID=
+      - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
+      - LOGGING_LEVEL_ROOT=INFO
+    depends_on:
+      - zeebecherry
+
+  zeebecherry:
+    image: camunda/zeebe:${CAMUNDA_CLOUD_VERSION:-8.2.4}
+    container_name: zeebecherry
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_BROKER_CLUSTER_NODEID=0
+      - ZEEBE_BROKER_CLUSTER_PARTITIONSCOUNT=2
+      - ZEEBE_BROKER_CLUSTER_REPLICATIONFACTOR=3
+      - ZEEBE_BROKER_CLUSTER_CLUSTERSIZE=3
+      - ZEEBE_BROKER_CLUSTER_INITIALCONTACTPOINTS=zeebe:26502
+      - ZEEBE_CLIENT_ID=clientId
+      - ZEEBE_CLIENT_SECRET=clientSecret
+      - ZEEBE_CLUSTER_ID=clusterId
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_BULK_SIZE=1
+    ports:
+      - 26500:26500
+    depends_on:
+      - elasticsearchcherry
+
+  operatecherry:
+    image: camunda/operate:${CAMUNDA_CLOUD_VERSION:-8.2.4}
+    container_name: operatecherry
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_OPERATE_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - 8081:8080
+    depends_on:
+      - elasticsearchcherry
+
+  tasklistcherry:
+    image: camunda/tasklist:${CAMUNDA_CLOUD_VERSION:-8.2.4}
+    container_name: tasklistcherry
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_TASKLIST_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - 8082:8080
+    depends_on:
+      - elasticsearchcherry
+
+  elasticsearchcherry:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-7.16.2}
+    container_name: elasticsearchcherry
+    environment:
+      - cluster.name=elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    ports:
+      - 9200:9200
+
+

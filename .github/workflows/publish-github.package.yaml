@@ -7,8 +7,10 @@
 name: Create and publish a Docker image
 
 on:
+  push:
+    branches: [main]
   release:
-    types: ['published']
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -22,7 +24,7 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
+      - name: publish-github Checkout repository
         uses: actions/checkout@v3
 
       - name: OperationLog in to the Container registry
@@ -39,7 +41,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@c84f38281176d4c9cdb1626ffafcd6b3911b5d94
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           version: v0.7.0
           context: .

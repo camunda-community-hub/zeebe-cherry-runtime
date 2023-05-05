@@ -1,0 +1,1 @@
+docker-compose -f docker-compose-alone.yml up -d

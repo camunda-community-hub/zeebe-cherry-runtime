@@ -40,6 +40,8 @@ public class CherryMain {
 
   @PreDestroy
   public void end() {
+    logger.info("----- End is called");
+
     cherryJobRunnerFactory.stopAll();
 
   }

@@ -1,17 +1,20 @@
 version: "3"
 services:
 
-
-  cherry-runtime:
-    image: "zeebe-cherryruntime:3.0.0"
-    container_name: "Cherry-runtime"
+  # Cherry got an error Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [io.camunda.zeebe.client.ZeebeClient]:
+  # Factory method 'zeebeClient' threw exception; nested exception is java.lang.NullPointerException: target
+  cherryruntime:
+    image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+    container_name: cherryruntime
     ports:
       - "9081:9081"
     environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
       - ZEEBE_CLIENT_CLOUD_REGION=
       - ZEEBE_CLIENT_CLOUD_CLUSTERID=
       - ZEEBE_CLIENT_CLOUD_CLIENTID=
       - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
       - LOGGING_LEVEL_ROOT=INFO
+
+
