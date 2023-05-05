@@ -27,6 +27,19 @@ jobs:
       - name: publish-github Checkout repository
         uses: actions/checkout@v3
 
+      - name: Set up Java environment
+        uses: actions/setup-java@v1
+        with:
+          java-version: 17
+          gpg-private-key: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
+          gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE
+
+      - name: Set up NPM
+        uses: actions/setup-node@v3
+
+      - name: Build with Maven
+        run:  CI=false mvn --batch-mode --update-snapshots package
+
       - name: OperationLog in to the Container registry
         uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b
         with:
