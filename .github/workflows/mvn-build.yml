@@ -23,4 +23,4 @@ jobs:
         uses: actions/setup-node@v3
 
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots package
+        run:  CI=false mvn --batch-mode --update-snapshots package
