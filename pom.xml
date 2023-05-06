@@ -4,7 +4,7 @@
 
   <groupId>io.camunda.community</groupId>
   <artifactId>zeebe-cherry-runtime</artifactId>
-  <version>3.0.2-SNAPSHOT</version>
+  <version>3.0.2</version>
 
   <properties>
     <java.version>17</java.version>
