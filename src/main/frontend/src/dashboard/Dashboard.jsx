@@ -8,7 +8,7 @@
 
 import React from 'react';
 import {Button, Select, TextInput} from "carbon-components-react";
-import {ArrowRepeat} from 'react-bootstrap-icons';
+import {ArrowRepeat, XCircle} from 'react-bootstrap-icons';
 
 import GeneralDashboard from "./GeneralDashboard";
 import RunnerDashboard from "./RunnerDashboard";
@@ -55,10 +55,10 @@ class Dashboard extends React.Component {
 
   render() {
     // console.log("dashboard.render display="+JSON.stringify(this.state.display));
-    return (<div class={"container"}>
+    return (<div className={"container"}>
       <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
                         timestamp={this.state.dashboard.timestamp}/>
-      <div class="row">
+      <div className="row">
         <div className="col-md-1">
           <h1 className="title">Details</h1>
         </div>
@@ -95,7 +95,7 @@ class Dashboard extends React.Component {
                     style={{marginLeft: "10px", fontSize: "10px"}}
                     disabled={this.state.display.loading}
                     onClick={() => this.setToggleFilter("showOnlyError")}>
-              Only Errors
+              <XCircle style={{color:"red"}}/> Only Errors
             </button>
             <button className={this.getButtonClass(this.state.display.showOnlyOverThreshold)}
                     style={{fontSize: "10px"}}

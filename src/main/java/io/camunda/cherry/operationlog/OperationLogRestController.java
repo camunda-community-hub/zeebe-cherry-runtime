@@ -57,6 +57,7 @@ public class OperationLogRestController {
       infoOperation.put("runnerType", t.runnerType);
       infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
       infoOperation.put("operation", t.operation.toString());
+      infoOperation.put("message", t.message);
       return infoOperation;
     }).toList();
     info.put("operations", listOperationsMap);
