@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
@@ -116,6 +115,8 @@ public class RunnerUploadFactory {
       }
 
       StringBuilder logLoadJar = new StringBuilder();
+      long beginOperation = System.currentTimeMillis();
+      logger.info("---- Start load Jar[{}]", jarFile.getPath());
 
       // Explore the JAR file and detect any connector inside
       try (ZipFile zipJarFile = new ZipFile(jarFile);
@@ -123,7 +124,8 @@ public class RunnerUploadFactory {
               this.getClass().getClassLoader())) {
 
         Enumeration<? extends ZipEntry> entries = zipJarFile.entries();
-
+        int nbConnectors = 0;
+        int nbRunners = 0;
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
           String entryName = entry.getName();
@@ -132,30 +134,40 @@ public class RunnerUploadFactory {
             try {
               Class<?> clazz = loader.loadClass(className);
               OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
-              if (connectorAnnotation != null) {
-                // this is a Outbound connector
-                logLoadJar.append("ConnectorDetection[");
-                logLoadJar.append(connectorAnnotation.name());
-                logLoadJar.append("], type[");
-                logLoadJar.append(connectorAnnotation.type());
-                logLoadJar.append("]; ");
-                storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
-                    jarStorageEntity);
-              }
               if (AbstractRunner.class.isAssignableFrom(clazz)) {
                 Object instanceClass = clazz.getDeclaredConstructor().newInstance();
                 // this is a AbstractConnector
                 AbstractRunner runner = (AbstractRunner) instanceClass;
                 storageRunner.saveUploadRunner(runner, jarStorageEntity);
+
                 logLoadJar.append("RunnerDectection[");
                 logLoadJar.append(runner.getName());
                 logLoadJar.append("], type[");
                 logLoadJar.append(runner.getType());
                 logLoadJar.append("]; ");
+                logOperation.log(OperationEntity.Operation.SERVERINFO,
+                    "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type["
+                        + runner.getType() + "]");
+                nbRunners++;
+              } else if (connectorAnnotation != null) {
+                // this is a Outbound connector
+                storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
+                    jarStorageEntity);
+
+                logLoadJar.append("ConnectorDetection[");
+                logLoadJar.append(connectorAnnotation.name());
+                logLoadJar.append("], type[");
+                logLoadJar.append(connectorAnnotation.type());
+                logLoadJar.append("]; ");
+                logOperation.log(OperationEntity.Operation.SERVERINFO,
+                    "Load Jar[" + jarFile.getName() + "] Connector[" + connectorAnnotation.name() + "] type["
+                        + connectorAnnotation.type() + "]");
+                nbConnectors++;
               }
+
             } catch (Error er) {
               logger.info("Can't load class [" + className + "] : " + er.getMessage());
-              logLoadJar.append("ERROR,Class[");
+              logLoadJar.append("ERROR, Class[");
               logLoadJar.append(className);
               logLoadJar.append("]:");
               logLoadJar.append(er.getMessage());
@@ -173,8 +185,17 @@ public class RunnerUploadFactory {
           }
         }
         // update the Jar information
+        long endOperation = System.currentTimeMillis();
+        logLoadJar.append(" in ");
+        logLoadJar.append(endOperation - beginOperation);
+        logLoadJar.append(" ms");
+
         jarStorageEntity.loadLog = logLoadJar.toString();
         storageRunner.updateJarStorage(jarStorageEntity);
+        logOperation.log(OperationEntity.Operation.SERVERINFO,
+            "Load [" + jarFile.getPath() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in "
+                + (endOperation - beginOperation) + " ms ");
+
       } catch (Exception e) {
         logOperation.log(OperationEntity.Operation.ERROR,
             "Can't register JAR [" + jarFile.getName() + "] " + e.getMessage());

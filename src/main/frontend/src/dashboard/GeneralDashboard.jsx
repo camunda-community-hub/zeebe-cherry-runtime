@@ -37,7 +37,7 @@ class GeneralDashboard extends React.Component {
     // console.log("GeneralDashboard.render: period="+this.state.period);
     return (
       <div className="box container">
-        <div class="row">
+        <div className="row">
           <div className="col-md-8">
             <h1 className="title is-5"> total jobs in last period </h1>
           </div>
@@ -53,7 +53,7 @@ class GeneralDashboard extends React.Component {
             </Select>
           </div>
         </div>
-        <div class="row">
+        <div className="row">
           <div className="col-md-8">
             <h1 className="title is-5">
               <span className="has-text-primary"
@@ -65,8 +65,9 @@ class GeneralDashboard extends React.Component {
           </div>
         </div>
 
-        <div class="row">
-          <progress className="progress is-large is-primary" value="1" max="1"></progress>
+        <div className="row">
+          <progress className="progress is-large is-primary" value={this.state.dashboard.totalExecutions}
+                    max={this.state.dashboard.totalExecutionsSucceeded}></progress>
         </div>
       </div>
 

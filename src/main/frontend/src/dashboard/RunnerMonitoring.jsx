@@ -8,6 +8,7 @@
 
 import React from 'react';
 import {Button, Tab, Tabs} from "react-bootstrap";
+import { NumberInput} from "carbon-components-react";
 
 import RestCallService from "../services/RestCallService";
 import RunnerChart from "./RunnerChart";
@@ -22,14 +23,14 @@ class RunnerMonitoring extends React.Component {
     this.state = {
       runner: props.runnerDisplay,
       timestamp: props.timestamp,
-      status:"",
+      status: "",
       display: {
         loading: false,
         pageNumberErrors: 0,
         pageNumberEExecutions: 0,
         pageNumberOperations: 0,
       },
-      operations:{}
+      operations: {}
     };
     this.refreshState = this.refreshState.bind(this);
   }
@@ -62,7 +63,7 @@ class RunnerMonitoring extends React.Component {
       <div>
         <div style={{position: "absolute", top: "0", right: "0"}}>
           <Button className="btn btn-success btn-sm"
-                  onClick={() =>  this.refreshLoadAllStatistics()}
+                  onClick={() => this.refreshLoadAllStatistics()}
                   disabled={this.state.display.loading}>
             <ArrowRepeat/> Refresh
           </Button>
@@ -72,7 +73,7 @@ class RunnerMonitoring extends React.Component {
             <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
 
 
-            <div style={{paddingTop: "10px"}}>
+            <div className="row" style={{paddingTop: "10px"}}>
               <div>
                 <Button className={this.getCssStartButton()}
                         style={{borderRadius: "2px", border: "1px solid"}}
@@ -87,20 +88,33 @@ class RunnerMonitoring extends React.Component {
                   {this.state.labelBtnStop}
                 </Button>
               </div>
-
             </div>
-            <div style={{padding: "0px 0px 20px 0px"}}>
+            <div className="row" style={{paddingTop: "10px"}}>
+              <div className="col-md-4">
+              <NumberInput label="Threshold (in milliseconds)"
+                disabled={this.state.display.loading}
+                          readonly="true"
+                          value={this.state.runner.threshold}
+                          onChange={(event) => {
+                            this.setThreshold(event.target.value);
+                          }}/>
+              </div>
+            </div>
+            <div className="row" style={{paddingTop: "10px"}}>
               {this.state.runner.statistic.executions} total,
               {this.state.runner.statistic.executionsSucceeded} succeeded,
               {this.state.runner.statistic.executionsFailed} failed,
               {this.state.runner.statistic.executionsBpmnErrors} BPMN Error
             </div>
-            <progress class="progress is-small is-primary"
-                      value="{this.state.runner.statistic.progressExecutionsSucceeded}"
-                      max="{this.state.runner.statistic.progressExecutions}"></progress>
-            <div>
-              <i>Average {this.state.runner.performance.averageTimeInMs} ms,
-                Pic {this.state.runner.performance.picTimeInMs} ms</i>
+            <div className="row">
+              <progress class="progress is-small is-primary"
+                        value="{this.state.runner.statistic.executionsSucceeded}"
+                        max="{this.state.runner.statistic.executions}"></progress>
+
+              <div>
+                <i>Average {this.state.runner.performance.averageTimeInMs} ms,
+                  Pic {this.state.runner.performance.picTimeInMs} ms</i>
+              </div>
             </div>
 
 
@@ -149,7 +163,7 @@ class RunnerMonitoring extends React.Component {
               {this.state.runner && this.state.runner.performance &&
                 this.state.runner.performance.listIntervals.map((interval, _index) =>
                   <tr>
-                    <td>{interval.humanTimeSlot}</td>
+                    <td style={{fontSize: "10px", whiteSpace: "nowrap"}}>{interval.humanTimeSlot}</td>
                     <td style={{textAlign: "right"}}>{interval.executions}</td>
                     <td style={{textAlign: "right"}}>{interval.executionSucceeded}</td>
                     <td style={{textAlign: "right"}}>{interval.executionBpmnErrors}</td>
@@ -174,8 +188,8 @@ class RunnerMonitoring extends React.Component {
               </thead>
               {this.state.operations && this.state.operations.errors &&
                 this.state.operations.errors.map((error, _index) =>
-                  <tr>
-                    <td>{error.executionTime}</td>
+                  <tr >
+                    <td style={{fontSize: "10px", whiteSpace: "nowrap"}}>{error.executionTime}</td>
                     <td>{error.status}</td>
                     <td>{error.errorCode}</td>
                     <td>{error.errorExplanation}</td>
@@ -195,8 +209,8 @@ class RunnerMonitoring extends React.Component {
               </thead>
               {this.state.operations && this.state.operations.executions &&
                 this.state.operations.executions.map((exec, _index) =>
-                  <tr>
-                    <td>{exec.executionTime}</td>
+                  <tr style={this.getStyleRowOperation(exec)}>
+                    <td style={{fontSize: "10px", whiteSpace: "nowrap"}}>{exec.executionTime}</td>
                     <td>{exec.status}</td>
                     <td style={{textAlign: "right"}}>{exec.durationms} ms</td>
                   </tr>
@@ -217,7 +231,7 @@ class RunnerMonitoring extends React.Component {
               {this.state.operations && this.state.operations.operations &&
                 this.state.operations.operations.map((operation, _index) =>
                   <tr>
-                    <td>{operation.executionTime}</td>
+                    <td style={{fontSize: "10px", whiteSpace: "nowrap"}}>{operation.executionTime}</td>
                     <td>{operation.operation}</td>
                     <td>{operation.hostname}</td>
 
@@ -249,18 +263,32 @@ class RunnerMonitoring extends React.Component {
 
   }
 
+  getStyleRowOperation(exec) {
+    if (exec.status === "ERROR")
+      return {backgroundColor: "#ffd7d9"};
+    return {};
+
+  }
+
   stopRunner() {
     console.log("RunnerMonitoring.stopRunner");
-    this.setState({labelBtnStop: "Stopping...", status:""});
+    this.setState({labelBtnStop: "Stopping...", status: ""});
     var restCallService = RestCallService.getInstance();
     restCallService.putJson('cherry/api/runner/stop?runnertype=' + this.state.runner.type, {}, this, this.operationRunnerCallback);
   }
 
   startRunner() {
     console.log("RunnerMonitoring.startRunner");
-    this.setState({labelBtnStart: "Starting...",status: ""});
+    this.setState({labelBtnStart: "Starting...", status: ""});
     var restCallService = RestCallService.getInstance();
-    restCallService.putJson('cherry/api/runner/start?runnertype=' + this.state.runner.type, {}, this,this.operationRunnerCallback);
+    restCallService.putJson('cherry/api/runner/start?runnertype=' + this.state.runner.type, {}, this, this.operationRunnerCallback);
+  }
+
+
+  setThreshold(value) {
+    let runnerinfo = this.state.runner;
+    runnerinfo.threshold = value;
+    this.setState({runner: runnerinfo})
   }
 
   operationRunnerCallback(httpResponse) {
@@ -271,10 +299,11 @@ class RunnerMonitoring extends React.Component {
     } else {
       let runnerinfo = this.state.runner;
       runnerinfo.active = httpResponse.getData().active;
-      this.setState({runner:runnerinfo})
+      this.setState({runner: runnerinfo})
     }
     this.refreshState();
   }
+
 
   refreshState() {
     if (this.state.runner.active) {
@@ -316,8 +345,8 @@ class RunnerMonitoring extends React.Component {
     } else {
 
       let operationsContent = this.state.operations;
-      if (! operationsContent) {
-        operationsContent={};
+      if (!operationsContent) {
+        operationsContent = {};
       }
       // Complete the variable
       let operationsServer = httpPayload.getData();

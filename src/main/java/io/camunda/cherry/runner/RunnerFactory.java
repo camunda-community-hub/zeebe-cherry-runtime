@@ -93,6 +93,7 @@ public class RunnerFactory {
    * @return the runner
    */
   private AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
+    ClassLoader loader;
     try {
       // if this class is embedded?
       AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByName(runnerDefinitionEntity.name);
@@ -104,13 +105,14 @@ public class RunnerFactory {
         String jarFileName =
             runnerUploadFactory.getClassLoaderPath() + File.separator + runnerDefinitionEntity.jar.name;
 
-        ClassLoader loader = new URLClassLoader(new URL[] { new File(jarFileName).toURI().toURL() });
+        loader = new URLClassLoader(new URL[] { new File(jarFileName).toURI().toURL() });
 
         Class clazz = loader.loadClass(runnerDefinitionEntity.classname);
         Object objectRunner = clazz.getDeclaredConstructor().newInstance();
 
-        if (objectRunner instanceof AbstractRunner runner) {
-          return runner;
+        if (AbstractRunner.class.isAssignableFrom(objectRunner.getClass())) {
+        // if (objectRunner instanceof AbstractRunner runner) {
+          return (AbstractRunner) objectRunner;
         } else if (objectRunner instanceof OutboundConnectorFunction outboundConnector) {
           SdkRunnerConnector runner = new SdkRunnerConnector(outboundConnector);
           OutboundConnector connectorAnnotation = (OutboundConnector) clazz.getAnnotation(OutboundConnector.class);
@@ -118,8 +120,12 @@ public class RunnerFactory {
           runner.setName(connectorAnnotation.name());
           return runner;
         }
+        logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
+        logOperation.logError("Class ["+runnerDefinitionEntity.classname+"] in jar["+jarFileName+"] not a Runner or OutboundConnectorFunction");
       }
-      logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
+      else {
+        logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
+      }
       return null;
     } catch (Error er) {
       // ControllerPage getting the information
