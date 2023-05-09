@@ -137,7 +137,7 @@ class Parameters extends React.Component {
         <h4>Workers</h4>
         <div className="row">
           <div className="col-md-12">
-            <NumberInput label="Threads"
+            <NumberInput label="Max job actives"
                          readonly="true"
                          min="1"
                          size="sm"

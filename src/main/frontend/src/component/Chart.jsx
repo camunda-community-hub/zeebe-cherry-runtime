@@ -134,6 +134,7 @@ class Chart extends React.Component {
   getOptionsBarChart() {
     const chartOptions = {
       'maintainAspectRatio': false,
+      'responsive': false,
       'plugins': {
         'legend': {
           'display': false
@@ -145,7 +146,7 @@ class Chart extends React.Component {
         y: {
           ticks: {
             beginAtZero: true,
-            display: false
+            display: true
           },
           grid: {
             display: false,
@@ -168,7 +169,6 @@ class Chart extends React.Component {
           borderWidth: 2,
         },
       };
-      chartOptions.responsive = true;
       chartOptions.plugins = {
         legend: {
           position: 'right',
@@ -187,6 +187,7 @@ class Chart extends React.Component {
     if (this.state.options.width !== undefined || this.state.options.height !== undefined) {
       chartOptions.maintainAspectRatio = false;
     }
+    // value is true by default
     if (this.state.options.showXLabel === false) {
       chartOptions.scales.x.ticks.display = false;
     }
@@ -268,7 +269,7 @@ class Chart extends React.Component {
       dataset.data = this.state.data;
     }
     console.log("Chart: dataChart=" + JSON.stringify(dataChart));
-
+    return dataChart;
   }
 
   /* ******************************************************************** */

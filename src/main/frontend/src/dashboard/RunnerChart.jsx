@@ -42,43 +42,51 @@ class RunnerChart extends React.Component {
                  options={{
                    title: this.state.title,
                    showXLabel: false,
-                   showYLabel: false,
+                   showYLabel: true,
                    width: 200,
                    height: 100,
                    showGrid: false
                  }}
                  title="execution"/>
         }
+        {this.state.type === "ExecutionsShort" && this.state.runner && this.state.runner.performance &&
+          <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
+                 options={{
+                   showXLabel: false,
+                   showYLabel: false,
+                   showGrid: false
+                 }}/>
+        }
         {this.state.type === "DurationsAvg" && this.state.runner && this.state.runner.performance &&
           <Chart type="HorizontalBar" dataList={this.getDurationsAvg()} oneColor={true}
                  options={{
                    title: this.state.title,
                    showXLabel: false,
-                   showYLabel: false,
+                   showYLabel: true,
                    width: 200,
                    height: 100,
                    showGrid: false
                  }}
-                 title="Duration (average)"/>
+                 title="Duration ms (average)"/>
         }
         {this.state.type === "DurationsPic" && this.state.runner && this.state.runner.performance &&
           <Chart type="HorizontalBar" dataList={this.getDurationsPic()} oneColor={true}
                  options={{
                    title: this.state.title,
                    showXLabel: false,
-                   showYLabel: false,
+                   showYLabel: true,
                    width: 200,
                    height: 100,
                    showGrid: false
                  }}
-                 title="Duration (pic)"/>
+                 title="Duration ms (pic)"/>
         }
         {this.state.type === "Errors" && this.state.runner && this.state.runner.performance &&
           <Chart type="HorizontalBar" dataList={this.getErrors()} oneColor={true}
                  options={{
                    title: this.state.title,
                    showXLabel: false,
-                   showYLabel: false,
+                   showYLabel: true,
                    width: 200,
                    height: 100,
                    showGrid: false
