@@ -45,6 +45,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           maven-auto-release-after-close: true
           artifacts-pattern: ""
+          maven-build-options: "-source 16"
         id: release
 
       - if: github.event.release
