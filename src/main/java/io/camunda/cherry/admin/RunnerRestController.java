@@ -73,7 +73,6 @@ public class RunnerRestController {
 
   /**
    * Get list of worker. Multiple result is possibles
-   * /api/runner/list?logo=true&stats=true&delaysstatsinhour=24
    *
    * @param logo   if true, logo is returned
    * @param stats  if true, execution on statistics is returned
