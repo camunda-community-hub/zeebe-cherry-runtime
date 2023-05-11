@@ -3,6 +3,7 @@ package io.camunda.cherry.runner;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.definition.SdkRunnerConnector;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -16,7 +17,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -28,6 +31,8 @@ public class RunnerUploadFactory {
   private final StorageRunner storageRunner;
 
   private final LogOperation logOperation;
+
+  private List<AbstractRunner> runners = new ArrayList<>();
 
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
@@ -143,6 +148,7 @@ public class RunnerUploadFactory {
                 // this is a AbstractConnector
                 AbstractRunner runner = (AbstractRunner) instanceClass;
                 storageRunner.saveUploadRunner(runner, jarStorageEntity);
+                listRunners.add(runner);
 
                 logLoadJar.append("RunnerDectection[");
                 logLoadJar.append(runner.getName());
@@ -157,6 +163,11 @@ public class RunnerUploadFactory {
                 // this is a Outbound connector
                 storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
                     jarStorageEntity);
+
+                SdkRunnerConnector runner = new SdkRunnerConnector(outboundConnector);
+                runner.setType(connectorAnnotation.type());
+                runner.setName(connectorAnnotation.name());
+                listRunners.add(runner);
 
                 logLoadJar.append("ConnectorDetection[");
                 logLoadJar.append(connectorAnnotation.name());

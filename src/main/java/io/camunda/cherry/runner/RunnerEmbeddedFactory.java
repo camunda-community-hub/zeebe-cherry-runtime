@@ -55,6 +55,16 @@ public class RunnerEmbeddedFactory {
     }
   }
 
+
+  public List<RunnerLightDefinition> getAllRunners() {
+    return Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
+        .map(t->
+        { RunnerLightDefinition light = new RunnerLightDefinition();
+        light.name = t.getName();
+        light.type = t.getType();
+        light.origin = });
+  }
+
   /**
    * Return the runner by its name, if it exists
    *
@@ -64,6 +74,19 @@ public class RunnerEmbeddedFactory {
   public AbstractRunner getByName(String name) {
     List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
         .filter(t -> t.getName().equals(name))
+        .toList();
+    return listRunners.isEmpty() ? null : listRunners.get(0);
+  }
+
+  /**
+   * Return the runner by its name, if it exists
+   *
+   * @param type type of the runner
+   * @return null if not exist, else the runner
+   */
+  public AbstractRunner getByType(String type) {
+    List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
+        .filter(t -> t.getType().equals(type))
         .toList();
     return listRunners.isEmpty() ? null : listRunners.get(0);
   }

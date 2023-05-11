@@ -102,11 +102,24 @@ Because the library contains Java and React script, to deploy it, the machine mu
 
 CI=false, else any warning will stop the construction
 
-Docker image is then availabe in the package
+Docker image is then available in the package
 `https://github.com/camunda-community-hub/zeebe-cherry-runtime/pkgs/container/zeebe-cherry-runtime`
 
 
 
 
 
+# Build
+The project is configured to publish automatically to maven central the JAR file, and to docker package a Docker image
 
+## Maven Central repository
+
+See .github/workflows/mvn-release.yml
+
+
+Visit
+https://github.com/camunda-community-hub/community-action-maven-release/tree/main
+
+
+Error
+Error: Resource not accessible by integration

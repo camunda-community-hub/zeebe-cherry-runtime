@@ -26,6 +26,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class RunnerFactory {
@@ -56,6 +57,16 @@ public class RunnerFactory {
     runnerUploadFactory.loadJavaFromStorage();
   }
 
+  /**
+   * Must be call after the initialisation
+   * all runners are loaded amd identified. The storageRunner are checked, and all runner in the database
+   * which are not loaded are purged.
+   */
+  public void synchronize() {
+    List<AbstractRunner> allRunners = Stream.concat(
+runnerEmbeddedFactory.getAllRunners().stream()).toList();
+
+  }
   /**
    * Get All runners
    *
@@ -96,7 +107,7 @@ public class RunnerFactory {
     ClassLoader loader;
     try {
       // if this class is embedded?
-      AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByName(runnerDefinitionEntity.name);
+      AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByType(runnerDefinitionEntity.type);
       if (embeddedRunner != null) {
         return embeddedRunner;
       }

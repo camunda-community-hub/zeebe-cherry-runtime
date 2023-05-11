@@ -25,7 +25,7 @@ public class CherryMain {
   RunnerFactory runnerFactory;
 
   @Autowired
-  JobRunnerFactory cherryJobRunnerFactory;
+  JobRunnerFactory jobRunnerFactory;
 
   @PostConstruct
   public void init() {
@@ -33,16 +33,19 @@ public class CherryMain {
     logger.info("----- CherryMain.1 Load all embedded runner");
     runnerFactory.init();
 
+    logger.info("----- CherryMain.2 purge non existing anymore runner");
+    runnerFactory.synchronize();
+
     // at this point, the table is up-to-date, class loader is correct : let's start all runners
-    logger.info("----- CherryMain.4 Start all runners");
-    cherryJobRunnerFactory.startAll();
+    logger.info("----- CherryMain.3 Start all runners");
+    jobRunnerFactory.startAll();
   }
 
   @PreDestroy
   public void end() {
     logger.info("----- End is called");
 
-    cherryJobRunnerFactory.stopAll();
+    jobRunnerFactory.stopAll();
 
   }
 
