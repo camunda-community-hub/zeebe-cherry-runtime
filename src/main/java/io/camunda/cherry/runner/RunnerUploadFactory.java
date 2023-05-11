@@ -25,11 +25,9 @@ import java.util.zip.ZipFile;
 public class RunnerUploadFactory {
 
   Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
-  @Autowired
-  StorageRunner storageRunner;
+  private final StorageRunner storageRunner;
 
-  @Autowired
-  LogOperation logOperation;
+  private final LogOperation logOperation;
 
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
@@ -40,8 +38,14 @@ public class RunnerUploadFactory {
   @Value("${cherry.connectorslib.forcerefresh:false}")
   private Boolean forceRefresh;
 
-  @Autowired
-  private SessionFactory sessionFactory;
+  private final SessionFactory sessionFactory;
+
+  public RunnerUploadFactory(StorageRunner storageRunner, LogOperation logOperation,  SessionFactory sessionFactory) {
+    this.storageRunner = storageRunner;
+    this.logOperation = logOperation;
+    this.sessionFactory = sessionFactory;
+  }
+
 
   public void loadConnectorsFromClassLoaderPath() {
     // No special operation to do

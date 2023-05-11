@@ -43,7 +43,7 @@ class RunnerChart extends React.Component {
                    title: this.state.title,
                    showXLabel: false,
                    showYLabel: true,
-                   width: 200,
+                   width: 400,
                    height: 100,
                    showGrid: false
                  }}

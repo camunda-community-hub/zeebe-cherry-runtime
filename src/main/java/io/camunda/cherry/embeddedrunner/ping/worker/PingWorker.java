@@ -30,7 +30,7 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
   private final Random random = new Random();
 
   public PingWorker() {
-    super("c-ping", Arrays.asList(
+    super("c-ping2", Arrays.asList(
         RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
             "Message to log"),
         RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL,

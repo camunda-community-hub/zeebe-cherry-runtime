@@ -70,6 +70,7 @@ public class StorageRunner {
    */
   public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
     String connectorName = jarFile.getName();
+    logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
 
     JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
     if (jarStorageEntity != null)
@@ -177,12 +178,10 @@ public class StorageRunner {
    * @return a RunnerDefinitionEntity, saved.
    */
   public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition) {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
-    if (runnerDefinition != null)
-      return runnerDefinition;
-
-    runnerDefinition = new RunnerDefinitionEntity();
-
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
+    if (runnerDefinition == null) {
+      runnerDefinition = new RunnerDefinitionEntity();
+    }
     runnerDefinition.name = runner.getName();
     runnerDefinition.classname = runner.getClass().getCanonicalName();
     runnerDefinition.jar = jarDefinition;
@@ -241,12 +240,10 @@ public class StorageRunner {
    * @throws IOException in case of error during the operation
    */
   public RunnerDefinitionEntity saveEmbeddedRunner(AbstractRunner runner) throws IOException {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
-    if (runnerDefinition != null)
-      return runnerDefinition;
-
-    runnerDefinition = new RunnerDefinitionEntity();
-
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
+    if (runnerDefinition == null) {
+      runnerDefinition = new RunnerDefinitionEntity();
+    }
     runnerDefinition.name = runner.getName();
     runnerDefinition.classname = runner.getClass().getCanonicalName();
     runnerDefinition.type = runner.getType();
@@ -291,8 +288,13 @@ public class StorageRunner {
         }).toList();
   }
 
-  public boolean existRunner(String runnerName) {
-    return runnerDefinitionRepository.selectByName(runnerName) != null;
+  /**
+   * existRunner by type
+   * @param runnerType type of runner
+   * @return true if the runner exists
+   */
+  public boolean existRunnerByType(String runnerType) {
+    return runnerDefinitionRepository.selectByType(runnerType) != null;
   }
 
   public static class Filter {
