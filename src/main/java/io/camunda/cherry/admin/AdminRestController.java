@@ -58,7 +58,8 @@ public class AdminRestController {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("zeebekindconnection", zeebeConfiguration.isCloudConfiguration() ? "SAAS" : "GATEWAY");
     parameters.put("gatewayaddress", zeebeConfiguration.getGatewayAddress());
-    parameters.put("plaintext", zeebeConfiguration.isPlaintext()==null? null : zeebeConfiguration.isPlaintext().toString());
+    parameters.put("plaintext",
+        zeebeConfiguration.isPlaintext() == null ? null : zeebeConfiguration.isPlaintext().toString());
 
     parameters.put("cloudregion", zeebeConfiguration.getRegion());
     parameters.put("cloudclusterid", zeebeConfiguration.getClusterId());

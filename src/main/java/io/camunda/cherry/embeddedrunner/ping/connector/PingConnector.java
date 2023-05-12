@@ -24,11 +24,9 @@ import java.util.Random;
 /* ------------------------------------------------------------------- */
 
 @Component
-@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR,
-    inputVariables = { PingConnectorInput.INPUT_MESSAGE,
+@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { PingConnectorInput.INPUT_MESSAGE,
     PingConnectorInput.INPUT_DELAY,
-    PingConnectorInput.INPUT_THROWERRORPLEASE },
-    type = PingConnector.TYPE_PINGCONNECTOR)
+    PingConnectorInput.INPUT_THROWERRORPLEASE }, type = PingConnector.TYPE_PINGCONNECTOR)
 public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";

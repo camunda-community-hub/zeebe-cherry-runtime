@@ -10,7 +10,6 @@ import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
-
 import io.camunda.cherry.definition.CherryConnectorJobHandler;
 import io.camunda.cherry.definition.SdkRunnerConnector;
 import io.camunda.cherry.exception.OperationAlreadyStartedException;
@@ -79,7 +78,7 @@ public class JobRunnerFactory {
     // now start the Zeebe Client
     try {
       zeebeContainer.startZeebeeClient();
-    } catch(TechnicalException e) {
+    } catch (TechnicalException e) {
       logger.error("ZeebeClient is not started, can't start runner");
       return;
     }
@@ -189,11 +188,13 @@ public class JobRunnerFactory {
 
   /**
    * We ask the container what is the number of job active configured
+   *
    * @return number of job active
    */
   public int getMaxJobActive() {
     return zeebeContainer.getMaxJobsActive();
   }
+
   public int getNumberOfThreads() {
     return zeebeContainer.getNumberOfThreads();
   }
@@ -202,7 +203,6 @@ public class JobRunnerFactory {
     zeebeConfiguration.setNumberOfThreads(numberOfThreadsRequired);
     zeebeContainer.stopZeebeeClient();
     zeebeContainer.startZeebeeClient();
-
 
     // stop all running and restart them
     for (Running running : mapRunning.values()) {

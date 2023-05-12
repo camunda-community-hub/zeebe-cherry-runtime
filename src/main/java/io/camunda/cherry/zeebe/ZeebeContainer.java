@@ -29,15 +29,12 @@ public class ZeebeContainer {
 
   @Autowired
   ZeebeConfiguration zeebeConfiguration;
-
-  private ZeebeClient zeebeClient;
-
   @Autowired
   LogOperation logOperation;
+  private ZeebeClient zeebeClient;
   /**
    * Number of thread currently used at the Zeebe Client
    */
-
 
   /**
    * Start the ZeebeClient
@@ -47,12 +44,11 @@ public class ZeebeContainer {
     String validation = zeebeConfiguration.checkValidation();
     if (validation != null) {
       logger.error("Incorrect configuration: " + validation);
-      logOperation.logError("Incorrect Zeebe configuration "+validation);
+      logOperation.logError("Incorrect Zeebe configuration " + validation);
       return;
     }
 
-
-    logger.info("ZeebeContainer.startZeebe {} ",zeebeConfiguration.getLogConfiguration());
+    logger.info("ZeebeContainer.startZeebe {} ", zeebeConfiguration.getLogConfiguration());
     ZeebeClientBuilder zeebeClientBuilder;
     if (zeebeConfiguration.isCloudConfiguration()) {
       zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
@@ -62,17 +58,16 @@ public class ZeebeContainer {
           .withRegion(zeebeConfiguration.getRegion());
 
     } else {
-      zeebeClientBuilder = ZeebeClient.newClientBuilder()
-          .gatewayAddress(zeebeConfiguration.getGatewayAddress());
+      zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
       if (zeebeConfiguration.isPlaintext())
         zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
 
     }
     try {
       zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
-    } catch(Exception e) {
-      logOperation.logError("Can't start ZeebeClient ",e);
-      throw new TechnicalException("Can't start ZeebeClient",e);
+    } catch (Exception e) {
+      logOperation.logError("Can't start ZeebeClient ", e);
+      throw new TechnicalException("Can't start ZeebeClient", e);
     }
     pingZeebeClient();
 
@@ -85,7 +80,7 @@ public class ZeebeContainer {
    * @return true if the zeebe server is alive, else false
    */
   public boolean pingZeebeClient() {
-    if (zeebeClient==null)
+    if (zeebeClient == null)
       return false;
     try {
 
@@ -102,7 +97,7 @@ public class ZeebeContainer {
    * Stop the zeebeClient
    */
   public void stopZeebeeClient() {
-    if (zeebeClient==null)
+    if (zeebeClient == null)
       return;
     zeebeClient.close();
     zeebeClient = null;
@@ -124,6 +119,7 @@ public class ZeebeContainer {
 
   /**
    * get the number of jobs in the
+   *
    * @return the number of threads used when the ZeebeClient is started
    */
   public int getNumberOfThreads() {
@@ -131,12 +127,10 @@ public class ZeebeContainer {
   }
 
   /**
-   *
    * @return the number of threads used when the ZeebeClient is started
    */
   public int getMaxJobsActive() {
     return zeebeClient.getConfiguration().getDefaultJobWorkerMaxJobsActive();
   }
-
 
 }

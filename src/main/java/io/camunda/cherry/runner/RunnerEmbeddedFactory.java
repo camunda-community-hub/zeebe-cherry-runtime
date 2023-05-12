@@ -8,12 +8,13 @@
 
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,14 +25,22 @@ public class RunnerEmbeddedFactory {
 
   Logger logger = LoggerFactory.getLogger(RunnerEmbeddedFactory.class.getName());
 
-  @Autowired
   List<AbstractConnector> listAbstractConnector;
 
-  @Autowired
   List<AbstractWorker> listAbstractWorker;
 
-  @Autowired
   StorageRunner storageRunner;
+  LogOperation logOperation;
+
+  RunnerEmbeddedFactory(List<AbstractConnector> listAbstractConnector,
+                        List<AbstractWorker> listAbstractWorker,
+                        StorageRunner storageRunner,
+                        LogOperation logOperation) {
+    this.listAbstractConnector = listAbstractConnector;
+    this.listAbstractWorker = listAbstractWorker;
+    this.storageRunner = storageRunner;
+    this.logOperation = logOperation;
+  }
 
   public void registerInternalRunner() {
     List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
@@ -47,22 +56,22 @@ public class RunnerEmbeddedFactory {
       try {
         storageRunner.saveEmbeddedRunner(runner);
       } catch (Exception e) {
-        logger.error("RunnerEmbeddedFactory: CAN'T SAVE [" + runner.getType() + (runner.getName() != null ?
-            " (" + runner.getName() + ")" :
-            "") + "]  error " + e.getMessage());
-        continue;
+        logOperation.log(OperationEntity.Operation.ERROR, "RunnerEmbeddedFactory: CAN'T SAVE [" + runner.getType() + (
+            runner.getName() != null ?
+                " (" + runner.getName() + ")" :
+                "") + "]  error " + e.getMessage());
       }
     }
   }
 
-
   public List<RunnerLightDefinition> getAllRunners() {
-    return Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
-        .map(t->
-        { RunnerLightDefinition light = new RunnerLightDefinition();
-        light.name = t.getName();
-        light.type = t.getType();
-        light.origin = });
+    return Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream()).map(t -> {
+      RunnerLightDefinition light = new RunnerLightDefinition();
+      light.name = t.getName();
+      light.type = t.getType();
+      light.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
+      return light;
+    }).toList();
   }
 
   /**

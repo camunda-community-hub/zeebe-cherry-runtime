@@ -16,4 +16,15 @@ public class RunnerLightDefinition {
   public String name;
   public RunnerDefinitionEntity.Origin origin;
 
+  public String getType() {
+    return type;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public RunnerDefinitionEntity.Origin getOrigin() {
+    return origin;
+  }
 }

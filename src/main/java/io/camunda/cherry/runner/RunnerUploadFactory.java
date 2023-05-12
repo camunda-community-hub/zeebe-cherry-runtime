@@ -2,13 +2,12 @@ package io.camunda.cherry.runner;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.definition.SdkRunnerConnector;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
@@ -27,30 +26,31 @@ import java.util.zip.ZipFile;
 @Configuration
 public class RunnerUploadFactory {
 
-  Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
   private final StorageRunner storageRunner;
-
   private final LogOperation logOperation;
-
-  private List<AbstractRunner> runners = new ArrayList<>();
-
+  private final SessionFactory sessionFactory;
+  Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
+  private final List<RunnerLightDefinition> listLightRunners = new ArrayList<>();
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
-
   @Value("${cherry.connectorslib.classloaderpath:@null}")
   private String classLoaderPath;
-
   @Value("${cherry.connectorslib.forcerefresh:false}")
   private Boolean forceRefresh;
 
-  private final SessionFactory sessionFactory;
-
-  public RunnerUploadFactory(StorageRunner storageRunner, LogOperation logOperation,  SessionFactory sessionFactory) {
+  public RunnerUploadFactory(StorageRunner storageRunner, LogOperation logOperation, SessionFactory sessionFactory) {
     this.storageRunner = storageRunner;
     this.logOperation = logOperation;
     this.sessionFactory = sessionFactory;
   }
 
+  private static RunnerLightDefinition getLightFromRunnerDefinitionEntity(RunnerDefinitionEntity entityRunner) {
+    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
+    runnerLightDefinition.name = entityRunner.name;
+    runnerLightDefinition.type = entityRunner.type;
+    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
+    return runnerLightDefinition;
+  }
 
   public void loadConnectorsFromClassLoaderPath() {
     // No special operation to do
@@ -111,8 +111,17 @@ public class RunnerUploadFactory {
 
         jarStorageEntity = storageRunner.getJarStorageByName(jarFile.getName());
         if (jarStorageEntity != null && !Boolean.TRUE.equals(forceRefresh)) {
+          // we don't reload the JAR file, so we believe what we have in the database
+          if (jarStorageEntity != null) {
+            List<RunnerDefinitionEntity> runners = storageRunner.getRunners(
+                new StorageRunner.Filter().jarFileName(jarStorageEntity.name));
+            listLightRunners.addAll(
+                runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
+          }
+
           continue;
         }
+
         if (jarStorageEntity == null) {
           // save it
           jarStorageEntity = storageRunner.saveJarRunner(jarFile);
@@ -148,7 +157,7 @@ public class RunnerUploadFactory {
                 // this is a AbstractConnector
                 AbstractRunner runner = (AbstractRunner) instanceClass;
                 storageRunner.saveUploadRunner(runner, jarStorageEntity);
-                listRunners.add(runner);
+                listLightRunners.add(getLightFromRunner(runner));
 
                 logLoadJar.append("RunnerDectection[");
                 logLoadJar.append(runner.getName());
@@ -156,18 +165,15 @@ public class RunnerUploadFactory {
                 logLoadJar.append(runner.getType());
                 logLoadJar.append("]; ");
                 logOperation.log(OperationEntity.Operation.SERVERINFO,
-                    "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type["
-                        + runner.getType() + "]");
+                    "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type[" + runner.getType()
+                        + "]");
                 nbRunners++;
               } else if (connectorAnnotation != null) {
                 // this is a Outbound connector
                 storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
                     jarStorageEntity);
 
-                SdkRunnerConnector runner = new SdkRunnerConnector(outboundConnector);
-                runner.setType(connectorAnnotation.type());
-                runner.setName(connectorAnnotation.name());
-                listRunners.add(runner);
+                listLightRunners.add(getLightFromConnectorAnnotation(connectorAnnotation));
 
                 logLoadJar.append("ConnectorDetection[");
                 logLoadJar.append(connectorAnnotation.name());
@@ -208,8 +214,8 @@ public class RunnerUploadFactory {
         jarStorageEntity.loadLog = logLoadJar.toString();
         storageRunner.updateJarStorage(jarStorageEntity);
         logOperation.log(OperationEntity.Operation.SERVERINFO,
-            "Load [" + jarFile.getPath() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in "
-                + (endOperation - beginOperation) + " ms ");
+            "Load [" + jarFile.getPath() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in " + (
+                endOperation - beginOperation) + " ms ");
 
       } catch (Exception e) {
         logOperation.log(OperationEntity.Operation.ERROR,
@@ -217,5 +223,25 @@ public class RunnerUploadFactory {
       } // end manage Zip file
 
     }
+  }
+
+  public List<RunnerLightDefinition> getAllRunners() {
+    return listLightRunners;
+  }
+
+  private RunnerLightDefinition getLightFromRunner(AbstractRunner runner) {
+    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
+    runnerLightDefinition.name = runner.getName();
+    runnerLightDefinition.type = runner.getType();
+    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
+    return runnerLightDefinition;
+  }
+
+  private RunnerLightDefinition getLightFromConnectorAnnotation(OutboundConnector connectorAnnotation) {
+    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
+    runnerLightDefinition.name = connectorAnnotation.name();
+    runnerLightDefinition.type = connectorAnnotation.type();
+    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
+    return runnerLightDefinition;
   }
 }
