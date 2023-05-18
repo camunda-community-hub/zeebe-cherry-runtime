@@ -89,8 +89,8 @@ public class HistoryPerformance {
       case FAIL -> interval.executionsFailed++;
       case BPMNERROR -> interval.executionsBpmnErrors++;
       }
-      if (runnerExecutionEntity.executionMs > interval.picTimeInMs)
-        interval.picTimeInMs = runnerExecutionEntity.executionMs;
+      if (runnerExecutionEntity.executionMs > interval.peakTimeInMs)
+        interval.peakTimeInMs = runnerExecutionEntity.executionMs;
     }
 
     // build the list and calculate average
@@ -103,8 +103,8 @@ public class HistoryPerformance {
 
       sumTotalExecutionTimeInMs += interval.sumOfExecutionTime;
       sumTotalExecutions += interval.executions;
-      if (interval.picTimeInMs > performance.picTimeInMs)
-        performance.picTimeInMs = interval.picTimeInMs;
+      if (interval.peakTimeInMs > performance.peakTimeInMs)
+        performance.peakTimeInMs = interval.peakTimeInMs;
     }
 
     // global values
@@ -174,7 +174,7 @@ public class HistoryPerformance {
   }
 
   public static class Performance {
-    public long picTimeInMs;
+    public long peakTimeInMs;
     public long executions;
     public long averageTimeInMs;
     public List<Interval> listIntervals = new ArrayList<>();
@@ -192,7 +192,7 @@ public class HistoryPerformance {
     public long executionsSucceeded = 0;
     public long executionsFailed = 0;
     public long executionsBpmnErrors = 0;
-    public long picTimeInMs = 0;
+    public long peakTimeInMs = 0;
     public long averageTimeInMs = 0;
 
     public Interval(String slot, LocalDateTime slotTime) {

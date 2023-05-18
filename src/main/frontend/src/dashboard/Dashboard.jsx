@@ -31,8 +31,8 @@ class Dashboard extends React.Component {
         loading: true,
         orderBy: "nameAsc",
         period: "ONEDAY",
-        showActif: true,
-        showInactif: true,
+        showActive: true,
+        showInactive: true,
         showWorker: true,
         showConnector: true,
         showOnlyError: false,
@@ -65,17 +65,17 @@ class Dashboard extends React.Component {
         <div className="col-md-6">
           <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
 
-            <button className={this.getButtonClass(this.state.display.showActif)}
+            <button className={this.getButtonClass(this.state.display.showActive)}
                     style={{marginLeft: "10px", fontSize: "10px"}}
                     disabled={this.state.display.loading}
-                    onClick={() => this.setToggleFilter("showActif")}>
-              Actif
+                    onClick={() => this.setToggleFilter("showActive")}>
+              Active
             </button>
-            <button className={this.getButtonClass(this.state.display.showInactif)}
+            <button className={this.getButtonClass(this.state.display.showInactive)}
                     style={{fontSize: "10px"}}
                     disabled={this.state.display.loading}
-                    onClick={() => this.setToggleFilter("showInactif")}>
-              Inactif
+                    onClick={() => this.setToggleFilter("showInactive")}>
+              Inactive
             </button>
 
             <button className={this.getButtonClass(this.state.display.showWorker)}
@@ -170,9 +170,9 @@ class Dashboard extends React.Component {
   }
 
   getStyleRow(runner) {
-    if (!this.state.display.showActif && runner.active)
+    if (!this.state.display.showActive && runner.active)
       return {display: "none"};
-    if (!this.state.display.showInactif && !runner.active)
+    if (!this.state.display.showInactive && !runner.active)
       return {display: "none"};
     if (!this.state.display.showWorker && runner.classrunner === "worker")
       return {display: "none"};
