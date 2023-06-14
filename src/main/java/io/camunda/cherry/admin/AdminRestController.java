@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.admin;
 
+import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
@@ -21,6 +22,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,21 +37,31 @@ public class AdminRestController {
 
   Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
-  @Autowired
-  JobRunnerFactory cherryJobRunnerFactory;
+  private final JobRunnerFactory jobRunnerFactory;
 
-  @Autowired
-  HistoryFactory historyFactory;
+  private final HistoryFactory historyFactory;
 
-  @Autowired
-  ZeebeConfiguration zeebeConfiguration;
+  private final ZeebeConfiguration zeebeConfiguration;
 
   /**
    * Spring populate the list of all workers
    */
-  @Autowired
-  private List<AbstractRunner> listRunner;
+  private final  List<AbstractRunner> listRunner;
 
+  private final DataSource dataSource;
+
+  AdminRestController( JobRunnerFactory jobRunnerFactory,
+  HistoryFactory historyFactory,
+  ZeebeConfiguration zeebeConfiguration,
+List<AbstractRunner> listRunner,
+                       DataSource dataSource
+) {
+this.jobRunnerFactory =jobRunnerFactory;
+this.historyFactory=historyFactory;
+    this.zeebeConfiguration=zeebeConfiguration;
+    this.listRunner = listRunner;
+    this.dataSource = dataSource;
+  }
   @GetMapping(value = "/api/ping", produces = "application/json")
   public Map<String, Object> ping() {
     Map<String, Object> parameters = new HashMap<>();
@@ -67,19 +83,26 @@ public class AdminRestController {
     parameters.put("cloudclientsecret", ""); // never send the client Secret
 
     // we don't want the configuration here, but the running information
-    parameters.put("maxjobsactive", cherryJobRunnerFactory.getMaxJobActive());
-    parameters.put("nbthreads", cherryJobRunnerFactory.getNumberOfThreads());
+    parameters.put("maxjobsactive", jobRunnerFactory.getMaxJobActive());
+    parameters.put("nbthreads", jobRunnerFactory.getNumberOfThreads());
+
+    try(Connection con = dataSource.getConnection()) {
+      parameters.put("datasourceproductname",con.getMetaData().getDatabaseProductName());
+      parameters.put("datasourceurl",con.getMetaData().getURL());
+      parameters.put("datasourceusername",con.getMetaData().getUserName());
+
+    } catch(Exception e){}
     return parameters;
   }
 
   @GetMapping(value = "/api/runtime/threads", produces = "application/json")
   public Integer getNumberOfThreads() {
-    return cherryJobRunnerFactory.getNumberOfThreads();
+    return jobRunnerFactory.getNumberOfThreads();
   }
 
   @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
   public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
-    cherryJobRunnerFactory.setNumberOfThreads(numberOfThreads);
+    jobRunnerFactory.setNumberOfThreads(numberOfThreads);
   }
 
 }

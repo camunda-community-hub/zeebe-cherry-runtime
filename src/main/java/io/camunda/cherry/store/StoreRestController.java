@@ -49,6 +49,7 @@ public class StoreRestController {
     try {
       String lastRelease = storeService.getLatestRelease();
       Map<String, String> connectors = storeService.listConnectors(lastRelease);
+
       List<RunnerDefinitionEntity> listRunnersEntity = runnerFactory.getAllRunnersEntity(
           new StorageRunner.Filter().isStore(true));
       Map<String, RunnerDefinitionEntity> mapRunners = listRunnersEntity.stream()

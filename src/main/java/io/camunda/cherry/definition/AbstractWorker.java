@@ -101,8 +101,11 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
       errorCode = "Exception";
       errorMessage = e.getMessage();
     }
-    // save the output in the process instance
-    jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
+    if(ExecutionStatusEnum.FAIL.equals(status) || ExecutionStatusEnum.BPMNERROR.equals(status))
+      jobClient.newThrowErrorCommand(activatedJob.getKey()).errorCode(errorCode).errorMessage(errorMessage).send().join();
+    else
+      // save the output in the process instance
+     jobClient.newCompleteCommand(activatedJob.getKey()).variables(contextExecution.outVariablesValue).send().join();
 
     contextExecution.endExecution = System.currentTimeMillis();
     if (isLog())

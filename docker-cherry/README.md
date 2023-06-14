@@ -11,13 +11,13 @@ There is two flavor:
 Start a complete cherry plus zeebe platform
 
 ```shell
-docker-compose -f docker-compose-core.yaml -f docker-compose-alone.yaml up -d 
+docker-compose -f docker-compose-core.yaml -f docker-compose-cherry.yaml up -d 
 ```
 
 To remove the different container created (use `stop` instead of `down` if you just want to stop and don't remove the container)
 
 ```shell
-docker-compose -f docker-compose-core.yaml -f docker-compose-alone.yaml down -v
+docker-compose -f docker-compose-core.yaml -f docker-compose-cherry.yaml down -v
 ```
 
 
@@ -26,11 +26,11 @@ docker-compose -f docker-compose-core.yaml -f docker-compose-alone.yaml down -v
 This example used a postgres database to store information (statistics, upload connectors)
 
 ```shell
-docker-compose -f docker-compose-core.yaml -f docker-compose-postgres.yaml up -d 
+docker-compose -f docker-compose-core.yaml -f docker-compose-cherry-postgres.yaml up -d 
 ```
 
 To remove the different container created (use `stop` instead of `down` if you just want to stop and don't remove the container)
 
 ```shell
-docker-compose -f docker-compose-core.yaml -f docker-compose-postgres.yaml down -v
+docker-compose -f docker-compose-core.yaml -f docker-compose-cherry-postgres.yaml down -v
 ```

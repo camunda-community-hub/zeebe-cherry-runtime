@@ -202,10 +202,9 @@ public class StoreService {
   private String getMavenCentralUrl(String release, String name) {
     String groupId = "";
     String artifactId = "";
+    String url="https://raw.githubusercontent.com/" + REPO + "/" + release + "/connectors/" + name + "/pom.xml";
     try {
-      String pom = restTemplate.getForObject(
-          "https://raw.githubusercontent.com/" + REPO + "/" + release + "/connectors/" + name + "/pom.xml",
-          String.class);
+      String pom = restTemplate.getForObject(url,String.class);
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder db = dbf.newDocumentBuilder();
       Document doc = db.parse(new ByteArrayInputStream(pom.getBytes()));
@@ -223,7 +222,7 @@ public class StoreService {
     } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
       throw new TechnicalException("ControllerPage building the maven url from the pom", e);
     } catch (Exception ex) {
-      throw new TechnicalException("Can't access the repository", ex);
+      throw new TechnicalException("Can't access the repository ["+url+"]", ex);
     }
   }
 

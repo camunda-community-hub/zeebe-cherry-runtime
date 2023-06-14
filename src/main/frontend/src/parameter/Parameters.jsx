@@ -45,6 +45,7 @@ class Parameters extends React.Component {
             </Button>
           </div>
         </div>
+
         <div className="row" style={{width: "100%"}}>
           <div className="col-md-12">
             <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
@@ -52,111 +53,171 @@ class Parameters extends React.Component {
         </div>
 
 
-        <h4>Zeebe Connection</h4>
+        <div className="row" >
+          <div className="col-md-6">
 
-        <div className="row">
-          <div className="col-md-4">
-            <Select
-              value={this.state.parameters.zeebekindconnection}
-              labelText="Zeebe connection"
-              disabled="true"
-              readonly="true"
-              onChange={(event) => this.setParameterProperty("zeebekindconnection", event.target.value)}>
-              <option value="GATEWAY">Gateway</option>
-              <option value="SAAS">Saas</option>
-            </Select>
+            <div className="card" style={{width: "25rem;"}}>
+              <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>Zeebe connection</div>
+              <div className="card-body">
+
+
+                <div className="row">
+                  <div className="col-md-4">
+                    <Select
+                      value={this.state.parameters.zeebekindconnection}
+                      labelText="Zeebe connection"
+                      disabled="true"
+                      readonly="true"
+                      onChange={(event) => this.setParameterProperty("zeebekindconnection", event.target.value)}>
+                      <option value="GATEWAY">Gateway</option>
+                      <option value="SAAS">Saas</option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div style={this.getZssZeebeConnection("GATEWAY")}>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="Address"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.gatewayaddress}
+                                 onChange={(event) => this.setParameterProperty("gatewayaddress", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-4">
+                      <Select
+                        value={this.state.parameters.plaintext}
+                        labelText="Security plain text"
+                        disabled="true"
+                        readonly="true"
+                        onChange={(event) => this.setParameterProperty("plaintext", event.target.value)}>
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div style={this.getZssZeebeConnection("SAAS")}>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <TextInput labelText="Region"
+                                 readonly="true"
+                                 value={this.state.parameters.cloudregion}
+                                 style={{width: "100px"}}
+                                 onChange={(event) => this.setParameterProperty("cloudregion", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <TextInput labelText="Cluster ID"
+                                 readonly="true"
+                                 value={this.state.parameters.cloudclusterid}
+                                 style={{width: "200px"}}
+                                 onChange={(event) => this.setParameterProperty("cloudclusterid", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <TextInput labelText="client ID"
+                                 readonly="true"
+                                 value={this.state.parameters.cloudclientid}
+                                 style={{width: "300px"}}
+                                 onChange={(event) => this.setParameterProperty("cloudclientid", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <TextInput labelText="Client secret"
+                                 readonly="true"
+                                 style={{width: "300px"}}
+                                 value={this.state.parameters.cloudclientsecret}
+                                 onChange={(event) => this.setParameterProperty("cloudclientsecret", event.target.value)}/>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+
+
+          <div className="col-md-6">
+
+            <div className="card" style={{width: "25rem;"}}>
+              <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>Database</div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-6">
+                    <TextInput labelText="Product"
+                               readonly="true"
+                               value={this.state.parameters.datasourceproductname}
+                               style={{width: "300px"}}/>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-6">
+                    <TextInput labelText="Product"
+                               readonly="true"
+                               value={this.state.parameters.datasourceurl}
+                               style={{width: "300px"}}
+                               onChange={(event) => this.setParameterProperty("datasourceurl", event.target.value)}/>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-6">
+                    <TextInput labelText="Product"
+                               readonly="true"
+                               value={this.state.parameters.datasourceusername}
+                               style={{width: "300px"}}
+                               onChange={(event) => this.setParameterProperty("datasourceusername", event.target.value)}/>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div style={this.getZssZeebeConnection("GATEWAY")}>
-          <div className="row">
-            <div className="col-md-12">
-              <TextInput labelText="Address"
-                         readonly="true"
-                         style={{width: "200px"}}
-                         value={this.state.parameters.gatewayaddress}
-                         onChange={(event) => this.setParameterProperty("gatewayaddress", event.target.value)}/>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-4">
-              <Select
-                value={this.state.parameters.plaintext}
-                labelText="Security plain text"
-                disabled="true"
-                readonly="true"
-                onChange={(event) => this.setParameterProperty("plaintext", event.target.value)}>
-                <option value="true">True</option>
-                <option value="false">False</option>
-              </Select>
+
+
+
+
+        <div className="row" style={{marginTop: "10px"}}>
+          <div className="col-md-6">
+            <div className="card" style={{width: "25rem;"}}>
+              <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>Worker</div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-12">
+                    <NumberInput label="Max job actives"
+                                 readonly="true"
+                                 min="1"
+                                 size="sm"
+                                 value={this.state.parameters.maxjobsactive}
+                                 style={{width: "100px"}}
+                                 onChange={(event) => this.setParameterProperty("maxjobsactive", event.target.value)}/>
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-md-12">
+                    <NumberInput label="Threads"
+                                 readonly="true"
+                                 min="1"
+                                 size="sm"
+                                 value={this.state.parameters.nbthreads}
+                                 style={{width: "100px"}}
+                                 onChange={(event) => this.setParameterProperty("nbthreads", event.target.value)}/>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-
-        <div style={this.getZssZeebeConnection("SAAS")}>
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput labelText="Region"
-                         readonly="true"
-                         value={this.state.parameters.cloudregion}
-                         style={{width: "100px"}}
-                         onChange={(event) => this.setParameterProperty("cloudregion", event.target.value)}/>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput labelText="Cluster ID"
-                         readonly="true"
-                         value={this.state.parameters.cloudclusterid}
-                         style={{width: "200px"}}
-                         onChange={(event) => this.setParameterProperty("cloudclusterid", event.target.value)}/>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput labelText="client ID"
-                         readonly="true"
-                         value={this.state.parameters.cloudclientid}
-                         style={{width: "300px"}}
-                         onChange={(event) => this.setParameterProperty("cloudclientid", event.target.value)}/>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6">
-              <TextInput labelText="Client secret"
-                         readonly="true"
-                         style={{width: "300px"}}
-                         value={this.state.parameters.cloudclientsecret}
-                         onChange={(event) => this.setParameterProperty("cloudclientsecret", event.target.value)}/>
-            </div>
-          </div>
-        </div>
-
-
-        <h4>Workers</h4>
-        <div className="row">
-          <div className="col-md-12">
-            <NumberInput label="Max job actives"
-                         readonly="true"
-                         min="1"
-                         size="sm"
-                         value={this.state.parameters.maxjobsactive}
-                         style={{width: "100px"}}
-                         onChange={(event) => this.setParameterProperty("maxjobsactive", event.target.value)}/>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-md-12">
-            <NumberInput label="Threads"
-                         readonly="true"
-                         min="1"
-                         size="sm"
-                         value={this.state.parameters.nbthreads}
-                         style={{width: "100px"}}
-                         onChange={(event) => this.setParameterProperty("nbthreads", event.target.value)}/>
-          </div>
-        </div>
 
       </div>
     )
