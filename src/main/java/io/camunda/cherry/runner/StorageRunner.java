@@ -70,6 +70,7 @@ public class StorageRunner {
    */
   public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
     String connectorName = jarFile.getName();
+    logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
 
     JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
     if (jarStorageEntity != null)
@@ -177,12 +178,10 @@ public class StorageRunner {
    * @return a RunnerDefinitionEntity, saved.
    */
   public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition) {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
-    if (runnerDefinition != null)
-      return runnerDefinition;
-
-    runnerDefinition = new RunnerDefinitionEntity();
-
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
+    if (runnerDefinition == null) {
+      runnerDefinition = new RunnerDefinitionEntity();
+    }
     runnerDefinition.name = runner.getName();
     runnerDefinition.classname = runner.getClass().getCanonicalName();
     runnerDefinition.jar = jarDefinition;
@@ -241,20 +240,18 @@ public class StorageRunner {
    * @throws IOException in case of error during the operation
    */
   public RunnerDefinitionEntity saveEmbeddedRunner(AbstractRunner runner) throws IOException {
-    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(runner.getName());
-    if (runnerDefinition != null)
-      return runnerDefinition;
-
-    runnerDefinition = new RunnerDefinitionEntity();
-
+    RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
+    if (runnerDefinition == null) {
+      runnerDefinition = new RunnerDefinitionEntity();
+      // start it by default
+      runnerDefinition.activeRunner = true;
+    }
     runnerDefinition.name = runner.getName();
     runnerDefinition.classname = runner.getClass().getCanonicalName();
     runnerDefinition.type = runner.getType();
     runnerDefinition.collectionName = runner.getCollectionName();
     runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
 
-    // start it by default
-    runnerDefinition.activeRunner = true;
     return runnerDefinitionRepository.save(runnerDefinition);
   }
 
@@ -288,12 +285,41 @@ public class StorageRunner {
           if (filter.filterType == null)
             return true;
           return t.type.equals(filter.filterType);
+        }).filter(t -> {
+          if (filter.jarFileName == null) {
+            return true;
+          } else {
+            return t.jar != null && filter.jarFileName.equals(t.jar.name);
+          }
         }).toList();
   }
 
-  public boolean existRunner(String runnerName) {
-    return runnerDefinitionRepository.selectByName(runnerName) != null;
+  /**
+   * existRunner by type
+   *
+   * @param runnerType type of runner
+   * @return true if the runner exists
+   */
+  public boolean existRunnerByType(String runnerType) {
+    return runnerDefinitionRepository.selectByType(runnerType) != null;
   }
+
+  /**
+   * Remove an entity - does not remove the history of execution
+   *
+   * @param entity entity to remove
+   */
+
+  public void removeEntity(RunnerDefinitionEntity entity) {
+    runnerDefinitionRepository.delete(entity);
+  }
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Remove entity                                                       */
+  /*                                                                      */
+  /*  Remove the entity     */
+  /* ******************************************************************** */
 
   public static class Filter {
     /**
@@ -307,6 +333,11 @@ public class StorageRunner {
      * We just want the store
      */
     Boolean storeOnly;
+
+    /**
+     * Only jar runner inside a specific JarFile
+     */
+    String jarFileName;
 
     public Filter isActive(boolean activeOnly) {
       this.activeOnly = activeOnly;
@@ -325,6 +356,11 @@ public class StorageRunner {
 
     public Filter type(String type) {
       this.filterType = type;
+      return this;
+    }
+
+    public Filter jarFileName(String jarFileName) {
+      this.jarFileName = jarFileName;
       return this;
     }
   }

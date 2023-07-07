@@ -4,14 +4,17 @@ import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+@Transactional
 public interface RunnerExecutionRepository extends JpaRepository<RunnerExecutionEntity, Long> {
 
   @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
@@ -39,4 +42,10 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
                                                           @Param("dateToSearch") LocalDateTime dateToSearch,
                                                           @Param("listStates") List<AbstractRunner.ExecutionStatusEnum> listStates,
                                                           Pageable pageable);
+
+  @Modifying
+  @Query(value = "delete from RunnerExecutionEntity runnerexecution"
+      + " where runnerexecution.runnerType = :runnerType")
+  void deleteFromEntityType(@Param("runnerType") String runnerType);
+
 }

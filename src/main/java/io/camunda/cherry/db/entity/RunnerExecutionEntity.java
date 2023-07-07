@@ -21,7 +21,7 @@ public class RunnerExecutionEntity {
   @Enumerated(EnumType.STRING)
   public TypeExecutor typeExecutor;
 
-  @Column(name = "runner_type", length = 100)
+  @Column(name = "runner_type", length = 1000)
   public String runnerType;
 
   /**

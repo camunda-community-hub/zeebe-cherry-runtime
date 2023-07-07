@@ -85,7 +85,7 @@ class RunnerDashboard extends React.Component {
                   </h1>
                   <h2 style={{padding: "5px 0px 0px 25px", fontSize: "70%"}}>
                     <i >Average {this.state.runner.performance.averageTimeInMs} ms
-                      Pic {this.state.runner.performance.picTimeInMs} ms </i></h2></div>
+                      Peak {this.state.runner.performance.peakTimeInMs} ms </i></h2></div>
               </td>
             </tr>
             </tbody>

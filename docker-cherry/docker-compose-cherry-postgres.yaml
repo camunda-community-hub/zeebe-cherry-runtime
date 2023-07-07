@@ -1,27 +1,28 @@
 version: "3"
 services:
 
-# Attention, this configuration is not validated
   cherry-runtime:
-    image: docker pull ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+    image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
     container_name: cherryruntime
     ports:
       - "9081:9081"
     environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=host.docker.internal:26500
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
-      - ZEEBE_CLIENT_CLOUD_REGION=
-      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
-      - ZEEBE_CLIENT_CLOUD_CLIENTID=
-      - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
+#      - ZEEBE_CLIENT_CLOUD_REGION=
+#      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
+#      - ZEEBE_CLIENT_CLOUD_CLIENTID=
+#      - ZEEBE_CLIENT_CLOUD_CLIENTSECRET=
       - LOGGING_LEVEL_ROOT=INFO
+      - spring.profiles.active=postgres
       - spring.datasource.url=jdbc:postgresql://postgres/cherrydb
       - spring.datasource.username=camunda
       - spring.datasource.password=camundapassword
-      - spring.datasource.driver-class-name=org.postgresql.Driver
-      - spring.datasource.spring.jpa.database-platform=org.hibernate.dialect.PostgreSQL94Dialect
-      - spring.datasource.org.hibernate.dialect=org.hibernate.dialect.PostgreSQL94Dialect
+
+    networks:
+      - camunda-platform
     depends_on:
+      - zeebe
       - postgres
 
   postgres: # https://hub.docker.com/_/postgres
@@ -40,3 +41,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - camunda-platform
+
+networks:
+  camunda-platform:

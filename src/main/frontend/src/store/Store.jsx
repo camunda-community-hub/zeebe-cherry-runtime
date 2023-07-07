@@ -58,7 +58,6 @@ class Store extends React.Component {
                 <tr>
                   <th>Connector</th>
                   <th>Release</th>
-
                   <th>Status</th>
                   <th>Operation</th>
                 </tr>
@@ -80,8 +79,7 @@ class Store extends React.Component {
                     <td>
                       {(connectorStore.status === "NEW" || connectorStore.status === "OLD") &&
                         <Button className="btn btn-primary btn-sm"
-                                onClick={() => this.downloadConnector(connectorStore)}
-                                disabled="true">
+                                onClick={() => this.downloadConnector(connectorStore)}>
                           <ConeStriped style={{color: "red"}}/>
                           <CloudDownloadFill/> Download
                         </Button>

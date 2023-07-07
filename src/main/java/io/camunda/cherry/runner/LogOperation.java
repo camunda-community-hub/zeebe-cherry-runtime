@@ -34,7 +34,7 @@ public class LogOperation {
    * @param message   message
    */
   public void log(OperationEntity.Operation operation, String message) {
-    logger.info("Operation {} [{}]",operation.toString(),message);
+    logger.info("Operation {} [{}]", operation.toString(), message);
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.operation = operation;
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -108,7 +108,7 @@ public class LogOperation {
    * @param e       exception
    */
   public void logError(String message, Exception e) {
-    logger.error("Exception {} {}",  message, e.getMessage());
+    logger.error("Exception {} {}", message, e);
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.operation = OperationEntity.Operation.ERROR;
@@ -116,13 +116,14 @@ public class LogOperation {
     operationEntity.message = message + ": " + e.getMessage();
     saveOperationEntity(operationEntity);
   }
+
   /**
    * OperationLog an error
    *
    * @param message contextual message (what operation was performed)
    */
   public void logError(String message) {
-    logger.error("Error {} {}",  message);
+    logger.error("Error {}", message);
     OperationEntity operationEntity = new OperationEntity();
     operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     operationEntity.operation = OperationEntity.Operation.ERROR;
@@ -131,16 +132,15 @@ public class LogOperation {
     saveOperationEntity(operationEntity);
   }
 
-
   private String getServerIdentification() {
     return getHostName();
   }
 
   private String getHostName() {
     try {
-      InetAddress IP = InetAddress.getLocalHost();
+      InetAddress ipAddress = InetAddress.getLocalHost();
 
-      return IP.getHostName();
+      return ipAddress.getHostName();
     } catch (Exception e) {
       return "CherryHostName";
     }
@@ -150,7 +150,7 @@ public class LogOperation {
     try {
       operationRepository.save(operationEntity);
     } catch (Exception e) {
-      logger.error("Can't save OperationEntity " + operationEntity);
+      logger.error("Can't save OperationEntity [{}]", operationEntity);
     }
   }
 }

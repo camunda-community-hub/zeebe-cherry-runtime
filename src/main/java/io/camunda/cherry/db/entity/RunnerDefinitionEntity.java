@@ -20,13 +20,13 @@ public class RunnerDefinitionEntity {
   @Column(name = "name", length = 300)
   public String name;
 
-  @Column(name = "classname", length = 1000, unique = true)
+  @Column(name = "classname", length = 1000)
   public String classname;
 
   @Column(name = "collection", length = 300)
   public String collectionName;
 
-  @Column(name = "type", length = 1000)
+  @Column(name = "type", length = 1000, unique = true)
   public String type;
 
   @Column(name = "origin", length = 1000)

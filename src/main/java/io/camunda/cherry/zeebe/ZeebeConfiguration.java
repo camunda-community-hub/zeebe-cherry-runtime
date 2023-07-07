@@ -14,7 +14,6 @@ public class ZeebeConfiguration {
   @Nullable
   private String gateway;
 
-
   @Value("${zeebe.client.security.plaintext:true}")
   @Nullable
   private Boolean plaintext;
@@ -63,7 +62,6 @@ public class ZeebeConfiguration {
   public String getGatewayAddress() {
     return gateway;
   }
-
 
   @Nullable
   public String getGateway() {

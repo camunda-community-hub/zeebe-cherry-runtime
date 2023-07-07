@@ -11,14 +11,18 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
+import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.SdkRunnerConnector;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -26,21 +30,36 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class RunnerFactory {
 
-  @Autowired
-  RunnerEmbeddedFactory runnerEmbeddedFactory;
-  @Autowired
-  RunnerUploadFactory runnerUploadFactory;
-  @Autowired
-  StorageRunner storageRunner;
-
-  @Autowired
-  LogOperation logOperation;
+  private final RunnerEmbeddedFactory runnerEmbeddedFactory;
+  private final RunnerUploadFactory runnerUploadFactory;
+  private final StorageRunner storageRunner;
+  private final RunnerExecutionRepository runnerExecutionRepository;
+  private final LogOperation logOperation;
+  private final SessionFactory sessionFactory;
 
   Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
+
+  RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
+                RunnerUploadFactory runnerUploadFactory,
+                StorageRunner storageRunner,
+                RunnerExecutionRepository runnerExecutionRepository,
+                LogOperation logOperation,
+                SessionFactory sessionFactory) {
+    this.runnerEmbeddedFactory = runnerEmbeddedFactory;
+    this.runnerUploadFactory = runnerUploadFactory;
+    this.storageRunner = storageRunner;
+    this.runnerExecutionRepository = runnerExecutionRepository;
+    this.logOperation = logOperation;
+    this.sessionFactory = sessionFactory;
+  }
 
   public void init() {
     logger.info("----- RunnerFactory.1 Load all embedded runner");
@@ -54,6 +73,40 @@ public class RunnerFactory {
     // Upload the ClassLoaderPath, and load the class
     logger.info("----- RunnerFactory.3 Load JavaMachine from storage");
     runnerUploadFactory.loadJavaFromStorage();
+  }
+
+  /**
+   * Must be call after the initialisation
+   * all runners are loaded amd identified. The storageRunner are checked, and all runner in the database
+   * which are not loaded are purged.
+   */
+  public void synchronize() {
+    Map<String, RunnerLightDefinition> mapExistingRunners = Stream.concat(
+            runnerEmbeddedFactory.getAllRunners().stream(), runnerUploadFactory.getAllRunners().stream())
+        .collect(Collectors.toMap(RunnerLightDefinition::getType, Function.identity()));
+
+    // get the list of entities
+    List<RunnerDefinitionEntity> listRunnersEntity = storageRunner.getRunners(new StorageRunner.Filter());
+    // identify entity which does not exist
+    List<RunnerDefinitionEntity> listEntityToRemove = listRunnersEntity.stream()
+        .filter(t -> !mapExistingRunners.containsKey(t.type))
+        .toList();
+
+    for (RunnerDefinitionEntity entityToRemove : listEntityToRemove) {
+      logOperation.log(OperationEntity.Operation.REMOVE,
+          "Entity type[" + entityToRemove.type + "] name[" + entityToRemove.name + "]");
+
+      try (Session session = sessionFactory.openSession()) {
+        Transaction txn = session.beginTransaction();
+        runnerExecutionRepository.deleteFromEntityType(entityToRemove.type);
+
+        storageRunner.removeEntity(entityToRemove);
+        txn.commit();
+      } catch (Exception e) {
+        logOperation.logError("Can't delete [" + entityToRemove.type + "]", e);
+      }
+    }
+
   }
 
   /**
@@ -96,7 +149,7 @@ public class RunnerFactory {
     ClassLoader loader;
     try {
       // if this class is embedded?
-      AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByName(runnerDefinitionEntity.name);
+      AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByType(runnerDefinitionEntity.type);
       if (embeddedRunner != null) {
         return embeddedRunner;
       }
@@ -111,7 +164,7 @@ public class RunnerFactory {
         Object objectRunner = clazz.getDeclaredConstructor().newInstance();
 
         if (AbstractRunner.class.isAssignableFrom(objectRunner.getClass())) {
-        // if (objectRunner instanceof AbstractRunner runner) {
+          // if (objectRunner instanceof AbstractRunner runner) {
           return (AbstractRunner) objectRunner;
         } else if (objectRunner instanceof OutboundConnectorFunction outboundConnector) {
           SdkRunnerConnector runner = new SdkRunnerConnector(outboundConnector);
@@ -121,9 +174,9 @@ public class RunnerFactory {
           return runner;
         }
         logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
-        logOperation.logError("Class ["+runnerDefinitionEntity.classname+"] in jar["+jarFileName+"] not a Runner or OutboundConnectorFunction");
-      }
-      else {
+        logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + jarFileName
+            + "] not a Runner or OutboundConnectorFunction");
+      } else {
         logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
       }
       return null;
