@@ -12,12 +12,12 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.StorageDefinition;
 import io.camunda.filestorage.cmis.CmisParameters;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -192,7 +192,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
       String cmisComplementSt = getInputStringValue(INPUT_STORAGEDEFINITION_CMIS_COMPLEMENT, null, activatedJob);
 
       logger.error("Can't get the CMIS information- bad Gson value :" + cmisComplementSt);
-      throw new ZeebeBpmnError(BPMNERROR_INCORRECT_CMIS_PARAMETERS,
+      throw new ConnectorException(BPMNERROR_INCORRECT_CMIS_PARAMETERS,
           "Worker [" + getName() + "] Cmis information" + cmisComplementSt);
 
     }
@@ -211,7 +211,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
       }
       logger.error(
           getName() + ": folder[" + folderName + "] does not exist (current local folder is [" + currentPath + "])");
-      throw new ZeebeBpmnError(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
+      throw new ConnectorException(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
           "Worker [" + getName() + "] folder[" + folderName + "] does not exist");
     }
     List<File> listFilesFiltered;
@@ -246,7 +246,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
         fileVariable.setValue(content);
       } catch (Exception e) {
         logger.error(getName() + ": cannot read file[" + fileToProcess.getAbsolutePath() + "] : " + e);
-        throw new ZeebeBpmnError(BPMNERROR_LOAD_FILE_ERROR,
+        throw new ConnectorException(BPMNERROR_LOAD_FILE_ERROR,
             "Worker [" + getName() + "]  cannot read file[" + fileToProcess.getAbsolutePath() + "] : " + e);
       }
     }
@@ -281,7 +281,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
           logger.error(
               getName() + ": folder[" + archiveFolderName + "] does not exist (current local folder is [" + currentPath
                   + "])");
-          throw new ZeebeBpmnError(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
+          throw new ConnectorException(BPMNERROR_FOLDER_NOT_EXIST_ERROR,
               "Worker [" + getName() + "] folder[" + folder.getAbsolutePath() + "] does not exist");
 
         }
@@ -296,7 +296,7 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
           logger.error(
               getName() + ": cannot apply the policy[" + policy + "] from source[" + source + "] to [" + target + "] : "
                   + e);
-          throw new ZeebeBpmnError(BPMNERROR_MOVE_FILE_ERROR,
+          throw new ConnectorException(BPMNERROR_MOVE_FILE_ERROR,
               "Worker [" + getName() + "] cannot apply the policy[" + policy + "] from source[" + source + "] to ["
                   + target + "] : " + e);
         }

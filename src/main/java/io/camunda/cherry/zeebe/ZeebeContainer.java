@@ -64,7 +64,10 @@ public class ZeebeContainer {
 
     }
     try {
-      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
+      zeebeClient = zeebeClientBuilder
+          .numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
+          .defaultJobWorkerMaxJobsActive(zeebeConfiguration.getMaxJobsActive())
+      .build();
     } catch (Exception e) {
       logOperation.logError("Can't start ZeebeClient ", e);
       throw new TechnicalException("Can't start ZeebeClient", e);

@@ -1,5 +1,7 @@
-package io.camunda.cherry.definition;
+package io.camunda.cherry.definition.connector;
 
+import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 
 import java.util.Collections;
@@ -23,13 +25,13 @@ public class SdkRunnerConnector extends AbstractRunner {
   }
 
   /**
-   * The type is known after, in the annotation for example
+   * Get the type from the annotation
    *
-   * @param type type to set
    */
   @Override
-  public void setType(String type) {
-    super.setType(type);
+  public String getType() {
+    OutboundConnector connectorAnnotation = outboundConnectorFunction.getClass().getAnnotation(OutboundConnector.class);
+    return connectorAnnotation.type();
   }
 
   /**
@@ -39,16 +41,8 @@ public class SdkRunnerConnector extends AbstractRunner {
    */
   @Override
   public String getName() {
-    return name;
-  }
-
-  /**
-   * the name has to be provided after.
-   *
-   * @param name name to save
-   */
-  public void setName(String name) {
-    this.name = name;
+    OutboundConnector connectorAnnotation = outboundConnectorFunction.getClass().getAnnotation(OutboundConnector.class);
+    return connectorAnnotation.name();
   }
 
   public boolean isWorker() {
@@ -57,5 +51,9 @@ public class SdkRunnerConnector extends AbstractRunner {
 
   public boolean isConnector() {
     return true;
+  }
+
+  public String toString() {
+    return name;
   }
 }

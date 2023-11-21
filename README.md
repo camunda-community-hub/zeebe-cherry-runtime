@@ -112,6 +112,11 @@ Docker image is then available in the package
 # Build
 The project is configured to publish automatically to maven central the JAR file, and to docker package a Docker image
 
+If you want to build a local maven image, use
+
+````yaml
+mvn spring-boot:build-image
+````
 ## Maven Central repository
 
 See .github/workflows/mvn-release.yml

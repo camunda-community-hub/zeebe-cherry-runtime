@@ -84,9 +84,9 @@ class Content extends React.Component {
                   </td>
                   <td>
                     <Button className="btn btn-danger btn-sm"
-                            onClick={() => this.unloadContent(content)}
+                            onClick={() => this.deleteStorageEntityId(content.storageentityid)}
                             style={{marginRight: "10px"}}
-                            disabled={this.state.display.loading || true}
+                            disabled={this.state.display.loading }
                     >
                       <ConeStriped style={{color: "red"}}/>
                       Delete
@@ -137,6 +137,25 @@ class Content extends React.Component {
     let displayObject = this.state.display;
     displayObject[propertyName] = propertyValue;
     this.setState({display: displayObject});
+  }
+
+  deleteStorageEntityId( storageentityid) {
+    console.log("Content.deleteStorageEntityId"+storageentityid);
+    const userConfirmed = window.confirm("Are you sure you want to delete this Jar?");
+    if (userConfirmed) {
+      this.setState({labelBtnStop: "Deleting...", status: ""});
+      var restCallService = RestCallService.getInstance();
+      restCallService.putJson('cherry/api/content/delete?storageentityid=' + storageentityid, {}, this, this.operationDeleteCallback);
+    }
+  }
+
+  operationDeleteCallback(httpResponse) {
+    if (httpResponse.isError()) {
+      console.log("deleteStorageEntityId.operationDeleteCallback: error " + httpResponse.getError());
+      this.setState({status: httpResponse.getError()});
+    } else {
+    }
+    this.refreshListContent();
   }
 }
 

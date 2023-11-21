@@ -24,6 +24,7 @@ zeebe.client:
 server.port: 9081
 logging.level.root: INFO
 
+
 # return message with BAD_REQUEST to the client
 server.error.include-message: always
 

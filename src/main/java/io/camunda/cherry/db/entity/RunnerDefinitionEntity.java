@@ -13,6 +13,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+/* ******************************************************************** */
+/*                                                                      */
+/*  RunnerDefinition entity                                             */
+/*                                                                      */
+/*  The runner is the connector to run. A connector OR a Cherry runner  */
+/* ******************************************************************** */
+
 @Entity
 @Table(name = "ChRunnerdef")
 public class RunnerDefinitionEntity {
@@ -33,6 +40,9 @@ public class RunnerDefinitionEntity {
   @Enumerated(EnumType.STRING)
   public Origin origin;
 
+  /**
+   * If the Runner come from a JAR loaded (github, directory) then the source is referenced here
+   */
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "jarid")
   public JarStorageEntity jar;
@@ -46,6 +56,10 @@ public class RunnerDefinitionEntity {
   @Column(name = "activerunner")
   public boolean activeRunner;
 
+  @Column(name = "status", length = 50)
+  @Enumerated(EnumType.STRING)
+  public Status status;
+
   @Id
   @SequenceGenerator(name = "seqconnectors", sequenceName = "seqconnectors", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -53,5 +67,9 @@ public class RunnerDefinitionEntity {
 
   public enum Origin {
     EMBEDDED, JARFILE, STORE
+  }
+
+  public enum Status {
+    PRESENT, DELETED
   }
 }

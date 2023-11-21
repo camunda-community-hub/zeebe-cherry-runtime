@@ -132,7 +132,7 @@ public class LogOperation {
     saveOperationEntity(operationEntity);
   }
 
-  private String getServerIdentification() {
+  private String rootgetServerIdentification() {
     return getHostName();
   }
 

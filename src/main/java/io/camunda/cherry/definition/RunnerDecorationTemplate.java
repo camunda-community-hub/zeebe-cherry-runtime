@@ -8,7 +8,6 @@ package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.camunda.connector.impl.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,12 +97,18 @@ public class RunnerDecorationTemplate {
         ATTR_VALUE, runner.getType(), // Default value
         ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_DEFINITION_TYPE)));
     boolean pleaseAddOutputGroup = false;
+
+    // Do not ask multiple time the listInput
+    List<RunnerParameter> listInput = runner.getListInput();
+    List<RunnerParameter> listOutput = runner.getListOutput();
+
+    // AbstractConnector
     if (runner instanceof AbstractConnector) {
       pleaseAddOutputGroup = true;
 
       // there is here two options:
       // connector return and object or a list of output
-      if (runner.getListOutput().isEmpty()) {
+      if (listInput.isEmpty()) {
         // connector returns an object
         listProperties.add(Map.of( // list of properties
             ATTR_LABEL, "Result Variable Label", // Label
@@ -117,16 +122,17 @@ public class RunnerDecorationTemplate {
             ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ATTR_KEY_RESULT_VARIABLE)));
       }
     }
+
     // Identify all groups
     List<RunnerParameter.Group> listGroups = new ArrayList<>();
-    listGroups.addAll(runner.getListInput().stream().filter(w -> w.group != null).map(w -> w.group).toList());
+    listGroups.addAll(listInput.stream().filter(w -> w.group != null).map(w -> w.group).toList());
 
     // We group all result in a Group Input
-    if (!runner.getListInput().isEmpty())
+    if (!listInput.isEmpty())
       listGroups.add(new RunnerParameter.Group(GROUP_INPUT, GROUP_INPUT_LABEL));
 
     // We group all result in a Group Output
-    if (!runner.getListOutput().isEmpty() || pleaseAddOutputGroup)
+    if (!listOutput.isEmpty() || pleaseAddOutputGroup)
       listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
     if (listGroups != null) {
@@ -134,13 +140,13 @@ public class RunnerDecorationTemplate {
           listGroups.stream().distinct().map(w -> Map.of(ATTR_ID, w.id(), ATTR_LABEL, w.label())).toList());
     }
 
-    for (RunnerParameter runnerParameter : runner.getListInput()) {
+    for (RunnerParameter runnerParameter : listInput) {
       // do not generate a propertie for a accessAllVariables
       if (runnerParameter.isAccessAllVariables())
         continue;
       listProperties.addAll(getParameterProperties(runnerParameter, true, ""));
     }
-    for (RunnerParameter runnerParameter : runner.getListOutput()) {
+    for (RunnerParameter runnerParameter : listOutput) {
       // do not generate a property for accessAllVariables
       if (runnerParameter.isAccessAllVariables())
         continue;
@@ -166,7 +172,7 @@ public class RunnerDecorationTemplate {
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
       errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
       errorParameters.put(ATTR_BINDING,
-          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, Constants.ERROR_EXPRESSION_KEYWORD));
+          Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, "ERROR_EXPRESSION_KEYWORD"));
 
       listProperties.add(errorParameters);
     }

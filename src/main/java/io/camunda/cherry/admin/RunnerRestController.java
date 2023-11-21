@@ -284,7 +284,7 @@ public class RunnerRestController {
    */
   @PutMapping(value = "/api/runner/stop", produces = "application/json")
   public RunnerInformation stopWorker(@RequestParam(name = "runnertype") String runnerType) {
-    logger.info("Stop requested for runnerType[" + runnerType + "]");
+    logger.info("PUT[/api/runner/stop] Stop requested for runnerType[" + runnerType + "]");
     try {
       boolean isStopped = false;
       try {
@@ -312,7 +312,7 @@ public class RunnerRestController {
    */
   @PutMapping(value = "/api/runner/start", produces = "application/json")
   public RunnerInformation startWorker(@RequestParam(name = "runnertype") String runnerType) {
-    logger.info("Start requested for [" + runnerType + "]");
+    logger.info("PUT[/api/runner/start] Start requested for [" + runnerType + "]");
     try {
       boolean isStarted = false;
       try {
@@ -345,7 +345,7 @@ public class RunnerRestController {
                             @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
     logger.info(
-        "Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
+        "GET[/api/runner/template] Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
             + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
     if (runnerName == null) {
       // generate for ALL runners
@@ -382,7 +382,7 @@ public class RunnerRestController {
     if (separateTemplate == null && withFrameworkRunners == null)
       withFrameworkRunnersIncluded = true;
     logger.info(
-        "Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
+        "GET[/api/runner/templatefile] Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
             + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
     try {
 

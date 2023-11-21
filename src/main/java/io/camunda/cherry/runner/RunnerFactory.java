@@ -15,8 +15,10 @@ import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.definition.SdkRunnerConnector;
-import io.camunda.connector.api.annotation.OutboundConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerWorker;
+import io.camunda.cherry.exception.OperationException;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -26,9 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -67,12 +71,19 @@ public class RunnerFactory {
     runnerEmbeddedFactory.registerInternalRunner();
 
     // second, check all library connector
-    logger.info("----- RunnerFactory.2 Load all upload JAR");
-    runnerUploadFactory.loadStorageFromUploadPath();
+    logger.info("----- RunnerFactory.2 Load to storage all upload JAR");
+    List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.loadStorageFromUploadPath();
+    String logInfo = runnerLightDefinitions.stream()
+        .map(RunnerLightDefinition::getName)
+        .collect(Collectors.joining(","));
+    logger.info("Load StorageFromUploadPath [{}]", logInfo);
 
     // Upload the ClassLoaderPath, and load the class
     logger.info("----- RunnerFactory.3 Load JavaMachine from storage");
-    runnerUploadFactory.loadJavaFromStorage();
+    List<String> lisJars = runnerUploadFactory.loadJarFromStorage(true);
+    logInfo = lisJars.stream().collect(Collectors.joining(","));
+    logger.info("Load JarUploadPath [{}]", logInfo);
+
   }
 
   /**
@@ -121,9 +132,7 @@ public class RunnerFactory {
     List<RunnerDefinitionEntity> listDefinitionRunners = storageRunner.getRunners(filter);
 
     for (RunnerDefinitionEntity runnerDefinitionEntity : listDefinitionRunners) {
-      AbstractRunner runner = getRunnerFromEntity(runnerDefinitionEntity);
-      if (runner != null)
-        listRunners.add(runner);
+      listRunners.addAll(getRunnerFromEntity(runnerDefinitionEntity));
     }
     return listRunners;
   }
@@ -145,49 +154,89 @@ public class RunnerFactory {
    * @param runnerDefinitionEntity runnerEntity
    * @return the runner
    */
-  private AbstractRunner getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
+  private List<AbstractRunner> getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
     ClassLoader loader;
     try {
       // if this class is embedded?
       AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByType(runnerDefinitionEntity.type);
       if (embeddedRunner != null) {
-        return embeddedRunner;
+        return List.of(embeddedRunner);
       }
 
-      if (runnerDefinitionEntity.jar != null) {
-        String jarFileName =
-            runnerUploadFactory.getClassLoaderPath() + File.separator + runnerDefinitionEntity.jar.name;
-
-        loader = new URLClassLoader(new URL[] { new File(jarFileName).toURI().toURL() });
-
-        Class clazz = loader.loadClass(runnerDefinitionEntity.classname);
-        Object objectRunner = clazz.getDeclaredConstructor().newInstance();
-
-        if (AbstractRunner.class.isAssignableFrom(objectRunner.getClass())) {
-          // if (objectRunner instanceof AbstractRunner runner) {
-          return (AbstractRunner) objectRunner;
-        } else if (objectRunner instanceof OutboundConnectorFunction outboundConnector) {
-          SdkRunnerConnector runner = new SdkRunnerConnector(outboundConnector);
-          OutboundConnector connectorAnnotation = (OutboundConnector) clazz.getAnnotation(OutboundConnector.class);
-          runner.setType(connectorAnnotation.type());
-          runner.setName(connectorAnnotation.name());
-          return runner;
-        }
-        logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
-        logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + jarFileName
-            + "] not a Runner or OutboundConnectorFunction");
-      } else {
+      if (runnerDefinitionEntity.jar == null) {
         logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
+        return null;
       }
-      return null;
+      String jarFileName = runnerUploadFactory.getClassLoaderPath() + File.separator + runnerDefinitionEntity.jar.name;
+
+      loader = new URLClassLoader(new URL[] { new File(jarFileName).toURI().toURL() });
+
+      Class clazz = loader.loadClass(runnerDefinitionEntity.classname);
+      Object objectRunner = clazz.getDeclaredConstructor().newInstance();
+
+      List<AbstractRunner> listRunners = detectRunnersInObject(objectRunner);
+      if (!listRunners.isEmpty())
+        return listRunners;
+
+      /* we must have a runner detected in a entity */
+      logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
+      logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + jarFileName
+          + "] not a Runner or OutboundConnectorFunction");
+      return listRunners;
     } catch (Error er) {
       // ControllerPage getting the information
       logOperation.logError(runnerDefinitionEntity.name, "Instantiate the runner ", er);
-      return null;
+      return Collections.emptyList();
     } catch (Exception e) {
       // ControllerPage getting the informations
       logOperation.logException(runnerDefinitionEntity.name, "Instantiate the runner ", e);
-      return null;
+      return Collections.emptyList();
     }
+  }
+
+  /**
+   * Detect classical runner in an object
+   *
+   * @param candidateRunner object to search inside
+   * @return list of runners detected
+   */
+  public static List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
+
+    List<AbstractRunner> listDetectedRunners = new ArrayList<>();
+
+    if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
+      // if (objectRunner instanceof AbstractRunner runner) {
+      listDetectedRunners.add((AbstractRunner) candidateRunner);
+      return listDetectedRunners;
+    }
+    if (candidateRunner instanceof OutboundConnectorFunction outboundConnector) {
+
+      // we have two kind of SDK runner :
+      // the classical connector
+      // the Cherry Enrichment Connector
+      if (SdkRunnerCherryConnector.isRunnerCherryConnector(candidateRunner.getClass())) {
+        listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector));
+      } else {
+        listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
+      }
+      return listDetectedRunners;
+    }
+
+    for (Method method : candidateRunner.getClass().getMethods()) {
+      io.camunda.zeebe.spring.client.annotation.JobWorker annotation = method.getAnnotation(
+          io.camunda.zeebe.spring.client.annotation.JobWorker.class);
+      if (annotation != null)
+        listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
+    }
+
+    return listDetectedRunners;
+  }
+
+
+
+  public boolean deleteJarFile(Long jarEntity) throws OperationException {
+
+    return true;
+
   }
 }

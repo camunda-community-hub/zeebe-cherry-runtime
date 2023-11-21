@@ -63,24 +63,22 @@ public class StorageRunner {
   /* ******************************************************************** */
 
   /**
-   * Save the connector to the storage The JAR file may contain multiple runner.
-   *
-   * @param jarFile jarfile to save
-   * @throws IOException error during saving
+   * Update (or save) a JarRunner
+   * @param jarStorageEntity existing jarRunner or null for a creation
+   * @param jarFile file to save
+   * @return the jarStorageEntity
+   * @throws TechnicalException for any error
    */
-  public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
-    String connectorName = jarFile.getName();
-    logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
+  public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, File jarFile) throws TechnicalException {
 
-    JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
-    if (jarStorageEntity != null)
-      return jarStorageEntity;
+
     try (FileInputStream fis = new FileInputStream(jarFile);
         Session session = sessionFactory.openSession();
         Connection con = dataSource.getConnection()) {
 
-      jarStorageEntity = new JarStorageEntity();
-      jarStorageEntity.name = connectorName;
+      if (jarStorageEntity==null)
+        jarStorageEntity = new JarStorageEntity();
+      jarStorageEntity.name = jarFile.getName();
       jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
       jarStorageEntity.loadLog = "Loaded correctly from file [" + jarFile.getPath() + "]";
 
@@ -93,13 +91,29 @@ public class StorageRunner {
       // Save it
       // session.persist(jarStorageEntity);
       jarDefinitionRepository.save(jarStorageEntity);
+      return jarStorageEntity;
     } catch (Exception e) {
       logOperation.log(OperationEntity.Operation.ERROR,
           "Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
       throw new TechnicalException(e);
     }
+  }
 
-    return jarStorageEntity;
+    /**
+     * Save the connector to the storage The JAR file may contain multiple runner.
+     *
+     * @param jarFile jarfile to save
+     * @throws IOException error during saving
+     */
+  public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
+    String connectorName = jarFile.getName();
+    logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
+
+    JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
+    if (jarStorageEntity != null)
+      return jarStorageEntity;
+
+    return updateJarRunner(jarStorageEntity, jarFile);
   }
 
   /**

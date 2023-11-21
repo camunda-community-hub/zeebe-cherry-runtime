@@ -1,25 +1,30 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  CherryJobWorkerFactory                                                 */
+/*  JobRunnerFactory                                                 */
 /*                                                                      */
 /*  Detect and start workers                                            */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.CherryConnectorJobHandler;
-import io.camunda.cherry.definition.SdkRunnerConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.exception.OperationAlreadyStartedException;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runner.handler.ConnectorJobHandler;
+import io.camunda.cherry.runner.handler.WorkerJobHandler;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.cherry.zeebe.ZeebeConfiguration;
 import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.zeebe.client.api.worker.JobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
 import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
@@ -31,6 +36,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
@@ -64,13 +70,17 @@ public class JobRunnerFactory {
 
   @Autowired
   SecretProvider secretProvider;
+
+  @Autowired ValidationProvider validationProvider;
+
+  private static final ObjectMapper objectMapper = new ObjectMapper();
+
   /**
    * Key is runnerType
    */
   Map<String, Running> mapRunning = new HashMap<>();
 
   public void startAll() {
-    logOperation.log(OperationEntity.Operation.STARTRUNTIME, "");
 
     // read the configuration
     zeebeConfiguration.init();
@@ -79,6 +89,7 @@ public class JobRunnerFactory {
     try {
       zeebeContainer.startZeebeeClient();
     } catch (TechnicalException e) {
+      logOperation.log(OperationEntity.Operation.ERROR, "Can't start zeebe Client "+e.getMessage());
       logger.error("ZeebeClient is not started, can't start runner");
       return;
     }
@@ -93,15 +104,34 @@ public class JobRunnerFactory {
     // get the list from the storage
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
 
+    List<AbstractRunner> listAbstractRunners = listRunners.stream()
+        .filter(t -> t instanceof AbstractRunner)
+        .collect(Collectors.toList());
+    List<AbstractRunner> listSdkRunners = listRunners.stream()
+        .filter(t -> t instanceof SdkRunnerConnector)
+        .collect(Collectors.toList());
+    List<AbstractRunner> listSdkCherryRunners = listRunners.stream()
+        .filter(t -> t instanceof SdkRunnerCherryConnector)
+        .collect(Collectors.toList());
+    List<AbstractRunner> listOtherRunners = listRunners.stream()
+        .filter(element -> !listAbstractRunners.contains(element))
+        .filter(element -> !listSdkRunners.contains(element))
+        .filter(element -> !listSdkCherryRunners.contains(element))
+        .collect(Collectors.toList());
+
+    logger.info("ListRunners to start SdkRunner[{}] SdkCherryRunner[{}] AbstractRunner[{}] Otjer[{}]",
+        logListRunners(listSdkRunners),
+        logListRunners(listSdkCherryRunners),
+        logListRunners(listAbstractRunners),
+            logListRunners(listOtherRunners));
+
+
     for (AbstractRunner runner : listRunners) {
 
       try {
         JobWorker jobWorker = createJobWorker(runner);
         if (jobWorker != null) {
-          logger.info("CherryJobRunnerFactory: start [" + runner.getType() + (runner.getName() != null ?
-              " (" + runner.getName() + ")" :
-              "") + "]");
-          logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
+          logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "Started[" + runner.getType()+"]");
 
           mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
         }
@@ -247,26 +277,35 @@ public class JobRunnerFactory {
   private JobWorker createJobWorker(AbstractRunner runner) throws OperationException {
 
     JobHandler jobHandler;
+
+
+
     if (runner instanceof AbstractWorker abstractWorker)
       jobHandler = abstractWorker;
     else if (runner instanceof AbstractConnector abstractConnector)
-      jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory, secretProvider);
+      jobHandler = new ConnectorJobHandler(abstractConnector, historyFactory, secretProvider, validationProvider, objectMapper);
     else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
-      jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider);
-    } else
+      jobHandler = new ConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider, validationProvider, objectMapper);
+    } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
+      jobHandler = new WorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
+    } else {
       throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
-
-    JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild3 = zeebeContainer.getZeebeClient()
-        .newWorker()
-        .jobType(runner.getType())
-        .handler(jobHandler)
-        .name(runner.getName() == null ? runner.getType() : runner.getName());
-
-    List<String> listVariablesInput = runner.getListFetchVariables();
-    if (listVariablesInput != null) {
-      jobWorkerBuild3.fetchVariables(listVariablesInput);
     }
-    return jobWorkerBuild3.open();
+      JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild3 = zeebeContainer.getZeebeClient()
+          .newWorker()
+          .jobType(runner.getType())
+          .handler(jobHandler)
+          .name(runner.getName() == null ? runner.getType() : runner.getName());
+
+    // jobWorkerBuild3.maxJobsActive()
+
+
+      List<String> listVariablesInput = runner.getListFetchVariables();
+      if (listVariablesInput != null) {
+        jobWorkerBuild3.fetchVariables(listVariablesInput);
+      }
+      return jobWorkerBuild3.open();
+
   }
 
   /**
@@ -291,4 +330,10 @@ public class JobRunnerFactory {
   record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
   }
 
+  private String logListRunners(List<AbstractRunner> listRunners ) {
+  return listRunners.stream().map(t -> {
+      return t.getName() + "(" + t.getType() + ")";})
+      .collect(Collectors.joining(";"));
+
+    }
 }

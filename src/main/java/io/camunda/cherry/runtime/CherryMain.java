@@ -8,6 +8,7 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
+import io.camunda.filestorage.FileVariableReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +31,11 @@ public class CherryMain {
   @PostConstruct
   public void init() {
     // first, check all internal runner
-    logger.info("----- CherryMain.1 Load all embedded runner");
+    logger.info("----- CherryMain.1 Load all embedded runners");
+
     runnerFactory.init();
 
-    logger.info("----- CherryMain.2 purge non existing anymore runner");
+    logger.info("----- CherryMain.2 purge non existing anymore runners");
     runnerFactory.synchronize();
 
     // at this point, the table is up-to-date, class loader is correct : let's start all runners

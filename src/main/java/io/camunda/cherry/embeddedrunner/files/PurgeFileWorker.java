@@ -10,12 +10,12 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.filestorage.FileRepoFactory;
 import io.camunda.filestorage.FileVariableReference;
 import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -83,7 +83,7 @@ public class PurgeFileWorker extends AbstractWorker implements IntFrameworkRunne
     } catch (Exception e) {
       logError("Can't purge file " + e);
       setOutputValue(OUTPUT_FILE_IS_PURGED, false, contextExecution);
-      throw new ZeebeBpmnError(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION,
+      throw new ConnectorException(StorageDefinition.ERROR_INCORRECT_STORAGEDEFINITION,
           "Worker [" + getName() + "] File[" + fileVariable.content + "] can't purge");
     }
 

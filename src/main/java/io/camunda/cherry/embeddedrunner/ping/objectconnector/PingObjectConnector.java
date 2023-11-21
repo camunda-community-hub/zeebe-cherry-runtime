@@ -27,6 +27,7 @@ import java.util.Random;
     "throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
 public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
 
+
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
 
   private final Random random = new Random();
