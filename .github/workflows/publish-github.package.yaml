@@ -41,7 +41,7 @@ jobs:
         run:  CI=false mvn --batch-mode --update-snapshots package
 
       - name: OperationLog in to the Container registry
-        uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b
+        uses: docker/login-action@3d58c274f17dffee475a5520cbe67f0a882c4dbb
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
