@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -34,10 +33,10 @@ public class RunnerEmbeddedFactory {
 
   /* Thanks to SpringBoot to detects all the AbstractWorker */ List<AbstractWorker> listAbstractWorker;
 
-  /* A ZeebeConnector can be a simple Connector, with the @JobWorker annotations */
+  /* A ZeebeConnector can be a simple Connector, with the @JobWorker annotations */ List<AbstractRunner> listClassicalRunnersFromComponent;
+
   @Autowired
   private ApplicationContext applicationContext;
-
 
   StorageRunner storageRunner;
   LogOperation logOperation;
@@ -53,7 +52,9 @@ public class RunnerEmbeddedFactory {
   }
 
   public void registerInternalRunner() {
-    List<AbstractRunner> listClassicalRunnersFromComponent = detectRunnerInComponents();
+
+    /// run the detection in all components
+    listClassicalRunnersFromComponent = detectRunnerInComponents();
 
     List<AbstractRunner> listRunners = new ArrayList<>();
     listRunners.addAll(listAbstractConnector);
@@ -63,9 +64,8 @@ public class RunnerEmbeddedFactory {
     for (AbstractRunner runner : listRunners) {
       List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
       if (!listOfErrors.isEmpty()) {
-        logger.error("RunnerEmbeddedFactory: CAN'T LOAD [" + runner.getType() + (runner.getName() != null ?
-            " (" + runner.getName() + ")" :
-            "") + "] can't start, errors " + String.join(", ", listOfErrors));
+        logger.error("RunnerEmbeddedFactory: CAN'T LOAD runner name[{}] type[{}]: errors:{}", runner.getName(),
+            runner.getType(), String.join(", ", listOfErrors));
         continue;
       }
       try {
@@ -80,7 +80,7 @@ public class RunnerEmbeddedFactory {
   }
 
   public List<RunnerLightDefinition> getAllRunners() {
-    return Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream()).map(t -> {
+    return concatAllRunners().map(t -> {
       RunnerLightDefinition light = new RunnerLightDefinition();
       light.name = t.getName();
       light.type = t.getType();
@@ -96,10 +96,13 @@ public class RunnerEmbeddedFactory {
    * @return null if not exist, else the runner
    */
   public AbstractRunner getByName(String name) {
-    List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
-        .filter(t -> t.getName().equals(name))
-        .toList();
+    List<AbstractRunner> listRunners = concatAllRunners().filter(t -> t.getName().equals(name)).toList();
     return listRunners.isEmpty() ? null : listRunners.get(0);
+  }
+
+  private Stream<AbstractRunner> concatAllRunners() {
+    return Stream.concat(Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream()),
+        listClassicalRunnersFromComponent.stream());
   }
 
   /**
@@ -109,34 +112,39 @@ public class RunnerEmbeddedFactory {
    * @return null if not exist, else the runner
    */
   public AbstractRunner getByType(String type) {
-    List<AbstractRunner> listRunners = Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream())
+    List<AbstractRunner> listRunners = concatAllRunners()
         .filter(t -> t.getType().equals(type))
         .toList();
     return listRunners.isEmpty() ? null : listRunners.get(0);
   }
 
+  /**
+   * DetectRunnerInComponents
+   * Check all Bean and Components and search for Workers
+   *
+   * @return list of detected runners
+   */
   private List<AbstractRunner> detectRunnerInComponents() {
     logger.info("Start detection runner in all Components");
     long begTime = System.currentTimeMillis();
-    List<AbstractRunner> listClassicalRunnersFromComponent = new ArrayList<>();
+    List<AbstractRunner> listDetectedRunners = new ArrayList<>();
 
     Map<String, Object> beansOfType = applicationContext.getBeansOfType(Object.class);
 
-
     for (Map.Entry bean : beansOfType.entrySet()) {
       // Theses are already detected before, we skip them
-      if (bean.getValue() instanceof AbstractRunner ||
-          bean.getValue() instanceof AbstractConnector)
+      if (bean.getValue() instanceof AbstractRunner || bean.getValue() instanceof AbstractConnector)
         continue;
 
-      listClassicalRunnersFromComponent.addAll(RunnerFactory.detectRunnersInObject(bean.getValue()));
+      listDetectedRunners.addAll(RunnerFactory.detectRunnersInObject(bean.getValue()));
     }
     long endTime = System.currentTimeMillis();
-    logger.info("End detection runner in all Components find {} runners n {} ms ({} objects checked",
-        listClassicalRunnersFromComponent.size(),
-        endTime-begTime,
-        beansOfType.size());
-    return listClassicalRunnersFromComponent;
+    logger.info("End detection runner in all Components find {} runners in {} ms ({} objects checked",
+        listDetectedRunners.size(), endTime - begTime, beansOfType.size());
+    for (AbstractRunner runner : listDetectedRunners) {
+      logger.info("  Runner detected name[{}] type[{}]", runner.getName(), runner.getType());
+    }
+    return listDetectedRunners;
   }
 
 }

@@ -70,8 +70,6 @@ public class StorageRunner {
    * @throws TechnicalException for any error
    */
   public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, File jarFile) throws TechnicalException {
-
-
     try (FileInputStream fis = new FileInputStream(jarFile);
         Session session = sessionFactory.openSession();
         Connection con = dataSource.getConnection()) {
@@ -94,7 +92,7 @@ public class StorageRunner {
       return jarStorageEntity;
     } catch (Exception e) {
       logOperation.log(OperationEntity.Operation.ERROR,
-          "Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
+          "StorageRunner.StorageRunner: Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
       throw new TechnicalException(e);
     }
   }
@@ -181,6 +179,8 @@ public class StorageRunner {
     runnerDefinition.jar = jarDefinition;
     // start it by default
     runnerDefinition.activeRunner = true;
+    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+
     return runnerDefinitionRepository.save(runnerDefinition);
   }
 
@@ -205,6 +205,8 @@ public class StorageRunner {
 
     // start it by default
     runnerDefinition.activeRunner = true;
+    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+
     return runnerDefinitionRepository.save(runnerDefinition);
   }
 
@@ -265,7 +267,7 @@ public class StorageRunner {
     runnerDefinition.type = runner.getType();
     runnerDefinition.collectionName = runner.getCollectionName();
     runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
-
+    logger.info("StorageRunner.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
     return runnerDefinitionRepository.save(runnerDefinition);
   }
 
@@ -321,11 +323,12 @@ public class StorageRunner {
   /**
    * Remove an entity - does not remove the history of execution
    *
-   * @param entity entity to remove
+   * @param runnerDefinition entity to remove
    */
 
-  public void removeEntity(RunnerDefinitionEntity entity) {
-    runnerDefinitionRepository.delete(entity);
+  public void removeEntity(RunnerDefinitionEntity runnerDefinition) {
+    logger.info("StorageRunner.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+    runnerDefinitionRepository.delete(runnerDefinition);
   }
 
   /* ******************************************************************** */

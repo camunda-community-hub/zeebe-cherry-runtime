@@ -87,7 +87,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
       Object listInputParameters = callMethod(objectInput, "getInputParameters", List.class);
       if (listInputParameters instanceof List listInputs)
         return transformList(listInputs, "ConnectorName[" + this.getName() + "]");
-      else if (listInputParameters !=null)
+      else if (listInputParameters != null)
         logger.error("Error during getListInput(): on ConnectorName[{}] expect List get {}", this.getName(),
             listInputParameters.getClass().getName());
       return Collections.emptyList();
@@ -97,7 +97,6 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
       return Collections.emptyList();
     }
   }
-
 
   @Override
   public List<RunnerParameter> getListOutput() {
@@ -113,7 +112,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
       Object listOutputParameter = callMethod(objectInput, "getOutputParameters", List.class);
       if (listOutputParameter instanceof List listInputs)
         return transformList(listInputs, "ConnectorName[" + this.getName() + "]");
-      else if (listOutputParameter !=null)
+      else if (listOutputParameter != null)
         logger.error("Error during getListInput(): on ConnectorName[{}] expect List get {}", this.getName(),
             listOutputParameter.getClass().getName());
       return Collections.emptyList();
@@ -123,7 +122,6 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
       return Collections.emptyList();
     }
   }
-
 
   public Class getInputParameterClass() {
     Object value = callMethod(outboundConnectorFunction, "getInputParameterClass", Class.class);
@@ -193,14 +191,12 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
             }
           }
           parameter.visibleInTemplate = (boolean) inputMap.get("visibleInTemplate");
-listRunnersParameters.add(parameter);
+          listRunnersParameters.add(parameter);
           // public RunnerParameter.Group group;
-
-        } else
-          logger.error("Error during transformList {} : List Of Map expected, get {}",
-              input == null ? "null" : input.getClass().getName());
-      }
-
+        } // end workerParameterChoiceList != null
+      } else // input is not a Map
+        logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,
+            input == null ? "null" : input.getClass().getName());
     }
     return listRunnersParameters;
   }

@@ -18,8 +18,8 @@ import io.camunda.cherry.exception.OperationAlreadyStartedException;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
-import io.camunda.cherry.runner.handler.ConnectorJobHandler;
-import io.camunda.cherry.runner.handler.WorkerJobHandler;
+import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
+import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.cherry.zeebe.ZeebeConfiguration;
@@ -104,26 +104,30 @@ public class JobRunnerFactory {
     // get the list from the storage
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
 
-    List<AbstractRunner> listAbstractRunners = listRunners.stream()
-        .filter(t -> t instanceof AbstractRunner)
-        .collect(Collectors.toList());
-    List<AbstractRunner> listSdkRunners = listRunners.stream()
+     List<AbstractRunner> listSdkRunners = listRunners.stream()
         .filter(t -> t instanceof SdkRunnerConnector)
         .collect(Collectors.toList());
     List<AbstractRunner> listSdkCherryRunners = listRunners.stream()
         .filter(t -> t instanceof SdkRunnerCherryConnector)
         .collect(Collectors.toList());
     List<AbstractRunner> listOtherRunners = listRunners.stream()
-        .filter(element -> !listAbstractRunners.contains(element))
         .filter(element -> !listSdkRunners.contains(element))
         .filter(element -> !listSdkCherryRunners.contains(element))
         .collect(Collectors.toList());
 
-    logger.info("ListRunners to start SdkRunner[{}] SdkCherryRunner[{}] AbstractRunner[{}] Otjer[{}]",
-        logListRunners(listSdkRunners),
-        logListRunners(listSdkCherryRunners),
-        logListRunners(listAbstractRunners),
-            logListRunners(listOtherRunners));
+    logger.info("--- SdkRunner to start (active runner only)");
+    for (AbstractRunner runner : listSdkRunners) {
+      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+    }
+    logger.info("--- SdkCherryRunner to start");
+    for (AbstractRunner runner : listSdkCherryRunners) {
+      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+    }
+    logger.info("--- OtherRunners to start");
+    for (AbstractRunner runner : listOtherRunners) {
+      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+    }
+    logger.info("---");
 
 
     for (AbstractRunner runner : listRunners) {
@@ -282,12 +286,13 @@ public class JobRunnerFactory {
 
     if (runner instanceof AbstractWorker abstractWorker)
       jobHandler = abstractWorker;
-    else if (runner instanceof AbstractConnector abstractConnector)
-      jobHandler = new ConnectorJobHandler(abstractConnector, historyFactory, secretProvider, validationProvider, objectMapper);
-    else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
-      jobHandler = new ConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider, validationProvider, objectMapper);
+    else if (runner instanceof AbstractConnector abstractConnector) {
+      jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory, secretProvider, validationProvider,
+          objectMapper);
+    } else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
+      jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider, validationProvider, objectMapper);
     } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
-      jobHandler = new WorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
+      jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
     } else {
       throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
     }
@@ -301,7 +306,7 @@ public class JobRunnerFactory {
 
 
       List<String> listVariablesInput = runner.getListFetchVariables();
-      if (listVariablesInput != null) {
+      if (listVariablesInput != null && ! listVariablesInput.isEmpty()) {
         jobWorkerBuild3.fetchVariables(listVariablesInput);
       }
       return jobWorkerBuild3.open();

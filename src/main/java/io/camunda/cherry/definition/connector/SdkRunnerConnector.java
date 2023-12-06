@@ -9,14 +9,14 @@ import java.util.Collections;
 public class SdkRunnerConnector extends AbstractRunner {
 
   private final OutboundConnectorFunction outboundConnectorFunction;
-  private String name;
 
   public SdkRunnerConnector(OutboundConnectorFunction outboundConnectorFunction) {
 
-    super("", // String type,
+    super( "", // String type,
         Collections.emptyList(), //  listInput,
         Collections.emptyList(), //  listOutput,
         Collections.emptyList()); // listBpmnErrors);
+    this.setType( getType());
     this.outboundConnectorFunction = outboundConnectorFunction;
   }
 
@@ -33,6 +33,7 @@ public class SdkRunnerConnector extends AbstractRunner {
     OutboundConnector connectorAnnotation = outboundConnectorFunction.getClass().getAnnotation(OutboundConnector.class);
     return connectorAnnotation.type();
   }
+
 
   /**
    * Return the name
@@ -53,7 +54,10 @@ public class SdkRunnerConnector extends AbstractRunner {
     return true;
   }
 
+  private String nameInCache;
   public String toString() {
-    return name;
+    if (nameInCache==null)
+      nameInCache=getName();
+    return nameInCache;
   }
 }

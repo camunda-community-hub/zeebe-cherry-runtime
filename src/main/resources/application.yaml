@@ -9,6 +9,15 @@ zeebe.client:
   broker.gateway-address: 127.0.0.1:26500
   # zeebe.client.broker.gateway-address=host.docker.internal:26500
   security.plaintext: true
+# https://github.com/camunda-community-hub/spring-zeebe#configuring-camunda-platform-8-saas-connection
+# https://github.com/camunda-community-hub/spring-zeebe#additional-configuration-options
+
+zeebeSaaS.client:
+  cloud:
+    region: bru-2
+    clusterId: 4b421869-b847-44af-95b5-f9bb544276e2
+    clientId: GYvGP9nfxE0lGdsY~Alvi622gRctUEt_
+    clientSecret: RthPQzPvuJEeTRwI4oTu.Gvo0rKMtSgFkmCQf-8BdcO-9fGKcLixIzittroaIcT1
 
   # use a cloud Zeebe engine
   # zeebe.client.cloud.region=bru-2

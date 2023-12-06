@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * Implementation of {@link OutboundConnectorContext} passed on to
  * a {@link io.camunda.connector.api.outbound.OutboundConnectorFunction} when called from the {@link
- * ConnectorJobHandler}.
+ * CherryConnectorJobHandler}.
  */
 public class JobHandlerContext implements OutboundConnectorContext {
 

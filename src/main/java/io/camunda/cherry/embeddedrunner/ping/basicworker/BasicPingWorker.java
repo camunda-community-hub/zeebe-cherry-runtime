@@ -34,15 +34,26 @@ public class BasicPingWorker implements IntFrameworkRunner {
 
   private final Random random = new Random();
 
-  @JobWorker(type = "c-basicpingworker-plus", name = "basicpingconnector-2")
+  /**
+   * Add a second worker in the same class. The runtime should detect it too.
+   * @param client client to run
+   * @param job job to run
+   */
+  @JobWorker(type = "c-basicpingworker2", name = "basicpingworker2")
   public void handleBasicWorker2(final JobClient client, final ActivatedJob job) {
-    logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> start [" + job.getKey() + "]");
+    logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> BasicPingWorker2 start [" + job.getKey() + "]");
     Map<String, Object> variablesAsMap = job.getVariablesAsMap();
+    HashMap<String, Object> variables = new HashMap<>();
+    variables.put("temperature", "3C");
+    variables.put("humidity", "75%");
+    client.newCompleteCommand(job).variables(variables).send().join();
 
   }
-    @JobWorker(type = TYPE_BASICPINGWORKER)
+
+
+  @JobWorker(type = TYPE_BASICPINGWORKER, name="basicpingworker")
   public void handleBasicWorker(final JobClient client, final ActivatedJob job) {
-    logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> start [" + job.getKey() + "]");
+    logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> BasicPingWorker start [" + job.getKey() + "]");
     Map<String, Object> variablesAsMap = job.getVariablesAsMap();
     String message = (String) variablesAsMap.getOrDefault(INPUT_MESSAGE, new String());
     Long delay = (Long) variablesAsMap.getOrDefault(INPUT_DELAY, Long.valueOf(0));

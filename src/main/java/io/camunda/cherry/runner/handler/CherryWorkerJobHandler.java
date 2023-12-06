@@ -27,15 +27,15 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
-public class WorkerJobHandler implements JobHandler {
+public class CherryWorkerJobHandler implements JobHandler {
 
   SdkRunnerWorker sdkRunnerWorker ;
   HistoryFactory historyFactory;
-  Logger logger = LoggerFactory.getLogger(WorkerJobHandler.class.getName());
+  Logger logger = LoggerFactory.getLogger(CherryWorkerJobHandler.class.getName());
 
-  public WorkerJobHandler(SdkRunnerWorker sdkRunnerWorker,
-                          HistoryFactory historyFactory,
-                          SecretProvider secretProvider) {
+  public CherryWorkerJobHandler(SdkRunnerWorker sdkRunnerWorker,
+                                HistoryFactory historyFactory,
+                                SecretProvider secretProvider) {
     this.sdkRunnerWorker = sdkRunnerWorker;
     this.historyFactory = historyFactory;
   }
@@ -43,7 +43,7 @@ public class WorkerJobHandler implements JobHandler {
   @Override
   public void handle(JobClient client, ActivatedJob job) {
     Instant executionInstant = Instant.now();
-    logger.info("WorkerJobHandler: Handle JobId[{}] of [{}]", job.getKey(), sdkRunnerWorker.getType());
+    logger.info("WorkerJobHandler: Handle JobId[{}] TenantId[{}] type[{}]", job.getKey(), job.getTenantId(), sdkRunnerWorker.getType());
     long beginExecution = System.currentTimeMillis();
 
     ConnectorException connectorException = null;

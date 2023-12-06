@@ -2,7 +2,6 @@ package io.camunda.cherry.embeddedrunner.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorInput;
 import io.camunda.cherry.definition.RunnerParameter;
-import io.camunda.cherry.embeddedrunner.ping.PingConstant;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.Arrays;

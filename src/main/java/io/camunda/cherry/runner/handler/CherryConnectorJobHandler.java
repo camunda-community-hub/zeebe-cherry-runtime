@@ -23,7 +23,9 @@ import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.api.validation.ValidationProvider;
+import io.camunda.connector.runtime.core.outbound.ConnectorJobHandler;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.client.api.worker.JobHandler;
@@ -37,22 +39,21 @@ import java.util.Map;
 /**
  * This job handler intercept the execution to the result
  */
-public class ConnectorJobHandler implements JobHandler {
+public class CherryConnectorJobHandler implements JobHandler {
   private final AbstractConnector abstractConnector;
   private final SdkRunnerConnector sdkRunnerConnector;
-  public Map<Long, StatusContainer> statusPerJob = new HashMap<>();
-  Logger logger = LoggerFactory.getLogger(ConnectorJobHandler.class.getName());
+  Logger logger = LoggerFactory.getLogger(CherryConnectorJobHandler.class.getName());
   HistoryFactory historyFactory;
 
   final SecretProvider secretProvider;
   final ValidationProvider validationProvider;
   final ObjectMapper objectMapper;
 
-  public ConnectorJobHandler(AbstractConnector abstractConnector,
-                             HistoryFactory historyFactory,
-                             SecretProvider secretProvider,
-                             ValidationProvider validationProvider,
-                             ObjectMapper objectMapper) {
+  public CherryConnectorJobHandler(AbstractConnector abstractConnector,
+                                   HistoryFactory historyFactory,
+                                   SecretProvider secretProvider,
+                                   ValidationProvider validationProvider,
+                                   ObjectMapper objectMapper) {
     this.abstractConnector = abstractConnector;
     this.sdkRunnerConnector = null;
     this.historyFactory = historyFactory;
@@ -61,11 +62,11 @@ public class ConnectorJobHandler implements JobHandler {
     this.objectMapper = objectMapper;
   }
 
-  public ConnectorJobHandler(SdkRunnerConnector sdkRunnerConnector,
-                             HistoryFactory historyFactory,
-                             SecretProvider secretProvider,
-                             ValidationProvider validationProvider,
-                             ObjectMapper objectMapper) {
+  public CherryConnectorJobHandler(SdkRunnerConnector sdkRunnerConnector,
+                                   HistoryFactory historyFactory,
+                                   SecretProvider secretProvider,
+                                   ValidationProvider validationProvider,
+                                   ObjectMapper objectMapper) {
     this.sdkRunnerConnector = sdkRunnerConnector;
     this.abstractConnector = null;
     this.historyFactory = historyFactory;
@@ -78,16 +79,34 @@ public class ConnectorJobHandler implements JobHandler {
   @Override
   public void handle(JobClient client, ActivatedJob job) {
     Instant executionInstant = Instant.now();
-    logger.info("ConnectorJobHancler: Handle JobId[{}] of [{}]", job.getKey(), sdkRunnerConnector.getType());
+    // abstractConnector or sdkRunnerConnector is not null
+    String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
+    logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]",
+        job.getKey(),
+        job.getTenantId(),
+        type);
     long beginExecution = System.currentTimeMillis();
     StatusContainer status;
     ConnectorException connectorException = null;
+
     try {
       JobHandlerContext context = new JobHandlerContext(job, secretProvider, validationProvider, objectMapper);
       // Execute the connector now
-      sdkRunnerConnector.getTransportedConnector().execute(context);
+      OutboundConnectorFunction connectorFunction=null;
+      if (abstractConnector!=null)
+        connectorFunction =  abstractConnector;
+      else if (sdkRunnerConnector!=null) {
+        connectorFunction= sdkRunnerConnector.getTransportedConnector();
+      } else
+        throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
-      status = statusPerJob.getOrDefault(job.getKey(), new StatusContainer(AbstractRunner.ExecutionStatusEnum.SUCCESS));
+
+
+      SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction, secretProvider, validationProvider, objectMapper);
+      connectorJobHandler.handle(client, job);
+      status = new StatusContainer( connectorJobHandler.getExecutionStatus());
+      status.exception = connectorJobHandler.getLogException();
+
     } catch (ConnectorException ce) {
       status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.BPMNERROR, ce);
       connectorException = ce;
@@ -98,10 +117,6 @@ public class ConnectorJobHandler implements JobHandler {
 
     logger.info("Connector[" + (abstractConnector != null ? abstractConnector.getName() : sdkRunnerConnector.getName())
         + "] executed in " + (endExecution - beginExecution) + " ms");
-    synchronized (statusPerJob) {
-      statusPerJob.remove(job.getKey());
-    }
-    String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
     String errorCode = null;
     String errorMessage = null;
     if (status.bpmnError != null) {
@@ -119,6 +134,7 @@ public class ConnectorJobHandler implements JobHandler {
         errorCode, errorMessage, // error
         endExecution - beginExecution);
   }
+
 
   private class StatusContainer {
     AbstractRunner.ExecutionStatusEnum status;

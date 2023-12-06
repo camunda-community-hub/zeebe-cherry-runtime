@@ -8,6 +8,9 @@
 /*                                                                      */
 /* This is the main entrance for all external access                    */
 /*                                                                      */
+/* Note: workers are created in the JobRunnerFactory. This class manage */
+/* the runner definition, not the execution                             */
+/*                                                                      */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
@@ -49,7 +52,7 @@ public class RunnerFactory {
   private final LogOperation logOperation;
   private final SessionFactory sessionFactory;
 
-  Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
+  private static Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
 
   RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
                 RunnerUploadFactory runnerUploadFactory,
@@ -206,6 +209,13 @@ public class RunnerFactory {
 
     if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
       // if (objectRunner instanceof AbstractRunner runner) {
+      logger.info("Candidate Runner is AbstractRunner [{}] type [{}] inputSize [{}] outputSize [{}]",
+          candidateRunner.getClass().getName(),
+          (candidateRunner instanceof SdkRunnerCherryConnector? "Cherry":"Classic"),
+          ((AbstractRunner) candidateRunner).getName(),
+          ((AbstractRunner) candidateRunner).getType(),
+          ((AbstractRunner) candidateRunner).getListOutput().size(),
+          ((AbstractRunner) candidateRunner).getListOutput().size());
       listDetectedRunners.add((AbstractRunner) candidateRunner);
       return listDetectedRunners;
     }
@@ -219,6 +229,17 @@ public class RunnerFactory {
       } else {
         listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
       }
+
+      // temp for debug
+      AbstractRunner last = listDetectedRunners.get(listDetectedRunners.size()-1);
+      logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] inputSize [{}] outputSize [{}]",
+          candidateRunner.getClass().getName(),
+          (last instanceof SdkRunnerCherryConnector? "Cherry":"Classic"),
+          last.getName(),
+          last.getType(),
+          last.getListOutput().size(),
+          last.getListOutput().size());
+
       return listDetectedRunners;
     }
 

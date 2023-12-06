@@ -876,7 +876,7 @@ public abstract class AbstractRunner {
   public ValidationResult checkValidDefinition() {
     ValidationResult validationResult = new ValidationResult(new ArrayList<>(), new ArrayList<>());
     if (getIdentification().isEmpty())
-      validationResult.listOfErrors.add("No identification");
+      validationResult.listOfErrors.add("No identification (no type or name declared in the runner)");
 
     validationResult.listOfErrors.addAll(checkListParameters(listInput));
     validationResult.listOfErrors.addAll(checkListParameters(listOutput));
