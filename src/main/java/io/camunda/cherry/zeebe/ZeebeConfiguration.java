@@ -14,9 +14,9 @@ public class ZeebeConfiguration {
   @Nullable
   private String gateway;
 
-  @Value("${zeebe.client.security.plaintext:true}")
+  @Value("${zeebe.client.security.plaintext:}")
   @Nullable
-  private Boolean plaintext;
+  private String plaintext;
 
   @Value("${zeebe.client.cloud.region:}")
   @Nullable
@@ -26,13 +26,28 @@ public class ZeebeConfiguration {
   @Nullable
   private String clusterId;
 
-  @Value("${zeebe.client.cloud.clientId:}")
+  @Value("${zeebe.client.oauth.clientId:}")
   @Nullable
   private String clientId;
 
-  @Value("${zeebe.client.cloud.clientSecret:}")
+  @Value("${zeebe.client.oauth.clientSecret:}")
   @Nullable
   private String clientSecret;
+
+  @Value("${zeebe.client.oauth.authorizationServerUrl:}")
+  @Nullable
+  private String authorizationServerUrl;
+
+
+  /**
+   * Not possible to use audience:
+   * connectorcore embeded io.camunda.zeebe.spring.client.properties.OperateClientConfigurationProperties
+   * This class does not have a setter for audience
+   * SpringBoot refuse to start
+   */
+  @Value("${zeebe.client.oauth.clientAudience:}")
+  @Nullable
+  private String audience;
 
   @Value("${zeebe.client.worker.threads:1}")
   private int numberOfThreads;
@@ -56,6 +71,10 @@ public class ZeebeConfiguration {
   }
 
   public boolean isCloudConfiguration() {
+    return clusterId != null && !clusterId.trim().isEmpty();
+  }
+
+  public boolean isOAuthConfiguration() {
     return clientId != null && !clientId.trim().isEmpty();
   }
 
@@ -73,11 +92,11 @@ public class ZeebeConfiguration {
   }
 
   @Nullable
-  public Boolean isPlaintext() {
-    return plaintext;
+  public boolean isPlaintext() {
+    return plaintext==null? true: "true".equals( plaintext);
   }
 
-  public void setPlaintext(@Nullable Boolean plaintext) {
+  public void setPlaintext(@Nullable String plaintext) {
     this.plaintext = plaintext;
   }
 
@@ -116,6 +135,27 @@ public class ZeebeConfiguration {
   public void setClientSecret(@Nullable String clientSecret) {
     this.clientSecret = clientSecret;
   }
+
+
+
+  @Nullable
+  public String getAuthorizationServerUrl() {
+    return authorizationServerUrl;
+  }
+
+  public void setAuthorizationServerUrl(@Nullable String authorizationServerUrl) {
+    this.authorizationServerUrl = authorizationServerUrl;
+  }
+
+
+  @Nullable
+  public String getAudience() {
+    return audience;
+  }
+  public void setAudience(@Nullable String audience) {
+    this.audience = audience;
+  }
+
 
   public int getNumberOfThreads() {
     return numberOfThreads;
@@ -183,21 +223,34 @@ public class ZeebeConfiguration {
     if (isCloudConfiguration()) {
       logConfiguration.append(" ClusterId[");
       logConfiguration.append(getClusterId());
-      logConfiguration.append("] ClientId[");
-      logConfiguration.append(getClientId());
-      logConfiguration.append("] ClientSecret[");
-      String clientSecret = getClientSecret();
-      logConfiguration.append(clientSecret == null ? "null" : (clientSecret + "****").substring(0, 3) + "****");
       logConfiguration.append("] Region[");
       logConfiguration.append(getRegion());
       logConfiguration.append("]");
     } else {
+      logConfiguration.append(" OAuth? ");
+      logConfiguration.append(isOAuthConfiguration());
+
       logConfiguration.append(" Gateway[");
       logConfiguration.append(getGateway());
       logConfiguration.append("] usePlainText[");
       logConfiguration.append(isPlaintext());
       logConfiguration.append("]");
     }
+
+    if (isOAuthConfiguration()) {
+      logConfiguration.append(" ClientID[");
+      logConfiguration.append(getClientId());
+      logConfiguration.append("] ClientSecret[");
+      String clientSecret = getClientSecret();
+      logConfiguration.append(clientSecret == null ? "null" : (clientSecret + "****").substring(0, 3) + "****");
+      logConfiguration.append("] Audience[");
+      logConfiguration.append(getAudience());
+      logConfiguration.append("] authorizationServerUrl[");
+      logConfiguration.append(getAuthorizationServerUrl());
+      logConfiguration.append("]");
+
+    }
+
     return logConfiguration.toString();
 
   }

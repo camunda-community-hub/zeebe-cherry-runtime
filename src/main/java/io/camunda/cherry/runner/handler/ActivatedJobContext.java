@@ -10,6 +10,7 @@ package io.camunda.cherry.runner.handler;
 
 import io.camunda.connector.api.outbound.JobContext;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
+
 import java.util.Map;
 import java.util.function.Supplier;
 

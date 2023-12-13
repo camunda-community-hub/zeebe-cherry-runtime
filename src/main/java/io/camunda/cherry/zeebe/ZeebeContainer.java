@@ -12,6 +12,8 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
 import io.camunda.zeebe.client.api.ZeebeFuture;
 import io.camunda.zeebe.client.api.response.Topology;
+import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProvider;
+import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProviderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +53,7 @@ public class ZeebeContainer {
     logger.info("ZeebeContainer.startZeebe {} ", zeebeConfiguration.getLogConfiguration());
     ZeebeClientBuilder zeebeClientBuilder;
     if (zeebeConfiguration.isCloudConfiguration()) {
+
       zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
           .withClusterId(zeebeConfiguration.getClusterId())
           .withClientId(zeebeConfiguration.getClientId())
@@ -62,19 +65,33 @@ public class ZeebeContainer {
       if (zeebeConfiguration.isPlaintext())
         zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
 
+      // see https://docs.camunda.io/docs/apis-tools/java-client/
+      // https://github.com/jwulf/zeebe-node-sm-mt-example
+      if (zeebeConfiguration.isOAuthConfiguration()) {
+        final OAuthCredentialsProvider provider = new OAuthCredentialsProviderBuilder() //
+            .clientId(zeebeConfiguration.getClientId())
+            .clientSecret(zeebeConfiguration.getClientSecret())
+            .audience(zeebeConfiguration.getAudience())
+            .build();
+
+        zeebeClientBuilder = zeebeClientBuilder.credentialsProvider(provider)
+        //    .defaultJobWorkerTenantIds(Arrays.asList("<default>", "red"))
+        ;
+      }
+
     }
     try {
-      zeebeClient = zeebeClientBuilder
-          .numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
+      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
           .defaultJobWorkerMaxJobsActive(zeebeConfiguration.getMaxJobsActive())
-      .build();
+          .build();
     } catch (Exception e) {
       logOperation.logError("Can't start ZeebeClient ", e);
       throw new TechnicalException("Can't start ZeebeClient", e);
     }
-    pingZeebeClient();
+    boolean isConnected = pingZeebeClient();
 
-    logger.info("ZeebeClient number of threads=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+    logger.info("ZeebeConnected: {} ClientNumberOfThreads=[{}]", isConnected,
+        zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
   }
 
   /**
@@ -92,6 +109,7 @@ public class ZeebeContainer {
 
       return true;
     } catch (Exception e) {
+      logger.error("PingZeebe exception {}", e.toString());
       return false;
     }
   }
