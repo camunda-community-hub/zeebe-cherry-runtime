@@ -7,7 +7,6 @@ import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerAdminOperation;
-import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.util.DateOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
