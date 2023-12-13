@@ -35,6 +35,7 @@ public class RunnerEmbeddedFactory {
 
   /* A ZeebeConnector can be a simple Connector, with the @JobWorker annotations */ List<AbstractRunner> listClassicalRunnersFromComponent;
 
+
   @Autowired
   private ApplicationContext applicationContext;
 
@@ -125,7 +126,7 @@ public class RunnerEmbeddedFactory {
    * @return list of detected runners
    */
   private List<AbstractRunner> detectRunnerInComponents() {
-    logger.info("Start detection runner in all Components");
+    logger.info("Start detection runners in all Components");
     long begTime = System.currentTimeMillis();
     List<AbstractRunner> listDetectedRunners = new ArrayList<>();
 
@@ -146,5 +147,7 @@ public class RunnerEmbeddedFactory {
     }
     return listDetectedRunners;
   }
+
+
 
 }

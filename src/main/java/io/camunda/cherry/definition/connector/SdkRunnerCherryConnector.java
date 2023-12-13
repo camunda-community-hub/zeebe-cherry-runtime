@@ -29,21 +29,23 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
    * Some optional method may exist: getLogo(), getCollectionName(), getDescription()
    * The Input class has a getInputParameters() methods, and output a getOutputParameters()
    *
-   * @param connectorClass
-   * @return
+   * @param connectorClass class to verify
+   * @return true if the class is a Cherry connector
    */
-  public static boolean isRunnerCherryConnector(Class connectorClass) {
+  public static boolean isRunnerCherryConnector(Class<?> connectorClass) {
     try {
       Method method = connectorClass.getMethod("getLogo");
-      return method != null;
+      return true;
     } catch (NoSuchMethodException e) {
       return false;
     }
   }
 
+  @Override
   public OutboundConnectorFunction getTransportedConnector() {
     return outboundConnectorFunction;
   }
+
 
   /**
    * The type is known after, in the annotation for example
@@ -60,10 +62,12 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     return callMethodString("getLogo");
   }
 
+  @Override
   public String getDescription() {
     return callMethodString("getDescription");
   }
 
+  @Override
   public String getCollectionName() {
     return callMethodString("getCollectionName");
   }
@@ -77,8 +81,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
   public List<RunnerParameter> getListInput() {
     Class classInput = getInputParameterClass();
     if (classInput == null)
-      return Collections.emptyList();
-
+      return super.getListInput();
     try {
       // Create an instance of the dynamically determined class using the constructor
       Constructor<?> constructor = classInput.getDeclaredConstructor();
@@ -152,6 +155,9 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
         return null;
       }
       return value;
+    } catch( NoSuchMethodException ne) {
+      // do nothing, no log please
+      return null;
     } catch (Exception e) {
       logger.error("Error during {}(): on [{}] {}", name, this.getName(), e.toString());
       return null;
@@ -190,10 +196,10 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
                   workerParameter == null ? "null" : workerParameter.getClass().getName());
             }
           }
-          parameter.visibleInTemplate = (boolean) inputMap.get("visibleInTemplate");
+        } // end workerParameterChoiceList != null
+          parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get("visibleInTemplate"));
           listRunnersParameters.add(parameter);
           // public RunnerParameter.Group group;
-        } // end workerParameterChoiceList != null
       } else // input is not a Map
         logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,
             input == null ? "null" : input.getClass().getName());

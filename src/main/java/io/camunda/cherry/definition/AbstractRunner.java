@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class AbstractRunner {
@@ -794,6 +796,13 @@ public abstract class AbstractRunner {
   }
 
   /**
+   * Return the ID, which should be uniq. The class name is used by default
+   * @return the ID
+   */
+  public String getId() {
+    return getClass().getName();
+  }
+  /**
    * To display on the admin page, this information is used. If this information is not provide,
    * then the name is used. Else the type See getDisplayLabel()
    */
@@ -801,11 +810,49 @@ public abstract class AbstractRunner {
     return null;
   }
 
+  private Pattern WORD_FINDER = Pattern.compile("(([A-Z]?[a-z]+)|([A-Z]))");
+
   public String getDisplayLabel() {
     if (!isStringEmpty(getLabel()))
       return getLabel();
-    if (!isStringEmpty(getName()))
-      return getName();
+    if (!isStringEmpty(getName())) {
+      String name =getName();
+      // all in uppercase? Change nothing
+      if (name.equals(name.toUpperCase()))
+        return name;
+
+      // if the name is a Camel format, then add a space between each
+      Matcher matcher = WORD_FINDER.matcher(name);
+
+      List<String> words = new ArrayList<>();
+      while (matcher.find()) {
+        words.add(matcher.group(0));
+      }
+      if (! words.isEmpty()) {
+        // Word with only one letter? This is the same word then. Example OfficeMICROSOFTToPDF ==> Office, MICROSOFT To, PDF
+        List<String> transformWords = new ArrayList<>();
+        String accumulator="";
+        for (String word : words) {
+          if (word.length()==1) {
+            accumulator+=word;
+          }
+          else {
+            if (accumulator.length()>0)
+              transformWords.add(accumulator);
+            transformWords.add(word.toLowerCase());
+            accumulator="";
+          }
+        }
+        if (accumulator.length()>0)
+          transformWords.add(accumulator);
+
+        // first word start by an upper case
+        transformWords.set(0, transformWords.get(0).substring(0,1).toUpperCase()+transformWords.get(0).substring(1));
+
+        return transformWords.stream().collect(Collectors.joining(" "));
+      }
+      return name;
+    }
     return type;
   }
 

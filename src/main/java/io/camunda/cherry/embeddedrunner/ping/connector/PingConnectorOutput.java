@@ -36,6 +36,14 @@ public class PingConnectorOutput extends AbstractConnectorOutput {
     this.parameters = parameters;
   }
 
+  /*
+  We want to return a serie of output values (not an object). So, we give here the list of parameters, and the generator will
+  create one output field per parameters.
+  BUT here is the trick: the Zeebe Engine will need to map expression with each output. So, the Feel Expression will search
+  for each output, a method getmyField : the first letter must be in lower case.
+
+  To return an object (and not a serie of field), see the objectConnector
+   */
   @Override
   public List<RunnerParameter> getOutputParameters() {
     return Arrays.asList(

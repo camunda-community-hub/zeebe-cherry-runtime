@@ -72,4 +72,8 @@ public class RunnerDefinitionEntity {
   public enum Status {
     PRESENT, DELETED
   }
+
+  public String toString() {
+    return name+"("+type+")-"+origin;
+  }
 }
