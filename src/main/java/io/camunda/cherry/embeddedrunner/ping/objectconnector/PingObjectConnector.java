@@ -10,6 +10,7 @@ package io.camunda.cherry.embeddedrunner.ping.objectconnector;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.cherry.embeddedrunner.ping.connector.PingConnector;
 import io.camunda.cherry.embeddedrunner.ping.connector.PingConnectorInput;
 import io.camunda.connector.api.annotation.OutboundConnector;
@@ -23,17 +24,18 @@ import java.util.Collections;
 import java.util.Random;
 
 @Component
-@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { "message", "delay",
+@OutboundConnector(name = PingObjectConnector.TYPE_PINGOBJECTCONNECTOR, inputVariables = { "message", "delay",
     "throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
-public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction {
+public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction,
+    PingIntRunner  {
 
-
+  public static final String TYPE_PINGOBJECTCONNECTOR = "c-pingobjectconnector";
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
 
   private final Random random = new Random();
 
   public PingObjectConnector() {
-    super("c-pingobjectconnector", PingConnectorInput.class, PingObjectConnectorOutput.class,
+    super(TYPE_PINGOBJECTCONNECTOR, PingConnectorInput.class, PingObjectConnectorOutput.class,
         Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
   }
 

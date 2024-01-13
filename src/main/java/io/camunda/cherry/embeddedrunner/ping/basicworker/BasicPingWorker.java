@@ -1,6 +1,7 @@
 package io.camunda.cherry.embeddedrunner.ping.basicworker;
 
 import io.camunda.cherry.definition.IntFrameworkRunner;
+import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.spring.client.annotation.JobWorker;
@@ -16,7 +17,7 @@ import java.util.Map;
 import java.util.Random;
 
 @Component
-public class BasicPingWorker implements IntFrameworkRunner {
+public class BasicPingWorker implements IntFrameworkRunner, PingIntRunner {
 
   /**
    * Basic Ping Worker + Throw error
@@ -25,6 +26,7 @@ public class BasicPingWorker implements IntFrameworkRunner {
   private final Logger logger = LoggerFactory.getLogger(BasicPingWorker.class.getName());
 
   public static final String TYPE_BASICPINGWORKER = "c-basicpingworker";
+  public static final String TYPE_BASICPINGWORKER2 = "c-basicpingworker2";
   private static final String INPUT_MESSAGE = "message";
   private static final String INPUT_DELAY = "delay";
   private static final String INPUT_THROWERRORPLEASE = "throwErrorPlease";
@@ -38,7 +40,7 @@ public class BasicPingWorker implements IntFrameworkRunner {
    * @param client client to run
    * @param job job to run
    */
-  @JobWorker(type = "c-basicpingworker2", name = "basicpingworker2")
+  @JobWorker(type = TYPE_BASICPINGWORKER2, name = "basicpingworker2")
   public void handleBasicWorker2(final JobClient client, final ActivatedJob job) {
     logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> BasicPingWorker2 start [" + job.getKey() + "]");
     Map<String, Object> variablesAsMap = job.getVariablesAsMap();

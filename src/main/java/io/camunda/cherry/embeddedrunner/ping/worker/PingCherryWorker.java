@@ -10,6 +10,7 @@ import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -23,7 +24,7 @@ import java.util.Date;
 import java.util.Random;
 
 @Component
-public class PingCherryWorker extends AbstractWorker implements IntFrameworkRunner {
+public class PingCherryWorker extends AbstractWorker implements IntFrameworkRunner, PingIntRunner {
 
   public static final String INPUT_MESSAGE = "message";
   public static final String INPUT_DELAY = "delay";

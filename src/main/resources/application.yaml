@@ -5,6 +5,12 @@ cherry:
     classloaderpath: ./localstorage/classloader
     forcerefresh: false
 
+  runners:
+    # the runtime load all embedded runners
+    embeddedrunner: false
+
+    # the runtime load ping runners
+    pingrunner: false
 
 zeebe:
   client:
@@ -23,19 +29,21 @@ zeebe.client:
 
 
 # On premise Multi tenancy cloud
-zeebe.clientIdentity:
+zeebe.clientMulti:
     broker.gateway-address: 127.0.0.1:26500
     # zeebe.client.broker.gateway-address=host.docker.internal:26500
     security:
       plaintext: false
 
+    # list of tenant's ID separated with a semi colons
+    tenantIds: <default>;red
 
 
     oauth:
       clientId: worker
-      clientSecret: 1EDqazlcfLse1qD6H8wEsQQfJ0eEc0bC
-      clientAudience: 127.0.0.1
+      clientSecret: uMpRNGJciY7EHgv3yuuO4xEFdaeb85oa
       authorizationServerUrl: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      clientAudience: zeebe-api
 
 zeebe.clientSaas:
     cloud:
@@ -76,27 +84,24 @@ server.servlet.context-path: /
 # Save statistics and information
 
 # --------------------- Postgres
-# spring.datasource:
-#  url: "jdbc:postgresql://localhost/cherrydb"
-#  username: "camunda"
-#  password: "camunda"
-#  driver-class-name: "org.postgresql.Driver"
-#spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+spring.datasource:
+  url: "jdbc:postgresql://localhost/cherrydb"
+  username: "camunda"
+  password: "camunda"
+  driver-class-name: "org.postgresql.Driver"
+spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 
-#org:
-#  hibernate:
-#    dialect:
-#      PostgreSQL94Dialect:
+org.hibernate.dialect: "PostgreSQL94Dialect"
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
-spring.datasource:
+spring2.datasource:
   url: "jdbc:h2:file:./cherry.db"
   driver-class-name: "org.h2.Driver"
   username: "sa"
   password: "password"
-spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
-org.hibernate.dialect: "H2Dialect"
+spring2.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+org2.hibernate.dialect: "H2Dialect"
 
 # allow CLOB in Postgres
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
@@ -123,31 +128,4 @@ spring.jpa:
 
 
 # Example of Watcher configuration
-
-
-#watchers:
-#  execution:
-#    - type: "WatchDirectory"
-#      name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchservice"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-
-
-#   - type: "Directory"
-#     name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchdir"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-#      timeBetweenDutyInMS: 30000
 
