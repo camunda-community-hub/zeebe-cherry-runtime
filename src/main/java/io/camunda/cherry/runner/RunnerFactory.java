@@ -28,6 +28,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -42,8 +43,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 @Service
 public class RunnerFactory {
+
 
   private final RunnerEmbeddedFactory runnerEmbeddedFactory;
   private final RunnerUploadFactory runnerUploadFactory;
@@ -168,7 +171,7 @@ public class RunnerFactory {
 
       if (runnerDefinitionEntity.jar == null) {
         logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
-        return null;
+        return Collections.emptyList();
       }
       String jarFileName = runnerUploadFactory.getClassLoaderPath() + File.separator + runnerDefinitionEntity.jar.name;
 

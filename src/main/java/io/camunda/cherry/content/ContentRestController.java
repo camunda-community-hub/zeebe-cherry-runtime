@@ -11,6 +11,7 @@ import io.camunda.cherry.util.DateOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,7 +61,7 @@ public class ContentRestController {
     return listContent;
   }
 
-  @GetMapping(value = "/api/content/delete", produces = "application/json")
+  @PutMapping(value = "/api/content/delete", produces = "application/json")
   public Map<String, Object> listContent(@RequestParam(name = "timezoneoffset") Long timezoneOffset,
                                          @RequestParam(name = "storageentityid") String storageEntityId) {
 

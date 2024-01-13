@@ -68,5 +68,9 @@ public class SdkRunnerWorker extends AbstractRunner {
   public String toString() {
     return "SdkRunnerWorker:"+getName();
   }
+
+  public Object getWorker() {
+    return worker;
+  }
 }
 

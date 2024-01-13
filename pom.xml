@@ -4,7 +4,7 @@
 
   <groupId>io.camunda.community</groupId>
   <artifactId>zeebe-cherry-runtime</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1</version>
 
   <properties>
     <java.version>17</java.version>
@@ -83,11 +83,7 @@
       <version>${connector-validation.version}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.camunda.connector/connector-validation -->
-    <dependency>
-      <groupId>io.camunda.connector</groupId>
-      <artifactId>connector-validation</artifactId>
-      <version>8.3.1</version>
-    </dependency>
+
 
     <!-- Access file -->
     <dependency>

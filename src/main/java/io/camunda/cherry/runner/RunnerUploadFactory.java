@@ -94,17 +94,22 @@ public class RunnerUploadFactory {
     return listJarLoaded;
   }
 
+  /**
+   * Get the class loader path
+   * @return the classloader path
+   */
   public File getClassLoaderPath() {
     return new File(classLoaderPath);
   }
 
   /**
-   * Load all files detected in the upload file to the storageRunner
+   * Load all files detected in the upload file to the storageRunner. Update database and factories
+   * @return the list of all Runners detected in the uploadPath
    */
   public List<RunnerLightDefinition> loadStorageFromUploadPath() {
 
     logger.info("Load from directory[{}]", uploadPath);
-    List<RunnerLightDefinition> listRunnerdDetected = new ArrayList<>();
+    List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
 
     if (uploadPath == null) {
       logOperation.log(OperationEntity.Operation.SERVERINFO, "No Uploadpath is provided");
@@ -166,7 +171,7 @@ public class RunnerUploadFactory {
         if (!reload && runners != null) {
           listLightRunners.addAll(
               runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
-          listRunnerdDetected.addAll(
+          listRunnersDetected.addAll(
               runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
           logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
           continue;
@@ -184,11 +189,11 @@ public class RunnerUploadFactory {
       } catch (Exception e) {
         logOperation.log(OperationEntity.Operation.ERROR,
             "Can't load JAR [" + jarFile.getName() + "] " + analysis+" : "+ e.getMessage());
-        return listRunnerdDetected;
+        return listRunnersDetected;
       }
       loadJarFile(jarFile, jarStorageEntity);
     }
-    return listRunnerdDetected;
+    return listRunnersDetected;
   }
 
   public List<RunnerLightDefinition> getAllRunners() {

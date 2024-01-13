@@ -5,6 +5,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 @Component
 @PropertySource("classpath:application.yaml")
@@ -38,6 +39,9 @@ public class ZeebeConfiguration {
   @Nullable
   private String authorizationServerUrl;
 
+  @Value("#{'${zeebe.client.tenantIds:}'.split(';')}")
+  @Nullable
+  private List<String> listTenantIds;
 
   /**
    * Not possible to use audience:
@@ -45,7 +49,7 @@ public class ZeebeConfiguration {
    * This class does not have a setter for audience
    * SpringBoot refuse to start
    */
-  @Value("${zeebe.client.oauth.clientAudience:}")
+  @Value("${zeebe.client.oauth.clientAudience:zeebe-api}")
   @Nullable
   private String audience;
 
@@ -70,11 +74,23 @@ public class ZeebeConfiguration {
     read();
   }
 
-  public boolean isCloudConfiguration() {
+  public enum TYPECONNECTION {CLOUD, IDENTITY, DIRECTIPADDRESS};
+  public TYPECONNECTION getTypeConnection() {
+    if (isCloudConfiguration())
+      return TYPECONNECTION.CLOUD;
+    if (isOAuthConfiguration())
+      return TYPECONNECTION.IDENTITY;
+    return TYPECONNECTION.DIRECTIPADDRESS;
+  }
+
+  public List<String> getListTenantIds() {
+    return listTenantIds;
+  }
+  private boolean isCloudConfiguration() {
     return clusterId != null && !clusterId.trim().isEmpty();
   }
 
-  public boolean isOAuthConfiguration() {
+  private boolean isOAuthConfiguration() {
     return clientId != null && !clientId.trim().isEmpty();
   }
 
@@ -93,7 +109,7 @@ public class ZeebeConfiguration {
 
   @Nullable
   public boolean isPlaintext() {
-    return plaintext==null? true: "true".equals( plaintext);
+    return plaintext == null ? true : "true".equals(plaintext);
   }
 
   public void setPlaintext(@Nullable String plaintext) {
@@ -136,8 +152,6 @@ public class ZeebeConfiguration {
     this.clientSecret = clientSecret;
   }
 
-
-
   @Nullable
   public String getAuthorizationServerUrl() {
     return authorizationServerUrl;
@@ -147,15 +161,14 @@ public class ZeebeConfiguration {
     this.authorizationServerUrl = authorizationServerUrl;
   }
 
-
   @Nullable
   public String getAudience() {
     return audience;
   }
+
   public void setAudience(@Nullable String audience) {
     this.audience = audience;
   }
-
 
   public int getNumberOfThreads() {
     return numberOfThreads;
