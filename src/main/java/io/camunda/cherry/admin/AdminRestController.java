@@ -8,7 +8,6 @@
 /* ******************************************************************** */
 package io.camunda.cherry.admin;
 
-import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.zeebe.ZeebeConfiguration;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,25 +36,18 @@ public class AdminRestController {
 
   private final ZeebeConfiguration zeebeConfiguration;
 
-  /**
-   * Spring populate the list of all workers
-   */
-  private final  List<AbstractRunner> listRunner;
-
   private final DataSource dataSource;
 
-  AdminRestController( JobRunnerFactory jobRunnerFactory,
-  HistoryFactory historyFactory,
-  ZeebeConfiguration zeebeConfiguration,
-List<AbstractRunner> listRunner,
-                       DataSource dataSource
-) {
-this.jobRunnerFactory =jobRunnerFactory;
-this.historyFactory=historyFactory;
-    this.zeebeConfiguration=zeebeConfiguration;
-    this.listRunner = listRunner;
+  AdminRestController(JobRunnerFactory jobRunnerFactory,
+                      HistoryFactory historyFactory,
+                      ZeebeConfiguration zeebeConfiguration,
+                      DataSource dataSource) {
+    this.jobRunnerFactory = jobRunnerFactory;
+    this.historyFactory = historyFactory;
+    this.zeebeConfiguration = zeebeConfiguration;
     this.dataSource = dataSource;
   }
+
   @GetMapping(value = "/api/ping", produces = "application/json")
   public Map<String, Object> ping() {
     Map<String, Object> parameters = new HashMap<>();
@@ -67,25 +58,49 @@ this.historyFactory=historyFactory;
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("zeebekindconnection", zeebeConfiguration.isCloudConfiguration() ? "SAAS" : "GATEWAY");
-    parameters.put("gatewayaddress", zeebeConfiguration.getGatewayAddress());
-    parameters.put("plaintext",String.valueOf(zeebeConfiguration.isPlaintext()));
+    parameters.put("zeebekindconnection", zeebeConfiguration.getTypeConnection().toString());
 
-    parameters.put("cloudregion", zeebeConfiguration.getRegion());
-    parameters.put("cloudclusterid", zeebeConfiguration.getClusterId());
-    parameters.put("cloudclientid", zeebeConfiguration.getClientId());
-    parameters.put("cloudclientsecret", ""); // never send the client Secret
+    switch (zeebeConfiguration.getTypeConnection()) {
+    case CLOUD -> {
 
+      parameters.put("cloudRegion", zeebeConfiguration.getRegion());
+      parameters.put("cloudClusterID", zeebeConfiguration.getClusterId());
+      parameters.put("cloudClientID", zeebeConfiguration.getClientId());
+      parameters.put("cloudClientSecret", ""); // never send the client Secret
+    }
+    case IDENTITY -> {
+      parameters.put("gatewayAddress", zeebeConfiguration.getGatewayAddress());
+      parameters.put("clientId", zeebeConfiguration.getClientId());
+      parameters.put("clientSecret",
+          (zeebeConfiguration.getClientSecret() != null && zeebeConfiguration.getClientSecret().length() > 0 ?
+              zeebeConfiguration.getClientSecret().charAt(0) :
+              "*") + "*********");
+      parameters.put("AutorizationServerUrl", zeebeConfiguration.getAuthorizationServerUrl());
+      parameters.put("clientAudience", zeebeConfiguration.getAudience());
+
+      parameters.put("plainText", zeebeConfiguration.isPlaintext());
+      parameters.put("tenantIds",
+          zeebeConfiguration.getListTenantIds() == null ? "" : String.join(";", zeebeConfiguration.getListTenantIds()));
+    }
+    case DIRECTIPADDRESS -> {
+      parameters.put("gatewayAddress", zeebeConfiguration.getGatewayAddress());
+      parameters.put("plainText", zeebeConfiguration.isPlaintext());
+      parameters.put("tenantIds",
+          zeebeConfiguration.getListTenantIds() == null ? "" : String.join(";", zeebeConfiguration.getListTenantIds()));
+    }
+    }
     // we don't want the configuration here, but the running information
-    parameters.put("maxjobsactive", jobRunnerFactory.getMaxJobActive());
-    parameters.put("nbthreads", jobRunnerFactory.getNumberOfThreads());
+    parameters.put("maxJobsActive", jobRunnerFactory.getMaxJobActive());
+    parameters.put("nbThreads", jobRunnerFactory.getNumberOfThreads());
 
-    try(Connection con = dataSource.getConnection()) {
-      parameters.put("datasourceproductname",con.getMetaData().getDatabaseProductName());
-      parameters.put("datasourceurl",con.getMetaData().getURL());
-      parameters.put("datasourceusername",con.getMetaData().getUserName());
+    try (Connection con = dataSource.getConnection()) {
+      parameters.put("datasourceProductName", con.getMetaData().getDatabaseProductName());
+      parameters.put("datasourceUrl", con.getMetaData().getURL());
+      parameters.put("datasourceUserName", con.getMetaData().getUserName());
 
-    } catch(Exception e){}
+    } catch (Exception e) {
+      logger.error("During getParameters() "+e.toString());
+    }
     return parameters;
   }
 

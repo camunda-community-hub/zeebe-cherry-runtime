@@ -32,7 +32,7 @@ class Dashboard extends React.Component {
         orderBy: "nameAsc",
         period: "ONEDAY",
         showActive: true,
-        showInactive: true,
+        showInactive: false,
         showWorker: true,
         showConnector: true,
         showOnlyError: false,
