@@ -166,11 +166,10 @@ public class StorageRunner {
                                                  Class clazz,
                                                  JarStorageEntity jarDefinition) {
     RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(name);
-    if (runnerDefinition != null)
-      return runnerDefinition;
-
-    runnerDefinition = new RunnerDefinitionEntity();
-
+    if (runnerDefinition == null) {
+      runnerDefinition = new RunnerDefinitionEntity();
+    }
+    // now update it (new or update)
     runnerDefinition.name = name;
     runnerDefinition.classname = clazz.getCanonicalName();
     runnerDefinition.type = type;
