@@ -125,7 +125,7 @@ class Definition extends React.Component {
   getDownloadUrl() {
     let restCallService = RestCallService.getInstance();
     let urlServer = restCallService.getUrlServer();
-    return urlServer+"/cherry/api/runner/templatefile?";
+    return urlServer + "/cherry/api/runner/templatefile?";
   }
 }
 

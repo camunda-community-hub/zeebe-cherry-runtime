@@ -3,7 +3,7 @@ cherry:
   connectorslib:
     uploadpath: ./localstorage/upload
     classloaderpath: ./localstorage/classloader
-    forcerefresh: false
+    forcerefresh: true
 
   runners:
     # the runtime load all embedded runners
@@ -84,7 +84,7 @@ server.servlet.context-path: /
 # Save statistics and information
 
 # --------------------- Postgres
-spring.datasource:
+spring2.datasource:
   url: "jdbc:postgresql://localhost/cherrydb"
   username: "camunda"
   password: "camunda"
@@ -95,7 +95,7 @@ org.hibernate.dialect: "PostgreSQL94Dialect"
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
-spring2.datasource:
+spring.datasource:
   url: "jdbc:h2:file:./cherry.db"
   driver-class-name: "org.h2.Driver"
   username: "sa"

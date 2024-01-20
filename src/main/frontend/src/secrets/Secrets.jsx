@@ -59,7 +59,7 @@ class Secrets extends React.Component {
                   <th>Name</th>
                   <th>Secret</th>
                   <th>Value</th>
-                  <th> </th>
+                  <th></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -73,7 +73,7 @@ class Secrets extends React.Component {
                                    secret.somethingChange = true;
                                    this.forceUpdate()
                                  }}/><br/>
-                      { secret.error && <div className="alert alert-danger"><ExclamationTriangle/>{secret.error}</div>}
+                      {secret.error && <div className="alert alert-danger"><ExclamationTriangle/>{secret.error}</div>}
                     </td>
                     <td>
                       <Toggle
@@ -205,7 +205,7 @@ class Secrets extends React.Component {
     if (secret.id)
       uri = uri + '&id=' + secret.id;
 
-    secret.error=""; // clear error
+    secret.error = ""; // clear error
     console.log("Secrets.update http[" + uri + "]");
 
     this.setDisplayProperty("loading", true);
@@ -221,7 +221,7 @@ class Secrets extends React.Component {
       this.setState({status: httpPayload.getError()});
     } else {
       debugger;
-      let secretInfo= httpPayload.getData();
+      let secretInfo = httpPayload.getData();
       this.saveSecret.id = secretInfo.id;
       this.saveSecret.error = secretInfo.error;
       // refresh: the display Property will do the job

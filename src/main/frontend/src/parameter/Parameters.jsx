@@ -53,7 +53,7 @@ class Parameters extends React.Component {
         </div>
 
 
-        <div className="row" >
+        <div className="row">
           <div className="col-md-6">
 
             <div className="card" style={{width: "25rem;"}}>
@@ -178,8 +178,6 @@ class Parameters extends React.Component {
                 </div>
 
 
-
-
                 <div style={this.getZssZeebeConnection("SAAS")}>
                   <div className="row">
                     <div className="col-md-6">
@@ -224,7 +222,6 @@ class Parameters extends React.Component {
           </div>
 
 
-
           <div className="col-md-6">
 
             <div className="card" style={{width: "25rem;"}}>
@@ -260,9 +257,6 @@ class Parameters extends React.Component {
             </div>
           </div>
         </div>
-
-
-
 
 
         <div className="row" style={{marginTop: "10px"}}>
@@ -304,7 +298,7 @@ class Parameters extends React.Component {
   }
 
   getZssZeebeConnection(value) {
-    console.log("getZssZeebeConnection : value="+value+"] statePara["+this.state.parameters.zeebekindconnection+"]")
+    console.log("getZssZeebeConnection : value=" + value + "] statePara[" + this.state.parameters.zeebekindconnection + "]")
     if (value === this.state.parameters.zeebekindconnection)
       return {}
     return {display: "none"};

@@ -7,15 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button, Select, TextInput} from "carbon-components-react";
-import {ArrowRepeat, XCircle} from 'react-bootstrap-icons';
-
-import GeneralDashboard from "./GeneralDashboard";
-import RunnerDashboard from "./RunnerDashboard";
 import RestCallService from "../services/RestCallService";
-import ControllerPage from "../component/ControllerPage";
-
-import RunnerChart from "./RunnerChart";
 
 
 class Monitoring extends React.Component {
@@ -80,7 +72,7 @@ class Monitoring extends React.Component {
     } else {
       let firstRunner = httpPayload.getData().details[0];
       console.log("Monitoring: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");
-      this.setState({status: httpPayload.getData().status, message:httpPayload.getData().message});
+      this.setState({status: httpPayload.getData().status, message: httpPayload.getData().message});
     }
   }
 

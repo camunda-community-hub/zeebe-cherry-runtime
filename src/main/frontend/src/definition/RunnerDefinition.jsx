@@ -41,7 +41,7 @@ class RunnerDefinition extends React.Component {
         <Tabs defaultActiveKey="description">
           <Tab eventKey="description" title="Description">
             <table style={{width: "25rem", padding: "10px"}}>
-              <tr >
+              <tr>
                 <td style={{verticalAlign: "top", padding: "10px"}}>
                   <Card>
                     <Card.Header style={{backgroundColor: "rgba(0,0,0,.03)"}}>{this.state.runner.name}</Card.Header>
@@ -80,7 +80,7 @@ class RunnerDefinition extends React.Component {
                          className="button is-info"
                          download>Download {this.state.runner.name} Element Template</a>
 
-                      <p class="card-text" style={{paddingLeft:"30px", paddingBottom: "20px"}}><i>Copy the JSON in the
+                      <p class="card-text" style={{paddingLeft: "30px", paddingBottom: "20px"}}><i>Copy the JSON in the
                         WebModeler to access the definition as a template</i></p>
                     </Card.Body>
                   </Card>
@@ -164,7 +164,7 @@ class RunnerDefinition extends React.Component {
   getDownloadUrlRunner(runner) {
     let restCallService = RestCallService.getInstance();
     let urlServer = restCallService.getUrlServer();
-    return urlServer+"/cherry/api/runner/templatefile?name="+runner.name;
+    return urlServer + "/cherry/api/runner/templatefile?name=" + runner.name;
   }
 }
 

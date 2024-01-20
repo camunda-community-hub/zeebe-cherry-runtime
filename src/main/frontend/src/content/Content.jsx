@@ -20,7 +20,7 @@ class Content extends React.Component {
     this.state = {
       content: [],
       display: {loading: false},
-      status:""
+      status: ""
     };
   }
 
@@ -61,7 +61,7 @@ class Content extends React.Component {
                 <th>Used by</th>
                 <th>Loaded time</th>
                 <th>Log</th>
-                <th> </th>
+                <th></th>
 
               </tr>
               </thead>
@@ -72,9 +72,9 @@ class Content extends React.Component {
                     {content.name}
                   </td>
                   <td>
-                  {content.usedby.map((usedby, _indexcontent) =>
-                    <div>{usedby.name} {usedby.collection} <br/></div>)
-                  }
+                    {content.usedby.map((usedby, _indexcontent) =>
+                      <div>{usedby.name} {usedby.collection} <br/></div>)
+                    }
                   </td>
                   <td style={{verticalAlign: "top"}}>
                     {content.loadedtime}
@@ -86,7 +86,7 @@ class Content extends React.Component {
                     <Button className="btn btn-danger btn-sm"
                             onClick={() => this.deleteStorageEntityId(content.storageentityid)}
                             style={{marginRight: "10px"}}
-                            disabled={this.state.display.loading }
+                            disabled={this.state.display.loading}
                     >
                       <ConeStriped style={{color: "red"}}/>
                       Delete
@@ -107,6 +107,7 @@ class Content extends React.Component {
   getStyleRow(_content) {
     return {};
   }
+
   refreshListContent() {
     let uri = 'cherry/api/content/list?';
     console.log("Content.refreshListContent http[" + uri + "]");
@@ -139,8 +140,8 @@ class Content extends React.Component {
     this.setState({display: displayObject});
   }
 
-  deleteStorageEntityId( storageentityid) {
-    console.log("Content.deleteStorageEntityId"+storageentityid);
+  deleteStorageEntityId(storageentityid) {
+    console.log("Content.deleteStorageEntityId" + storageentityid);
     const userConfirmed = window.confirm("Are you sure you want to delete this Jar?");
     if (userConfirmed) {
       this.setState({labelBtnStop: "Deleting...", status: ""});

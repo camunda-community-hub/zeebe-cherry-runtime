@@ -1,8 +1,15 @@
 
-cherry.connectorslib:
-  uploadpath: ./localstorage/upload
-  classloaderpath: ./localstorage/classloader
-  forcerefresh: false
+cherry:
+  connectorslib:
+    uploadpath: ./localstorage/upload
+    classloaderpath: ./localstorage/classloader
+    forcerefresh: false
+  runners:
+    # the runtime load all embedded runners
+    embeddedrunner: false
+
+    # the runtime load ping runners
+    pingrunner: false
 
 # use a OnPremise Zeebe engine
 zeebe.client:
@@ -19,8 +26,8 @@ zeebe.client:
 
 
   worker:
-    maxJobsActive: 32
-    threads: 1
+    maxJobsActive: 10
+    threads: 10
 server.port: 9081
 logging.level.root: INFO
 

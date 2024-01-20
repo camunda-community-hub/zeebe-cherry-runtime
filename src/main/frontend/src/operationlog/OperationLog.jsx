@@ -86,7 +86,7 @@ class OperationLog extends React.Component {
                   <td>
                     {logitem.operation}
                   </td>
-                  <td  style={{fontSize: "12px"}}>
+                  <td style={{fontSize: "12px"}}>
                     {logitem.message}
                   </td>
                   <td>

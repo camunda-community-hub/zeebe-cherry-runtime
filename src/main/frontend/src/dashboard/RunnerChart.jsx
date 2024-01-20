@@ -124,6 +124,7 @@ class RunnerChart extends React.Component {
     });
     return result;
   }
+
   getDurationsPic() {
     const result = [];
     this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
@@ -136,7 +137,7 @@ class RunnerChart extends React.Component {
   getErrors() {
     const result = [];
     this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
-      let record = {label: element.slot, value: element.executionsBpmnErrors+element.executionsFailed};
+      let record = {label: element.slot, value: element.executionsBpmnErrors + element.executionsFailed};
       result.push(record);
     });
     return result;

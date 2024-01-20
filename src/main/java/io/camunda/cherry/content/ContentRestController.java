@@ -72,7 +72,8 @@ public class ContentRestController {
     } catch (OperationException e) {
       if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "storageEntityId [" + storageEntityId + "] not found");
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "storageEntityId [" + storageEntityId + "] error " + e);
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+          "storageEntityId [" + storageEntityId + "] error " + e);
 
     }
     return status;
