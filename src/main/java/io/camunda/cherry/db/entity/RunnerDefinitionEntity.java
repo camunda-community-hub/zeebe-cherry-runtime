@@ -65,15 +65,15 @@ public class RunnerDefinitionEntity {
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   public Long id;
 
+  public String toString() {
+    return name + "(" + type + ")-" + origin;
+  }
+
   public enum Origin {
     EMBEDDED, JARFILE, STORE
   }
 
   public enum Status {
     PRESENT, DELETED
-  }
-
-  public String toString() {
-    return name+"("+type+")-"+origin;
   }
 }

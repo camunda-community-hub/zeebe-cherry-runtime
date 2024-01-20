@@ -7,11 +7,13 @@ import java.util.Collections;
 
 public class SdkRunnerWorker extends AbstractRunner {
 
-  private final Object worker;
-  public final  io.camunda.zeebe.spring.client.annotation.JobWorker annotation;
+  public final io.camunda.zeebe.spring.client.annotation.JobWorker annotation;
   public final Method handleMethod;
+  private final Object worker;
 
-  public SdkRunnerWorker(Object worker, io.camunda.zeebe.spring.client.annotation.JobWorker annotation, Method handleMethod) {
+  public SdkRunnerWorker(Object worker,
+                         io.camunda.zeebe.spring.client.annotation.JobWorker annotation,
+                         Method handleMethod) {
 
     super("", // String type
         Collections.emptyList(), //  listInput
@@ -29,9 +31,9 @@ public class SdkRunnerWorker extends AbstractRunner {
   public Method getHandleMethod() {
     return handleMethod;
   }
+
   /**
    * Get the type from the annotation
-   *
    */
   @Override
   public String getType() {
@@ -50,6 +52,7 @@ public class SdkRunnerWorker extends AbstractRunner {
 
   /**
    * For the ID, we return the name of the transported object, not the RunnerConnector
+   *
    * @return the ID of the runner
    */
   @Override
@@ -66,7 +69,7 @@ public class SdkRunnerWorker extends AbstractRunner {
   }
 
   public String toString() {
-    return "SdkRunnerWorker:"+getName();
+    return "SdkRunnerWorker:" + getName();
   }
 
   public Object getWorker() {

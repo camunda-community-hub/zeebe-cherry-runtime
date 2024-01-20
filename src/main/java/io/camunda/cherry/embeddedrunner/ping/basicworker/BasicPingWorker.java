@@ -19,26 +19,25 @@ import java.util.Random;
 @Component
 public class BasicPingWorker implements IntFrameworkRunner, PingIntRunner {
 
+  public static final String TYPE_BASICPINGWORKER = "c-basicpingworker";
+  public static final String TYPE_BASICPINGWORKER2 = "c-basicpingworker2";
+  public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+  private static final String INPUT_MESSAGE = "message";
+  private static final String INPUT_DELAY = "delay";
+  private static final String INPUT_THROWERRORPLEASE = "throwErrorPlease";
+  private static final String OUTPUT_TIMESTAMP = "timestamp";
   /**
    * Basic Ping Worker + Throw error
    */
 
   private final Logger logger = LoggerFactory.getLogger(BasicPingWorker.class.getName());
-
-  public static final String TYPE_BASICPINGWORKER = "c-basicpingworker";
-  public static final String TYPE_BASICPINGWORKER2 = "c-basicpingworker2";
-  private static final String INPUT_MESSAGE = "message";
-  private static final String INPUT_DELAY = "delay";
-  private static final String INPUT_THROWERRORPLEASE = "throwErrorPlease";
-  private static final String OUTPUT_TIMESTAMP = "timestamp";
-  public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
-
   private final Random random = new Random();
 
   /**
    * Add a second worker in the same class. The runtime should detect it too.
+   *
    * @param client client to run
-   * @param job job to run
+   * @param job    job to run
    */
   @JobWorker(type = TYPE_BASICPINGWORKER2, name = "basicpingworker2")
   public void handleBasicWorker2(final JobClient client, final ActivatedJob job) {
@@ -51,12 +50,11 @@ public class BasicPingWorker implements IntFrameworkRunner, PingIntRunner {
 
   }
 
-
-  @JobWorker(type = TYPE_BASICPINGWORKER, name="basicpingworker")
+  @JobWorker(type = TYPE_BASICPINGWORKER, name = "basicpingworker")
   public void handleBasicWorker(final JobClient client, final ActivatedJob job) {
     logger.info("WorkerVariables.handleWorkerVariable : >>>>>>>>>>> BasicPingWorker start [" + job.getKey() + "]");
     Map<String, Object> variablesAsMap = job.getVariablesAsMap();
-    String message = (String) variablesAsMap.getOrDefault(INPUT_MESSAGE, new String());
+    String message = (String) variablesAsMap.getOrDefault(INPUT_MESSAGE, "");
     Long delay = (Long) variablesAsMap.getOrDefault(INPUT_DELAY, Long.valueOf(0));
     Boolean throwErrorPlease = (Boolean) variablesAsMap.getOrDefault(INPUT_THROWERRORPLEASE, Boolean.FALSE);
 

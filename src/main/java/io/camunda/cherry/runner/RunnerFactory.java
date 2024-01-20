@@ -28,7 +28,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -43,19 +42,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 @Service
 public class RunnerFactory {
 
-
+  private static final Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
   private final RunnerEmbeddedFactory runnerEmbeddedFactory;
   private final RunnerUploadFactory runnerUploadFactory;
   private final StorageRunner storageRunner;
   private final RunnerExecutionRepository runnerExecutionRepository;
   private final LogOperation logOperation;
   private final SessionFactory sessionFactory;
-
-  private static Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
 
   RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
                 RunnerUploadFactory runnerUploadFactory,
@@ -69,6 +65,57 @@ public class RunnerFactory {
     this.runnerExecutionRepository = runnerExecutionRepository;
     this.logOperation = logOperation;
     this.sessionFactory = sessionFactory;
+  }
+
+  /**
+   * Detect classical runner in an object
+   *
+   * @param candidateRunner object to search inside
+   * @return list of runners detected
+   */
+  public static List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
+
+    List<AbstractRunner> listDetectedRunners = new ArrayList<>();
+
+    if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
+      // if (objectRunner instanceof AbstractRunner runner) {
+      logger.info("Candidate Runner is AbstractRunner [{}] type [{}] inputSize [{}] outputSize [{}]",
+          candidateRunner.getClass().getName(),
+          (candidateRunner instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
+          ((AbstractRunner) candidateRunner).getName(), ((AbstractRunner) candidateRunner).getType(),
+          ((AbstractRunner) candidateRunner).getListOutput().size(),
+          ((AbstractRunner) candidateRunner).getListOutput().size());
+      listDetectedRunners.add((AbstractRunner) candidateRunner);
+      return listDetectedRunners;
+    }
+    if (candidateRunner instanceof OutboundConnectorFunction outboundConnector) {
+
+      // we have two kind of SDK runner :
+      // the classical connector
+      // the Cherry Enrichment Connector
+      if (SdkRunnerCherryConnector.isRunnerCherryConnector(candidateRunner.getClass())) {
+        listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector));
+      } else {
+        listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
+      }
+
+      // temp for debug
+      AbstractRunner last = listDetectedRunners.get(listDetectedRunners.size() - 1);
+      logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] inputSize [{}] outputSize [{}]",
+          candidateRunner.getClass().getName(), (last instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
+          last.getName(), last.getType(), last.getListOutput().size(), last.getListOutput().size());
+
+      return listDetectedRunners;
+    }
+
+    for (Method method : candidateRunner.getClass().getMethods()) {
+      io.camunda.zeebe.spring.client.annotation.JobWorker annotation = method.getAnnotation(
+          io.camunda.zeebe.spring.client.annotation.JobWorker.class);
+      if (annotation != null)
+        listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
+    }
+
+    return listDetectedRunners;
   }
 
   public void init() {
@@ -199,64 +246,6 @@ public class RunnerFactory {
       return Collections.emptyList();
     }
   }
-
-  /**
-   * Detect classical runner in an object
-   *
-   * @param candidateRunner object to search inside
-   * @return list of runners detected
-   */
-  public static List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
-
-    List<AbstractRunner> listDetectedRunners = new ArrayList<>();
-
-    if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
-      // if (objectRunner instanceof AbstractRunner runner) {
-      logger.info("Candidate Runner is AbstractRunner [{}] type [{}] inputSize [{}] outputSize [{}]",
-          candidateRunner.getClass().getName(),
-          (candidateRunner instanceof SdkRunnerCherryConnector? "Cherry":"Classic"),
-          ((AbstractRunner) candidateRunner).getName(),
-          ((AbstractRunner) candidateRunner).getType(),
-          ((AbstractRunner) candidateRunner).getListOutput().size(),
-          ((AbstractRunner) candidateRunner).getListOutput().size());
-      listDetectedRunners.add((AbstractRunner) candidateRunner);
-      return listDetectedRunners;
-    }
-    if (candidateRunner instanceof OutboundConnectorFunction outboundConnector) {
-
-      // we have two kind of SDK runner :
-      // the classical connector
-      // the Cherry Enrichment Connector
-      if (SdkRunnerCherryConnector.isRunnerCherryConnector(candidateRunner.getClass())) {
-        listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector));
-      } else {
-        listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
-      }
-
-      // temp for debug
-      AbstractRunner last = listDetectedRunners.get(listDetectedRunners.size()-1);
-      logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] inputSize [{}] outputSize [{}]",
-          candidateRunner.getClass().getName(),
-          (last instanceof SdkRunnerCherryConnector? "Cherry":"Classic"),
-          last.getName(),
-          last.getType(),
-          last.getListOutput().size(),
-          last.getListOutput().size());
-
-      return listDetectedRunners;
-    }
-
-    for (Method method : candidateRunner.getClass().getMethods()) {
-      io.camunda.zeebe.spring.client.annotation.JobWorker annotation = method.getAnnotation(
-          io.camunda.zeebe.spring.client.annotation.JobWorker.class);
-      if (annotation != null)
-        listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
-    }
-
-    return listDetectedRunners;
-  }
-
-
 
   public boolean deleteJarFile(Long jarEntity) throws OperationException {
 

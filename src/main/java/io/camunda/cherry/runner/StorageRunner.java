@@ -64,8 +64,9 @@ public class StorageRunner {
 
   /**
    * Update (or save) a JarRunner
+   *
    * @param jarStorageEntity existing jarRunner or null for a creation
-   * @param jarFile file to save
+   * @param jarFile          file to save
    * @return the jarStorageEntity
    * @throws TechnicalException for any error
    */
@@ -74,7 +75,7 @@ public class StorageRunner {
         Session session = sessionFactory.openSession();
         Connection con = dataSource.getConnection()) {
 
-      if (jarStorageEntity==null)
+      if (jarStorageEntity == null)
         jarStorageEntity = new JarStorageEntity();
       jarStorageEntity.name = jarFile.getName();
       jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -97,12 +98,12 @@ public class StorageRunner {
     }
   }
 
-    /**
-     * Save the connector to the storage The JAR file may contain multiple runner.
-     *
-     * @param jarFile jarfile to save
-     * @throws IOException error during saving
-     */
+  /**
+   * Save the connector to the storage The JAR file may contain multiple runner.
+   *
+   * @param jarFile jarfile to save
+   * @throws IOException error during saving
+   */
   public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
     String connectorName = jarFile.getName();
     logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
@@ -178,7 +179,8 @@ public class StorageRunner {
     runnerDefinition.jar = jarDefinition;
     // start it by default
     runnerDefinition.activeRunner = true;
-    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
+        runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
 
     return runnerDefinitionRepository.save(runnerDefinition);
   }
@@ -204,7 +206,8 @@ public class StorageRunner {
 
     // start it by default
     runnerDefinition.activeRunner = true;
-    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+    logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
+        runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
 
     return runnerDefinitionRepository.save(runnerDefinition);
   }
@@ -266,7 +269,8 @@ public class StorageRunner {
     runnerDefinition.type = runner.getType();
     runnerDefinition.collectionName = runner.getCollectionName();
     runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
-    logger.info("StorageRunner.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+    logger.info("StorageRunner.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]",
+        runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
     return runnerDefinitionRepository.save(runnerDefinition);
   }
 
@@ -326,7 +330,8 @@ public class StorageRunner {
    */
 
   public void removeEntity(RunnerDefinitionEntity runnerDefinition) {
-    logger.info("StorageRunner.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,runnerDefinition.type, runnerDefinition.activeRunner);
+    logger.info("StorageRunner.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,
+        runnerDefinition.type, runnerDefinition.activeRunner);
     runnerDefinitionRepository.delete(runnerDefinition);
   }
 

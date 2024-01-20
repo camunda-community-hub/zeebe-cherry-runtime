@@ -28,8 +28,8 @@ import java.util.Random;
 @OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { PingConnectorInput.INPUT_MESSAGE,
     PingConnectorInput.INPUT_DELAY,
     PingConnectorInput.INPUT_THROWERRORPLEASE }, type = PingConnector.TYPE_PINGCONNECTOR)
-public class PingConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction,
-    PingIntRunner {
+public class PingConnector extends AbstractConnector
+    implements IntFrameworkRunner, OutboundConnectorFunction, PingIntRunner {
 
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
   public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
@@ -70,7 +70,6 @@ public class PingConnector extends AbstractConnector implements IntFrameworkRunn
   public Object execute(OutboundConnectorContext context) throws Exception {
 
     PingConnectorInput pingConnectorInput = context.bindVariables(PingConnectorInput.class);
-
 
     if (pingConnectorInput.isThrowErrorPlease()) {
       throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");

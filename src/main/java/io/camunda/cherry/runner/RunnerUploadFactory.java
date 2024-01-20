@@ -34,8 +34,8 @@ public class RunnerUploadFactory {
   private final StorageRunner storageRunner;
   private final LogOperation logOperation;
   private final SessionFactory sessionFactory;
-  Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
   private final List<RunnerLightDefinition> listLightRunners = new ArrayList<>();
+  Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
   @Value("${cherry.connectorslib.classloaderpath:@null}")
@@ -96,6 +96,7 @@ public class RunnerUploadFactory {
 
   /**
    * Get the class loader path
+   *
    * @return the classloader path
    */
   public File getClassLoaderPath() {
@@ -104,6 +105,7 @@ public class RunnerUploadFactory {
 
   /**
    * Load all files detected in the upload file to the storageRunner. Update database and factories
+   *
    * @return the list of all Runners detected in the uploadPath
    */
   public List<RunnerLightDefinition> loadStorageFromUploadPath() {
@@ -164,9 +166,9 @@ public class RunnerUploadFactory {
           // there is something wrong here: why there is no runners behind this JAR?
           if (runners.isEmpty())
             reload = true;
-          analysis += "found "+runners.size()+" runners,";
+          analysis += "found " + runners.size() + " runners,";
         }
-        analysis+="reload:"+reload+",";
+        analysis += "reload:" + reload + ",";
 
         if (!reload && runners != null) {
           listLightRunners.addAll(
@@ -177,7 +179,7 @@ public class RunnerUploadFactory {
           continue;
         }
 
-        analysis+= jarStorageEntity==null? "SaveEntity":"UpdateEntity";
+        analysis += jarStorageEntity == null ? "SaveEntity" : "UpdateEntity";
         logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
         if (jarStorageEntity == null) {
           // save it
@@ -188,7 +190,7 @@ public class RunnerUploadFactory {
 
       } catch (Exception e) {
         logOperation.log(OperationEntity.Operation.ERROR,
-            "Can't load JAR [" + jarFile.getName() + "] " + analysis+" : "+ e.getMessage());
+            "Can't load JAR [" + jarFile.getName() + "] " + analysis + " : " + e.getMessage());
         return listRunnersDetected;
       }
       loadJarFile(jarFile, jarStorageEntity);
@@ -307,7 +309,7 @@ public class RunnerUploadFactory {
       logLoadJar.append(endOperation - beginOperation);
       logLoadJar.append(" ms");
 
-      jarStorageEntity.loadLog = logLoadJar.toString() + errLogLoadJar.toString();
+      jarStorageEntity.loadLog = logLoadJar.toString() + errLogLoadJar;
       if (jarStorageEntity.loadLog.length() > 1999)
         jarStorageEntity.loadLog = jarStorageEntity.loadLog.substring(0, 1999);
 

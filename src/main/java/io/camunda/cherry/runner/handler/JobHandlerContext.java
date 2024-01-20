@@ -25,15 +25,12 @@ import java.util.Objects;
  */
 public class JobHandlerContext implements OutboundConnectorContext {
 
-  private final ActivatedJob job;
-
   final SecretProvider secretProvider;
   final ValidationProvider validationProvider;
+  private final ActivatedJob job;
   private final ObjectMapper objectMapper;
-
-  private String jsonWithSecrets = null;
-
   private final JobContext jobContext;
+  private String jsonWithSecrets = null;
 
   public JobHandlerContext(final ActivatedJob job,
                            final SecretProvider secretProvider,

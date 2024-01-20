@@ -33,23 +33,22 @@ public class PingCherryWorker extends AbstractWorker implements IntFrameworkRunn
   public static final String OUTPUT_TIMESTAMP = "timestamp";
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
 
-  public static final String OUTPUT_TEMPERATURE= "temperature";
+  public static final String OUTPUT_TEMPERATURE = "temperature";
   public static final String OUTPUT_HUMIDITY = "humidity";
 
   private final Random random = new Random();
 
   public PingCherryWorker() {
     super("c-pingworker", Arrays.asList(
-        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
-            "Message to log"),
-        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL,
-            "Delay to sleep"),
-        RunnerParameter.getInstance(INPUT_THROWERRORPLEASE, "ThrowError", Boolean.class, RunnerParameter.Level.OPTIONAL,
-            "Please throw an error")),
+            RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
+                "Message to log"),
+            RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
+            RunnerParameter.getInstance(INPUT_THROWERRORPLEASE, "ThrowError", Boolean.class, RunnerParameter.Level.OPTIONAL,
+                "Please throw an error")),
 
         Collections.singletonList(
-        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
-            "Produce a timestamp")),
+            RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
+                "Produce a timestamp")),
         Collections.singletonList(BpmnError.getInstance(ERROR_BAD_WEATHER, "Bad Weather")));
   }
 
@@ -87,9 +86,8 @@ public class PingCherryWorker extends AbstractWorker implements IntFrameworkRunn
 
     Boolean throwErrorPlease = getInputBooleanValue(INPUT_THROWERRORPLEASE, Boolean.FALSE, activatedJob);
 
-
     if (Boolean.TRUE.equals(throwErrorPlease)) {
-      setOutputValue(OUTPUT_TEMPERATURE , "6C", contextExecution);
+      setOutputValue(OUTPUT_TEMPERATURE, "6C", contextExecution);
       setOutputValue(OUTPUT_HUMIDITY, "100%", contextExecution);
       throw new ConnectorException(ERROR_BAD_WEATHER, "Weather is rainy");
     }

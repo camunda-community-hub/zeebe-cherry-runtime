@@ -5,6 +5,9 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -13,7 +16,7 @@ public class ZeebeConfiguration {
 
   @Value("${zeebe.client.broker.gateway-address:localhost:26500}")
   @Nullable
-  private String gateway;
+  private String gatewayAddress;
 
   @Value("${zeebe.client.security.plaintext:}")
   @Nullable
@@ -53,12 +56,14 @@ public class ZeebeConfiguration {
   @Nullable
   private String audience;
 
-  @Value("${zeebe.client.worker.threads:1}")
+  @Value("${zeebe.client.worker.threads:10}")
   private int numberOfThreads;
 
-  @Value("${zeebe.client.worker.maxJobsActive:1}")
+  @Value("${zeebe.client.worker.maxJobsActive:10}")
   private int maxJobsActive;
 
+  @Value("${zeebe.client.worker.defaultJobDuration:}")
+  private String defaultJobDuration;
 
 
 
@@ -74,7 +79,6 @@ public class ZeebeConfiguration {
     read();
   }
 
-  public enum TYPECONNECTION {CLOUD, IDENTITY, DIRECTIPADDRESS};
   public TYPECONNECTION getTypeConnection() {
     if (isCloudConfiguration())
       return TYPECONNECTION.CLOUD;
@@ -84,8 +88,12 @@ public class ZeebeConfiguration {
   }
 
   public List<String> getListTenantIds() {
+    // Due to the split, and empty list return a list with one value, blanck
+    if (listTenantIds==null || (listTenantIds.size() == 1 && listTenantIds.get(0).trim().isEmpty()))
+      return Collections.emptyList();
     return listTenantIds;
   }
+
   private boolean isCloudConfiguration() {
     return clusterId != null && !clusterId.trim().isEmpty();
   }
@@ -95,21 +103,16 @@ public class ZeebeConfiguration {
   }
 
   public String getGatewayAddress() {
-    return gateway;
+    return gatewayAddress;
   }
 
-  @Nullable
-  public String getGateway() {
-    return gateway;
-  }
-
-  public void setGateway(@Nullable String gateway) {
-    this.gateway = gateway;
+  public void setGatewayAddress(@Nullable String gatewayAddress) {
+    this.gatewayAddress = gatewayAddress;
   }
 
   @Nullable
   public boolean isPlaintext() {
-    return plaintext == null ? true : "true".equals(plaintext);
+    return plaintext == null || "true".equals(plaintext);
   }
 
   public void setPlaintext(@Nullable String plaintext) {
@@ -186,11 +189,15 @@ public class ZeebeConfiguration {
     this.maxJobsActive = maxJobsActive;
   }
 
-  /* ******************************************************************** */
-  /*                                                                      */
-  /*  Read/Write in the database                                          */
-  /*                                                                      */
-  /* ******************************************************************** */
+  public Duration getDefaultJobTimeout() {
+    try {
+      return Duration.parse(defaultJobDuration);
+    } catch (DateTimeParseException e) {
+      // Handle parsing exception if the input is not a valid ISO duration
+
+      return null;
+    }
+  }
 
   /**
    * Detect if something change
@@ -200,6 +207,12 @@ public class ZeebeConfiguration {
   public boolean read() {
     return false;
   }
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Read/Write in the database                                          */
+  /*                                                                      */
+  /* ******************************************************************** */
 
   public void write() {
 
@@ -244,7 +257,7 @@ public class ZeebeConfiguration {
       logConfiguration.append(isOAuthConfiguration());
 
       logConfiguration.append(" Gateway[");
-      logConfiguration.append(getGateway());
+      logConfiguration.append(getGatewayAddress());
       logConfiguration.append("] usePlainText[");
       logConfiguration.append(isPlaintext());
       logConfiguration.append("]");
@@ -261,11 +274,8 @@ public class ZeebeConfiguration {
       logConfiguration.append("] authorizationServerUrl[");
       logConfiguration.append(getAuthorizationServerUrl());
       logConfiguration.append("]");
-
     }
-
     return logConfiguration.toString();
-
   }
 
   /**
@@ -277,4 +287,6 @@ public class ZeebeConfiguration {
   private boolean empty(String value) {
     return value == null || value.trim().isEmpty();
   }
+
+  public enum TYPECONNECTION {CLOUD, IDENTITY, DIRECTIPADDRESS}
 }

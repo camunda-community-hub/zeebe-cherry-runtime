@@ -26,8 +26,8 @@ import java.util.Random;
 @Component
 @OutboundConnector(name = PingObjectConnector.TYPE_PINGOBJECTCONNECTOR, inputVariables = { "message", "delay",
     "throwErrorPlease" }, type = PingConnector.TYPE_PINGCONNECTOR)
-public class PingObjectConnector extends AbstractConnector implements IntFrameworkRunner, OutboundConnectorFunction,
-    PingIntRunner  {
+public class PingObjectConnector extends AbstractConnector
+    implements IntFrameworkRunner, OutboundConnectorFunction, PingIntRunner {
 
   public static final String TYPE_PINGOBJECTCONNECTOR = "c-pingobjectconnector";
   public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";

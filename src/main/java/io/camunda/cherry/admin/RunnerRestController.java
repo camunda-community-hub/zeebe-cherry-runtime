@@ -344,9 +344,9 @@ public class RunnerRestController {
   public String getTemplate(@RequestParam(name = "name", required = false) String runnerName,
                             @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
-    logger.info(
-        "GET[/api/runner/template] Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
-            + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
+    logger.info("GET[/api/runner/template] Download template requested for " + (runnerName == null ?
+        "Complete collection" :
+        "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
     if (runnerName == null) {
       // generate for ALL runners
       List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
@@ -381,9 +381,9 @@ public class RunnerRestController {
     // Zip file required? Add all templates in the ZIP.
     if (separateTemplate == null && withFrameworkRunners == null)
       withFrameworkRunnersIncluded = true;
-    logger.info(
-        "GET[/api/runner/templatefile] Download template requested for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
-            + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
+    logger.info("GET[/api/runner/templatefile] Download template requested for " + (runnerName == null ?
+        "Complete collection" :
+        "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
     try {
 
       Map<String, String> mapContent = new HashMap<>();

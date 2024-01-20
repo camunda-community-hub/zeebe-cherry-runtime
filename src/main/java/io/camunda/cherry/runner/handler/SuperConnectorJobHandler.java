@@ -24,23 +24,25 @@ public class SuperConnectorJobHandler extends ConnectorJobHandler {
   private AbstractRunner.ExecutionStatusEnum executionStatus;
   private Exception logException;
 
-  public SuperConnectorJobHandler(OutboundConnectorFunction call, SecretProvider secretProvider, ValidationProvider validationProvider, ObjectMapper objectMapper) {
+  public SuperConnectorJobHandler(OutboundConnectorFunction call,
+                                  SecretProvider secretProvider,
+                                  ValidationProvider validationProvider,
+                                  ObjectMapper objectMapper) {
     super(call, secretProvider, validationProvider, objectMapper);
   }
 
-
   protected void completeJob(JobClient client, ActivatedJob job, ConnectorResult.SuccessResult result) {
-    executionStatus= AbstractRunner.ExecutionStatusEnum.SUCCESS;
-    super.completeJob(client,job,result);
+    executionStatus = AbstractRunner.ExecutionStatusEnum.SUCCESS;
+    super.completeJob(client, job, result);
   }
 
   protected void failJob(JobClient client, ActivatedJob job, ConnectorResult.ErrorResult result) {
-    executionStatus= AbstractRunner.ExecutionStatusEnum.FAIL;
+    executionStatus = AbstractRunner.ExecutionStatusEnum.FAIL;
     super.failJob(client, job, result);
   }
 
   protected void throwBpmnError(JobClient client, ActivatedJob job, BpmnError value) {
-    executionStatus= AbstractRunner.ExecutionStatusEnum.BPMNERROR;
+    executionStatus = AbstractRunner.ExecutionStatusEnum.BPMNERROR;
     super.throwBpmnError(client, job, value);
   }
 

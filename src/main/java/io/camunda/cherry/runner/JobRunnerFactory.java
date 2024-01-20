@@ -53,45 +53,32 @@ public class JobRunnerFactory {
   public static final String TOO_MANY_RUNNERS = "TooManyRunners";
   public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
   public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
-
-  @Value("${cherry.runners.embeddedrunner:true}")
-  private Boolean executeEmbeddedRunner;
-
-  @Value("${cherry.runners.pingrunner:true}")
-  private Boolean executePingRunner;
-
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
-
   @Autowired
   HistoryFactory historyFactory;
-
   @Autowired
   StorageRunner storageRunner;
-
   @Autowired
   RunnerFactory runnerFactory;
-
   @Autowired
   ZeebeContainer zeebeContainer;
-
   @Autowired
   ZeebeConfiguration zeebeConfiguration;
-
   @Autowired
   LogOperation logOperation;
-
   @Autowired
   SecretProvider secretProvider;
-
   @Autowired
   ValidationProvider validationProvider;
-
-  private static final ObjectMapper objectMapper = new ObjectMapper();
-
   /**
    * Key is runnerType
    */
   Map<String, Running> mapRunning = new HashMap<>();
+  @Value("${cherry.runners.embeddedrunner:true}")
+  private Boolean executeEmbeddedRunner;
+  @Value("${cherry.runners.pingrunner:true}")
+  private Boolean executePingRunner;
 
   public void startAll() {
 
@@ -326,14 +313,6 @@ public class JobRunnerFactory {
    */
   private JobWorker createJobWorker(AbstractRunner runner) throws OperationException {
 
-    if (runner.getName().contains("PDF")) {
-      JobWorker creditCardWorker = zeebeContainer.getZeebeClient()
-          .newWorker()
-          .jobType("c-pdf-convert-to")
-          .handler(new CreditDeductionWorker())
-          .open();
-      return creditCardWorker;
-    }
     JobHandler jobHandler;
 
     if (runner instanceof AbstractWorker abstractWorker)
@@ -365,6 +344,25 @@ public class JobRunnerFactory {
 
   }
 
+  @Scheduled(fixedDelay = 30000)
+  public void checkZeebeConnection() {
+    boolean checkConnection = zeebeContainer.retryConnection();
+    // if the connection is false, pause all runners
+
+    // if the connection is true, resume all runners which need to be resume
+
+  }
+
+  private boolean isEmbeddedWorker(AbstractRunner runner) {
+    return runner instanceof IntFrameworkRunner;
+  }
+
+  private boolean isPingWorker(AbstractRunner runner) {
+    if (runner instanceof SdkRunnerWorker)
+      return ((SdkRunnerWorker) runner).getWorker() instanceof PingIntRunner;
+    return runner instanceof PingIntRunner;
+  }
+
   /**
    * Not possible to restart a jobWorker: must be created again !
    */
@@ -387,25 +385,6 @@ public class JobRunnerFactory {
   record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
   }
 
-  @Scheduled(fixedDelay = 30000)
-  public void checkZeebeConnection() {
-    boolean checkConnection = zeebeContainer.retryConnection();
-    // if the connection is false, pause all runners
-
-    // if the connection is true, resume all runners which need to be resume
-
-  }
-
-  private boolean isEmbeddedWorker(AbstractRunner runner) {
-    return runner instanceof IntFrameworkRunner;
-  }
-
-  private boolean isPingWorker(AbstractRunner runner) {
-    if (runner instanceof SdkRunnerWorker)
-      return ((SdkRunnerWorker) runner).getWorker() instanceof PingIntRunner;
-    return runner instanceof PingIntRunner;
-  }
-
   public class CreditDeductionWorker implements JobHandler {
 
     Logger LOGGER = LoggerFactory.getLogger(CreditDeductionWorker.class);
@@ -415,4 +394,5 @@ public class JobRunnerFactory {
       logger.info("YES");
     }
   }
+
 }

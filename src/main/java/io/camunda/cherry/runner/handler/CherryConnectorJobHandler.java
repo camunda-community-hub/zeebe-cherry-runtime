@@ -37,14 +37,13 @@ import java.time.Instant;
  * This job handler intercept the execution to the result
  */
 public class CherryConnectorJobHandler implements JobHandler {
+  final SecretProvider secretProvider;
+  final ValidationProvider validationProvider;
+  final ObjectMapper objectMapper;
   private final AbstractConnector abstractConnector;
   private final SdkRunnerConnector sdkRunnerConnector;
   Logger logger = LoggerFactory.getLogger(CherryConnectorJobHandler.class.getName());
   HistoryFactory historyFactory;
-
-  final SecretProvider secretProvider;
-  final ValidationProvider validationProvider;
-  final ObjectMapper objectMapper;
 
   public CherryConnectorJobHandler(AbstractConnector abstractConnector,
                                    HistoryFactory historyFactory,
@@ -78,9 +77,7 @@ public class CherryConnectorJobHandler implements JobHandler {
     Instant executionInstant = Instant.now();
     // abstractConnector or sdkRunnerConnector is not null
     String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
-    logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]",
-        job.getKey(),
-        job.getTenantId(),
+    logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]", job.getKey(), job.getTenantId(),
         type);
     long beginExecution = System.currentTimeMillis();
     StatusContainer status;
@@ -89,19 +86,18 @@ public class CherryConnectorJobHandler implements JobHandler {
     try {
       JobHandlerContext context = new JobHandlerContext(job, secretProvider, validationProvider, objectMapper);
       // Execute the connector now
-      OutboundConnectorFunction connectorFunction=null;
-      if (abstractConnector!=null)
-        connectorFunction =  abstractConnector;
-      else if (sdkRunnerConnector!=null) {
-        connectorFunction= sdkRunnerConnector.getTransportedConnector();
+      OutboundConnectorFunction connectorFunction = null;
+      if (abstractConnector != null)
+        connectorFunction = abstractConnector;
+      else if (sdkRunnerConnector != null) {
+        connectorFunction = sdkRunnerConnector.getTransportedConnector();
       } else
         throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
-
-
-      SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction, secretProvider, validationProvider, objectMapper);
+      SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction, secretProvider,
+          validationProvider, objectMapper);
       connectorJobHandler.handle(client, job);
-      status = new StatusContainer( connectorJobHandler.getExecutionStatus());
+      status = new StatusContainer(connectorJobHandler.getExecutionStatus());
       status.exception = connectorJobHandler.getLogException();
 
     } catch (ConnectorException ce) {
@@ -131,7 +127,6 @@ public class CherryConnectorJobHandler implements JobHandler {
         errorCode, errorMessage, // error
         endExecution - beginExecution);
   }
-
 
   private class StatusContainer {
     AbstractRunner.ExecutionStatusEnum status;

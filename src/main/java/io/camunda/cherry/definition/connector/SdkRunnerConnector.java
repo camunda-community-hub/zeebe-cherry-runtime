@@ -11,6 +11,7 @@ import java.util.List;
 public class SdkRunnerConnector extends AbstractRunner {
 
   private final OutboundConnectorFunction outboundConnectorFunction;
+  private String nameInCache;
 
   public SdkRunnerConnector(OutboundConnectorFunction outboundConnectorFunction) {
 
@@ -59,8 +60,6 @@ public class SdkRunnerConnector extends AbstractRunner {
 
   }
 
-
-
   /**
    * For the ID, we return the name of the class, not the RunnerConnector
    *
@@ -78,8 +77,6 @@ public class SdkRunnerConnector extends AbstractRunner {
   public boolean isConnector() {
     return true;
   }
-
-  private String nameInCache;
 
   public String toString() {
     if (nameInCache == null)

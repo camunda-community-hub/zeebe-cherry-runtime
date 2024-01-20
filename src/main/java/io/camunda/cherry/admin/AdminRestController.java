@@ -28,15 +28,11 @@ import java.util.Map;
 @RequestMapping("cherry")
 public class AdminRestController {
 
-  Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
-
   private final JobRunnerFactory jobRunnerFactory;
-
   private final HistoryFactory historyFactory;
-
   private final ZeebeConfiguration zeebeConfiguration;
-
   private final DataSource dataSource;
+  Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
   AdminRestController(JobRunnerFactory jobRunnerFactory,
                       HistoryFactory historyFactory,
@@ -99,7 +95,7 @@ public class AdminRestController {
       parameters.put("datasourceUserName", con.getMetaData().getUserName());
 
     } catch (Exception e) {
-      logger.error("During getParameters() "+e.toString());
+      logger.error("During getParameters() " + e);
     }
     return parameters;
   }

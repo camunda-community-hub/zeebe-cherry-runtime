@@ -34,13 +34,10 @@ public class RunnerEmbeddedFactory {
   /* Thanks to SpringBoot to detects all the AbstractWorker */ List<AbstractWorker> listAbstractWorker;
 
   /* A ZeebeConnector can be a simple Connector, with the @JobWorker annotations */ List<AbstractRunner> listClassicalRunnersFromComponent;
-
-
-  @Autowired
-  private ApplicationContext applicationContext;
-
   StorageRunner storageRunner;
   LogOperation logOperation;
+  @Autowired
+  private ApplicationContext applicationContext;
 
   RunnerEmbeddedFactory(List<AbstractConnector> listAbstractConnector,
                         List<AbstractWorker> listAbstractWorker,
@@ -113,9 +110,7 @@ public class RunnerEmbeddedFactory {
    * @return null if not exist, else the runner
    */
   public AbstractRunner getByType(String type) {
-    List<AbstractRunner> listRunners = concatAllRunners()
-        .filter(t -> t.getType().equals(type))
-        .toList();
+    List<AbstractRunner> listRunners = concatAllRunners().filter(t -> t.getType().equals(type)).toList();
     return listRunners.isEmpty() ? null : listRunners.get(0);
   }
 
@@ -147,7 +142,5 @@ public class RunnerEmbeddedFactory {
     }
     return listDetectedRunners;
   }
-
-
 
 }

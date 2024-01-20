@@ -29,7 +29,7 @@ import java.time.Instant;
 
 public class CherryWorkerJobHandler implements JobHandler {
 
-  SdkRunnerWorker sdkRunnerWorker ;
+  SdkRunnerWorker sdkRunnerWorker;
   HistoryFactory historyFactory;
   Logger logger = LoggerFactory.getLogger(CherryWorkerJobHandler.class.getName());
 
@@ -43,32 +43,30 @@ public class CherryWorkerJobHandler implements JobHandler {
   @Override
   public void handle(JobClient client, ActivatedJob job) {
     Instant executionInstant = Instant.now();
-    logger.info("WorkerJobHandler: Handle JobId[{}] TenantId[{}] type[{}]", job.getKey(), job.getTenantId(), sdkRunnerWorker.getType());
+    logger.info("WorkerJobHandler: Handle JobId[{}] TenantId[{}] type[{}]", job.getKey(), job.getTenantId(),
+        sdkRunnerWorker.getType());
     long beginExecution = System.currentTimeMillis();
 
     ConnectorException connectorException = null;
     try {
       Class sdkRunnerClass = sdkRunnerWorker.getTransportedObject().getClass();
-      sdkRunnerWorker.getHandleMethod().invoke( sdkRunnerWorker.getTransportedObject(),
-          client, job);
+      sdkRunnerWorker.getHandleMethod().invoke(sdkRunnerWorker.getTransportedObject(), client, job);
 
-// the worker complete fail or throw a BPMN error: there is no way to knows what's happenned
+      // the worker complete fail or throw a BPMN error: there is no way to knows what's happenned
     } catch (Exception e) {
-      logger.error("Worker[{}] failed {}" + sdkRunnerWorker.getName(), e.toString() );
-   }
+      logger.error("Worker[{}] failed {}" + sdkRunnerWorker.getName(), e.toString());
+    }
 
     long endExecution = System.currentTimeMillis();
 
-      logger.info("Worker[{}] executed in {} ms" ,
-          sdkRunnerWorker.getName(),
-          endExecution - beginExecution);
-      String type = sdkRunnerWorker.getType();
-      historyFactory.saveExecution(executionInstant, // this instance
-          RunnerExecutionEntity.TypeExecutor.CONNECTOR, // this is a connector
-          type, // type of connector
-          AbstractRunner.ExecutionStatusEnum.SUCCESS, // status of execution
-          null, null, // error
-          endExecution - beginExecution);
-    }
-
+    logger.info("Worker[{}] executed in {} ms", sdkRunnerWorker.getName(), endExecution - beginExecution);
+    String type = sdkRunnerWorker.getType();
+    historyFactory.saveExecution(executionInstant, // this instance
+        RunnerExecutionEntity.TypeExecutor.CONNECTOR, // this is a connector
+        type, // type of connector
+        AbstractRunner.ExecutionStatusEnum.SUCCESS, // status of execution
+        null, null, // error
+        endExecution - beginExecution);
   }
+
+}

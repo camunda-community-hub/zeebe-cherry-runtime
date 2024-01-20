@@ -46,7 +46,6 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     return outboundConnectorFunction;
   }
 
-
   /**
    * The type is known after, in the annotation for example
    *
@@ -155,7 +154,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
         return null;
       }
       return value;
-    } catch( NoSuchMethodException ne) {
+    } catch (NoSuchMethodException ne) {
       // do nothing, no log please
       return null;
     } catch (Exception e) {
@@ -197,9 +196,9 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
             }
           }
         } // end workerParameterChoiceList != null
-          parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get("visibleInTemplate"));
-          listRunnersParameters.add(parameter);
-          // public RunnerParameter.Group group;
+        parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get("visibleInTemplate"));
+        listRunnersParameters.add(parameter);
+        // public RunnerParameter.Group group;
       } else // input is not a Map
         logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,
             input == null ? "null" : input.getClass().getName());

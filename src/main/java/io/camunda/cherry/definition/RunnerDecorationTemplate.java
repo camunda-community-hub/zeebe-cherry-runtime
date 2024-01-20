@@ -98,10 +98,9 @@ public class RunnerDecorationTemplate {
     List<Map<String, Object>> listProperties = new ArrayList<>();
     boolean pleaseAddOutputGroup = false;
     listProperties.add(Map.of( // Default value
-        ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_DEFINITION_TYPE),
-        ATTR_VALUE, runner.getType(),
-        ATTR_TYPE, ATTR_TYPE_HIDDEN // Hidden
-        ));
+        ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_DEFINITION_TYPE), ATTR_VALUE, runner.getType(), ATTR_TYPE,
+        ATTR_TYPE_HIDDEN // Hidden
+    ));
 
     // Do not ask multiple time the listInput
     List<RunnerParameter> listInput = runner.getListInput();
@@ -116,8 +115,7 @@ public class RunnerDecorationTemplate {
       if (listOutput.isEmpty()) {
         // connector returns an object
         listProperties.add(Map.of( // list of properties
-            ATTR_VALUE, RESULT_VARIABLE,
-            ATTR_TYPE, TYPE_FIELD_STRING,// Variable Value Name
+            ATTR_VALUE, RESULT_VARIABLE, ATTR_TYPE, TYPE_FIELD_STRING,// Variable Value Name
             ATTR_LABEL, "Result Variable Label", // Label
             ATTR_GROUPS, "output", // set in the output group
             ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ATTR_KEY_RESULT_VARIABLE)));
@@ -142,7 +140,7 @@ public class RunnerDecorationTemplate {
       listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
     // ---- Add groups
-    if (! listGroups.isEmpty()) {
+    if (!listGroups.isEmpty()) {
       templateContent.put(ATTR_GROUPS,
           listGroups.stream().distinct().map(w -> Map.of(ATTR_ID, w.id(), ATTR_LABEL, w.label())).toList());
     }
