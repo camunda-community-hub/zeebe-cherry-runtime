@@ -62,7 +62,7 @@ public class ZeebeContainer {
     switch (zeebeConfiguration.getTypeConnection()) {
     // ---- CLOUD connection
     case CLOUD -> {
-      ZeebeClient.newCloudClientBuilder()
+      zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
           .withClusterId(zeebeConfiguration.getClusterId())
           .withClientId(zeebeConfiguration.getClientId())
           .withClientSecret(zeebeConfiguration.getClientSecret())
@@ -94,15 +94,15 @@ public class ZeebeContainer {
       if (zeebeConfiguration.isPlaintext())
         zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
     }
-    default ->
-      throw new TechnicalException("Unkon connection type [" + zeebeConfiguration.getTypeConnection().toString() + "]");
-
+    default -> throw new TechnicalException(
+        "Unknown connection type [" + zeebeConfiguration.getTypeConnection().toString() + "]");
     }
-
 
     // Multi tenancy?
     if (!zeebeConfiguration.getListTenantIds().isEmpty())
       zeebeClientBuilder = zeebeClientBuilder.defaultJobWorkerTenantIds(zeebeConfiguration.getListTenantIds());
+    if (zeebeConfiguration.getDefaultJobTimeout() != null)
+      zeebeClientBuilder = zeebeClientBuilder.defaultJobTimeout(zeebeConfiguration.getDefaultJobTimeout());
 
     try {
       zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
@@ -180,6 +180,7 @@ public class ZeebeContainer {
 
   /**
    * Check the connection, and restart it if it is possible
+   *
    * @return true if the connection is up and running, false else
    */
   public boolean retryConnection() {
