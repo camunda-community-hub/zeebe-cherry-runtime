@@ -14,12 +14,12 @@ package io.camunda.cherry.definition;
 
 import com.google.gson.Gson;
 import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.filestorage.FileRepoFactory;
 import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.FileVariableReference;
 import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -246,7 +246,7 @@ public abstract class AbstractRunner {
    * @return a FileVariable
    */
   public FileVariable getInputFileVariableValue(String parameterName, final ActivatedJob activatedJob)
-      throws ZeebeBpmnError {
+      throws ConnectorException {
 
     try {
       FileVariableReference fileVariableReference = getFileVariableReferenceValue(parameterName, activatedJob);
@@ -255,7 +255,7 @@ public abstract class AbstractRunner {
       FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
       return fileRepoFactory.loadFileVariable(fileVariableReference);
     } catch (Exception e) {
-      throw new ZeebeBpmnError(BPMNERROR_ACCESS_FILEVARIABLE,
+      throw new ConnectorException(BPMNERROR_ACCESS_FILEVARIABLE,
           "Worker [" + getName() + "] error during access parameterName[" + parameterName + "] :" + e);
     }
   }
@@ -268,12 +268,12 @@ public abstract class AbstractRunner {
    * @param parameterName name where the value is stored
    * @param activatedJob  job passed to the worker
    * @return a FileVariable
-   * @throws ZeebeBpmnError if the file variable cannot be load
+   * @throws ConnectorException if the file variable cannot be load
    * @deprecated use getInputFileVariableValue()
    */
   @Deprecated
   public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob)
-      throws ZeebeBpmnError {
+      throws ConnectorException {
     return getInputFileVariableValue(parameterName, activatedJob);
   }
 
@@ -283,10 +283,10 @@ public abstract class AbstractRunner {
    * @param parameterName name where the value is stored
    * @param activatedJob  job passed to the worker
    * @return a FileVariableReference
-   * @throws ZeebeBpmnError if the fileVariableReference cannot be load
+   * @throws ConnectorException if the fileVariableReference cannot be load
    */
   public FileVariableReference getFileVariableReferenceValue(String parameterName, final ActivatedJob activatedJob)
-      throws ZeebeBpmnError {
+      throws ConnectorException {
     if (!containsKeyInJob(parameterName, activatedJob))
       return null;
     Object fileVariableReferenceValue = getValueFromJob(parameterName, activatedJob);
@@ -295,7 +295,7 @@ public abstract class AbstractRunner {
       return FileVariableReference.fromJson(fileVariableReferenceValue.toString());
 
     } catch (Exception e) {
-      throw new ZeebeBpmnError(BPMNERROR_ACCESS_FILEVARIABLE,
+      throw new ConnectorException(BPMNERROR_ACCESS_FILEVARIABLE,
           "Worker [" + getName() + "] error during access fileVariableReference[" + fileVariableReferenceValue + "] :"
               + e);
     }
@@ -329,7 +329,7 @@ public abstract class AbstractRunner {
    * @return the value as an object, decoded
    */
   public Object getInputGsonValue(String parameterName, String defaultValue, final ActivatedJob activatedJob)
-      throws Exception {
+      throws ConnectorException {
     Object value;
     if (!containsKeyInJob(parameterName, activatedJob))
       value = getDefaultValue(parameterName, defaultValue);
@@ -347,7 +347,7 @@ public abstract class AbstractRunner {
       Gson gson = new Gson();
       return gson.fromJson(valueInJson, Object.class);
     } catch (Exception e) {
-      throw new Exception("Can't decode the GSON on " + valueInJson);
+      throw new ConnectorException("Can't decode the GSON on " + valueInJson);
     }
   }
 
@@ -505,7 +505,7 @@ public abstract class AbstractRunner {
       contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
     } catch (Exception e) {
       logError("parameterName[" + parameterName + "] ControllerPage during setFileVariable read: " + e);
-      throw new ZeebeBpmnError(BPMNERROR_SAVE_FILEVARIABLE,
+      throw new ConnectorException(BPMNERROR_SAVE_FILEVARIABLE,
           "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
     }
   }
@@ -588,7 +588,7 @@ public abstract class AbstractRunner {
     }
     if (!listErrors.isEmpty()) {
       logError("CherryConnector[" + getType() + "] Errors:" + String.join(",", listErrors));
-      throw new ZeebeBpmnError("INPUT_CONTRACT_ERROR",
+      throw new ConnectorException("INPUT_CONTRACT_ERROR",
           "Worker [" + getType() + "] InputContract Exception:" + String.join(",", listErrors));
     }
   }
@@ -596,13 +596,13 @@ public abstract class AbstractRunner {
   /**
    * Runner can implement a validateInput method, to code advance verification
    */
-  public void validateInput() throws ZeebeBpmnError {
+  public void validateInput() throws ConnectorException {
   }
 
   /**
    * Runner can implement a validateOutput method, to code advance verification on output
    */
-  public void validateOutput() throws ZeebeBpmnError {
+  public void validateOutput() throws ConnectorException {
   }
 
   /**
@@ -650,7 +650,7 @@ public abstract class AbstractRunner {
 
     if (!listErrors.isEmpty()) {
       logError("Errors:" + String.join(",", listErrors));
-      throw new ZeebeBpmnError("OUTPUT_CONTRACT_ERROR",
+      throw new ConnectorException("OUTPUT_CONTRACT_ERROR",
           "Worker[" + getType() + "] OutputContract Exception:" + String.join(",", listErrors));
     }
   }
