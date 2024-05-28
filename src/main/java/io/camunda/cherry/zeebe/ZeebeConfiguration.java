@@ -89,7 +89,7 @@ public class ZeebeConfiguration {
 
   public List<String> getListTenantIds() {
     // Due to the split, and empty list return a list with one value, blanck
-    if (listTenantIds==null || (listTenantIds.size() == 1 && listTenantIds.get(0).trim().isEmpty()))
+    if (listTenantIds == null || (listTenantIds.size() == 1 && listTenantIds.get(0).trim().isEmpty()))
       return Collections.emptyList();
     return listTenantIds;
   }
@@ -215,7 +215,7 @@ public class ZeebeConfiguration {
   /* ******************************************************************** */
 
   public void write() {
-
+    // To be implemented
   }
 
   /**
@@ -267,8 +267,8 @@ public class ZeebeConfiguration {
       logConfiguration.append(" ClientID[");
       logConfiguration.append(getClientId());
       logConfiguration.append("] ClientSecret[");
-      String clientSecret = getClientSecret();
-      logConfiguration.append(clientSecret == null ? "null" : (clientSecret + "****").substring(0, 3) + "****");
+      String clientSecretTemp = getClientSecret();
+      logConfiguration.append(clientSecretTemp == null ? "null" : (clientSecretTemp + "****").substring(0, 3) + "****");
       logConfiguration.append("] Audience[");
       logConfiguration.append(getAudience());
       logConfiguration.append("] authorizationServerUrl[");
