@@ -271,6 +271,10 @@ public class RunnerUploadFactory {
           // save time
           if (className.startsWith("org.apache"))
             continue;
+          // Connector onboard the CamundaStarter function
+          if (className.startsWith("io.camunda.connector.runtime") ||
+          className.startsWith("io.camunda.zeebe"))
+            continue;
           try {
             Class<?> clazz = loader.loadClass(className);
             OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
