@@ -68,9 +68,8 @@ logging.level.root: INFO
 server.error.include-message: always
 
 # Spring Boot Configuration
-spring.application.name: ZeebeCherry
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
+spring.application.name: CherryRuntime
+# server.servlet.context-path: /
 # spring.mustache.prefix: classpath:static/templates/
 
 
