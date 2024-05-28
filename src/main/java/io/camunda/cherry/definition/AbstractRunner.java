@@ -890,6 +890,10 @@ public abstract class AbstractRunner {
     return "Cherry";
   }
 
+  public List<String> getAppliesTo() {
+    return List.of("bpmn:Task");
+  }
+
   /**
    * Qualify the runner
    *
@@ -939,8 +943,8 @@ public abstract class AbstractRunner {
         listOfErrors.add(
             "Runner [" + getIdentification() + ", Parameter name[" + parameter.name + "] is defined multiple time");
 
-      if (parameter.conditionProperty != null) {
-        if (parameter.conditionProperty.trim().isEmpty())
+      if (parameter.condition != null) {
+        if (parameter.condition.trim().isEmpty())
           listOfErrors.add("Runner [" + getIdentification() + ", Parameter [" + parameter.name
               + "], conditionProperty must not bu empty when set");
         // the list must not be null
@@ -948,7 +952,7 @@ public abstract class AbstractRunner {
           listOfErrors.add("Runner [" + getIdentification() + ", Parameter [" + parameter.name
               + "], conditionOneOf must not be empty");
         // the property must match a parameter
-        if (listInput.stream().filter(w -> parameter.conditionProperty.equals(w.getName())).count() != 1)
+        if (listInput.stream().filter(w -> parameter.condition.equals(w.getName())).count() != 1)
           listOfErrors.add("Runner [" + getIdentification() + ", Parameter [" + parameter.name
               + "], conditionProperty must match one and only one other parameter");
       }

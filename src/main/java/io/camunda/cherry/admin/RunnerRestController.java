@@ -131,11 +131,7 @@ public class RunnerRestController {
       infoRunner.put("frameworkrunner", runner instanceof IntFrameworkRunner ? "true" : "false");
 
       infoRunner.put("logo", runner.getLogo());
-      try {
-        infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getType()));
-      } catch (OperationException e) {
-        infoRunner.put("active", false);
-      }
+      infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getType()));
       infoRunner.put("statistic", statisticRunner);
       infoRunner.put(PARAM_NBEXEC, statisticRunner.executions);
       infoRunner.put(PARAM_NBFAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
@@ -286,7 +282,7 @@ public class RunnerRestController {
   public RunnerInformation stopWorker(@RequestParam(name = "runnertype") String runnerType) {
     logger.info("PUT[/api/runner/stop] Stop requested for runnerType[" + runnerType + "]");
     try {
-      boolean isStopped = false;
+      boolean isStopped;
       try {
         isStopped = cherryJobRunnerFactory.stopRunner(runnerType);
       } catch (OperationAlreadyStoppedException e) {
@@ -312,7 +308,7 @@ public class RunnerRestController {
    */
   @PutMapping(value = "/api/runner/start", produces = "application/json")
   public RunnerInformation startWorker(@RequestParam(name = "runnertype") String runnerType) {
-    logger.info("PUT[/api/runner/start] Start requested for [" + runnerType + "]");
+    logger.info("PUT[/api/runner/start] Start requested for [{}]", runnerType);
     try {
       boolean isStarted = false;
       try {
@@ -320,7 +316,7 @@ public class RunnerRestController {
       } catch (OperationAlreadyStartedException e) {
         isStarted = true;
       }
-      logger.info("Start executed for [" + runnerType + "]: " + isStarted);
+      logger.info("Start executed for [{}]: {}", runnerType, isStarted);
       AbstractRunner runner = getRunnerByType(runnerType);
       RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
       return completeRunnerInformation(runnerInfo, false, false, null, null);
@@ -344,9 +340,9 @@ public class RunnerRestController {
   public String getTemplate(@RequestParam(name = "name", required = false) String runnerName,
                             @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners) {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
-    logger.info("GET[/api/runner/template] Download template requested for " + (runnerName == null ?
-        "Complete collection" :
-        "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
+    logger.info("GET[/api/runner/template] Download template requested for [{}] FrameworkIncluded[{}]",
+        (runnerName == null ? "<Completecollection>" : runnerName), withFrameworkRunnersIncluded);
+
     if (runnerName == null) {
       // generate for ALL runners
       List<Map<String, Object>> listTemplate = getListRunners(withFrameworkRunnersIncluded).stream()
@@ -381,9 +377,8 @@ public class RunnerRestController {
     // Zip file required? Add all templates in the ZIP.
     if (separateTemplate == null && withFrameworkRunners == null)
       withFrameworkRunnersIncluded = true;
-    logger.info("GET[/api/runner/templatefile] Download template requested for " + (runnerName == null ?
-        "Complete collection" :
-        "[" + runnerName + "]") + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "]");
+    logger.info("GET[/api/runner/template] Download template requested for [{}] FrameworkIncluded[{}]",
+        (runnerName == null ? "<Completecollection>" : runnerName), withFrameworkRunnersIncluded);
     try {
 
       Map<String, String> mapContent = new HashMap<>();
@@ -444,9 +439,8 @@ public class RunnerRestController {
           .contentType(MediaType.parseMediaType("application/json"))
           .body(resource);
     } catch (Exception e) {
-      logger.error(
-          "Download template error for " + (runnerName == null ? "Complete collection" : "[" + runnerName + "]")
-              + " FrameworkIncluded[" + withFrameworkRunnersIncluded + "] :" + e);
+      logger.error("Download template error for [{}] FrameworkIncluded[{}] : {}",
+          (runnerName == null ? "Complete collection" : "[" + runnerName + "]"), withFrameworkRunnersIncluded, e);
       return ResponseEntity.internalServerError().body(null);
     }
   }
@@ -472,20 +466,16 @@ public class RunnerRestController {
                                                       boolean withStats,
                                                       LocalDateTime dateNow,
                                                       HistoryPerformance.PeriodStatistic periodStatistic) {
-    try {
-      runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getType()));
-      runnerInformation.setDisplayLogo(withLogo);
+    runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getType()));
+    runnerInformation.setDisplayLogo(withLogo);
 
-      if (withStats) {
-        runnerInformation.setStatistic(
-            historyFactory.getStatistic(runnerInformation.getType(), dateNow, periodStatistic));
-        runnerInformation.setPerformance(
-            historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic));
-      }
-
-    } catch (OperationException e) {
-      // definitively not expected
+    if (withStats) {
+      runnerInformation.setStatistic(
+          historyFactory.getStatistic(runnerInformation.getType(), dateNow, periodStatistic));
+      runnerInformation.setPerformance(
+          historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic));
     }
+
     return runnerInformation;
   }
 
@@ -511,7 +501,7 @@ public class RunnerRestController {
         return HistoryPerformance.PeriodStatistic.FOURHOUR;
       return HistoryPerformance.PeriodStatistic.valueOf(period);
     } catch (Exception e) {
-      logger.error("Unknow PeriodStatistic[" + period + "]");
+      logger.error("Unknow PeriodStatistic[{}]", period);
       return HistoryPerformance.PeriodStatistic.FOURHOUR;
     }
   }

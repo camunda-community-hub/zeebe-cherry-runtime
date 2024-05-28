@@ -8,7 +8,7 @@ cherry:
     # the runtime load all embedded runners
     embeddedrunner: false
 
-    # the runtime load ping runners
+    # the runtime load ping runners - attention, pingConnector and pingObjectConnector are embedded
     pingrunner: false
 
 # use a OnPremise Zeebe engine
@@ -34,11 +34,29 @@ logging.level.root: INFO
 # return message with BAD_REQUEST to the client
 server.error.include-message: always
 
-# Spring Boot Configuration
-spring.application.name: ZeebeCherry
+
 # TODO change this to /cherry. Need to figure out how to access this from mustache templates
 server.servlet.context-path: /
-# spring.mustache.prefix: classpath:static/templates/
+
+# Spring Boot Configuration
+spring:
+  application.name: ZeebeCherry
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+
+  jpa:
+    generate-ddl: true
+    hibernate.ddl-auto: "update"
+
+    properties:
+      hibernate:
+        format_sql: true
+        show-sql: true
+
 
 # spring.datasource:
 #   url: "jdbc:h2:file:./cherry.db"
@@ -50,12 +68,13 @@ server.servlet.context-path: /
 # Save statistics and information
 
 # --------------------- Postgres
-spring.datasource:
-  url: "jdbc:postgresql://localhost/cherrydb"
-  username: "camunda"
-  password: "camunda"
-  driver-class-name: "org.postgresql.Driver"
-spring.jpa.database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+  datasource:
+    url: "jdbc:postgresql://localhost/cherrydb"
+    username: "camunda"
+    password: "camunda"
+    driver-class-name: "org.postgresql.Driver"
+  jpa.database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+
 org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
 # hibernate.jdbc.use_streams_for_binary: true
 
@@ -73,15 +92,6 @@ org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
 
 
 
-
-spring.jpa:
-  generate-ddl: true
-  hibernate.ddl-auto: "update"
-
-  properties:
-    hibernate:
-      format_sql: true
-      show-sql: true
 
 
 # logging.level.org.hibernate.SQL: TRACE

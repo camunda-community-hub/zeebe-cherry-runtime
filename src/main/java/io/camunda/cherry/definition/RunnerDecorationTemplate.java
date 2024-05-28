@@ -65,6 +65,12 @@ public class RunnerDecorationTemplate {
   public static String getJsonFromList(List<Map<String, Object>> listTemplates) {
     // transform the result in JSON
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    // Attention: if there is only one item in the list, then generate directly the JSON
+    // Camunda Marketplace want to see one tempalte and not a list of template
+    if (listTemplates != null && listTemplates.size() == 1) {
+      return gson.toJson(listTemplates.get(0));
+    }
+
     return gson.toJson(listTemplates);
   }
 
@@ -90,7 +96,7 @@ public class RunnerDecorationTemplate {
     if (runner.getLogo() != null)
       templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
     templateContent.put(ATTR_CATEGORY, Map.of(ATTR_ID, "connectors", ATTR_NAME, "connectors"));
-    templateContent.put(ATTR_APPLIES_TO, List.of("bpmn:Task"));
+    templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo() != null ? runner.getAppliesTo() : List.of("bpmn:Task"));
     templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, "bpmn:ServiceTask"));
     // no groups at this moment
 
@@ -103,16 +109,18 @@ public class RunnerDecorationTemplate {
     ));
 
     // Do not ask multiple time the listInput
-    List<RunnerParameter> listInput = runner.getListInput();
-    List<RunnerParameter> listOutput = runner.getListOutput();
+    List<RunnerParameter> listInputs = runner.getListInput();
+    List<RunnerParameter> listOutputs = runner.getListOutput();
 
+    boolean useResultVariable = false;
     // AbstractConnector
     if (runner instanceof AbstractConnector || runner instanceof SdkRunnerConnector) {
       pleaseAddOutputGroup = true;
 
       // there is here two options:
       // connector return and object or a list of output
-      if (listOutput.isEmpty()) {
+
+      if (listOutputs.isEmpty()) {
         // connector returns an object
         listProperties.add(Map.of( // list of properties
             ATTR_VALUE, RESULT_VARIABLE, ATTR_TYPE, TYPE_FIELD_STRING,// Variable Value Name
@@ -120,6 +128,7 @@ public class RunnerDecorationTemplate {
             ATTR_GROUPS, "output", // set in the output group
             ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ATTR_KEY_RESULT_VARIABLE)));
       } else {
+        useResultVariable = true;
         listProperties.add(Map.of( // list of properties
             ATTR_VALUE, RESULT_VARIABLE, // save the result in the result variable
             ATTR_TYPE, ATTR_TYPE_HIDDEN, // Hidden, because one field is created per output
@@ -129,14 +138,14 @@ public class RunnerDecorationTemplate {
 
     // Identify all groups
     List<RunnerParameter.Group> listGroups = new ArrayList<>();
-    listGroups.addAll(listInput.stream().filter(w -> w.group != null).map(w -> w.group).toList());
+    listGroups.addAll(listInputs.stream().filter(w -> w.group != null).map(w -> w.group).toList());
 
     // We group all result in a Group Input
-    if (!listInput.isEmpty())
+    if (!listInputs.isEmpty())
       listGroups.add(new RunnerParameter.Group(GROUP_INPUT, GROUP_INPUT_LABEL));
 
     // We group all result in a Group Output
-    if (!listOutput.isEmpty() || pleaseAddOutputGroup)
+    if (!listOutputs.isEmpty() || pleaseAddOutputGroup)
       listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
     // ---- Add groups
@@ -148,18 +157,18 @@ public class RunnerDecorationTemplate {
     // ---- Add Properties
     templateContent.put(ATTR_PROPERTIES, listProperties);
 
-    for (RunnerParameter runnerParameter : listInput) {
+    for (RunnerParameter runnerParameter : listInputs) {
       // do not generate a propertie for a accessAllVariables
       if (runnerParameter.isAccessAllVariables())
         continue;
       listProperties.addAll(getParameterProperties(runnerParameter, true, ""));
     }
-    for (RunnerParameter runnerParameter : listOutput) {
+    for (RunnerParameter runnerParameter : listOutputs) {
       // do not generate a property for accessAllVariables
       if (runnerParameter.isAccessAllVariables())
         continue;
-      listProperties.addAll(getParameterProperties(runnerParameter, false,
-          runner instanceof AbstractConnector ? RESULT_VARIABLE + "." : ""));
+      listProperties.addAll(
+          getParameterProperties(runnerParameter, false, useResultVariable ? RESULT_VARIABLE + "." : ""));
     }
 
     // check if the runner generates error
@@ -202,15 +211,17 @@ public class RunnerDecorationTemplate {
 
     // Calculate the condition
     HashMap<String, Object> condition = null;
-    if (runnerParameter.conditionProperty != null) {
+    if (runnerParameter.condition != null) {
       condition = new HashMap<>();
-      condition.put("property", runnerParameter.conditionProperty);
-      condition.put("oneOf", runnerParameter.conditionOneOf);
+      condition.put("property", runnerParameter.condition);
+      if (runnerParameter.conditionOneOf != null)
+        condition.put("oneOf", runnerParameter.conditionOneOf);
+      if (runnerParameter.conditionEquals != null && !runnerParameter.conditionEquals.isEmpty())
+        condition.put("equals", runnerParameter.conditionEquals);
     }
-    // To have a checkbox, the parameter must be optionnal AND does not have already a condition
+    // To have a checkbox, the parameter must be optional AND does not have already a condition
     boolean addConditionCheckbox =
-        (runnerParameter.conditionProperty == null) && (RunnerParameter.Level.OPTIONAL.equals(
-            runnerParameter.getLevel()));
+        (runnerParameter.condition == null) && (RunnerParameter.Level.OPTIONAL.equals(runnerParameter.getLevel()));
 
     if (runnerParameter.visibleInTemplate)
       addConditionCheckbox = false;
@@ -270,7 +281,7 @@ public class RunnerDecorationTemplate {
       typeParameter = TYPE_FIELD_DROPDOWN;
       // add choices
       List<Map<String, String>> listChoices = new ArrayList<>();
-      for (RunnerParameter.WorkerParameterChoice oneChoice : runnerParameter.workerParameterChoiceList) {
+      for (RunnerParameter.WorkerParameterChoice oneChoice : runnerParameter.choiceList) {
         listChoices.add(Map.of(ATTR_NAME, oneChoice.displayName, ATTR_VALUE, oneChoice.code));
       }
       propertyParameter.put(ATTR_CHOICES, listChoices);

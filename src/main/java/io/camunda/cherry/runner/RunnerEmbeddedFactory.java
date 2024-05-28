@@ -79,11 +79,8 @@ public class RunnerEmbeddedFactory {
 
   public List<RunnerLightDefinition> getAllRunners() {
     return concatAllRunners().map(t -> {
-      RunnerLightDefinition light = new RunnerLightDefinition();
-      light.name = t.getName();
-      light.type = t.getType();
-      light.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
-      return light;
+      return new RunnerLightDefinition(t.getName(), t.getType(), t.getClass().getName(),
+          RunnerDefinitionEntity.Origin.EMBEDDED);
     }).toList();
   }
 

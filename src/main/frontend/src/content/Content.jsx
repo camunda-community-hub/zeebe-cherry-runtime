@@ -7,7 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button} from "carbon-components-react";
+import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat, ConeStriped} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
 import RestCallService from "../services/RestCallService";
@@ -38,7 +38,10 @@ class Content extends React.Component {
           </div>
           <div className="col-md-2">
             <Button className="btn btn-success btn-sm"
-                    onClick={() => this.refreshListContent()}
+                    onClick={() => {
+                      this.refreshStatusOnPage();
+                      this.refreshListContent()
+                    }}
                     disabled={this.state.display.loading}>
               <ArrowRepeat/> Refresh
             </Button>
@@ -99,6 +102,39 @@ class Content extends React.Component {
 
           </div>
         </div>
+        <div className="row" style={{width: "100%"}}>
+          <div className="col-md-12">
+            <FileUploader
+              labelTitle="Upload JAR files"
+              labelDescription="Only .jar file"
+              buttonLabel="Add files"
+              filenameStatus="edit"
+              accept={['.jar']}
+              onChange={(event) => this.handleFileChange(event)}
+              multiple
+              iconDescription="Clear file"
+              disabled={this.state.display.loading || this.state.files.size == 0}
+            />
+            <Button onClick={() => this.loadJar()} disabled={this.state.display.loading}>Upload</Button>
+            <br/>
+            Upload a Connector Jar directly from your disk to Cherry. It will be analysed and all workers/connectors
+            detected started.
+
+            {this.state.statusUploadFailed && <div className="alert alert-danger" style={{
+              margin: "10px 10px 10px" +
+                " 10px"
+            }}>
+              {this.state.statusUploadFailed}
+            </div>
+            }
+            {this.state.statusUploadSuccess && <div className="alert alert-success" style={{
+              margin: "10px 10px 10px" +
+                " 10px"
+            }}>
+              {this.state.statusUploadSuccess}
+            </div>}
+          </div>
+        </div>
       </div>
     )
   }
@@ -121,7 +157,7 @@ class Content extends React.Component {
   refreshListContentCallback(httpPayload) {
     this.setDisplayProperty("loading", false);
     if (httpPayload.isError()) {
-      console.log("Content.refreshListContentCallback: error " + httpPayload.getError());
+      console.log("Content.refreshListContentCallback: error: " + httpPayload.getError());
       this.setState({status: httpPayload.getError()});
     } else {
       this.setState({content: httpPayload.getData()});
@@ -141,9 +177,11 @@ class Content extends React.Component {
   }
 
   deleteStorageEntityId(storageentityid) {
+    this.refreshStatusOnPage();
     console.log("Content.deleteStorageEntityId" + storageentityid);
     const userConfirmed = window.confirm("Are you sure you want to delete this Jar?");
     if (userConfirmed) {
+      this.setDisplayProperty("loading", true);
       this.setState({labelBtnStop: "Deleting...", status: ""});
       var restCallService = RestCallService.getInstance();
       restCallService.putJson('cherry/api/content/delete?storageentityid=' + storageentityid, {}, this, this.operationDeleteCallback);
@@ -151,12 +189,52 @@ class Content extends React.Component {
   }
 
   operationDeleteCallback(httpResponse) {
+    this.setDisplayProperty("loading", false);
+
     if (httpResponse.isError()) {
       console.log("deleteStorageEntityId.operationDeleteCallback: error " + httpResponse.getError());
       this.setState({status: httpResponse.getError()});
     } else {
     }
     this.refreshListContent();
+  }
+
+  handleFileChange(event) {
+    this.refreshStatusOnPage();
+    const fileList = event.target.files;
+    this.setState({files: fileList}); // Use spread operator to create a new array
+  };
+
+
+  loadJar(event) {
+    console.log("Load Jar ", this.state.files);
+    this.refreshStatusOnPage();
+    var restCallService = RestCallService.getInstance();
+
+    const formData = new FormData();
+    formData.append("File", this.state.files[0]);
+    this.setDisplayProperty("loading", true);
+
+    restCallService.postUpload('cherry/api/content/add?', formData, this, this.operationUploadJarCallback);
+
+
+    // dispatch(connectorService.uploadJar(event.target.files[0]));
+  }
+
+  operationUploadJarCallback(httpResponse) {
+    this.setDisplayProperty("loading", false);
+
+    if (httpResponse.isError()) {
+      console.log("operationUploadJar.operationDeleteCallback: error " + httpResponse.getError());
+      this.setState({statusUploadFailed: httpResponse.getError()});
+    } else {
+      this.setState({'files': [], statusUploadSuccess: 'Jar uploaded with success'});
+    }
+    this.refreshListContent();
+  }
+
+  refreshStatusOnPage() {
+    this.setState({statusUploadFailed: '', statusUploadSuccess: '', status: ''});
   }
 }
 

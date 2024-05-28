@@ -27,8 +27,6 @@ import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.cherry.zeebe.ZeebeConfiguration;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.validation.ValidationProvider;
-import io.camunda.zeebe.client.api.response.ActivatedJob;
-import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.client.api.worker.JobHandler;
 import io.camunda.zeebe.client.api.worker.JobWorker;
 import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
@@ -39,9 +37,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
@@ -99,7 +100,11 @@ public class JobRunnerFactory {
       return;
     }
 
-    logOperation.log(OperationEntity.Operation.STARTRUNTIME, "");
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    String utcDateString = sdf.format(new Date());
+
+    logOperation.log(OperationEntity.Operation.STARTRUNTIME, utcDateString + " UTC");
 
     resumeAllRunners();
   }
@@ -115,7 +120,7 @@ public class JobRunnerFactory {
   }
 
   /**
-   *
+   * Restart all runners
    */
   public void resumeAllRunners() {
     // get the list from the storage
@@ -173,13 +178,13 @@ public class JobRunnerFactory {
         }
 
       } catch (Exception e) {
-        logger.error("Can't start runner " + runner.getIdentification() + " : " + e);
+        logger.error("Can't start runner [{}] : {} ", runner.getIdentification(), e);
       }
     }
   }
 
   /**
-   *
+   * stop all runners
    */
   public void suspendAllRunners() {
     for (Running running : mapRunning.values()) {
@@ -246,7 +251,11 @@ public class JobRunnerFactory {
     return true;
   }
 
-  public boolean isRunnerActive(String runnerType) throws OperationException {
+  public boolean isRunnerExist(String runnerType) {
+    return mapRunning.containsKey(runnerType);
+  }
+
+  public boolean isRunnerActive(String runnerType) {
     if (!mapRunning.containsKey(runnerType))
       return false;
     Running running = mapRunning.get(runnerType);
@@ -354,7 +363,7 @@ public class JobRunnerFactory {
   }
 
   private boolean isEmbeddedWorker(AbstractRunner runner) {
-    return runner instanceof IntFrameworkRunner;
+    return runner instanceof IntFrameworkRunner && !(runner instanceof PingIntRunner);
   }
 
   private boolean isPingWorker(AbstractRunner runner) {
@@ -383,16 +392,6 @@ public class JobRunnerFactory {
   }
 
   record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
-  }
-
-  public class CreditDeductionWorker implements JobHandler {
-
-    Logger LOGGER = LoggerFactory.getLogger(CreditDeductionWorker.class);
-
-    @Override
-    public void handle(JobClient client, ActivatedJob job) throws Exception {
-      logger.info("YES");
-    }
   }
 
 }

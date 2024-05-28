@@ -1,12 +1,15 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  RunnerFactory                                                 */
+/*  RunnerFactory                                                       */
 /*                                                                      */
 /*  manipulate all runners.                                             */
 /* main API for RunnerEmbedded, RunnerUpload to manipulate different    */
-/* kind of runner, and interface to RunnerStorage                       */
+/* kind of runners, and interface to RunnerStorage                      */
 /*                                                                      */
-/* This is the main entrance for all external access                    */
+/* The RunnerFactory does not manage execution, just definition and     */
+/* storage. See JobRunnerFactory                                        */
+/*                                                                      */
+/* This is the main entrance for all external access.                   */
 /*                                                                      */
 /* Note: workers are created in the JobRunnerFactory. This class manage */
 /* the runner definition, not the execution                             */
@@ -14,6 +17,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
@@ -29,11 +33,14 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +55,7 @@ public class RunnerFactory {
   private static final Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
   private final RunnerEmbeddedFactory runnerEmbeddedFactory;
   private final RunnerUploadFactory runnerUploadFactory;
+  private final RunnerClassLoaderFactory runnerClassLoaderFactory;
   private final StorageRunner storageRunner;
   private final RunnerExecutionRepository runnerExecutionRepository;
   private final LogOperation logOperation;
@@ -55,12 +63,14 @@ public class RunnerFactory {
 
   RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
                 RunnerUploadFactory runnerUploadFactory,
+                RunnerClassLoaderFactory runnerClassLoaderFactory,
                 StorageRunner storageRunner,
                 RunnerExecutionRepository runnerExecutionRepository,
                 LogOperation logOperation,
                 SessionFactory sessionFactory) {
     this.runnerEmbeddedFactory = runnerEmbeddedFactory;
     this.runnerUploadFactory = runnerUploadFactory;
+    this.runnerClassLoaderFactory = runnerClassLoaderFactory;
     this.storageRunner = storageRunner;
     this.runnerExecutionRepository = runnerExecutionRepository;
     this.logOperation = logOperation;
@@ -79,11 +89,11 @@ public class RunnerFactory {
 
     if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
       // if (objectRunner instanceof AbstractRunner runner) {
-      logger.info("Candidate Runner is AbstractRunner [{}] type [{}] inputSize [{}] outputSize [{}]",
+      logger.info(
+          "Candidate Runner is AbstractRunner [{}] CherryConnector[{}] type [{}] inputSize [{}] outputSize [{}]",
           candidateRunner.getClass().getName(),
           (candidateRunner instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
-          ((AbstractRunner) candidateRunner).getName(), ((AbstractRunner) candidateRunner).getType(),
-          ((AbstractRunner) candidateRunner).getListOutput().size(),
+          ((AbstractRunner) candidateRunner).getType(), ((AbstractRunner) candidateRunner).getListOutput().size(),
           ((AbstractRunner) candidateRunner).getListOutput().size());
       listDetectedRunners.add((AbstractRunner) candidateRunner);
       return listDetectedRunners;
@@ -103,7 +113,7 @@ public class RunnerFactory {
       AbstractRunner last = listDetectedRunners.get(listDetectedRunners.size() - 1);
       logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] inputSize [{}] outputSize [{}]",
           candidateRunner.getClass().getName(), (last instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
-          last.getName(), last.getType(), last.getListOutput().size(), last.getListOutput().size());
+          last.getName(), last.getType(), last.getListInput().size(), last.getListOutput().size());
 
       return listDetectedRunners;
     }
@@ -118,6 +128,22 @@ public class RunnerFactory {
     return listDetectedRunners;
   }
 
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Operations                                                          */
+  /*                                                                      */
+  /* ******************************************************************** */
+
+  /**
+   * Initialise step
+   * 1: detect/load all runners in the storage:
+   * - from embedbed (thanks to runnerEmbeddedFactory),
+   * - UploadPath (runnerUploadFactory)
+   * 2; copy all Jar from the storage to the Classloaderpath (runnerUploadFactory)
+   * <p>
+   * The class does not start any runners
+   */
   public void init() {
     logger.info("----- RunnerFactory.1 Load all embedded runner");
 
@@ -132,11 +158,70 @@ public class RunnerFactory {
     logger.info("Load StorageFromUploadPath [{}]", logInfo);
 
     // Upload the ClassLoaderPath, and load the class
-    logger.info("----- RunnerFactory.3 Load JavaMachine from storage");
-    List<String> lisJars = runnerUploadFactory.loadJarFromStorage(true);
+    logger.info("----- RunnerFactory.3 Load JavaClassLoaderPath from storage");
+    List<String> lisJars = runnerUploadFactory.loadClassLoaderJarsFromStorage(true);
     logInfo = lisJars.stream().collect(Collectors.joining(","));
     logger.info("Load JarUploadPath [{}]", logInfo);
 
+  }
+
+  /**
+   * Save a new Jar file. A Jar file contains multiple runners. This method does not stop/restart runners.
+   * The method save in the storage and in the classloader path. The load in the JavaClassLoader is not under
+   * the responsability of the method, just to place the jar in the storage and the classloader.
+   *
+   * @param file multipart file
+   * @return list of runners detected in the jar file
+   */
+  public List<RunnerLightDefinition> saveFromMultiPartFile(MultipartFile file, String jarFileName) {
+
+    List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
+    JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
+
+    // save the file on a temporary disk
+    OutputStream outputStream = null;
+    Path jarTemp = null;
+    try {
+      jarTemp = Files.createTempFile(jarFileName, ".jar");
+      // Open an OutputStream to the temporary file
+      outputStream = new FileOutputStream(jarTemp.toFile());
+      // Transfer data from InputStream to OutputStream
+      byte[] buffer = new byte[1024 * 100]; // 100Ko
+      int bytesRead;
+      int count = 0;
+      InputStream inputStream = file.getInputStream();
+      while ((bytesRead = inputStream.read(buffer)) != -1) {
+        count += bytesRead;
+        outputStream.write(buffer, 0, bytesRead);
+      }
+      outputStream.flush();
+      outputStream.close();
+      outputStream = null;
+
+      listRunnersDetected = runnerUploadFactory.saveJarFileToStorage(jarTemp.toFile(), jarFileName, true);
+
+      logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + file.getName() + "]");
+
+    } catch (Exception e) {
+      logOperation.log(OperationEntity.Operation.ERROR, "Can't load JAR [" + jarFileName + "] : " + e.getMessage());
+    } finally {
+      if (outputStream != null)
+        try {
+          outputStream.close();
+        } catch (Exception e) {
+          // do nothing
+        }
+    }
+    return listRunnersDetected;
+  }
+
+  /**
+   * Copy a Jar File from Storage to the ClassLoader path
+   *
+   * @param jarFileName
+   */
+  public boolean jarFileToClassLoader(String jarFileName) {
+    return runnerUploadFactory.jarFileStorageToClassLoader(jarFileName);
   }
 
   /**
@@ -164,7 +249,7 @@ public class RunnerFactory {
         Transaction txn = session.beginTransaction();
         runnerExecutionRepository.deleteFromEntityType(entityToRemove.type);
 
-        storageRunner.removeEntity(entityToRemove);
+        storageRunner.removeRunner(entityToRemove);
         txn.commit();
       } catch (Exception e) {
         logOperation.logError("Can't delete [" + entityToRemove.type + "]", e);
@@ -172,6 +257,12 @@ public class RunnerFactory {
     }
 
   }
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  getter/setter                                                       */
+  /*                                                                      */
+  /* ******************************************************************** */
 
   /**
    * Get All runners
@@ -185,7 +276,7 @@ public class RunnerFactory {
     List<RunnerDefinitionEntity> listDefinitionRunners = storageRunner.getRunners(filter);
 
     for (RunnerDefinitionEntity runnerDefinitionEntity : listDefinitionRunners) {
-      listRunners.addAll(getRunnerFromEntity(runnerDefinitionEntity));
+      listRunners.addAll(getRunnersFromEntity(runnerDefinitionEntity));
     }
     return listRunners;
   }
@@ -202,12 +293,13 @@ public class RunnerFactory {
   }
 
   /**
-   * Get the runner by it's entity
+   * Get the runner by its entity. Assuming the Jar is already loaded on the ClassLoader path, and it is loaded
+   * in the Java Macbine during the operation
    *
    * @param runnerDefinitionEntity runnerEntity
    * @return the runner
    */
-  private List<AbstractRunner> getRunnerFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
+  private List<AbstractRunner> getRunnersFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
     ClassLoader loader;
     try {
       // if this class is embedded?
@@ -220,11 +312,9 @@ public class RunnerFactory {
         logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
         return Collections.emptyList();
       }
-      String jarFileName = runnerUploadFactory.getClassLoaderPath() + File.separator + runnerDefinitionEntity.jar.name;
+      Class clazz = runnerClassLoaderFactory.loadClassInJavaMachine(runnerDefinitionEntity.jar.name,
+          runnerDefinitionEntity.classname);
 
-      loader = new URLClassLoader(new URL[] { new File(jarFileName).toURI().toURL() });
-
-      Class clazz = loader.loadClass(runnerDefinitionEntity.classname);
       Object objectRunner = clazz.getDeclaredConstructor().newInstance();
 
       List<AbstractRunner> listRunners = detectRunnersInObject(objectRunner);
@@ -232,8 +322,8 @@ public class RunnerFactory {
         return listRunners;
 
       /* we must have a runner detected in a entity */
-      logger.error("No method to get a runner from [" + runnerDefinitionEntity.name + "]");
-      logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + jarFileName
+      logger.error("No method to get a runner from [{}]", runnerDefinitionEntity.name);
+      logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + runnerDefinitionEntity.jar.name
           + "] not a Runner or OutboundConnectorFunction");
       return listRunners;
     } catch (Error er) {

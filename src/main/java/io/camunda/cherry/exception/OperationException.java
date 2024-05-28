@@ -16,4 +16,8 @@ public class OperationException extends Exception {
   public String getExplanation() {
     return explanation;
   }
+
+  public String getHumanInformation() {
+    return "Code: [" + exceptionCode + "] " + explanation;
+  }
 }

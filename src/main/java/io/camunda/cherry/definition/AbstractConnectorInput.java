@@ -16,7 +16,7 @@ public class AbstractConnectorInput {
   /**
    * Return the list of Parameters used by the connector
    *
-   * @return
+   * @return list of InputParameters
    */
   public List<RunnerParameter> getInputParameters() {
     return Collections.emptyList();
@@ -31,6 +31,6 @@ public class AbstractConnectorInput {
    * basic connector, give the Input connector. The Cherry will be able to verify the list against
    * the Input: all fields are declared? All RunnerParameters exists as a member in the class?
    */
-  protected record InputParametersInfo(List<RunnerParameter> listRunners, Class inputClass) {
+  protected record InputParametersInfo(List<RunnerParameter> listRunners, Class<?> inputClass) {
   }
 }

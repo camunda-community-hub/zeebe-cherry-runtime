@@ -280,8 +280,17 @@ public class StorageRunner {
   /*                                                                      */
   /* ******************************************************************** */
 
-  public List<RunnerDefinitionEntity> getRunners(Filter filter) {
+  public List<RunnerDefinitionEntity> getRunnersFromJarName(String jarName) {
+    return getRunners(new StorageRunner.Filter().jarFileName(jarName));
+  }
 
+  /**
+   * Return runner which march the filter
+   *
+   * @param filter to select runners
+   * @return list of Runner Entity
+   */
+  public List<RunnerDefinitionEntity> getRunners(Filter filter) {
     List<RunnerDefinitionEntity> listRunnerEntity = runnerDefinitionRepository.findAll();
     return listRunnerEntity.stream() // stream to apply each filter
         .filter(t -> {
@@ -329,7 +338,7 @@ public class StorageRunner {
    * @param runnerDefinition entity to remove
    */
 
-  public void removeEntity(RunnerDefinitionEntity runnerDefinition) {
+  public void removeRunner(RunnerDefinitionEntity runnerDefinition) {
     logger.info("StorageRunner.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,
         runnerDefinition.type, runnerDefinition.activeRunner);
     runnerDefinitionRepository.delete(runnerDefinition);

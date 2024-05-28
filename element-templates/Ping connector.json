@@ -206,7 +206,7 @@
           "property": "ipAddress_optional",
           "equals": "true"
         },
-        "description": "Returm the IpAddress",
+        "description": "Return the IpAddress",
         "binding": {
           "type": "zeebe:output",
           "source": "\u003d result.ipAddress"
@@ -220,7 +220,7 @@
         "group": "Output"
       },
       {
-        "description": "Returm parameters",
+        "description": "Return parameters",
         "binding": {
           "type": "zeebe:input",
           "name": "parameters_optional"

@@ -24,7 +24,11 @@ class HttpResponse {
   }
 
   getError() {
-    return this.err.response.data.message;
+    if (this.err.response && this.err.response.data && this.err.response.data.message)
+      return this.err.response.data.message;
+    if (this.err.message)
+      return this.err.message;
+    return this.err.code;
   }
 
   getData() {

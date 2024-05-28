@@ -78,9 +78,9 @@ public class LoadFileFromDiskWorker extends AbstractWorker implements IntFramewo
             RunnerParameter.getInstance(INPUT_POLICY, "Policy", String.class, RunnerParameter.Level.OPTIONAL,
                     "Policy to manipulate the file after loading. With " + POLICY_V_ARCHIVE
                         + ", the folder archive must be specify")
-                .addChoice("DELETE", POLICY_V_DELETE)
-                .addChoice("ARCHIVE", POLICY_V_ARCHIVE)
-                .addChoice("UNCHANGE", POLICY_V_UNCHANGE)
+                .addChoice(POLICY_V_DELETE, "Delete")
+                .addChoice(POLICY_V_ARCHIVE, "Archive")
+                .addChoice(POLICY_V_UNCHANGE, "Unchange")
                 .setVisibleInTemplate()
                 .setDefaultValue(POLICY_V_UNCHANGE)
                 .setGroup(GROUP_PROCESS_FILE),

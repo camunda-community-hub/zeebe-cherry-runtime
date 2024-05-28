@@ -1,5 +1,6 @@
 package io.camunda.cherry.definition.connector;
 
+import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.RunnerParameter;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.slf4j.Logger;
@@ -14,6 +15,22 @@ import java.util.Map;
 
 public class SdkRunnerCherryConnector extends SdkRunnerConnector {
 
+  /**
+   * Use the CherryInput constant *
+   * public static final String PARAMETER_MAP_NAME = "name";
+   * public static final String PARAMETER_MAP_LABEL = "label";
+   * public static final String PARAMETER_MAP_CLASS = "class";
+   * public static final String PARAMETER_MAP_LEVEL = "level";
+   * public static final String PARAMETER_MAP_EXPLANATION = "explanation";
+   * public static final String PARAMETER_MAP_DEFAULT_VALUE = "defaultValue";
+   * public static final String PARAMETER_MAP_CONDITION_PROPERTY = "conditionProperty";
+   * public static final String PARAMETER_MAP_GSON_TEMPLATE = "gsonTemplate";
+   * public static final String PARAMETER_MAP_CONDITION_ONE_OF = "conditionOneOf";
+   * public static final String PARAMETER_MAP_CHOICE_LIST = "choiceList";
+   * public static final String PARAMETER_MAP_CHOICE_LIST_CODE = "code";
+   * public static final String PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME = "displayName";
+   * public static final String PARAMETER_MAP_VISIBLE_IN_TEMPLATE = "visibleInTemplate";
+   */
   private final OutboundConnectorFunction outboundConnectorFunction;
 
   Logger logger = LoggerFactory.getLogger(SdkRunnerCherryConnector.class.getName());
@@ -71,14 +88,28 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     return callMethodString("getCollectionName");
   }
 
-  public Map<String, String> getBpmnErrors() {
-    Object value = callMethod(outboundConnectorFunction, "getBpmnErrors", Map.class);
-    return (Map<String, String>) value;
+  @Override
+  public List<BpmnError> getListBpmnErrors() {
+    Object value = callMethod(outboundConnectorFunction, "getListBpmnErrors", Map.class);
+    if (value instanceof Map<?, ?> listErrorsMap) {
+      List<BpmnError> listErrors = new ArrayList<>();
+      for (Map.Entry<?, ?> entry : listErrorsMap.entrySet()) {
+        if (entry.getKey() != null && entry.getValue() != null) {
+          listErrors.add(new BpmnError(entry.getKey().toString(), entry.getValue().toString()));
+        } else {
+          logger.error("getListBpmnErrors: Must be Map<String,String> with String (no null value)");
+
+        }
+      }
+      return listErrors;
+    }
+    logger.error("getListBpmnErrors does not return a Map<String,String> as expected ");
+    return Collections.emptyList();
   }
 
   @Override
   public List<RunnerParameter> getListInput() {
-    Class classInput = getInputParameterClass();
+    Class<?> classInput = getInputParameterClass();
     if (classInput == null)
       return super.getListInput();
     try {
@@ -102,7 +133,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
 
   @Override
   public List<RunnerParameter> getListOutput() {
-    Class classOutput = getOutputParameterClass();
+    Class<?> classOutput = getOutputParameterClass();
     if (classOutput == null)
       return Collections.emptyList();
 
@@ -112,8 +143,8 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
       Object objectInput = constructor.newInstance();
 
       Object listOutputParameter = callMethod(objectInput, "getOutputParameters", List.class);
-      if (listOutputParameter instanceof List listInputs)
-        return transformList(listInputs, "ConnectorName[" + this.getName() + "]");
+      if (listOutputParameter instanceof List listOuputs)
+        return transformList(listOuputs, "ConnectorName[" + this.getName() + "]");
       else if (listOutputParameter != null)
         logger.error("Error during getListInput(): on ConnectorName[{}] expect List get {}", this.getName(),
             listOutputParameter.getClass().getName());
@@ -125,12 +156,12 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     }
   }
 
-  public Class getInputParameterClass() {
+  public Class<?> getInputParameterClass() {
     Object value = callMethod(outboundConnectorFunction, "getInputParameterClass", Class.class);
     return (Class) value;
   }
 
-  public Class getOutputParameterClass() {
+  public Class<?> getOutputParameterClass() {
     Object value = callMethod(outboundConnectorFunction, "getOutputParameterClass", Class.class);
     return (Class) value;
   }
@@ -139,7 +170,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     return (String) callMethod(outboundConnectorFunction, name, String.class);
   }
 
-  private Object callMethod(Object caller, String name, Class valueClass) {
+  private Object callMethod(Object caller, String name, Class<?> valueClass) {
     Method method = null;
     try {
       method = caller.getClass().getMethod(name);
@@ -167,37 +198,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     List<RunnerParameter> listRunnersParameters = new ArrayList<>();
     for (Object input : listInputsParameter) {
       if (input instanceof Map inputMap) {
-        RunnerParameter parameter = new RunnerParameter();
-        parameter.name = getStringFromMap(inputMap, "name", contextInfo);
-        parameter.label = getStringFromMap(inputMap, "label", contextInfo);
-        parameter.clazz = (Class) inputMap.get("class");
-        parameter.level = RunnerParameter.Level.valueOf(getStringFromMap(inputMap, "level", contextInfo));
-        parameter.explanation = getStringFromMap(inputMap, "explanation", contextInfo);
-        parameter.defaultValue = inputMap.get("defaultValue");
-        parameter.conditionProperty = getStringFromMap(inputMap, "conditionProperty", contextInfo);
-
-        parameter.gsonTemplate = getStringFromMap(inputMap, "gsonTemplate", contextInfo);
-        parameter.conditionOneOf = (List<String>) inputMap.get("conditionOneOf");
-
-        List<Object> workerParameterChoiceList = (List) inputMap.get("workerParameterChoiceList");
-        if (workerParameterChoiceList != null) {
-          List<RunnerParameter.WorkerParameterChoice> workerParameterList = new ArrayList<>();
-          for (Object workerParameter : workerParameterChoiceList) {
-            if (workerParameter instanceof Map workerParameterMap) {
-              String code = getStringFromMap(workerParameterMap, "code", contextInfo + ".workerParameterChoiceList");
-              String displayName = getStringFromMap(workerParameterMap, "displayName",
-                  contextInfo + ".workerParameterChoiceList");
-              RunnerParameter.WorkerParameterChoice workerParameterChoice = new RunnerParameter.WorkerParameterChoice(
-                  code, displayName);
-              workerParameterList.add(workerParameterChoice);
-            } else {
-              logger.error("Error during transformList.workerParameterChoiceList{} : List Of Map expected, get {}",
-                  workerParameter == null ? "null" : workerParameter.getClass().getName());
-            }
-          }
-        } // end workerParameterChoiceList != null
-        parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get("visibleInTemplate"));
-        listRunnersParameters.add(parameter);
+        listRunnersParameters.add(RunnerParameter.getFromMap(inputMap, contextInfo));
         // public RunnerParameter.Group group;
       } else // input is not a Map
         logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,
@@ -206,15 +207,4 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     return listRunnersParameters;
   }
 
-  public String getStringFromMap(Map<?, ?> map, String attributName, String contextInfo) {
-    Object value = map.getOrDefault(attributName, null);
-    if (value == null)
-      return null;
-    if (value instanceof String)
-      return (String) value;
-
-    logger.error("Error during getString in {}, attribut {} : String expected get {}", contextInfo, attributName,
-        value.getClass().getName());
-    return null;
-  }
 }

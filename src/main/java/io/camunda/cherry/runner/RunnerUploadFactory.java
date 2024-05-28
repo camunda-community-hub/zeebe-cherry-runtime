@@ -1,3 +1,11 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  RunnerUploadFactory                                                 */
+/*                                                                      */
+/* This factory are in charge to upload jar in the storage (database)   */
+/* and in the ClassLoader                                               */
+/*                                                                      */
+/* ******************************************************************** */
 package io.camunda.cherry.runner;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
@@ -13,7 +21,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.time.Instant;
@@ -34,27 +41,30 @@ public class RunnerUploadFactory {
   private final StorageRunner storageRunner;
   private final LogOperation logOperation;
   private final SessionFactory sessionFactory;
+  private final RunnerClassLoaderFactory runnerClassLoaderFactory;
   private final List<RunnerLightDefinition> listLightRunners = new ArrayList<>();
+
   Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
+
   @Value("${cherry.connectorslib.uploadpath:@null}")
   private String uploadPath;
-  @Value("${cherry.connectorslib.classloaderpath:@null}")
-  private String classLoaderPath;
+
   @Value("${cherry.connectorslib.forcerefresh:false}")
   private Boolean forceRefresh;
 
-  public RunnerUploadFactory(StorageRunner storageRunner, LogOperation logOperation, SessionFactory sessionFactory) {
+  public RunnerUploadFactory(StorageRunner storageRunner,
+                             LogOperation logOperation,
+                             RunnerClassLoaderFactory runnerClassLoaderFactory,
+                             SessionFactory sessionFactory) {
     this.storageRunner = storageRunner;
     this.logOperation = logOperation;
+    this.runnerClassLoaderFactory = runnerClassLoaderFactory;
     this.sessionFactory = sessionFactory;
   }
 
   private static RunnerLightDefinition getLightFromRunnerDefinitionEntity(RunnerDefinitionEntity entityRunner) {
-    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
-    runnerLightDefinition.name = entityRunner.name;
-    runnerLightDefinition.type = entityRunner.type;
-    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
-    return runnerLightDefinition;
+    return new RunnerLightDefinition(entityRunner.name, entityRunner.type, entityRunner.classname,
+        RunnerDefinitionEntity.Origin.JARFILE);
   }
 
   public void loadConnectorsFromClassLoaderPath() {
@@ -62,45 +72,38 @@ public class RunnerUploadFactory {
   }
 
   /**
-   * get the list from the database, and compare what we have locally. Refresh the local path folder
+   * get the list from the storage (database), and compare what we have in the class loader.
+   * Reload the class in the class loader if needed
    *
    * @param clearAllBefore clear the path before
    * @return listJarLoaded loaded
    */
-  public List<String> loadJarFromStorage(boolean clearAllBefore) {
+  public List<String> loadClassLoaderJarsFromStorage(boolean clearAllBefore) {
     List<String> listJarLoaded = new ArrayList<>();
 
     if (clearAllBefore) {
-      clearFolder(new File(classLoaderPath), false);
+      runnerClassLoaderFactory.clearClassLoaderFolder();
     }
     // All JAR file in the database must be load in the JavaMachine
     for (JarStorageEntity jarStorageEntity : storageRunner.getAll()) {
-      String jarFileName = classLoaderPath + File.separator + jarStorageEntity.name;
-      File saveJarFile = new File(jarFileName);
-
-      try (FileOutputStream outputStream = new FileOutputStream(saveJarFile)) {
-        if (jarStorageEntity.jarfileByte != null) {
-          outputStream.write(jarStorageEntity.jarfileByte);
-        } else {
-          storageRunner.readJarBlob(jarStorageEntity, outputStream);
-        }
-        outputStream.flush();
-        listJarLoaded.add(saveJarFile.getName());
-      } catch (Exception e) {
-        logOperation.log(OperationEntity.Operation.ERROR,
-            "Can't save jarFile[" + jarStorageEntity.name + "] to file [" + jarFileName + "] : " + e.getMessage());
-      }
+      listJarLoaded.add(runnerClassLoaderFactory.copyJarEntity(jarStorageEntity));
     }
     return listJarLoaded;
   }
 
   /**
-   * Get the class loader path
+   * Retrieve a file in the database and upload it on the Storage Class Load
    *
-   * @return the classloader path
+   * @param jarFileName jar file name to load
+   * @return true if the jar can be loaded in the storage path, else false
    */
-  public File getClassLoaderPath() {
-    return new File(classLoaderPath);
+  public boolean jarFileStorageToClassLoader(String jarFileName) {
+    JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
+    if (jarStorageEntity == null)
+      return false;
+    String jarSaved = runnerClassLoaderFactory.copyJarEntity(jarStorageEntity);
+    return jarSaved != null;
+
   }
 
   /**
@@ -129,102 +132,123 @@ public class RunnerUploadFactory {
       if (!jarFile.getName().endsWith(".jar"))
         continue;
       logger.info("  Check file [{}]...", jarFile.getName());
-      JarStorageEntity jarStorageEntity;
-      String analysis = "";
-      try {
+      List<RunnerLightDefinition> list = saveJarFileToStorage(jarFile, jarFile.getName(), forceRefresh);
+      listRunnersDetected.addAll(list);
+      listLightRunners.addAll(list);
 
-        jarStorageEntity = storageRunner.getJarStorageByName(jarFile.getName());
-        boolean reload = false;
-        if (forceRefresh) {
-          reload = true;
-          analysis += "ForceRefresh,";
-        }
-        if (jarStorageEntity == null) {
-          reload = true;
-          analysis += "New,";
-        }
-        if (jarStorageEntity != null) {
-
-          // Convert the timestamp to a LocalDateTime
-          LocalDateTime fileLocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(jarFile.lastModified()),
-              ZoneId.systemDefault());
-
-          // transform this local dateTime in UTC, because all comparaison on date in made n UTC
-          ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
-          ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-          LocalDateTime utcLocalDateTime = utcDateTime.toLocalDateTime();
-
-          if (jarStorageEntity.loadedTime.isBefore(utcLocalDateTime)) {
-            reload = true;
-            analysis += "NewVersion,";
-          }
-        }
-        List<RunnerDefinitionEntity> runners = null;
-        if (!reload) {
-          // we don't reload the JAR file, so we believe what we have in the database
-          runners = storageRunner.getRunners(new StorageRunner.Filter().jarFileName(jarStorageEntity.name));
-          // there is something wrong here: why there is no runners behind this JAR?
-          if (runners.isEmpty())
-            reload = true;
-          analysis += "found " + runners.size() + " runners,";
-        }
-        analysis += "reload:" + reload + ",";
-
-        if (!reload && runners != null) {
-          listLightRunners.addAll(
-              runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
-          listRunnersDetected.addAll(
-              runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
-          logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
-          continue;
-        }
-
-        analysis += jarStorageEntity == null ? "SaveEntity" : "UpdateEntity";
-        logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
-        if (jarStorageEntity == null) {
-          // save it
-          jarStorageEntity = storageRunner.saveJarRunner(jarFile);
-        } else {
-          jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarFile);
-        }
-
-      } catch (Exception e) {
-        logOperation.log(OperationEntity.Operation.ERROR,
-            "Can't load JAR [" + jarFile.getName() + "] " + analysis + " : " + e.getMessage());
-        return listRunnersDetected;
-      }
-      loadJarFile(jarFile, jarStorageEntity);
     }
     return listRunnersDetected;
   }
 
+  /**
+   * Load a Jar file in the storage and in the factory
+   *
+   * @param jarFile            file to load
+   * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
+   * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
+   * @return list of runnerLight Definition
+   */
+  public List<RunnerLightDefinition> saveJarFileToStorage(File jarFile,
+                                                          String originalFileName,
+                                                          boolean forceReloadThisJar) {
+    List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
+    JarStorageEntity jarStorageEntity;
+    String analysis = "";
+    try {
+      jarStorageEntity = storageRunner.getJarStorageByName(
+          originalFileName == null ? jarFile.getName() : originalFileName);
+      boolean reload = false;
+      if (forceReloadThisJar) {
+        reload = true;
+        analysis += "ForceRefresh,";
+      }
+      if (jarStorageEntity == null) {
+        reload = true;
+        analysis += "NewJar,";
+      }
+      if (jarStorageEntity != null) {
+
+        // Convert the timestamp to a LocalDateTime
+        LocalDateTime fileLocalDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(jarFile.lastModified()),
+            ZoneId.systemDefault());
+
+        // transform this local dateTime in UTC, because all comparaison on date in made n UTC
+        ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
+        ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
+        LocalDateTime utcLocalDateTime = utcDateTime.toLocalDateTime();
+
+        if (jarStorageEntity.loadedTime.isBefore(utcLocalDateTime)) {
+          reload = true;
+          analysis += "NewVersion,";
+        }
+      }
+      List<RunnerDefinitionEntity> runners = null;
+      if (!reload) {
+        // we don't reload the JAR file, so we believe what we have in the database
+        runners = storageRunner.getRunnersFromJarName(jarStorageEntity.name);
+        // there is something wrong here: why there is no runners behind this JAR?
+        if (runners.isEmpty())
+          reload = true;
+        analysis += "found " + runners.size() + " runners,";
+      }
+      analysis += "reload:" + reload + ",";
+
+      if (!reload && runners != null) {
+        listRunnersLoaded.addAll(
+            runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
+        logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
+        return listRunnersLoaded;
+      }
+
+      analysis += jarStorageEntity == null ? "SaveEntity" : "UpdateEntity";
+      logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
+      if (jarStorageEntity == null) {
+        // save it
+        jarStorageEntity = storageRunner.saveJarRunner(jarFile);
+      } else {
+        jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarFile);
+      }
+      listRunnersLoaded.addAll(saveStorageJarFile(jarFile, jarStorageEntity));
+
+    } catch (Exception e) {
+      logOperation.log(OperationEntity.Operation.ERROR,
+          "Can't load JAR [" + jarFile.getName() + "] " + analysis + " : " + e.getMessage());
+      return listRunnersLoaded;
+    }
+
+    return listRunnersLoaded;
+  }
+
+  /**
+   * get All runners
+   *
+   * @return list of all runners knows byt the factory
+   */
   public List<RunnerLightDefinition> getAllRunners() {
     return listLightRunners;
   }
 
   private RunnerLightDefinition getLightFromRunner(AbstractRunner runner) {
-    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
-    runnerLightDefinition.name = runner.getName();
-    runnerLightDefinition.type = runner.getType();
-    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
-    return runnerLightDefinition;
+    return new RunnerLightDefinition(runner.getName(), runner.getType(), runner.getClass().getName(),
+        RunnerDefinitionEntity.Origin.JARFILE);
+
   }
 
   private RunnerLightDefinition getLightFromConnectorAnnotation(OutboundConnector connectorAnnotation) {
-    RunnerLightDefinition runnerLightDefinition = new RunnerLightDefinition();
-    runnerLightDefinition.name = connectorAnnotation.name();
-    runnerLightDefinition.type = connectorAnnotation.type();
-    runnerLightDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
-    return runnerLightDefinition;
+    return new RunnerLightDefinition(connectorAnnotation.name(), connectorAnnotation.type(),
+        connectorAnnotation.getClass().getName(), RunnerDefinitionEntity.Origin.JARFILE);
   }
 
   /**
-   * Open the JAR file and load all runners detected inside
+   * Open the JAR file and load all runners detected inside.
    *
    * @param jarFile          jarFile to open
    * @param jarStorageEntity jarStorageEntity related to the JAR file - all runners will be attached to this one
+   * @return the runner detected in the jar
    */
-  private void loadJarFile(File jarFile, JarStorageEntity jarStorageEntity) {
+  private List<RunnerLightDefinition> saveStorageJarFile(File jarFile, JarStorageEntity jarStorageEntity) {
+
+    List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
 
     StringBuilder logLoadJar = new StringBuilder();
     StringBuilder errLogLoadJar = new StringBuilder();
@@ -244,6 +268,9 @@ public class RunnerUploadFactory {
         String entryName = entry.getName();
         if (entryName.endsWith(".class")) {
           String className = entryName.replace(".class", "").replace('/', '.');
+          // save time
+          if (className.startsWith("org.apache"))
+            continue;
           try {
             Class<?> clazz = loader.loadClass(className);
             OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
@@ -252,7 +279,7 @@ public class RunnerUploadFactory {
               // this is a AbstractConnector
               AbstractRunner runner = (AbstractRunner) instanceClass;
               storageRunner.saveUploadRunner(runner, jarStorageEntity);
-              listLightRunners.add(getLightFromRunner(runner));
+              listRunnersDetected.add(getLightFromRunner(runner));
 
               logLoadJar.append("RunnerDectection[");
               logLoadJar.append(runner.getName());
@@ -268,7 +295,7 @@ public class RunnerUploadFactory {
               storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
                   jarStorageEntity);
 
-              listLightRunners.add(getLightFromConnectorAnnotation(connectorAnnotation));
+              listRunnersDetected.add(getLightFromConnectorAnnotation(connectorAnnotation));
 
               logLoadJar.append("ConnectorDetection[");
               logLoadJar.append(connectorAnnotation.name());
@@ -283,7 +310,7 @@ public class RunnerUploadFactory {
 
           } catch (Error er) {
             if (className.startsWith("io.camunda")) {
-              logger.info("ErrLoadClass [" + className + "] : " + er.getMessage());
+              logger.info("ErrLoadClass [{}] : {} ", className, er.getMessage());
               errLogLoadJar.append("ERROR, Class[");
               errLogLoadJar.append(className);
               errLogLoadJar.append("]:");
@@ -293,7 +320,7 @@ public class RunnerUploadFactory {
           } catch (Exception e) {
             // the class may extend some class which are not present at this moment
             if (className.startsWith("io.camunda")) {
-              logger.info("Can't load class [" + className + "] : " + e.getMessage());
+              logger.info("Can't load class [{}] : {}", className, e.getMessage());
               errLogLoadJar.append("ERROR,Class[");
               errLogLoadJar.append(className);
               errLogLoadJar.append("]:");
@@ -322,38 +349,7 @@ public class RunnerUploadFactory {
       logOperation.log(OperationEntity.Operation.ERROR,
           "Can't register JAR [" + jarFile.getName() + "] " + e.getMessage());
     } // end manage Zip file
-
+    return listRunnersDetected;
   }
 
-  /**
-   * Clear a folder
-   *
-   * @param folder    folder to clear
-   * @param recursive recursive cleaning
-   * @return true if all is correct, false in one error was detected
-   */
-  private boolean clearFolder(File folder, boolean recursive) {
-    boolean finalStatus = true;
-    File[] files = folder.listFiles();
-
-    if (files != null) {
-      for (File file : files) {
-        if (file.isDirectory()) {
-          if (recursive) {
-            // Recursively clear subdirectories
-            if (!clearFolder(new File(file.getAbsolutePath()), true))
-              finalStatus = false;
-          }
-        } else {
-          // Delete files
-          if (!file.delete()) {
-            logger.error("Failed to delete file: [{}]", file.getAbsolutePath());
-            finalStatus = false;
-          }
-        }
-      }
-
-    }
-    return finalStatus;
-  }
 }
