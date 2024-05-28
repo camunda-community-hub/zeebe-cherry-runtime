@@ -31,7 +31,6 @@ public class CherryMain {
   public void init() {
     // first, check all internal runner
     logger.info("----- CherryMain.1 Load all embedded runners");
-
     runnerFactory.init();
 
     logger.info("----- CherryMain.2 purge non existing anymore runners");
