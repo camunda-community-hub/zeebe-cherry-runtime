@@ -69,9 +69,11 @@ server.error.include-message: always
 
 # Spring Boot Configuration
 spring.application.name: CherryRuntime
-# server.servlet.context-path: /
-# spring.mustache.prefix: classpath:static/templates/
 
+# Cherry will override the zeebeClient bean
+spring:
+  main:
+    allow-bean-definition-overriding: true
 
 # spring.datasource:
 #   url: "jdbc:h2:file:./cherry.db"

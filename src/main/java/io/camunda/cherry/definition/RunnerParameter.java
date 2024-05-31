@@ -28,6 +28,7 @@ public class RunnerParameter {
   public Level level;
   public String explanation;
   public String gsonTemplate;
+  public String feelOptional="optional";
   /**
    * Declare a condition on the parameters
    */
@@ -156,6 +157,7 @@ public class RunnerParameter {
     parameter.condition = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION, contextInfo);
     parameter.conditionEquals = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION_EQUALS, contextInfo);
     parameter.conditionOneOf = (List<String>) inputMap.get(CherryInput.PARAMETER_MAP_CONDITION_ONE_OF);
+    parameter.feelOptional = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_FEEL, contextInfo);
 
     List<Object> workerParameterChoiceList = (List) inputMap.get(CherryInput.PARAMETER_MAP_CHOICE_LIST);
     if (workerParameterChoiceList != null) {

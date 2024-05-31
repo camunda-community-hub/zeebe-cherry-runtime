@@ -17,7 +17,9 @@ import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProviderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
@@ -26,7 +28,6 @@ import org.springframework.stereotype.Component;
 @Configuration
 @PropertySource("classpath:application.yaml")
 @EnableScheduling
-
 public class ZeebeContainer {
 
   Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
@@ -157,6 +158,20 @@ public class ZeebeContainer {
   public ZeebeClient getZeebeClient() {
     return zeebeClient;
   }
+
+  /**
+   * Note: the class io/camunda/zeebe/spring/client/configuration/ZeebeClientProdAutoConfiguration
+   * already define a zeebeClient as a bean. But this class known the real zeebeclient in use.
+   *
+   * @return the zeebeClient
+   */
+  @Bean
+  @Primary
+  public ZeebeClient zeebeClient() {
+    return zeebeClient;
+  }
+
+  ;
 
   public boolean isOk() {
     return zeebeClient != null;

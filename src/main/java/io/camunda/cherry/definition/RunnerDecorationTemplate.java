@@ -55,6 +55,7 @@ public class RunnerDecorationTemplate {
   public static final String TYPE_FIELD_DROPDOWN = "Dropdown";
   public static final String ATTR_CONSTRAINTS_NOT_EMPTY = "notEmpty";
   public static final String ATTR_CONSTRAINTS = "constraints";
+  public static final String ATTR_FEEL = "feel";
 
   private final AbstractRunner runner;
 
@@ -219,6 +220,7 @@ public class RunnerDecorationTemplate {
       if (runnerParameter.conditionEquals != null && !runnerParameter.conditionEquals.isEmpty())
         condition.put("equals", runnerParameter.conditionEquals);
     }
+
     // To have a checkbox, the parameter must be optional AND does not have already a condition
     boolean addConditionCheckbox =
         (runnerParameter.condition == null) && (RunnerParameter.Level.OPTIONAL.equals(runnerParameter.getLevel()));
@@ -266,6 +268,8 @@ public class RunnerDecorationTemplate {
     propertyParameter.put(ATTR_LABEL, runnerParameter.label);
     // don't have the group at this moment
     propertyParameter.put(ATTR_DESCRIPTION, runnerParameter.explanation);
+    propertyParameter.put(ATTR_FEEL, runnerParameter.feelOptional==null? "optional": runnerParameter.feelOptional);
+
     if (runnerParameter.defaultValue != null) {
       propertyParameter.put(ATTR_VALUE, runnerParameter.defaultValue);
     }

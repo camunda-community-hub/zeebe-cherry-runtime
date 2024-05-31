@@ -32,17 +32,25 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.support.GenericWebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -60,6 +68,11 @@ public class RunnerFactory {
   private final RunnerExecutionRepository runnerExecutionRepository;
   private final LogOperation logOperation;
   private final SessionFactory sessionFactory;
+
+  /**
+   * There is only one object per runner, so it's possible to cache them
+   */
+  private Map<String,Object> runnerCache = new HashMap<>();
 
   RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
                 RunnerUploadFactory runnerUploadFactory,
@@ -315,7 +328,7 @@ public class RunnerFactory {
       Class clazz = runnerClassLoaderFactory.loadClassInJavaMachine(runnerDefinitionEntity.jar.name,
           runnerDefinitionEntity.classname);
 
-      Object objectRunner = clazz.getDeclaredConstructor().newInstance();
+      Object objectRunner = getRunnerObjectFromClass(clazz);
 
       List<AbstractRunner> listRunners = detectRunnersInObject(objectRunner);
       if (!listRunners.isEmpty())
@@ -338,8 +351,34 @@ public class RunnerFactory {
   }
 
   public boolean deleteJarFile(Long jarEntity) throws OperationException {
-
     return true;
+  }
+
+  @Autowired
+  private ApplicationContext context;
+
+  private Object getRunnerObjectFromClass(Class clazz)
+      throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    // There is two uses case:
+    // 1. the object is complex, and need injection. Then, it may be a @Bean
+
+    // 2. the class is very straightforward, and then we just need to create a new instance
+    try {
+      // First, ask Spring to load the class.
+      GenericWebApplicationContext genericContext = (GenericWebApplicationContext) context;
+      BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(clazz);
+      genericContext.registerBeanDefinition(clazz.getSimpleName(), builder.getBeanDefinition());
+
+      Object beanObject = context.getBean(clazz);
+      logOperation.log(OperationEntity.Operation.STARTRUNNER, "Runner is a bean [" + clazz.getName() + "]");
+      return beanObject;
+    } catch (Exception e) {
+      // Don't need to log, this is not a bean
+      logger.info("Error "+e);
+    }
+
+    return clazz.getDeclaredConstructor().newInstance();
 
   }
+
 }
