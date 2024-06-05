@@ -28,7 +28,7 @@ public class RunnerParameter {
   public Level level;
   public String explanation;
   public String gsonTemplate;
-  public String feelOptional="optional";
+  public String feelOptional = "optional";
   /**
    * Declare a condition on the parameters
    */
