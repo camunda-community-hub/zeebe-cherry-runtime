@@ -7,8 +7,8 @@
 // -----------------------------------------------------------
 
 import React,{ createRef  } from 'react';
-import {Button, FileUploader, Tag} from "carbon-components-react";
-import {ArrowRepeat, ConeStriped} from "react-bootstrap-icons";
+import {Button, FileUploader} from "carbon-components-react";
+import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
 import RestCallService from "../services/RestCallService";
 
@@ -124,7 +124,7 @@ class Content extends React.Component {
               onChange={(event) => this.handleFileChange(event)}
               multiple
               iconDescription="Clear file"
-              disabled={this.state.display.loading || this.state.files.size == 0}
+              disabled={this.state.display.loading || this.state.files.size === 0}
             />
             <Button onClick={() => this.loadJar()} disabled={this.state.display.loading}>Upload</Button>
             <br/>
