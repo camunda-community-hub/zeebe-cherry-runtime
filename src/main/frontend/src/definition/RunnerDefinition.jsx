@@ -164,6 +164,7 @@ class RunnerDefinition extends React.Component {
   getDownloadUrlRunner(runner) {
     let restCallService = RestCallService.getInstance();
     let urlServer = restCallService.getUrlServer();
+    console.log("GetURL Download runner ["+runner.name+"] : ["+urlServer + "/cherry/api/runner/templatefile?name=" + runner.name)
     return urlServer + "/cherry/api/runner/templatefile?name=" + runner.name;
   }
 }

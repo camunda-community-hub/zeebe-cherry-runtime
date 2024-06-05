@@ -1,13 +1,13 @@
-package io.camunda.cherry.embeddedrunner.ping.operations;
+package io.camunda.cherry.embeddedrunner.operations;
 
 import com.google.gson.Gson;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
-import io.camunda.zeebe.spring.client.exception.ZeebeBpmnError;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -91,7 +91,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         String content = oneOperation.hasMoreTokens() ? oneOperation.nextToken() : null;
         // check the content: a String? A integer? A variable?
         if (content == null || content.isEmpty())
-          throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_SYNTAXE_OPERATION_ERROR,
               "Worker [" + getName() + "] Operation [" + oneOperationSt + "] must have name=value: value is missing.");
         Object contentVariable;
         FunctionDescription function = getFunction(content);
@@ -104,7 +104,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         setOutputValue(variableName, contentVariable, contextExecution);
       }
     } catch (Exception e) {
-      throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
+      throw new ConnectorException(BPMERROR_SYNTAXE_OPERATION_ERROR,
           "Worker [" + getName() + "] Syntax error on operation[" + operations + "] : " + e);
     }
   }
@@ -148,7 +148,8 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
    * @return the value by the function
    * @throws Exception any errors arrive during the execution
    */
-  private Object getValueFunction(FunctionDescription function, final ActivatedJob activatedJob) throws ZeebeBpmnError {
+  private Object getValueFunction(FunctionDescription function, final ActivatedJob activatedJob)
+      throws ConnectorException {
     if (function.isFunction(CST_FUNCTION_DATE)) {
       Object dateValue = getValue(function.getParameter(0), activatedJob);
       if (CST_NOW.equals(dateValue) || dateValue == null)
@@ -157,7 +158,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         try {
           return new SimpleDateFormat(CST_ISODATE).parse(dateValue.toString());
         } catch (Exception e) {
-          throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_DATEPARSE_OPERATION_ERROR,
               "Worker [" + getName() + "] Can't parse date[" + dateValue + "] pattern [" + CST_ISODATE + "]: " + e);
         }
       }
@@ -169,7 +170,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         try {
           return new SimpleDateFormat(CST_ISODATETIME).parse(dateValue.toString());
         } catch (Exception e) {
-          throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_DATEPARSE_OPERATION_ERROR,
               "Worker [" + getName() + "] Can't parse date[" + dateValue + "] pattern [" + CST_ISODATETIME + "]: " + e);
         }
     } else if (function.isFunction(CST_FUNCTION_LOCALDATE)) {
@@ -180,7 +181,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         try {
           return LocalDate.parse(dateValue.toString());
         } catch (Exception e) {
-          throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_DATEPARSE_OPERATION_ERROR,
               "Worker [" + getName() + "] Can't parse date[" + dateValue + "] LocalDate pattern [yyyy-MM-dd]: " + e);
         }
     } else if (function.isFunction(CST_FUNCTION_LOCAL_TIME)) {
@@ -191,7 +192,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         try {
           return LocalDateTime.parse(dateValue.toString());
         } catch (Exception e) {
-          throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_DATEPARSE_OPERATION_ERROR,
               "Worker [" + getName() + "] Can't parse date[" + dateValue
                   + "] LocalDate pattern [yyyy-MM-dd'T'HH:mm:ss'Z']: " + e);
         }
@@ -203,7 +204,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
         try {
           return ZonedDateTime.parse(dateValue.toString());
         } catch (Exception e) {
-          throw new ZeebeBpmnError(BPMERROR_DATEPARSE_OPERATION_ERROR,
+          throw new ConnectorException(BPMERROR_DATEPARSE_OPERATION_ERROR,
               "Worker [" + getName() + "] Can't parse date[" + dateValue
                   + "] LocalDate pattern [yyyy-MM-dd'T'HH:mm:ss[+-]hh:mm]: " + e);
         }
@@ -211,7 +212,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
     } else if (function.isFunction(CST_FUNCTION_JSON)) {
       return new Gson().fromJson(function.allParams, Object.class);
     } else {
-      throw new ZeebeBpmnError(BPMERROR_UNKNOWFUNCTION_ERROR,
+      throw new ConnectorException(BPMERROR_UNKNOWFUNCTION_ERROR,
           "Worker [" + getName() + "] function[" + function.name + "] unknown");
     }
   }
@@ -229,7 +230,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
 
     if (valueSt.startsWith("\"")) {
       if (!valueSt.endsWith("\""))
-        throw new ZeebeBpmnError(BPMERROR_SYNTAXE_OPERATION_ERROR,
+        throw new ConnectorException(BPMERROR_SYNTAXE_OPERATION_ERROR,
             "Worker [" + getName() + "] Operation [" + valueSt + "]: String must start and end by a \" ");
       return valueSt.substring(0, valueSt.length() - 1).substring(1);
     }

@@ -10,6 +10,7 @@ import io.camunda.cherry.runner.RunnerAdminOperation;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runner.RunnerLightDefinition;
 import io.camunda.cherry.util.DateOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,8 @@ public class ContentRestController {
   RunnerAdminOperation runnerAdminOperation;
   RunnerFactory runnerFactory;
   JobRunnerFactory jobRunnerFactory;
+  @Autowired
+  JobRunnerFactory cherryJobRunnerFactory;
 
   public ContentRestController(JarDefinitionRepository jarDefinitionRepository,
                                RunnerDefinitionRepository runnerDefinitionRepository,
@@ -66,14 +70,18 @@ public class ContentRestController {
       }).map(t -> {
         Map<String, Object> recordRunner = new HashMap<>();
         recordRunner.put("name", t.name);
-        recordRunner.put("collectionname", t.collectionName);
+        recordRunner.put("collectionName", t.collectionName);
+        recordRunner.put("activeRunner", cherryJobRunnerFactory.isActiveRunner(t.type));
         return recordRunner;
       }).toList();
       recordStorage.put("usedby", listUsedBy);
       recordStorage.put("loadedtime", DateOperation.dateTimeToHumanString(storageEntity.loadedTime, timezoneOffset));
       listContent.add(recordStorage);
     }
-    return listContent;
+    List<Map<String, Object>> sortedList = listContent.stream()
+        .sorted(Comparator.comparing(map -> (String) map.get("name")))
+        .collect(Collectors.toList());
+    return sortedList;
   }
 
   @PutMapping(value = "/api/content/delete", produces = "application/json")
@@ -114,12 +122,12 @@ public class ContentRestController {
       for (RunnerLightDefinition runner : listRunnerLightDefinitions) {
         String analysis = "runner [" + runner.getType() + "]: ";
         if (jobRunnerFactory.isRunnerExist(runner.getType())) {
-          runnerIsRunningBefore.put(runner.getType(), jobRunnerFactory.isRunnerActive(runner.getType()));
-          analysis += jobRunnerFactory.isRunnerActive(runner.getType()) ? "ACTIVE, " : "STOPPED, ";
+          runnerIsRunningBefore.put(runner.getType(), jobRunnerFactory.isActiveRunner(runner.getType()));
+          analysis += jobRunnerFactory.isActiveRunner(runner.getType()) ? "ACTIVE, " : "STOPPED, ";
         } else {
           analysis += "New runner,";
         }
-        if (jobRunnerFactory.isRunnerActive(runner.getType())) {
+        if (jobRunnerFactory.isActiveRunner(runner.getType())) {
           try {
             boolean isStopped = jobRunnerFactory.stopRunner(runner.getType());
             analysis += "Stopped, ";

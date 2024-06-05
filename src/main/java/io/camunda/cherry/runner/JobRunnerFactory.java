@@ -255,7 +255,7 @@ public class JobRunnerFactory {
     return mapRunning.containsKey(runnerType);
   }
 
-  public boolean isRunnerActive(String runnerType) {
+  public boolean isActiveRunner(String runnerType) {
     if (!mapRunning.containsKey(runnerType))
       return false;
     Running running = mapRunning.get(runnerType);

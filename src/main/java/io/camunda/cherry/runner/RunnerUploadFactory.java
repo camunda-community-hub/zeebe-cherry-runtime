@@ -154,6 +154,7 @@ public class RunnerUploadFactory {
     List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
     JarStorageEntity jarStorageEntity;
     String analysis = "";
+    String jarName = originalFileName;
     try {
       jarStorageEntity = storageRunner.getJarStorageByName(
           originalFileName == null ? jarFile.getName() : originalFileName);
@@ -204,9 +205,9 @@ public class RunnerUploadFactory {
       logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
       if (jarStorageEntity == null) {
         // save it
-        jarStorageEntity = storageRunner.saveJarRunner(jarFile);
+        jarStorageEntity = storageRunner.saveJarRunner(jarName, jarFile);
       } else {
-        jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarFile);
+        jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarName, jarFile);
       }
       listRunnersLoaded.addAll(saveStorageJarFile(jarFile, jarStorageEntity));
 
@@ -272,8 +273,7 @@ public class RunnerUploadFactory {
           if (className.startsWith("org.apache"))
             continue;
           // Connector onboard the CamundaStarter function
-          if (className.startsWith("io.camunda.connector.runtime") ||
-          className.startsWith("io.camunda.zeebe"))
+          if (className.startsWith("io.camunda.connector.runtime") || className.startsWith("io.camunda.zeebe"))
             continue;
           try {
             Class<?> clazz = loader.loadClass(className);

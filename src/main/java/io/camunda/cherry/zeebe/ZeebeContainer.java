@@ -24,6 +24,8 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
+import java.net.URI;
+
 @Component
 @Configuration
 @PropertySource("classpath:application.yaml")
@@ -51,6 +53,16 @@ public class ZeebeContainer {
    */
   public void startZeebeeClient() throws TechnicalException {
     zeebeClient = null;
+    URI zeebeAddressURI;
+    try {
+      String gatewayAddress = zeebeConfiguration.getGatewayAddress();
+      if (!gatewayAddress.startsWith("http"))
+        gatewayAddress = "http://" + gatewayAddress;
+      zeebeAddressURI = new URI(gatewayAddress);
+    } catch (Exception e) {
+      // logger.error("Can't convert [{}] to URI", zeebeConfiguration.getGatewayAddress());
+      // throw new TechnicalException("Can't convert [" + zeebeConfiguration.getGatewayAddress() + " to URI", e);
+    }
     String validation = zeebeConfiguration.checkValidation();
     if (validation != null) {
       logger.error("Incorrect configuration: " + validation);
@@ -73,6 +85,7 @@ public class ZeebeContainer {
 
     // ---- IDENTITY connection (with OAuth)
     case IDENTITY -> {
+      // zeebeClientBuilder = ZeebeClient.newClientBuilder().grpcAddress(zeebeAddressURI);
       zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
       if (zeebeConfiguration.isPlaintext())
         zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
@@ -170,8 +183,6 @@ public class ZeebeContainer {
   public ZeebeClient zeebeClient() {
     return zeebeClient;
   }
-
-  ;
 
   public boolean isOk() {
     return zeebeClient != null;

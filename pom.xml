@@ -11,7 +11,7 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven.compiler.source>${java.version}</maven.compiler.source>
 
-    <!--Version-->
+    <!--Version 8.3.0-->
     <zeebe.version>8.3.0</zeebe.version>
     <zeebe-client.version>8.3.3</zeebe-client.version>
     <connector-core.version>8.3.1</connector-core.version>
@@ -20,9 +20,11 @@
     <!-- Access file -->
     <filestorage.version>1.2.0</filestorage.version>
 
+    <!-- 2.7.4 -->
+    <spring.boot.version>2.7.4</spring.boot.version>
+
     <junit.jupiter.version>5.9.1</junit.jupiter.version>
     <opensagres.version>2.0.3</opensagres.version>
-    <spring.boot.version>2.7.4</spring.boot.version>
 
     <opensagres.version>2.0.4</opensagres.version>
 
@@ -53,17 +55,27 @@
 
   <dependencies>
 
-    <dependency>
-      <groupId>io.camunda.spring</groupId>
-      <artifactId>spring-boot-starter-camunda</artifactId>
-      <version>${zeebe.version}</version>
-    </dependency>
+    <!-- https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/getting-started/ -->
+    <!--    <dependency>
+          <groupId>io.camunda</groupId>
+          <artifactId>spring-boot-starter-camunda-sdk</artifactId>
+          <version>${zeebe.version}</version>
+        </dependency>
+    -->
 
-    <dependency>
-      <groupId>io.camunda</groupId>
-      <artifactId>zeebe-client-java</artifactId>
-      <version>${zeebe-client.version}</version>
-    </dependency>
+
+        <dependency>
+          <groupId>io.camunda.spring</groupId>
+          <artifactId>spring-boot-starter-camunda</artifactId>
+          <version>${zeebe.version}</version>
+        </dependency>
+
+
+        <dependency>
+          <groupId>io.camunda</groupId>
+          <artifactId>zeebe-client-java</artifactId>
+          <version>${zeebe-client.version}</version>
+        </dependency>
 
 
     <!-- Accept Camunda Connector -->
@@ -300,10 +312,11 @@
         </dependencies>
       </plugin>
 
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.10.1</version>
+        <version>3.13.0</version>
         <configuration>
           <source>17</source>
           <target>17</target>

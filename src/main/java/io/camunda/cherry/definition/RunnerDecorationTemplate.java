@@ -98,7 +98,10 @@ public class RunnerDecorationTemplate {
       templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
     templateContent.put(ATTR_CATEGORY, Map.of(ATTR_ID, "connectors", ATTR_NAME, "connectors"));
     templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo() != null ? runner.getAppliesTo() : List.of("bpmn:Task"));
-    templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, "bpmn:ServiceTask"));
+    if (runner.getAppliesTo() != null || runner.getAppliesTo().size() == 1) {
+      // We can force the element-type, else if there is more than one item or no item, do not force it
+      templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+    }
     // no groups at this moment
 
     // ---- Prepare the properties
@@ -268,7 +271,7 @@ public class RunnerDecorationTemplate {
     propertyParameter.put(ATTR_LABEL, runnerParameter.label);
     // don't have the group at this moment
     propertyParameter.put(ATTR_DESCRIPTION, runnerParameter.explanation);
-    propertyParameter.put(ATTR_FEEL, runnerParameter.feelOptional==null? "optional": runnerParameter.feelOptional);
+    propertyParameter.put(ATTR_FEEL, runnerParameter.feelOptional == null ? "optional" : runnerParameter.feelOptional);
 
     if (runnerParameter.defaultValue != null) {
       propertyParameter.put(ATTR_VALUE, runnerParameter.defaultValue);

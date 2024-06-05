@@ -307,9 +307,9 @@ class RunnerMonitoring extends React.Component {
 
   refreshState() {
     if (this.state.runner.active) {
-      this.setState({labelBtnStart: "started", labelBtnStop: "stop"});
+      this.setState({labelBtnStart: "Started", labelBtnStop: "Stop"});
     } else {
-      this.setState({labelBtnStart: "start", labelBtnStop: "stopped"});
+      this.setState({labelBtnStart: "Start", labelBtnStop: "Stopped"});
     }
   }
 

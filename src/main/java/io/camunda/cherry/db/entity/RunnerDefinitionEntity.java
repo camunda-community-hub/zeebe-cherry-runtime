@@ -41,7 +41,7 @@ public class RunnerDefinitionEntity {
   public Origin origin;
 
   /**
-   * If the Runner come from a JAR loaded (github, directory) then the source is referenced here
+   * If the Runner come from a JAR loaded (Upload, GitHub, directory) then the source is referenced here
    */
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "jarid")

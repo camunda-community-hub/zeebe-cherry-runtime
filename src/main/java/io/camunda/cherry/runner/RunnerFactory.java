@@ -34,9 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.GenericWebApplicationContext;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,9 +68,16 @@ public class RunnerFactory {
   private final SessionFactory sessionFactory;
 
   /**
+   * A runner (worker, connector) is instantiate only one time. it maybe a object to create, or a component.
+   * When it's create/find, keep it in the cache.
+   */
+  private final Map<String, AbstractRunner> cacheRunner = new HashMap<>();
+  /**
    * There is only one object per runner, so it's possible to cache them
    */
-  private Map<String,Object> runnerCache = new HashMap<>();
+  private final Map<String, Object> runnerCache = new HashMap<>();
+  @Autowired
+  private ApplicationContext context;
 
   RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
                 RunnerUploadFactory runnerUploadFactory,
@@ -89,6 +94,13 @@ public class RunnerFactory {
     this.logOperation = logOperation;
     this.sessionFactory = sessionFactory;
   }
+
+
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Operations                                                          */
+  /*                                                                      */
+  /* ******************************************************************** */
 
   /**
    * Detect classical runner in an object
@@ -140,13 +152,6 @@ public class RunnerFactory {
 
     return listDetectedRunners;
   }
-
-
-  /* ******************************************************************** */
-  /*                                                                      */
-  /*  Operations                                                          */
-  /*                                                                      */
-  /* ******************************************************************** */
 
   /**
    * Initialise step
@@ -237,6 +242,12 @@ public class RunnerFactory {
     return runnerUploadFactory.jarFileStorageToClassLoader(jarFileName);
   }
 
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  getter/setter                                                       */
+  /*                                                                      */
+  /* ******************************************************************** */
+
   /**
    * Must be call after the initialisation
    * all runners are loaded amd identified. The storageRunner are checked, and all runner in the database
@@ -270,12 +281,6 @@ public class RunnerFactory {
     }
 
   }
-
-  /* ******************************************************************** */
-  /*                                                                      */
-  /*  getter/setter                                                       */
-  /*                                                                      */
-  /* ******************************************************************** */
 
   /**
    * Get All runners
@@ -315,14 +320,21 @@ public class RunnerFactory {
   private List<AbstractRunner> getRunnersFromEntity(RunnerDefinitionEntity runnerDefinitionEntity) {
     ClassLoader loader;
     try {
+      AbstractRunner runner = cacheRunner.get(runnerDefinitionEntity.type);
+      if (runner != null) {
+        logger.debug("Return runner {} from cache", runnerDefinitionEntity.type);
+        return List.of(runner);
+      }
+
       // if this class is embedded?
       AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByType(runnerDefinitionEntity.type);
       if (embeddedRunner != null) {
+        cacheRunner.put(embeddedRunner.getType(), embeddedRunner);
         return List.of(embeddedRunner);
       }
 
       if (runnerDefinitionEntity.jar == null) {
-        logOperation.logError("No Jar file, not an embedded runner for [" + runnerDefinitionEntity.name + "]");
+        logOperation.logError("No Jar file, not an embedded runner for [{}" + runnerDefinitionEntity.name + "]");
         return Collections.emptyList();
       }
       Class clazz = runnerClassLoaderFactory.loadClassInJavaMachine(runnerDefinitionEntity.jar.name,
@@ -331,14 +343,20 @@ public class RunnerFactory {
       Object objectRunner = getRunnerObjectFromClass(clazz);
 
       List<AbstractRunner> listRunners = detectRunnersInObject(objectRunner);
-      if (!listRunners.isEmpty())
-        return listRunners;
+      if (listRunners.isEmpty()) {
+        /* we must have a runner detected in an entity */
+        logger.error("No method to get a runner from [{}]", runnerDefinitionEntity.name);
+        logOperation.logError(
+            "Class [" + runnerDefinitionEntity.classname + "] in jar[" + runnerDefinitionEntity.jar.name
+                + "] not a Runner or OutboundConnectorFunction");
+        return Collections.emptyList();
+      }
 
-      /* we must have a runner detected in a entity */
-      logger.error("No method to get a runner from [{}]", runnerDefinitionEntity.name);
-      logOperation.logError("Class [" + runnerDefinitionEntity.classname + "] in jar[" + runnerDefinitionEntity.jar.name
-          + "] not a Runner or OutboundConnectorFunction");
+      for (AbstractRunner runnerIterator : listRunners) {
+        cacheRunner.put(runnerIterator.getType(), runnerIterator);
+      }
       return listRunners;
+
     } catch (Error er) {
       // ControllerPage getting the information
       logOperation.logError(runnerDefinitionEntity.name, "Instantiate the runner ", er);
@@ -353,9 +371,6 @@ public class RunnerFactory {
   public boolean deleteJarFile(Long jarEntity) throws OperationException {
     return true;
   }
-
-  @Autowired
-  private ApplicationContext context;
 
   private Object getRunnerObjectFromClass(Class clazz)
       throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
@@ -374,7 +389,7 @@ public class RunnerFactory {
       return beanObject;
     } catch (Exception e) {
       // Don't need to log, this is not a bean
-      logger.info("Error "+e);
+      logger.info("Error " + e);
     }
 
     return clazz.getDeclaredConstructor().newInstance();

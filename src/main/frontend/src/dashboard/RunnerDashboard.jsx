@@ -60,7 +60,7 @@ class RunnerDashboard extends React.Component {
                               <td style={{border: "1px solid", padding: "0px"}}>
                                 {this.state.runner.active &&
                                   <button className="start-runner button is-selected is-primary"
-                                          style={{height: "1.5em", border: "1px solid"}}>Active</button>}
+                                          style={{height: "1.5em", border: "1px solid"}}>Started</button>}
                                 {!this.state.runner.active &&
                                   <button className="stop-runner button is-selected is-danger"
                                           style={{height: "1.5em"}}>Stopped</button>}

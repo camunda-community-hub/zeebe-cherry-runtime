@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
@@ -37,13 +38,16 @@ public class RunnerAdminOperation {
   public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
     // search the StorageEntity
-    JarStorageEntity storageEntity = jarDefinitionRepository.getReferenceById(storageEntityId);
+    Optional<JarStorageEntity> storageEntity = jarDefinitionRepository.findById(storageEntityId);
+    if (storageEntity.isEmpty())
+      throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
 
+    // Need that variable for the stream
     // Identify all worker behind the JarEntity
     List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
     List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
         .filter(t -> {
-          return t.jar.id.equals(storageEntity.id);
+          return storageEntity.get().id.equals(t.jar.id);
         }).collect(Collectors.toList());
 
     // Stop all workers
@@ -61,7 +65,7 @@ public class RunnerAdminOperation {
       runnerDefinitionRepository.delete(runnerEntity);
     }
     // remove Jar
-    jarDefinitionRepository.delete(storageEntity);
+    jarDefinitionRepository.delete(storageEntity.get());
 
     return true;
 

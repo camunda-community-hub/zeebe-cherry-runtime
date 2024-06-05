@@ -131,7 +131,7 @@ public class RunnerRestController {
       infoRunner.put("frameworkrunner", runner instanceof IntFrameworkRunner ? "true" : "false");
 
       infoRunner.put("logo", runner.getLogo());
-      infoRunner.put("active", cherryJobRunnerFactory.isRunnerActive(runner.getType()));
+      infoRunner.put("active", cherryJobRunnerFactory.isActiveRunner(runner.getType()));
       infoRunner.put("statistic", statisticRunner);
       infoRunner.put(PARAM_NBEXEC, statisticRunner.executions);
       infoRunner.put(PARAM_NBFAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
@@ -368,10 +368,9 @@ public class RunnerRestController {
    * @throws IOException can't write the content to the HTTP response
    */
   @GetMapping(value = "/api/runner/templatefile", produces = MediaType.TEXT_PLAIN_VALUE)
-  public @ResponseBody
-  ResponseEntity downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
-                                  @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners,
-                                  @RequestParam(name = "separatetemplate", required = false) Boolean separateTemplate)
+  public @ResponseBody ResponseEntity downloadTemplate(@RequestParam(name = "name", required = false) String runnerName,
+                                                       @RequestParam(name = "withframeworkrunners", required = false) Boolean withFrameworkRunners,
+                                                       @RequestParam(name = "separatetemplate", required = false) Boolean separateTemplate)
       throws IOException {
     boolean withFrameworkRunnersIncluded = (withFrameworkRunners != null && withFrameworkRunners);
     // Zip file required? Add all templates in the ZIP.
@@ -466,7 +465,7 @@ public class RunnerRestController {
                                                       boolean withStats,
                                                       LocalDateTime dateNow,
                                                       HistoryPerformance.PeriodStatistic periodStatistic) {
-    runnerInformation.setActive(cherryJobRunnerFactory.isRunnerActive(runnerInformation.getType()));
+    runnerInformation.setActive(cherryJobRunnerFactory.isActiveRunner(runnerInformation.getType()));
     runnerInformation.setDisplayLogo(withLogo);
 
     if (withStats) {

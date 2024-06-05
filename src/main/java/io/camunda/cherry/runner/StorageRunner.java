@@ -70,14 +70,15 @@ public class StorageRunner {
    * @return the jarStorageEntity
    * @throws TechnicalException for any error
    */
-  public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, File jarFile) throws TechnicalException {
+  public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, String jarName, File jarFile)
+      throws TechnicalException {
     try (FileInputStream fis = new FileInputStream(jarFile);
         Session session = sessionFactory.openSession();
         Connection con = dataSource.getConnection()) {
 
       if (jarStorageEntity == null)
         jarStorageEntity = new JarStorageEntity();
-      jarStorageEntity.name = jarFile.getName();
+      jarStorageEntity.name = jarName;
       jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
       jarStorageEntity.loadLog = "Loaded correctly from file [" + jarFile.getPath() + "]";
 
@@ -104,7 +105,7 @@ public class StorageRunner {
    * @param jarFile jarfile to save
    * @throws IOException error during saving
    */
-  public JarStorageEntity saveJarRunner(File jarFile) throws TechnicalException {
+  public JarStorageEntity saveJarRunner(String jarName, File jarFile) throws TechnicalException {
     String connectorName = jarFile.getName();
     logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
 
@@ -112,7 +113,7 @@ public class StorageRunner {
     if (jarStorageEntity != null)
       return jarStorageEntity;
 
-    return updateJarRunner(jarStorageEntity, jarFile);
+    return updateJarRunner(jarStorageEntity, jarName, jarFile);
   }
 
   /**

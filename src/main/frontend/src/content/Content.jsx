@@ -6,8 +6,8 @@
 //
 // -----------------------------------------------------------
 
-import React from 'react';
-import {Button, FileUploader} from "carbon-components-react";
+import React,{ createRef  } from 'react';
+import {Button, FileUploader, Tag} from "carbon-components-react";
 import {ArrowRepeat, ConeStriped} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
 import RestCallService from "../services/RestCallService";
@@ -17,8 +17,11 @@ class Content extends React.Component {
 
   constructor(_props) {
     super();
+    this.fileUploaderRef = createRef();
+
     this.state = {
       content: [],
+      files:[],
       display: {loading: false},
       status: ""
     };
@@ -62,7 +65,7 @@ class Content extends React.Component {
               <tr>
                 <th>Name</th>
                 <th>Used by</th>
-                <th>Loaded time</th>
+                <th>Loaded</th>
                 <th>Log</th>
                 <th></th>
 
@@ -74,9 +77,17 @@ class Content extends React.Component {
                   <td style={{verticalAlign: "top"}}>
                     {content.name}
                   </td>
-                  <td>
+                  <td style={{verticalAlign: "top"}}>
                     {content.usedby.map((usedby, _indexcontent) =>
-                      <div>{usedby.name} {usedby.collection} <br/></div>)
+                      <div>{usedby.name} {usedby.collectionName} <br/>
+                        {usedby.activeRunner &&
+                          <button className="start-runner button is-selected is-primary">Started</button>
+                          }
+                        {!usedby.activeRunner &&
+                          <button className="stop-runner button is-selected is-danger">Stopped</button>
+                        }
+                      </div>
+                    )
                     }
                   </td>
                   <td style={{verticalAlign: "top"}}>
@@ -91,7 +102,6 @@ class Content extends React.Component {
                             style={{marginRight: "10px"}}
                             disabled={this.state.display.loading}
                     >
-                      <ConeStriped style={{color: "red"}}/>
                       Delete
                     </Button>
                   </td>
@@ -105,6 +115,7 @@ class Content extends React.Component {
         <div className="row" style={{width: "100%"}}>
           <div className="col-md-12">
             <FileUploader
+              ref={this.fileUploaderRef}
               labelTitle="Upload JAR files"
               labelDescription="Only .jar file"
               buttonLabel="Add files"
@@ -209,10 +220,13 @@ class Content extends React.Component {
   loadJar(event) {
     console.log("Load Jar ", this.state.files);
     this.refreshStatusOnPage();
-    var restCallService = RestCallService.getInstance();
+    let restCallService = RestCallService.getInstance();
 
     const formData = new FormData();
-    formData.append("File", this.state.files[0]);
+    Array.from(this.state.files).forEach((file, index) => {
+      formData.append(`File`, file);
+    });
+    /* formData.append("File", this.state.files[0]); */
     this.setDisplayProperty("loading", true);
 
     restCallService.postUpload('cherry/api/content/add?', formData, this, this.operationUploadJarCallback);
@@ -228,6 +242,10 @@ class Content extends React.Component {
       console.log("operationUploadJar.operationDeleteCallback: error " + httpResponse.getError());
       this.setState({statusUploadFailed: httpResponse.getError()});
     } else {
+        // Clear the file input field using JavaScript
+      if (this.fileUploaderRef.current) {
+        this.fileUploaderRef.current.clearFiles();
+      }
       this.setState({'files': [], statusUploadSuccess: 'Jar uploaded with success'});
     }
     this.refreshListContent();

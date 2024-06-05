@@ -140,11 +140,13 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     try {
       // Create an instance of the dynamically determined class using the constructor
       Constructor<?> constructor = classOutput.getDeclaredConstructor();
+      // Force the constructor, in case the developper forget to set it public
+      constructor.setAccessible(true);
       Object objectInput = constructor.newInstance();
 
       Object listOutputParameter = callMethod(objectInput, "getOutputParameters", List.class);
-      if (listOutputParameter instanceof List listOuputs)
-        return transformList(listOuputs, "ConnectorName[" + this.getName() + "]");
+      if (listOutputParameter instanceof List listOutput)
+        return transformList(listOutput, "ConnectorName[" + this.getName() + "]");
       else if (listOutputParameter != null)
         logger.error("Error during getListInput(): on ConnectorName[{}] expect List get {}", this.getName(),
             listOutputParameter.getClass().getName());
@@ -174,6 +176,8 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     Method method = null;
     try {
       method = caller.getClass().getMethod(name);
+      // if the developer forget to put it public
+      method.setAccessible(true);
       // the method does not exist, return value null
       if (method == null) {
         return null;
