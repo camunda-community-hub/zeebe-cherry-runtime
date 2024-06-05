@@ -28,7 +28,7 @@ const FRAME_NAME = {
   CONTENT: "Content",
   PARAMETERS: "Parameters",
   STORE: "Store",
-  OPERATIONLOG : "OperationLog"
+  OPERATIONLOG: "OperationLog"
 
 }
 

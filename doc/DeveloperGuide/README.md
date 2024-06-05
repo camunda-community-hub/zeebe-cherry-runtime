@@ -128,7 +128,6 @@ A parameter can be a list of choice, and the designer will choose one in the dro
 
 ### List of BPMN Errors
 
-![Bpmn Errors documentation](BpmnErrorsDocumentation.png?raw=true)
 
 Give the list of BPMN Errors that the connector/worker can throw. This list will be available in the documentation.
 The Element-Template will contain the FEEL expression to transform a `ConnectorException` to a BPMN Error.
@@ -143,9 +142,9 @@ The worker has only one class, and get directly the information from the context
 Declare in the constructor the different input.
 (see `src/main/java/io/camunda/cherry/embeddedrunner/ping/worker/PingWorker.java`)
 
-`````java
+`````
 @Component
-public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
+public class PingWorker extends AbstractWorker implements IntruntimeRunner {
 
   public PingWorker() {
     super("c-ping", 
@@ -191,7 +190,7 @@ The recommendation is to declare a constant for each Input to ensure consistency
 public class PingConnectorInput extends AbstractConnectorInput {
 
 // see
-// https://docs.camunda.io/docs/components/integration-framework/connectors/custom-built-connectors/connector-sdk/#validation
+// https://docs.camunda.io/docs/components/integration-runtime/connectors/custom-built-connectors/connector-sdk/#validation
 
 @NotEmpty
 protected final static String INPUT_MESSAGE="message";
@@ -205,7 +204,7 @@ private boolean throwErrorPlease;
 `````
 Then the value can be used in the declaration
 
-`````java
+`````
 @Component
 @OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR,
     inputVariables = { PingConnectorInput.INPUT_MESSAGE,
@@ -217,7 +216,7 @@ public class PingConnector extends AbstractConnector implements OutboundConnecto
 
 In the constructor, reference the Input class and the Output class. The Cherry runtime will introspect these class to create the documentation and the Element-template
 
-`````java
+`````
 
 public PingConnector() {
   super(TYPE_PINGCONNECTOR, 
@@ -227,9 +226,9 @@ public PingConnector() {
 
 `````
 
-Doing this ways, the Cherry framework will not find the documentation to build the documentation or the Element-template.
+Doing this way, the Cherry runtime will not find the documentation to build the documentation or the Element-template.
 
-Do do that, the Input object need to extends the `AbstractConnectorInput` class
+Do do that, the Input object need to extend the `AbstractConnectorInput` class
 
 ````
 public class PingConnectorInput extends AbstractConnectorInput {
@@ -315,7 +314,7 @@ Then, you have to specify the list of outputs in the method `getOutputParameters
 **You must create a getter for each member, starting with a lower case**
 For example, for the object
 
-````java
+````
 private long internalTimeStampMS;
 ````
 
@@ -402,7 +401,7 @@ You can override different method:
     }
     
 ````
-The logo must be a SVG image.
+The logo must be an SVG image.
 
 ## Execution
 Then here you are: the execute method!
@@ -504,3 +503,14 @@ Start the Cherry runtime. Your connector appears in the dashboard, and the Eleme
 You can download the complete collection to save for the desktop Modeler.
 
 Or you can access the definition of one connector/worker to create a connector template in the Web Modeler. One connector template must be created one by one.
+
+# Integrate an external connector
+You have an external connector, and when you will upload it in Cherry runtime, you want to take advantages of all functions, displaying it with logo, display the list of Inputs, Outputs, BPMNError.
+
+You want to generate the element-template by the Cherry runtime, with advance controles.
+
+It is possible to do that without embedded any Cherry Library. You will just need to add some methods in your connector, then the runtime will be able to access it.
+For example, the Cherry runtime will try to access a method `getLogo()` to read the logo.
+
+To be sure to not miss any function, check interfaces CherryConnector, CherryInput, CherryOutput stored
+under `io.camunda.connector.cherrytemplate`. Copy the package in your connector, and follow the README.MD

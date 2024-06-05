@@ -32,13 +32,13 @@ class Dashboard extends React.Component {
         orderBy: "nameAsc",
         period: "ONEDAY",
         showActive: true,
-        showInactive: true,
+        showInactive: false,
         showWorker: true,
         showConnector: true,
         showOnlyError: false,
         showOnlyOverThreshold: false,
         showFrameworkRunner: true,
-        filterSearch:""
+        filterSearch: ""
 
       },
 
@@ -95,7 +95,7 @@ class Dashboard extends React.Component {
                     style={{marginLeft: "10px", fontSize: "10px"}}
                     disabled={this.state.display.loading}
                     onClick={() => this.setToggleFilter("showOnlyError")}>
-              <XCircle style={{color:"red"}}/> Only Errors
+              <XCircle style={{color: "red"}}/> Only Errors
             </button>
             <button className={this.getButtonClass(this.state.display.showOnlyOverThreshold)}
                     style={{fontSize: "10px"}}
@@ -118,14 +118,14 @@ class Dashboard extends React.Component {
                      disabled={this.state.display.loading}
                      value={this.state.display.filterSearch}
                      style={{width: "80px"}}
-                     onChange={(event) => this.setSearchFilter( event.target.value)} />
+                     onChange={(event) => this.setSearchFilter(event.target.value)}/>
         </div>
         <div className="col-md-2">
           <Select
             value={this.state.display.orderBy}
             labelText="order by"
             disabled={this.state.display.loading}
-          onChange={(event) => this.setOrderBy(event.target.value)}>
+            onChange={(event) => this.setOrderBy(event.target.value)}>
             <option value="nameAsc">Name (asc)</option>
             <option value="nameDes">Name (desc)</option>
             <option value="execAsc">Execution (asc)</option>
@@ -187,8 +187,8 @@ class Dashboard extends React.Component {
 
     if (this.state.display.filterSearch
       && !runner.name.toLowerCase().includes(this.state.display.filterSearch.toLowerCase())) {
-    return {display: "none"};
-  }
+      return {display: "none"};
+    }
 
 
     return {};

@@ -1,3 +1,13 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  SecretProvider                                                      */
+/*                                                                      */
+/*  Manage secret inside the framework                                  */
+/*  There is two secret available:                                      */
+/*  - one managed directly from the framework, and saved in the database*/
+/*  - one given as a ConfigMap via the Docker configuration             */
+/*  TO BE IMPLEMENTED (both)                                            */
+/* ******************************************************************** */
 package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;

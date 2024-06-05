@@ -13,10 +13,23 @@ import javax.persistence.Table;
 import java.sql.Blob;
 import java.time.LocalDateTime;
 
+
+/* ******************************************************************** */
+/*                                                                      */
+/*  Jar storage entity                                                  */
+/*                                                                      */
+/*  Save JAR.                                                           */
+/*  One JAR can contain MULTIPLE connectors                             */
+/*  Connector (runner) are saved in the RunnerDefinition Entity         */
+/* ******************************************************************** */
+
 @Entity
 @Table(name = "ChJarstorage")
 public class JarStorageEntity {
 
+  /**
+   * The Jar Name (file name)
+   */
   @Column(name = "name", length = 1000, unique = true)
   public String name;
 

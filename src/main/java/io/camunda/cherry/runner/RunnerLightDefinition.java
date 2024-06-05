@@ -11,10 +11,18 @@ import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 
 public class RunnerLightDefinition {
 
-  public String type;
+  private final String type;
 
-  public String name;
-  public RunnerDefinitionEntity.Origin origin;
+  private final String name;
+  private final RunnerDefinitionEntity.Origin origin;
+  private final String classname;
+
+  RunnerLightDefinition(String name, String type, String className, RunnerDefinitionEntity.Origin origin) {
+    this.name = name;
+    this.type = type;
+    this.classname = className;
+    this.origin = origin;
+  }
 
   public String getType() {
     return type;
@@ -22,6 +30,10 @@ public class RunnerLightDefinition {
 
   public String getName() {
     return name;
+  }
+
+  public String getClassname() {
+    return classname;
   }
 
   public RunnerDefinitionEntity.Origin getOrigin() {

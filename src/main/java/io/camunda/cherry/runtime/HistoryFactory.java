@@ -49,7 +49,7 @@ public class HistoryFactory {
 
     HistoryPerformance.IntervalRule intervalRule = historyPerformance.getIntervalRuleByPeriod(periodStatistic);
     LocalDateTime dateThreshold = LocalDateTime.now();
-    dateThreshold = dateThreshold.minusMinutes(intervalRule.intervalInMinutes * intervalRule.numberOfIntervals);
+    dateThreshold = dateThreshold.minusMinutes((long) intervalRule.intervalInMinutes * intervalRule.numberOfIntervals);
 
     List<Map<String, Object>> listStats = runnerExecutionRepository.selectStatusStats(runnerType, dateThreshold);
     for (Map<String, Object> recordStats : listStats) {

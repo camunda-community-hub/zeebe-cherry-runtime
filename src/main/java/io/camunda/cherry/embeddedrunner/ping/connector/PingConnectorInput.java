@@ -16,6 +16,7 @@ public class PingConnectorInput extends AbstractConnectorInput {
   protected final static String INPUT_MESSAGE = "message";
   protected final static String INPUT_DELAY = "delay";
   protected final static String INPUT_THROWERRORPLEASE = "throwErrorPlease";
+  // must be the same as the constant
   private String message;
   private int delay;
   private boolean throwErrorPlease;
@@ -31,10 +32,11 @@ public class PingConnectorInput extends AbstractConnectorInput {
    */
   @Override
   public List<RunnerParameter> getInputParameters() {
-    return Arrays.asList(RunnerParameter.getInstance("message", "Message", String.class, RunnerParameter.Level.OPTIONAL,
+    return Arrays.asList(
+        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
             "Message to log"),
-        RunnerParameter.getInstance("delay", "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
-        RunnerParameter.getInstance("throwErrorPlease", "Throw ControllerPage Please", Boolean.class,
+        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
+        RunnerParameter.getInstance(INPUT_THROWERRORPLEASE, "Throw ControllerPage Please", Boolean.class,
             RunnerParameter.Level.OPTIONAL, "If true, then the connector throw an error").setVisibleInTemplate());
   }
 

@@ -7,8 +7,11 @@
 package io.camunda.cherry.embeddedrunner.ping.worker;
 
 import io.camunda.cherry.definition.AbstractWorker;
+import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
+import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import org.springframework.stereotype.Component;
@@ -21,22 +24,32 @@ import java.util.Date;
 import java.util.Random;
 
 @Component
-public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
+public class PingCherryWorker extends AbstractWorker implements IntFrameworkRunner, PingIntRunner {
 
-  private static final String INPUT_MESSAGE = "message";
-  private static final String INPUT_DELAY = "delay";
-  private static final String OUTPUT_TIMESTAMP = "timestamp";
+  public static final String INPUT_MESSAGE = "message";
+  public static final String INPUT_DELAY = "delay";
+  public static final String INPUT_THROWERRORPLEASE = "throwErrorPlease";
+
+  public static final String OUTPUT_TIMESTAMP = "timestamp";
+  public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+
+  public static final String OUTPUT_TEMPERATURE = "temperature";
+  public static final String OUTPUT_HUMIDITY = "humidity";
 
   private final Random random = new Random();
 
-  public PingWorker() {
-    super("c-ping", Arrays.asList(
-        RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
-            "Message to log"),
-        RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL,
-            "Delay to sleep")), Collections.singletonList(
-        RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
-            "Produce a timestamp")), Collections.emptyList());
+  public PingCherryWorker() {
+    super("c-pingworker", Arrays.asList(
+            RunnerParameter.getInstance(INPUT_MESSAGE, "Message", String.class, RunnerParameter.Level.OPTIONAL,
+                "Message to log"),
+            RunnerParameter.getInstance(INPUT_DELAY, "Delay", Long.class, RunnerParameter.Level.OPTIONAL, "Delay to sleep"),
+            RunnerParameter.getInstance(INPUT_THROWERRORPLEASE, "ThrowError", Boolean.class, RunnerParameter.Level.OPTIONAL,
+                "Please throw an error")),
+
+        Collections.singletonList(
+            RunnerParameter.getInstance(OUTPUT_TIMESTAMP, "Time stamp", String.class, RunnerParameter.Level.REQUIRED,
+                "Produce a timestamp")),
+        Collections.singletonList(BpmnError.getInstance(ERROR_BAD_WEATHER, "Bad Weather")));
   }
 
   /**
@@ -68,7 +81,17 @@ public class PingWorker extends AbstractWorker implements IntFrameworkRunner {
   public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
     String message = getInputStringValue(INPUT_MESSAGE, null, activatedJob);
     Long delay = getInputLongValue(INPUT_DELAY, null, activatedJob);
+
     logInfo(message);
+
+    Boolean throwErrorPlease = getInputBooleanValue(INPUT_THROWERRORPLEASE, Boolean.FALSE, activatedJob);
+
+    if (Boolean.TRUE.equals(throwErrorPlease)) {
+      setOutputValue(OUTPUT_TEMPERATURE, "6C", contextExecution);
+      setOutputValue(OUTPUT_HUMIDITY, "100%", contextExecution);
+      throw new ConnectorException(ERROR_BAD_WEATHER, "Weather is rainy");
+    }
+
     if (delay != null && delay < 0) {
       delay = random.nextLong(10000) + 1500L;
     }

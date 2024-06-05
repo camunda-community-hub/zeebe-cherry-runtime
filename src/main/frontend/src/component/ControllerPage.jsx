@@ -40,7 +40,12 @@ class ControllerPage extends React.Component {
     return (
       <div style={{height: "50px"}}>
         {this.state.loading &&
-          <table><tr><td><InlineLoading></InlineLoading></td><td>Loading</td></tr></table>}
+          <table>
+            <tr>
+              <td><InlineLoading></InlineLoading></td>
+              <td>Loading</td>
+            </tr>
+          </table>}
 
         {this.state.errorMessage &&
           <div className="alert alert-danger" style={{margin: "10px 10px 10px 10px"}}>

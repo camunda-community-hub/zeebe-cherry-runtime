@@ -1,14 +1,58 @@
 
-cherry.connectorslib:
-  uploadpath: ./localstorage/upload
-  classloaderpath: ./localstorage/classloader
-  forcerefresh: false
+cherry:
+  connectorslib:
+    uploadpath: ./localstorage/upload
+    classloaderpath: ./localstorage/classloader
+    forcerefresh: true
+
+  runners:
+    # the runtime load all embedded runners
+    embeddedrunner: false
+
+    # the runtime load ping runners
+    pingrunner: false
+
+zeebe:
+  client:
+    worker:
+      threads: 14
+      maxJobsActive: 30
+
 
 # use a OnPremise Zeebe engine
 zeebe.client:
-  broker.gateway-address: 127.0.0.1:26500
-  # zeebe.client.broker.gateway-address=host.docker.internal:26500
-  security.plaintext: true
+    broker.gateway-address: 127.0.0.1:26500
+    # zeebe.client.broker.gateway-address=host.docker.internal:26500
+    security.plaintext: true
+  # https://github.com/camunda-community-hub/spring-zeebe#configuring-camunda-platform-8-saas-connection
+  # https://github.com/camunda-community-hub/spring-zeebe#additional-configuration-options
+
+
+# On premise Multi tenancy cloud
+zeebe.clientMulti:
+    broker.gateway-address: 127.0.0.1:26500
+    # zeebe.client.broker.gateway-address=host.docker.internal:26500
+    security:
+      plaintext: false
+
+    # list of tenant's ID separated with a semi colons
+    tenantIds: <default>;red
+
+
+    oauth:
+      clientId: worker
+      clientSecret: uMpRNGJciY7EHgv3yuuO4xEFdaeb85oa
+      authorizationServerUrl: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      clientAudience: zeebe-api
+
+zeebe.clientSaas:
+    cloud:
+      region: bru-2
+      clusterId: 4b421869-b847-44af-95b5-f9bb544276e2
+    oauth:
+      clientId: GYvGP9nfxE0lGdsY~Alvi622gRctUEt_
+      clientSecret: RthPQzPvuJEeTRwI4oTu.Gvo0rKMtSgFkmCQf-8BdcO-9fGKcLixIzittroaIcT1
+
 
   # use a cloud Zeebe engine
   # zeebe.client.cloud.region=bru-2
@@ -16,22 +60,20 @@ zeebe.client:
   # zeebe.client.cloud.clientId=si71NBAWtUlREmfKja5oQC3M.WsT~sHa
   # zeebe.client.cloud.clientSecret=pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
 
-
-
-  worker:
-    maxJobsActive: 32
-    threads: 1
 server.port: 9081
 logging.level.root: INFO
+
 
 # return message with BAD_REQUEST to the client
 server.error.include-message: always
 
 # Spring Boot Configuration
-spring.application.name: ZeebeCherry
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
-# spring.mustache.prefix: classpath:static/templates/
+spring.application.name: CherryRuntime
+
+# Cherry will override the zeebeClient bean
+spring:
+  main:
+    allow-bean-definition-overriding: true
 
 # spring.datasource:
 #   url: "jdbc:h2:file:./cherry.db"
@@ -43,17 +85,14 @@ server.servlet.context-path: /
 # Save statistics and information
 
 # --------------------- Postgres
-# spring.datasource:
-#  url: "jdbc:postgresql://localhost/cherrydb"
-#  username: "camunda"
-#  password: "camunda"
-#  driver-class-name: "org.postgresql.Driver"
-#spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+spring2.datasource:
+  url: "jdbc:postgresql://localhost/cherrydb"
+  username: "camunda"
+  password: "camunda"
+  driver-class-name: "org.postgresql.Driver"
+spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 
-#org:
-#  hibernate:
-#    dialect:
-#      PostgreSQL94Dialect:
+org.hibernate.dialect: "PostgreSQL94Dialect"
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
@@ -62,8 +101,8 @@ spring.datasource:
   driver-class-name: "org.h2.Driver"
   username: "sa"
   password: "password"
-spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
-org.hibernate.dialect: "H2Dialect"
+spring2.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+org2.hibernate.dialect: "H2Dialect"
 
 # allow CLOB in Postgres
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true
@@ -90,31 +129,4 @@ spring.jpa:
 
 
 # Example of Watcher configuration
-
-
-#watchers:
-#  execution:
-#    - type: "WatchDirectory"
-#      name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchservice"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-
-
-#   - type: "Directory"
-#     name: "watch my directory"
-#      directory: "./src/test/resources/watcher/watchdir"
-#      filterFile: ".*\\.txt"
-#      storageDefinition: "JSON"
-#      fileReference: "ApplicantMotivationFile"
-#      fileName: "ApplicantFileName"
-#
-#      action: "CREATEPROCESSINSTANCEPERID"
-#      processId: "watchDirectory"
-#      timeBetweenDutyInMS: 30000
 

@@ -8,7 +8,7 @@
 
 import React from 'react';
 import {Button, Tab, Tabs} from "react-bootstrap";
-import { NumberInput} from "carbon-components-react";
+import {NumberInput} from "carbon-components-react";
 
 import RestCallService from "../services/RestCallService";
 import RunnerChart from "./RunnerChart";
@@ -91,13 +91,13 @@ class RunnerMonitoring extends React.Component {
             </div>
             <div className="row" style={{paddingTop: "10px"}}>
               <div className="col-md-4">
-              <NumberInput label="Threshold (in milliseconds)"
-                disabled={this.state.display.loading}
-                          readonly="true"
-                          value={this.state.runner.threshold}
-                          onChange={(event) => {
-                            this.setThreshold(event.target.value);
-                          }}/>
+                <NumberInput label="Threshold (in milliseconds)"
+                             disabled={this.state.display.loading}
+                             readonly="true"
+                             value={this.state.runner.threshold}
+                             onChange={(event) => {
+                               this.setThreshold(event.target.value);
+                             }}/>
               </div>
             </div>
             <div className="row" style={{paddingTop: "10px"}}>
@@ -188,7 +188,7 @@ class RunnerMonitoring extends React.Component {
               </thead>
               {this.state.operations && this.state.operations.errors &&
                 this.state.operations.errors.map((error, _index) =>
-                  <tr >
+                  <tr>
                     <td style={{fontSize: "10px", whiteSpace: "nowrap"}}>{error.executionTime}</td>
                     <td>{error.status}</td>
                     <td>{error.errorCode}</td>
@@ -307,9 +307,9 @@ class RunnerMonitoring extends React.Component {
 
   refreshState() {
     if (this.state.runner.active) {
-      this.setState({labelBtnStart: "started", labelBtnStop: "stop"});
+      this.setState({labelBtnStart: "Started", labelBtnStop: "Stop"});
     } else {
-      this.setState({labelBtnStart: "start", labelBtnStop: "stopped"});
+      this.setState({labelBtnStart: "Start", labelBtnStop: "Stopped"});
     }
   }
 

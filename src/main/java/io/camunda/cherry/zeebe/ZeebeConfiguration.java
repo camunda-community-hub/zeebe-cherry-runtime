@@ -5,6 +5,10 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 @PropertySource("classpath:application.yaml")
@@ -12,11 +16,11 @@ public class ZeebeConfiguration {
 
   @Value("${zeebe.client.broker.gateway-address:localhost:26500}")
   @Nullable
-  private String gateway;
+  private String gatewayAddress;
 
-  @Value("${zeebe.client.security.plaintext:true}")
+  @Value("${zeebe.client.security.plaintext:}")
   @Nullable
-  private Boolean plaintext;
+  private String plaintext;
 
   @Value("${zeebe.client.cloud.region:}")
   @Nullable
@@ -26,20 +30,40 @@ public class ZeebeConfiguration {
   @Nullable
   private String clusterId;
 
-  @Value("${zeebe.client.cloud.clientId:}")
+  @Value("${zeebe.client.oauth.clientId:}")
   @Nullable
   private String clientId;
 
-  @Value("${zeebe.client.cloud.clientSecret:}")
+  @Value("${zeebe.client.oauth.clientSecret:}")
   @Nullable
   private String clientSecret;
 
-  @Value("${zeebe.client.worker.threads:1}")
+  @Value("${zeebe.client.oauth.authorizationServerUrl:}")
+  @Nullable
+  private String authorizationServerUrl;
+
+  @Value("#{'${zeebe.client.tenantIds:}'.split(';')}")
+  @Nullable
+  private List<String> listTenantIds;
+
+  /**
+   * Not possible to use audience:
+   * connectorcore embeded io.camunda.zeebe.spring.client.properties.OperateClientConfigurationProperties
+   * This class does not have a setter for audience
+   * SpringBoot refuse to start
+   */
+  @Value("${zeebe.client.oauth.clientAudience:zeebe-api}")
+  @Nullable
+  private String audience;
+
+  @Value("${zeebe.client.worker.threads:10}")
   private int numberOfThreads;
 
-  @Value("${zeebe.client.worker.maxJobsActive:1}")
+  @Value("${zeebe.client.worker.maxJobsActive:10}")
   private int maxJobsActive;
 
+  @Value("${zeebe.client.worker.defaultJobDuration:}")
+  private String defaultJobDuration;
 
 
 
@@ -55,29 +79,43 @@ public class ZeebeConfiguration {
     read();
   }
 
-  public boolean isCloudConfiguration() {
+  public TYPECONNECTION getTypeConnection() {
+    if (isCloudConfiguration())
+      return TYPECONNECTION.CLOUD;
+    if (isOAuthConfiguration())
+      return TYPECONNECTION.IDENTITY;
+    return TYPECONNECTION.DIRECTIPADDRESS;
+  }
+
+  public List<String> getListTenantIds() {
+    // Due to the split, and empty list return a list with one value, blanck
+    if (listTenantIds == null || (listTenantIds.size() == 1 && listTenantIds.get(0).trim().isEmpty()))
+      return Collections.emptyList();
+    return listTenantIds;
+  }
+
+  private boolean isCloudConfiguration() {
+    return clusterId != null && !clusterId.trim().isEmpty();
+  }
+
+  private boolean isOAuthConfiguration() {
     return clientId != null && !clientId.trim().isEmpty();
   }
 
   public String getGatewayAddress() {
-    return gateway;
+    return gatewayAddress;
+  }
+
+  public void setGatewayAddress(@Nullable String gatewayAddress) {
+    this.gatewayAddress = gatewayAddress;
   }
 
   @Nullable
-  public String getGateway() {
-    return gateway;
+  public boolean isPlaintext() {
+    return plaintext == null || "true".equals(plaintext);
   }
 
-  public void setGateway(@Nullable String gateway) {
-    this.gateway = gateway;
-  }
-
-  @Nullable
-  public Boolean isPlaintext() {
-    return plaintext;
-  }
-
-  public void setPlaintext(@Nullable Boolean plaintext) {
+  public void setPlaintext(@Nullable String plaintext) {
     this.plaintext = plaintext;
   }
 
@@ -117,6 +155,24 @@ public class ZeebeConfiguration {
     this.clientSecret = clientSecret;
   }
 
+  @Nullable
+  public String getAuthorizationServerUrl() {
+    return authorizationServerUrl;
+  }
+
+  public void setAuthorizationServerUrl(@Nullable String authorizationServerUrl) {
+    this.authorizationServerUrl = authorizationServerUrl;
+  }
+
+  @Nullable
+  public String getAudience() {
+    return audience;
+  }
+
+  public void setAudience(@Nullable String audience) {
+    this.audience = audience;
+  }
+
   public int getNumberOfThreads() {
     return numberOfThreads;
   }
@@ -133,11 +189,15 @@ public class ZeebeConfiguration {
     this.maxJobsActive = maxJobsActive;
   }
 
-  /* ******************************************************************** */
-  /*                                                                      */
-  /*  Read/Write in the database                                          */
-  /*                                                                      */
-  /* ******************************************************************** */
+  public Duration getDefaultJobTimeout() {
+    try {
+      return Duration.parse(defaultJobDuration);
+    } catch (DateTimeParseException e) {
+      // Handle parsing exception if the input is not a valid ISO duration
+
+      return null;
+    }
+  }
 
   /**
    * Detect if something change
@@ -148,8 +208,14 @@ public class ZeebeConfiguration {
     return false;
   }
 
-  public void write() {
+  /* ******************************************************************** */
+  /*                                                                      */
+  /*  Read/Write in the database                                          */
+  /*                                                                      */
+  /* ******************************************************************** */
 
+  public void write() {
+    // To be implemented
   }
 
   /**
@@ -183,23 +249,33 @@ public class ZeebeConfiguration {
     if (isCloudConfiguration()) {
       logConfiguration.append(" ClusterId[");
       logConfiguration.append(getClusterId());
-      logConfiguration.append("] ClientId[");
-      logConfiguration.append(getClientId());
-      logConfiguration.append("] ClientSecret[");
-      String clientSecret = getClientSecret();
-      logConfiguration.append(clientSecret == null ? "null" : (clientSecret + "****").substring(0, 3) + "****");
       logConfiguration.append("] Region[");
       logConfiguration.append(getRegion());
       logConfiguration.append("]");
     } else {
+      logConfiguration.append(" OAuth? ");
+      logConfiguration.append(isOAuthConfiguration());
+
       logConfiguration.append(" Gateway[");
-      logConfiguration.append(getGateway());
+      logConfiguration.append(getGatewayAddress());
       logConfiguration.append("] usePlainText[");
       logConfiguration.append(isPlaintext());
       logConfiguration.append("]");
     }
-    return logConfiguration.toString();
 
+    if (isOAuthConfiguration()) {
+      logConfiguration.append(" ClientID[");
+      logConfiguration.append(getClientId());
+      logConfiguration.append("] ClientSecret[");
+      String clientSecretTemp = getClientSecret();
+      logConfiguration.append(clientSecretTemp == null ? "null" : (clientSecretTemp + "****").substring(0, 3) + "****");
+      logConfiguration.append("] Audience[");
+      logConfiguration.append(getAudience());
+      logConfiguration.append("] authorizationServerUrl[");
+      logConfiguration.append(getAuthorizationServerUrl());
+      logConfiguration.append("]");
+    }
+    return logConfiguration.toString();
   }
 
   /**
@@ -211,4 +287,6 @@ public class ZeebeConfiguration {
   private boolean empty(String value) {
     return value == null || value.trim().isEmpty();
   }
+
+  public enum TYPECONNECTION {CLOUD, IDENTITY, DIRECTIPADDRESS}
 }

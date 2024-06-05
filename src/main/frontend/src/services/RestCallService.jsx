@@ -60,7 +60,7 @@ class RestCallService {
       });
   }
 
-// PostJson
+  // PostJson
   postJson(uri, param, objToCall, fctToCallback) {
     let headers = {'Content-Type': 'application/json'};
     param.timezoneoffset = (new Date()).getTimezoneOffset();
@@ -134,6 +134,46 @@ class RestCallService {
         } else {
           console.log("RestCallService.putJson: No call back defined");
         }
+
+      });
+  }
+
+  // postUpload file
+  postUpload(uri, formData, objToCall, fctToCallback) {
+    let headers = {'Content-Type': 'multipart/form-data'};
+    let timezoneoffset = (new Date()).getTimezoneOffset();
+    console.log("RestCallService.postJson: timezoneoffset=" + timezoneoffset);
+    uri = uri + "&timezoneoffset=" + (new Date()).getTimezoneOffset();
+
+    const requestOptions = {
+      headers: headers
+    };
+    var selfUri = uri;
+    axios.post(uri, formData, requestOptions)
+      .then(axiosPayload => {
+        // console.log("RestCallService.getJson: payload:"+JSON.stringify(axiosPayload.data));
+        if (fctToCallback != null) {
+          let httpResponse = new HttpResponse(axiosPayload, null);
+          fctToCallback.call(objToCall, httpResponse);
+        } else {
+          console.log("RestCallService.postJson: No call back defined");
+        }
+      })
+      .catch(error => {
+        console.error("RestCallService.getJson: Uri[" + selfUri + "] catch error:" + error.message);
+        if (error.response && error.response.status && error.response.status === 401) {
+          let homeCherry = window.location.href;
+          console.log("Redirect : to[" + homeCherry + "]");
+          window.location = homeCherry;
+          return;
+        }
+        if (fctToCallback != null) {
+          let httpResponse = new HttpResponse({}, error)
+          fctToCallback.call(objToCall, httpResponse);
+        } else {
+          console.log("RestCallService.postJson: No call back defined");
+        }
+
 
       });
   }

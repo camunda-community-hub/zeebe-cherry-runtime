@@ -12,17 +12,24 @@ import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
 import io.camunda.zeebe.client.api.ZeebeFuture;
 import io.camunda.zeebe.client.api.response.Topology;
+import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProvider;
+import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProviderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
+
+import java.net.URI;
 
 @Component
 @Configuration
 @PropertySource("classpath:application.yaml")
-
+@EnableScheduling
 public class ZeebeContainer {
 
   Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
@@ -32,6 +39,11 @@ public class ZeebeContainer {
   @Autowired
   LogOperation logOperation;
   private ZeebeClient zeebeClient;
+
+  /**
+   * Connection correct is zeebeClient !=null && isConnected = true
+   */
+  private boolean isConnected = false;
   /**
    * Number of thread currently used at the Zeebe Client
    */
@@ -41,6 +53,16 @@ public class ZeebeContainer {
    */
   public void startZeebeeClient() throws TechnicalException {
     zeebeClient = null;
+    URI zeebeAddressURI;
+    try {
+      String gatewayAddress = zeebeConfiguration.getGatewayAddress();
+      if (!gatewayAddress.startsWith("http"))
+        gatewayAddress = "http://" + gatewayAddress;
+      zeebeAddressURI = new URI(gatewayAddress);
+    } catch (Exception e) {
+      // logger.error("Can't convert [{}] to URI", zeebeConfiguration.getGatewayAddress());
+      // throw new TechnicalException("Can't convert [" + zeebeConfiguration.getGatewayAddress() + " to URI", e);
+    }
     String validation = zeebeConfiguration.checkValidation();
     if (validation != null) {
       logger.error("Incorrect configuration: " + validation);
@@ -49,29 +71,65 @@ public class ZeebeContainer {
     }
 
     logger.info("ZeebeContainer.startZeebe {} ", zeebeConfiguration.getLogConfiguration());
-    ZeebeClientBuilder zeebeClientBuilder;
-    if (zeebeConfiguration.isCloudConfiguration()) {
+    ZeebeClientBuilder zeebeClientBuilder = null;
+    switch (zeebeConfiguration.getTypeConnection()) {
+    // ---- CLOUD connection
+    case CLOUD -> {
       zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
           .withClusterId(zeebeConfiguration.getClusterId())
           .withClientId(zeebeConfiguration.getClientId())
           .withClientSecret(zeebeConfiguration.getClientSecret())
           .withRegion(zeebeConfiguration.getRegion());
+      break;
+    }
 
-    } else {
+    // ---- IDENTITY connection (with OAuth)
+    case IDENTITY -> {
+      // zeebeClientBuilder = ZeebeClient.newClientBuilder().grpcAddress(zeebeAddressURI);
       zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
       if (zeebeConfiguration.isPlaintext())
         zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
 
+      // see https://docs.camunda.io/docs/apis-tools/java-client/
+      // https://github.com/jwulf/zeebe-node-sm-mt-example
+      final OAuthCredentialsProvider provider = new OAuthCredentialsProviderBuilder() //
+          .clientId(zeebeConfiguration.getClientId())
+          .clientSecret(zeebeConfiguration.getClientSecret())
+          .audience(zeebeConfiguration.getAudience())
+          .build();
+      zeebeClientBuilder = zeebeClientBuilder.credentialsProvider(provider);
+      break;
     }
+
+    // ---- CLASSIC connection
+
+    case DIRECTIPADDRESS -> {
+      zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
+      if (zeebeConfiguration.isPlaintext())
+        zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
+    }
+    default -> throw new TechnicalException(
+        "Unknown connection type [" + zeebeConfiguration.getTypeConnection().toString() + "]");
+    }
+
+    // Multi tenancy?
+    if (!zeebeConfiguration.getListTenantIds().isEmpty())
+      zeebeClientBuilder = zeebeClientBuilder.defaultJobWorkerTenantIds(zeebeConfiguration.getListTenantIds());
+    if (zeebeConfiguration.getDefaultJobTimeout() != null)
+      zeebeClientBuilder = zeebeClientBuilder.defaultJobTimeout(zeebeConfiguration.getDefaultJobTimeout());
+
     try {
-      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads()).build();
+      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
+          .defaultJobWorkerMaxJobsActive(zeebeConfiguration.getMaxJobsActive())
+          .build();
     } catch (Exception e) {
       logOperation.logError("Can't start ZeebeClient ", e);
       throw new TechnicalException("Can't start ZeebeClient", e);
     }
-    pingZeebeClient();
+    isConnected = pingZeebeClient();
 
-    logger.info("ZeebeClient number of threads=" + zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+    logger.info("ZeebeConnected: {} ClientNumberOfThreads=[{}]", isConnected,
+        zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
   }
 
   /**
@@ -89,6 +147,7 @@ public class ZeebeContainer {
 
       return true;
     } catch (Exception e) {
+      logger.error("PingZeebe exception {}", e.toString());
       return false;
     }
   }
@@ -113,6 +172,18 @@ public class ZeebeContainer {
     return zeebeClient;
   }
 
+  /**
+   * Note: the class io/camunda/zeebe/spring/client/configuration/ZeebeClientProdAutoConfiguration
+   * already define a zeebeClient as a bean. But this class known the real zeebeclient in use.
+   *
+   * @return the zeebeClient
+   */
+  @Bean
+  @Primary
+  public ZeebeClient zeebeClient() {
+    return zeebeClient;
+  }
+
   public boolean isOk() {
     return zeebeClient != null;
   }
@@ -131,6 +202,18 @@ public class ZeebeContainer {
    */
   public int getMaxJobsActive() {
     return zeebeClient.getConfiguration().getDefaultJobWorkerMaxJobsActive();
+  }
+
+  /**
+   * Check the connection, and restart it if it is possible
+   *
+   * @return true if the connection is up and running, false else
+   */
+  public boolean retryConnection() {
+
+    if (getZeebeClient() == null)
+      startZeebeeClient();
+    return pingZeebeClient();
   }
 
 }

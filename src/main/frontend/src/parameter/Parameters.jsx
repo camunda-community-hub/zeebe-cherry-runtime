@@ -53,7 +53,7 @@ class Parameters extends React.Component {
         </div>
 
 
-        <div className="row" >
+        <div className="row">
           <div className="col-md-6">
 
             <div className="card" style={{width: "25rem;"}}>
@@ -72,16 +72,17 @@ class Parameters extends React.Component {
                       <option value="GATEWAY">Gateway</option>
                       <option value="SAAS">Saas</option>
                     </Select>
+
                   </div>
                 </div>
 
-                <div style={this.getZssZeebeConnection("GATEWAY")}>
+                <div style={this.getZssZeebeConnection("DIRECTIPADDRESS")}>
                   <div className="row">
                     <div className="col-md-12">
-                      <TextInput labelText="Address"
+                      <TextInput labelText="Gateway Address"
                                  readonly="true"
                                  style={{width: "200px"}}
-                                 value={this.state.parameters.gatewayaddress}
+                                 value={this.state.parameters.gatewayAddress}
                                  onChange={(event) => this.setParameterProperty("gatewayaddress", event.target.value)}/>
                     </div>
                   </div>
@@ -98,6 +99,82 @@ class Parameters extends React.Component {
                       </Select>
                     </div>
                   </div>
+
+                </div>
+
+
+                <div style={this.getZssZeebeConnection("IDENTITY")}>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="Address"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.gatewayAddress}
+                                 onChange={(event) => this.setParameterProperty("gatewayAddress", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="clientId"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.clientId}
+                                 onChange={(event) => this.setParameterProperty("clientId", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="clientSecret"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.clientSecret}
+                                 onChange={(event) => this.setParameterProperty("clientSecret", event.target.value)}/>
+
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="Autorization Server Url"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.AutorizationServerUrl}
+                                 onChange={(event) => this.setParameterProperty("AutorizationServerUrl", event.target.value)}/>
+
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-12">
+                      <TextInput labelText="client Audience"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.clientAudience}
+                                 onChange={(event) => this.setParameterProperty("clientAudience", event.target.value)}/>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-4">
+                      <Select
+                        value={this.state.parameters.plaintext}
+                        labelText="Security plain text"
+                        disabled="true"
+                        readonly="true"
+                        onChange={(event) => this.setParameterProperty("plaintext", event.target.value)}>
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-md-4">
+                      <TextInput labelText="Address"
+                                 readonly="true"
+                                 style={{width: "200px"}}
+                                 value={this.state.parameters.tenantIds}
+                                 onChange={(event) => this.setParameterProperty("gatewayaddress", event.target.value)}/>
+
+                    </div>
+                  </div>
+
                 </div>
 
 
@@ -106,27 +183,27 @@ class Parameters extends React.Component {
                     <div className="col-md-6">
                       <TextInput labelText="Region"
                                  readonly="true"
-                                 value={this.state.parameters.cloudregion}
+                                 value={this.state.parameters.cloudRegion}
                                  style={{width: "100px"}}
-                                 onChange={(event) => this.setParameterProperty("cloudregion", event.target.value)}/>
+                                 onChange={(event) => this.setParameterProperty("cloudRegion", event.target.value)}/>
                     </div>
                   </div>
                   <div className="row">
                     <div className="col-md-6">
                       <TextInput labelText="Cluster ID"
                                  readonly="true"
-                                 value={this.state.parameters.cloudclusterid}
+                                 value={this.state.parameters.cloudClusterID}
                                  style={{width: "200px"}}
-                                 onChange={(event) => this.setParameterProperty("cloudclusterid", event.target.value)}/>
+                                 onChange={(event) => this.setParameterProperty("cloudClusterID", event.target.value)}/>
                     </div>
                   </div>
                   <div className="row">
                     <div className="col-md-6">
                       <TextInput labelText="client ID"
                                  readonly="true"
-                                 value={this.state.parameters.cloudclientid}
+                                 value={this.state.parameters.cloudClientID}
                                  style={{width: "300px"}}
-                                 onChange={(event) => this.setParameterProperty("cloudclientid", event.target.value)}/>
+                                 onChange={(event) => this.setParameterProperty("cloudClientID", event.target.value)}/>
                     </div>
                   </div>
                   <div className="row">
@@ -134,8 +211,8 @@ class Parameters extends React.Component {
                       <TextInput labelText="Client secret"
                                  readonly="true"
                                  style={{width: "300px"}}
-                                 value={this.state.parameters.cloudclientsecret}
-                                 onChange={(event) => this.setParameterProperty("cloudclientsecret", event.target.value)}/>
+                                 value={this.state.parameters.cloudClientSecret}
+                                 onChange={(event) => this.setParameterProperty("cloudClientSecret", event.target.value)}/>
                     </div>
                   </div>
                 </div>
@@ -143,7 +220,6 @@ class Parameters extends React.Component {
               </div>
             </div>
           </div>
-
 
 
           <div className="col-md-6">
@@ -155,35 +231,32 @@ class Parameters extends React.Component {
                   <div className="col-md-6">
                     <TextInput labelText="Product"
                                readonly="true"
-                               value={this.state.parameters.datasourceproductname}
+                               value={this.state.parameters.datasourceProductName}
                                style={{width: "300px"}}/>
                   </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6">
-                    <TextInput labelText="Product"
+                    <TextInput labelText="Datasource"
                                readonly="true"
-                               value={this.state.parameters.datasourceurl}
+                               value={this.state.parameters.datasourceUrl}
                                style={{width: "300px"}}
-                               onChange={(event) => this.setParameterProperty("datasourceurl", event.target.value)}/>
+                               onChange={(event) => this.setParameterProperty("datasourceUrl", event.target.value)}/>
                   </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6">
-                    <TextInput labelText="Product"
+                    <TextInput labelText="User Name"
                                readonly="true"
-                               value={this.state.parameters.datasourceusername}
+                               value={this.state.parameters.datasourceUserName}
                                style={{width: "300px"}}
-                               onChange={(event) => this.setParameterProperty("datasourceusername", event.target.value)}/>
+                               onChange={(event) => this.setParameterProperty("datasourceUserName", event.target.value)}/>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-
-
 
 
         <div className="row" style={{marginTop: "10px"}}>
@@ -197,9 +270,9 @@ class Parameters extends React.Component {
                                  readonly="true"
                                  min="1"
                                  size="sm"
-                                 value={this.state.parameters.maxjobsactive}
+                                 value={this.state.parameters.maxJobsActive}
                                  style={{width: "100px"}}
-                                 onChange={(event) => this.setParameterProperty("maxjobsactive", event.target.value)}/>
+                                 onChange={(event) => this.setParameterProperty("maxJobsActive", event.target.value)}/>
                   </div>
                 </div>
                 <div className="row">
@@ -208,9 +281,9 @@ class Parameters extends React.Component {
                                  readonly="true"
                                  min="1"
                                  size="sm"
-                                 value={this.state.parameters.nbthreads}
+                                 value={this.state.parameters.nbThreads}
                                  style={{width: "100px"}}
-                                 onChange={(event) => this.setParameterProperty("nbthreads", event.target.value)}/>
+                                 onChange={(event) => this.setParameterProperty("nbThreads", event.target.value)}/>
                   </div>
                 </div>
               </div>
@@ -225,6 +298,7 @@ class Parameters extends React.Component {
   }
 
   getZssZeebeConnection(value) {
+    console.log("getZssZeebeConnection : value=" + value + "] statePara[" + this.state.parameters.zeebekindconnection + "]")
     if (value === this.state.parameters.zeebekindconnection)
       return {}
     return {display: "none"};
