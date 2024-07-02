@@ -38,7 +38,7 @@ This should be the correct information, but does not work
 # Inbound connector
 Cherry handle Inbound connector
 
-# Upload connector JAR
+
 
 ## PVC
 Documentation: via a PVC, upload the JAR and Cherry load it at the beginning.

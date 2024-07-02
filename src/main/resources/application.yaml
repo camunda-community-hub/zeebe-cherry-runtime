@@ -90,9 +90,9 @@ spring2.datasource:
   username: "camunda"
   password: "camunda"
   driver-class-name: "org.postgresql.Driver"
-spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+spring2.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 
-org.hibernate.dialect: "PostgreSQL94Dialect"
+org2.hibernate.dialect: "PostgreSQL94Dialect"
 
 # spring.datasource.validation-query: SELECT 1;
 # --------------------- H2
@@ -101,8 +101,8 @@ spring.datasource:
   driver-class-name: "org.h2.Driver"
   username: "sa"
   password: "password"
-spring2.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
-org2.hibernate.dialect: "H2Dialect"
+spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+org.hibernate.dialect: "H2Dialect"
 
 # allow CLOB in Postgres
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: true

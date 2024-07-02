@@ -7,7 +7,7 @@ The developer can choose two different pattern:
 * worker
 
 The connector pattern embed the Connector SDK
-![Architecture](../Architecture.png?raw=true)
+![Architecture](../images/Architecture.png?raw=true)
 
 In the next part of the documentation, we use the term of **Runner**. A Runner is a Connector or a Worker.
 
