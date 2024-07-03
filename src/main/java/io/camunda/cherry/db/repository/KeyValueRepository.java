@@ -16,6 +16,5 @@ public interface KeyValueRepository extends JpaRepository<KeyValueEntity, Long> 
   @Query("select keyValue from KeyValueEntity keyValue" + " where keyValue.origin = :origin ")
   List<KeyValueEntity> getAllByOrigin(@Param("origin") KeyValueEntity.KeyValueType origin);
 
-  @Query("update KeyValueEntity c set c.name = :name WHERE c.id = :name")
-  void setCustomerName(@Param("name") String name);
+
 }
