@@ -292,6 +292,25 @@ class Parameters extends React.Component {
         </div>
 
 
+        <div className="row" style={{marginTop: "10px"}}>
+          <div className="col-md-6">
+            <div className="card" style={{width: "25rem;"}}>
+              <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>About</div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-12">
+                    <TextInput labelText="Version"
+                               readonly="true"
+                               value={this.state.parameters.version}
+                               style={{width: "300px"}}
+                              />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     )
 
@@ -307,7 +326,7 @@ class Parameters extends React.Component {
 
 
   /**
-   * Set a parameter property property
+   * Set a parameter
    * @param propertyName name of the property in parameters
    * @param propertyValue the value
    */

@@ -20,9 +20,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.sql.DataSource;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 @RestController
 @RequestMapping("cherry")
@@ -97,6 +103,9 @@ public class AdminRestController {
     } catch (Exception e) {
       logger.error("During getParameters() " + e);
     }
+
+    parameters.put("version", getVersion());
+
     return parameters;
   }
 
@@ -110,4 +119,14 @@ public class AdminRestController {
     jobRunnerFactory.setNumberOfThreads(numberOfThreads);
   }
 
+  private String getVersion() {
+    MavenXpp3Reader reader = new MavenXpp3Reader();
+    try (FileReader fileReader = new FileReader("pom.xml")) {
+      Model model = reader.read(fileReader);
+      return model.getVersion();
+    } catch (IOException | XmlPullParserException e) {
+      logger.error("Exception during load pom.xml: {}", e);
+      return null;
+    }
+  }
 }
