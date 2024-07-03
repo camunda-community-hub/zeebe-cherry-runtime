@@ -77,9 +77,10 @@ public class JobRunnerFactory {
    */
   Map<String, Running> mapRunning = new HashMap<>();
   @Value("${cherry.runners.embeddedrunner:true}")
-  private Boolean executeEmbeddedRunner;
+  private Boolean executeEmbeddedRunner = Boolean.TRUE;
+
   @Value("${cherry.runners.pingrunner:true}")
-  private Boolean executePingRunner;
+  private Boolean executePingRunner= Boolean.FALSE;
 
   public void startAll() {
 
@@ -125,6 +126,7 @@ public class JobRunnerFactory {
   public void resumeAllRunners() {
     // get the list from the storage
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
+    logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}",executeEmbeddedRunner, executePingRunner );
     if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
       logger.info("Don't start the EmbeddedWorker");
 
