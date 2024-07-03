@@ -192,7 +192,7 @@ public class JobRunnerFactory {
     for (Running running : mapRunning.values()) {
       if (running.runner != null) {
         try {
-          stopRunner(running.runner.getIdentification());
+          stopRunner(running.runner.getType());
 
         } catch (Exception e) {
           logger.error("ControllerPage on runner [{}] : {}", running.runner.getIdentification(), e);

@@ -1,32 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <!-- 3.2.0 using Zeebe 8.5.x/ SporingBoot 3.3.x -->
   <groupId>io.camunda.community</groupId>
   <artifactId>zeebe-cherry-runtime</artifactId>
-  <version>3.1.1</version>
+  <version>3.2.0</version>
 
   <properties>
-    <java.version>17</java.version>
+    <java.version>21</java.version>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven.compiler.source>${java.version}</maven.compiler.source>
 
+    <!-- versin in https://central.sonatype.com/artifact/io.camunda.connector/connector-validation/versions -->
     <!--Version 8.3.0-->
-    <zeebe.version>8.3.0</zeebe.version>
-    <zeebe-client.version>8.3.3</zeebe-client.version>
-    <connector-core.version>8.3.1</connector-core.version>
-    <connector-validation.version>8.3.1</connector-validation.version>
+    <version.zeebe>8.5.7</version.zeebe>
+    <!--Version 8.3.3-->
+    <version.zeebe-client>8.5.5</version.zeebe-client>
+    <!--Version 8.3.1-->
+    <version.connector-core>8.5.4</version.connector-core>
+    <version.connector-runtime>8.5.4</version.connector-runtime>
+    <!--Version 8.3.1-->
+    <version.connector-validation>8.5.4</version.connector-validation>
+
+
 
     <!-- Access file -->
-    <filestorage.version>1.2.0</filestorage.version>
+    <version.filestorage>1.2.0</version.filestorage>
 
     <!-- 2.7.4 -->
-    <spring.boot.version>2.7.4</spring.boot.version>
+    <!-- According https://github.com/camunda-community-hub/spring-zeebe/blob/main/pom.xml -->
+    <version.spring.boot>3.3.0</version.spring.boot>
 
-    <junit.jupiter.version>5.9.1</junit.jupiter.version>
-    <opensagres.version>2.0.3</opensagres.version>
-
-    <opensagres.version>2.0.4</opensagres.version>
+    <version.junit.jupiter>5.9.1</version.junit.jupiter>
+    <version.opensagres>2.0.3</version.opensagres>
 
   </properties>
 
@@ -46,7 +54,7 @@
         <!-- Import dependency management from Spring Boot -->
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring.boot.version}</version>
+        <version>${version.spring.boot}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -64,35 +72,35 @@
     -->
 
 
-        <dependency>
-          <groupId>io.camunda.spring</groupId>
-          <artifactId>spring-boot-starter-camunda</artifactId>
-          <version>${zeebe.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>io.camunda.spring</groupId>
+      <artifactId>spring-boot-starter-camunda</artifactId>
+      <version>${version.zeebe}</version>
+    </dependency>
 
 
-        <dependency>
-          <groupId>io.camunda</groupId>
-          <artifactId>zeebe-client-java</artifactId>
-          <version>${zeebe-client.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>io.camunda</groupId>
+      <artifactId>zeebe-client-java</artifactId>
+      <version>${version.zeebe-client}</version>
+    </dependency>
 
 
     <!-- Accept Camunda Connector -->
     <dependency>
       <groupId>io.camunda.connector</groupId>
       <artifactId>connector-core</artifactId>
-      <version>${connector-core.version}</version>
+      <version>${version.connector-core}</version>
     </dependency>
     <dependency>
       <groupId>io.camunda.connector</groupId>
       <artifactId>connector-runtime-core</artifactId>
-      <version>${connector-core.version}</version>
+      <version>${version.connector-core}</version>
     </dependency>
     <dependency>
       <groupId>io.camunda.connector</groupId>
       <artifactId>connector-validation</artifactId>
-      <version>${connector-validation.version}</version>
+      <version>${version.connector-validation}</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.camunda.connector/connector-validation -->
 
@@ -101,7 +109,7 @@
     <dependency>
       <groupId>io.camunda.filestorage</groupId>
       <artifactId>filestorage</artifactId>
-      <version>${filestorage.version}</version>
+      <version>${version.filestorage}</version>
     </dependency>
 
 
@@ -121,7 +129,7 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
-      <version>${spring.boot.version}</version>
+      <version>${version.spring.boot}</version>
     </dependency>
     <!-- JPA to save entity -->
     <dependency>
@@ -136,6 +144,12 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- Access the pom.xmll to read the version -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+      <version>3.8.4</version>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
 
     <dependency>
@@ -165,69 +179,16 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.jupiter.version}</version>
+      <version>${version.junit.jupiter}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.jupiter.version}</version>
+      <version>${version.junit.jupiter}</version>
       <scope>test</scope>
     </dependency>
 
-
-
-
-
-    <!-- Convert to PDF -->
-    <!-- https://mvnrepository.com/artifact/fr.opensagres.xdocreport/fr.opensagres.xdocreport.document -->
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.document</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.document.docx</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.document.odt</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.converter.odt.odfdom</artifactId>
-      <version>${opensagres.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>xml-apis</groupId>
-          <artifactId>xml-apis</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>xdocreport</artifactId>
-      <version>${opensagres.version}</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.converter</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.template.velocity</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>fr.opensagres.xdocreport</groupId>
-      <artifactId>fr.opensagres.xdocreport.converter.docx.xwpf</artifactId>
-      <version>${opensagres.version}</version>
-    </dependency>
 
 
   </dependencies>
@@ -236,48 +197,48 @@
 
     <plugins>
       <!-- connect the React application in the Springboot application -->
-     <plugin>
-       <groupId>com.github.eirslett</groupId>
-       <artifactId>frontend-maven-plugin</artifactId>
-       <version>1.12.1</version>
-       <configuration>
-         <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
-         <installDirectory>${project.basedir}/target</installDirectory>
-       </configuration>
-       <executions>
-         <execution>
-           <id>install node and npm</id>
-           <phase>compile</phase>
-           <goals>
-             <goal>install-node-and-npm</goal>
-           </goals>
-           <configuration>
-             <nodeVersion>v18.5.0</nodeVersion>
-             <npmVersion>8.12.1</npmVersion>
-           </configuration>
-         </execution>
-         <execution>
-           <id>npm install</id>
-           <phase>compile</phase>
-           <goals>
-             <goal>npm</goal>
-           </goals>
-           <configuration>
-             <arguments>install</arguments>
-           </configuration>
-         </execution>
-         <execution>
-           <id>npm run build</id>
-           <phase>compile</phase>
-           <goals>
-             <goal>npm</goal>
-           </goals>
-           <configuration>
-             <arguments>run build</arguments>
-           </configuration>
-         </execution>
-       </executions>
-     </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.12.1</version>
+        <configuration>
+          <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
+          <installDirectory>${project.basedir}/target</installDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install node and npm</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>v18.5.0</nodeVersion>
+              <npmVersion>8.12.1</npmVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm install</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm run build</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
@@ -299,6 +260,7 @@
         </executions>
       </plugin>
 
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -318,8 +280,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
         <configuration>
-          <source>17</source>
-          <target>17</target>
+          <source>21</source>
+          <target>21</target>
         </configuration>
       </plugin>
 
@@ -337,6 +299,10 @@
         </executions>
         <configuration>
           <classifier>exec</classifier>
+          <mainClass>io.camunda.CherryApplication</mainClass>
+          <image>
+            <name>ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest</name>
+          </image>
         </configuration>
       </plugin>
 
