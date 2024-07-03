@@ -32,6 +32,8 @@ What do you need to do to start the runtime?
 
 Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
 
+Check the [Administration guide.md](doc/AdministrationGuide%2FREADME.md) for explanation on functions available.
+
 In a short overview, to enable a Cherry runtime in your cluster:
 
 ## Download the application
