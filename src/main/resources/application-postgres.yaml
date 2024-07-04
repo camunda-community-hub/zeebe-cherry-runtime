@@ -6,7 +6,7 @@ cherry:
     forcerefresh: false
   runners:
     # the runtime load all embedded runners
-    embeddedrunner: false
+    embeddedrunner: true
 
     # the runtime load ping runners - attention, pingConnector and pingObjectConnector are embedded
     pingrunner: false
@@ -35,8 +35,6 @@ logging.level.root: INFO
 server.error.include-message: always
 
 
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
 
 # Spring Boot Configuration
 spring:
@@ -73,9 +71,12 @@ spring:
     username: "camunda"
     password: "camunda"
     driver-class-name: "org.postgresql.Driver"
-  jpa.database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+  jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+org2:
+  hibernate:
+    dialect:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
 # hibernate.jdbc.use_streams_for_binary: true
 
 # spring.datasource.validation-query: SELECT 1;
