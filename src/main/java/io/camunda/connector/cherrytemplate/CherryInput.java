@@ -35,6 +35,9 @@ public interface CherryInput {
   String PARAMETER_MAP_VISIBLE_IN_TEMPLATE = "visibleInTemplate";
   /* use 'optional' or empty (empty is translate to optional) */ String PARAMETER_MAP_FEEL = "feel";
 
+  String PARAMETER_MAP_GROUP_ID = "groupId";
+  String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
+
   /**
    * get the list of Input Parameters
    *

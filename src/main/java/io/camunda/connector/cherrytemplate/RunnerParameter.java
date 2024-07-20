@@ -4,13 +4,13 @@
 /*                                                                      */
 /*  Define a parameters (Worker or Connector)                           */
 /* ******************************************************************** */
-package io.camunda.cherry.definition;
+package io.camunda.connector.cherrytemplate;
 
-import io.camunda.connector.cherrytemplate.CherryInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +40,17 @@ public class RunnerParameter {
   public boolean visibleInTemplate = false;
   public Group group;
 
+  public RunnerParameter() {
+
+  }
+
+  public RunnerParameter(String name, String label, Class<?> classParameter, Level level, String explanation) {
+    this.name = name;
+    this.label = label;
+    this.clazz = classParameter;
+    this.level = level;
+    this.explanation = explanation;
+  }
   /**
    * Get an instance without a default value
    *
@@ -99,7 +110,7 @@ public class RunnerParameter {
   }
 
   /**
-   * A Gson Parameter can be given as a String or at a Object?
+   * A Gson Parameter can be given as a String or as Object?
    *
    * @param parameterName  parameter name
    * @param parameterLabel label to display in the template
@@ -142,57 +153,6 @@ public class RunnerParameter {
     return parameter;
   }
 
-  public static RunnerParameter getFromMap(Map<String, Object> inputMap, String contextInfo) {
-    RunnerParameter parameter = new RunnerParameter();
-    parameter.name = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_NAME, contextInfo);
-    parameter.label = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_LABEL, contextInfo);
-    parameter.clazz = (Class) inputMap.get(CherryInput.PARAMETER_MAP_CLASS);
-    parameter.level = RunnerParameter.Level.valueOf(
-        getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_LEVEL, contextInfo));
-    parameter.explanation = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_EXPLANATION, contextInfo);
-    parameter.defaultValue = inputMap.get(CherryInput.PARAMETER_MAP_DEFAULT_VALUE);
-
-    parameter.gsonTemplate = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_GSON_TEMPLATE, contextInfo);
-
-    parameter.condition = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION, contextInfo);
-    parameter.conditionEquals = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION_EQUALS, contextInfo);
-    parameter.conditionOneOf = (List<String>) inputMap.get(CherryInput.PARAMETER_MAP_CONDITION_ONE_OF);
-    parameter.feelOptional = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_FEEL, contextInfo);
-
-    List<Object> workerParameterChoiceList = (List) inputMap.get(CherryInput.PARAMETER_MAP_CHOICE_LIST);
-    if (workerParameterChoiceList != null) {
-      parameter.choiceList = new ArrayList<>();
-      for (Object workerParameter : workerParameterChoiceList) {
-        if (workerParameter instanceof Map workerParameterMap) {
-          String code = getStringFromMap(workerParameterMap, CherryInput.PARAMETER_MAP_CHOICE_LIST_CODE,
-              contextInfo + ".workerParameterChoiceList");
-          String displayName = getStringFromMap(workerParameterMap, CherryInput.PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME,
-              contextInfo + ".workerParameterChoiceList");
-          RunnerParameter.WorkerParameterChoice workerParameterChoice = new RunnerParameter.WorkerParameterChoice(code,
-              displayName);
-          parameter.choiceList.add(workerParameterChoice);
-        } else {
-          logger.error("Error during transformList.workerParameterChoiceList : List Of Map expected, get {}",
-              workerParameter == null ? "null" : workerParameter.getClass().getName());
-        }
-      }
-    } // end workerParameterChoiceList != null
-    parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE));
-    return parameter;
-  }
-
-  private static String getStringFromMap(Map<?, ?> map, String attributName, String contextInfo) {
-    Object value = map.getOrDefault(attributName, null);
-    if (value == null)
-      return null;
-    if (value instanceof String)
-      return (String) value;
-
-    logger.error("Error during getString in {}, attribut {} : String expected get {}", contextInfo, attributName,
-        value.getClass().getName());
-    return null;
-  }
-
   public String getName() {
     return name;
   }
@@ -230,6 +190,10 @@ public class RunnerParameter {
     this.defaultValue = defaultValue;
     return this;
   }
+  public RunnerParameter setGsonTemplate(String gsonTemplate) {
+    this.gsonTemplate = gsonTemplate;
+    return this;
+  }
 
   /* -------------------------------------------------------- */
   /*                                                          */
@@ -251,6 +215,14 @@ public class RunnerParameter {
   }
 
   /**
+   * return the condition property
+   * @return
+   */
+  public String getCondition() {
+    return condition;
+  }
+
+  /**
    * Worker can define a list of choice. Add a new choice in the list
    *
    * @param name  name of the choice
@@ -267,6 +239,11 @@ public class RunnerParameter {
   public boolean hasChoice() {
     return choiceList != null && !choiceList.isEmpty();
   }
+
+  public List<String> getConditionOneOf() {
+    return conditionOneOf;
+  }
+
 
   /* -------------------------------------------------------- */
   /*                                                          */
@@ -286,9 +263,13 @@ public class RunnerParameter {
 
   /**
    * Level on the parameter.
+   * REQUIRED: a value must be given. in the element-template, a Mandatory is placed
+   * OPTIONAL: value may be given, or not. In the element template, a checkbox is added, because in Modeler, not possible
+   * to leave a empty field for some type, so something has to be done
+   * FREE: not required, nothing is done in the element template, field will be visible
    */
   public enum Level {
-    REQUIRED, OPTIONAL
+    REQUIRED, OPTIONAL, FREE
   }
 
   /**
@@ -313,4 +294,113 @@ public class RunnerParameter {
       return false;
     }
   }
+
+
+
+  /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  Serialization                                                   */
+  /*                                                          */
+  /* -------------------------------------------------------- */
+
+
+
+  public Map<String, Object> toMap(String parameterNameForCondition) {
+    Map<String, Object> oneParameter = new HashMap<>();
+    oneParameter.put(CherryInput.PARAMETER_MAP_NAME, name);
+    oneParameter.put(CherryInput.PARAMETER_MAP_LABEL, label);
+    oneParameter.put(CherryInput.PARAMETER_MAP_CLASS, clazz);
+    oneParameter.put(CherryInput.PARAMETER_MAP_LEVEL, level.toString());
+    oneParameter.put(CherryInput.PARAMETER_MAP_EXPLANATION, explanation);
+
+    // Transform the choiceList to a List<Map> to avoid any class exception between the RunnerParameter embedded in
+    // the JAR and the one in the Cherry Runtime
+    if (choiceList!=null && ! choiceList.isEmpty()) {
+
+      List<Map<String, Object>> choiceMapList = new ArrayList<>();
+      for (WorkerParameterChoice choice : choiceList) {
+        choiceMapList.add( Map.of(CherryInput.PARAMETER_MAP_CHOICE_LIST_CODE, choice.code,
+            CherryInput.PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME, choice.displayName));
+      }
+      oneParameter.put(CherryInput.PARAMETER_MAP_CHOICE_LIST, choiceMapList);
+    }
+    oneParameter.put(CherryInput.PARAMETER_MAP_CONDITION, condition);
+    oneParameter.put( CherryInput.PARAMETER_MAP_CONDITION_EQUALS, conditionEquals);
+
+    oneParameter.put(CherryInput.PARAMETER_MAP_CONDITION_ONE_OF, conditionOneOf);
+
+    if (group!=null) {
+      oneParameter.put(CherryInput.PARAMETER_MAP_GROUP_ID, group.id);
+      oneParameter.put(CherryInput.PARAMETER_MAP_GROUP_LABEL, group.label);
+    }
+    if (defaultValue!=null)
+      oneParameter.put(CherryInput.PARAMETER_MAP_DEFAULT_VALUE, defaultValue.toString());
+
+    oneParameter.put(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE, visibleInTemplate);
+
+    logger.info("PdfParameters getMap:{}", oneParameter);
+
+    return oneParameter;
+  }
+
+
+  public static RunnerParameter fromMap(Map<String, Object> inputMap, String contextInfo) {
+    RunnerParameter parameter = new RunnerParameter();
+    parameter.name = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_NAME, contextInfo);
+    parameter.label = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_LABEL, contextInfo);
+    parameter.clazz = (Class) inputMap.get(CherryInput.PARAMETER_MAP_CLASS);
+    parameter.level = Level.valueOf(
+        getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_LEVEL, contextInfo));
+    parameter.explanation = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_EXPLANATION, contextInfo);
+    parameter.defaultValue = inputMap.get(CherryInput.PARAMETER_MAP_DEFAULT_VALUE);
+
+    parameter.gsonTemplate = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_GSON_TEMPLATE, contextInfo);
+
+    parameter.condition = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION, contextInfo);
+    parameter.conditionEquals = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_CONDITION_EQUALS, contextInfo);
+    parameter.conditionOneOf = (List<String>) inputMap.get(CherryInput.PARAMETER_MAP_CONDITION_ONE_OF);
+    parameter.feelOptional = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_FEEL, contextInfo);
+
+    List<Object> workerParameterChoiceList = (List) inputMap.get(CherryInput.PARAMETER_MAP_CHOICE_LIST);
+    if (workerParameterChoiceList != null) {
+      parameter.choiceList = new ArrayList<>();
+      for (Object workerParameter : workerParameterChoiceList) {
+        if (workerParameter instanceof Map workerParameterMap) {
+          String code = getStringFromMap(workerParameterMap, CherryInput.PARAMETER_MAP_CHOICE_LIST_CODE,
+              contextInfo + ".workerParameterChoiceList");
+          String displayName = getStringFromMap(workerParameterMap, CherryInput.PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME,
+              contextInfo + ".workerParameterChoiceList");
+          WorkerParameterChoice workerParameterChoice = new WorkerParameterChoice(code,
+              displayName);
+          parameter.choiceList.add(workerParameterChoice);
+        } else {
+          logger.error("Error during transformList.workerParameterChoiceList : List Of Map expected, get {}",
+              workerParameter == null ? "null" : workerParameter.getClass().getName());
+        }
+      }
+    } // end workerParameterChoiceList != null
+    parameter.visibleInTemplate = Boolean.TRUE.equals(inputMap.get(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE));
+    // Retrieve Group
+    String groupId = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_GROUP_ID, contextInfo);
+    String groupLabel = getStringFromMap(inputMap, CherryInput.PARAMETER_MAP_GROUP_LABEL, contextInfo);
+    if (groupId!=null) {
+      parameter.group = new Group(groupId, groupLabel);
+    }
+
+    return parameter;
+  }
+
+
+  private static String getStringFromMap(Map<?, ?> map, String attributName, String contextInfo) {
+    Object value = map.getOrDefault(attributName, null);
+    if (value == null)
+      return null;
+    if (value instanceof String)
+      return (String) value;
+
+    logger.error("Error during getString in {}, attribut {} : String expected get {}", contextInfo, attributName,
+        value.getClass().getName());
+    return null;
+  }
+
 }

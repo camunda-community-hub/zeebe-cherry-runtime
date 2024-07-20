@@ -15,3 +15,5 @@ buildNumber.properties
 /localstorage/classloader/*
 /localstorage/upload/*
 /docker/diskmonitor/
+/docker/connectorruntime/
+/localstorage/upload/

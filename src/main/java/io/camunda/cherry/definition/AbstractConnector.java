@@ -11,6 +11,7 @@
 package io.camunda.cherry.definition;
 
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

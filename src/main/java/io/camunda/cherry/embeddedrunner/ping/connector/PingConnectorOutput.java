@@ -12,7 +12,7 @@
 package io.camunda.cherry.embeddedrunner.ping.connector;
 
 import io.camunda.cherry.definition.AbstractConnectorOutput;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 
 import java.util.Arrays;
 import java.util.List;

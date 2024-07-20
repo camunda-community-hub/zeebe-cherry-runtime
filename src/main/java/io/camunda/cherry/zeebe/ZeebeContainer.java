@@ -10,6 +10,7 @@ import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.LogOperation;
 import io.camunda.zeebe.client.ZeebeClient;
 import io.camunda.zeebe.client.ZeebeClientBuilder;
+import io.camunda.zeebe.client.ZeebeClientConfiguration;
 import io.camunda.zeebe.client.api.ZeebeFuture;
 import io.camunda.zeebe.client.api.response.Topology;
 import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProvider;
@@ -35,23 +36,56 @@ public class ZeebeContainer {
   Logger logger = LoggerFactory.getLogger(ZeebeContainer.class.getName());
 
   @Autowired
-  ZeebeConfiguration zeebeConfiguration;
-  @Autowired
   LogOperation logOperation;
-  private ZeebeClient zeebeClient;
+  @Autowired
+  private ZeebeCherryConfiguration zeebeCherryConfiguration;
 
   /**
    * Connection correct is zeebeClient !=null && isConnected = true
    */
   private boolean isConnected = false;
+
+
+  private ZeebeClient zeebeClient;
+  private ZeebeCherryConfiguration zeebeConfiguration;
+  private ZeebeClientConfiguration clientConfiguration;
+
+
+  public ZeebeContainer(final ZeebeClient zeebeClient, final ZeebeCherryConfiguration zeebeConfiguration, final ZeebeClientConfiguration clientConfiguration) {
+    this.zeebeClient = zeebeClient;
+    this.zeebeConfiguration = zeebeConfiguration;
+    this.clientConfiguration = clientConfiguration;
+  }
+
+
+
+
   /**
-   * Number of thread currently used at the Zeebe Client
+   * Return the current ZeebeClient Attention: do not save it, it may be deleted and recreated on
+   * demand
+   *
+   * @return the zeebeClient
    */
 
+  public ZeebeClient getZeebeClient() {
+    return zeebeClient;
+  }
+
+/*  public ZeebeCherryConfiguration getZeebeConfiguration() {
+    return zeebeCherryConfiguration;
+  }
+*/
+
+  public ZeebeClientConfiguration getClientConfiguration() { return clientConfiguration;};
   /**
    * Start the ZeebeClient
    */
   public void startZeebeeClient() throws TechnicalException {
+    // Do nothing, already started
+
+
+    /*
+
     zeebeClient = null;
     URI zeebeAddressURI;
     try {
@@ -130,6 +164,8 @@ public class ZeebeContainer {
 
     logger.info("ZeebeConnected: {} ClientNumberOfThreads=[{}]", isConnected,
         zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
+
+ */
   }
 
   /**
@@ -138,11 +174,13 @@ public class ZeebeContainer {
    * @return true if the zeebe server is alive, else false
    */
   public boolean pingZeebeClient() {
-    if (zeebeClient == null)
+    ZeebeClient localZeebe = zeebeClient;
+
+    if (localZeebe == null)
       return false;
     try {
 
-      ZeebeFuture<Topology> send = zeebeClient.newTopologyRequest().send();
+      ZeebeFuture<Topology> send = localZeebe.newTopologyRequest().send();
       Topology join = send.join();
 
       return true;
@@ -156,21 +194,13 @@ public class ZeebeContainer {
    * Stop the zeebeClient
    */
   public void stopZeebeeClient() {
-    if (zeebeClient == null)
+    ZeebeClient localZeebe = zeebeClient;
+
+    if (localZeebe == null)
       return;
-    zeebeClient.close();
-    zeebeClient = null;
+    localZeebe.close();
   }
 
-  /**
-   * Return the current ZeebeClient Attention: do not save it, it may be deleted and recreated on
-   * demand
-   *
-   * @return the zeebeClient
-   */
-  public ZeebeClient getZeebeClient() {
-    return zeebeClient;
-  }
 
   /**
    * Note: the class io/camunda/zeebe/spring/client/configuration/ZeebeClientProdAutoConfiguration
@@ -178,12 +208,12 @@ public class ZeebeContainer {
    *
    * @return the zeebeClient
    */
-  @Bean
-  @Primary
-  public ZeebeClient zeebeClient() {
+  // @Bean
+  // @Primary
+  /* public ZeebeClient zeebeClient() {
     return zeebeClient;
   }
-
+*/
   public boolean isOk() {
     return zeebeClient != null;
   }
@@ -194,6 +224,7 @@ public class ZeebeContainer {
    * @return the number of threads used when the ZeebeClient is started
    */
   public int getNumberOfThreads() {
+
     return zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads();
   }
 
@@ -210,8 +241,9 @@ public class ZeebeContainer {
    * @return true if the connection is up and running, false else
    */
   public boolean retryConnection() {
+    ZeebeClient localZeebe = zeebeClient;
 
-    if (getZeebeClient() == null)
+    if (localZeebe==null)
       startZeebeeClient();
     return pingZeebeClient();
   }

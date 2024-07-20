@@ -105,6 +105,7 @@ services:
       - management.endpoint.health.probes.enabled=true
     volumes:
       - ./diskmonitor:/home
+      - ./connectorruntime:/opt/custom
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health/readiness" ]
       interval: 30s

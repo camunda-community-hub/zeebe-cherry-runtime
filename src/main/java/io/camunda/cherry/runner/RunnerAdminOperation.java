@@ -13,6 +13,7 @@ import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.JarDefinitionRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
+import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,8 +54,12 @@ public class RunnerAdminOperation {
     // Stop all workers
     String runnerNotStopped = "";
     for (RunnerDefinitionEntity runnerEntity : listRunners) {
-      if (!jobRunnerFactory.stopRunner(runnerEntity.type))
-        runnerNotStopped += runnerEntity.name + ";";
+      try {
+        if (!jobRunnerFactory.stopRunner(runnerEntity.type))
+          runnerNotStopped += runnerEntity.name + ";";
+      }catch(OperationAlreadyStoppedException e) {
+        // Ok, it's already stopped, proceed
+      }
     }
 
     if (!runnerNotStopped.isEmpty())

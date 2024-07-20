@@ -10,7 +10,7 @@ package io.camunda.cherry.admin;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.zeebe.ZeebeConfiguration;
+import io.camunda.cherry.zeebe.ZeebeCherryConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,13 +36,13 @@ public class AdminRestController {
 
   private final JobRunnerFactory jobRunnerFactory;
   private final HistoryFactory historyFactory;
-  private final ZeebeConfiguration zeebeConfiguration;
+  private final ZeebeCherryConfiguration zeebeConfiguration;
   private final DataSource dataSource;
   Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
   AdminRestController(JobRunnerFactory jobRunnerFactory,
                       HistoryFactory historyFactory,
-                      ZeebeConfiguration zeebeConfiguration,
+                      ZeebeCherryConfiguration zeebeConfiguration,
                       DataSource dataSource) {
     this.jobRunnerFactory = jobRunnerFactory;
     this.historyFactory = historyFactory;

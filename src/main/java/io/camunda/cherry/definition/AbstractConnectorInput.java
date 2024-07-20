@@ -8,6 +8,8 @@
 /* ******************************************************************** */
 package io.camunda.cherry.definition;
 
+import io.camunda.connector.cherrytemplate.RunnerParameter;
+
 import java.util.Collections;
 import java.util.List;
 

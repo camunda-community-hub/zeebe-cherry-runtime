@@ -1,7 +1,7 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,7 +202,12 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     List<RunnerParameter> listRunnersParameters = new ArrayList<>();
     for (Object input : listInputsParameter) {
       if (input instanceof Map inputMap) {
-        listRunnersParameters.add(RunnerParameter.getFromMap(inputMap, contextInfo));
+        try {
+          RunnerParameter runner = RunnerParameter.fromMap(inputMap, contextInfo);
+          listRunnersParameters.add(runner);
+        } catch(Exception e) {
+          logger.error("Can't convert RunnerParameter from map {} : {}", inputMap, e);
+        }
         // public RunnerParameter.Group group;
       } else // input is not a Map
         logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,

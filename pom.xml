@@ -71,7 +71,7 @@
         </dependency>
     -->
 
-
+    <!-- community project -->
     <dependency>
       <groupId>io.camunda.spring</groupId>
       <artifactId>spring-boot-starter-camunda</artifactId>
