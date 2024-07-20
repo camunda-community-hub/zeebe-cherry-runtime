@@ -2,6 +2,7 @@ package io.camunda.cherry.definition;
 
 import io.camunda.cherry.runtime.WatcherFactory;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

@@ -1,16 +1,9 @@
 # Installation guide
+The purpose of this document is to explain how to install the Runtime.
 
 
-## Introduction
+# Introduction
 the purpose of this document is to explain how to install and execute the runtime. The target audience are the administrators.
-
-
-The Cherry runtime comes with some Runners. 
-You can start it as it is, and then upload any connectors or workers in the runtime.
-
-You can find some collection available on the community (PDF, CMIS). You can start directly each collections, or you can download the JAR file and upload it in a runtime.
-
-## Different packages
 
 The runtime is available in multiple forms.
 
@@ -18,6 +11,37 @@ The runtime is available in multiple forms.
 
 * A Docker image. The docker image is accessible via the Docker repository or can be built from the project.
 
+The docker image is used in the docker-compose, and the Kubernetes installation. 
+
+The runtime accept new connectors / workers. They come from a JAR file.
+
+The runtime accepts multiple way to upload them:
+* Start the runtime. Access the Administration page, section `content`, and upload the JAR file. The Cherry runtime saved the JAR in a database, and it will be started if you stop / restart the runtime.
+
+* Start the runtime. Access the Administration page, section `Store`. Upload the JAR file. It is saved in the local database, and wil be started if you stop / restart the runtime
+ 
+* share (mount) a PVC with the runtime. Place in this PVC all connectors / worker JAR. At the beginning, the Cherry Runtime check the PVC, and any JAR or new version is uploaded in the database. This does not require any manual intervention
+Check the section "Load connectors and workers at startup from a PVC"
+
+* in the configuration, update the variable `ConnectorsAtStartup`. The MarketPlace is contacted, and connectors are downloaded. This does not require any manual intervention.
+Visit the section "Load Connectors from MarketPlace"
+
+
+
+
+# From a docker-compose
+
+Visit [Docker Compose Installation](..%2F..%2Fdocker%2FREADME.md). This folder contains a H2 and a Postgres execution.
+
+# Kubernetes Cluster
+
+# Locally in a development environment
+
+The runtime is available in multiple forms.
+
+* A GitHub project (this project). The repository can produce the different artefact or can be run directly
+
+* A Docker image. The docker image is accessible via the Docker repository or can be built from the project.
 
 ## Start from the project
 
@@ -40,7 +64,7 @@ java -jar .\target\zeebe-cherry-runtime-<version>-exec.jar
 ````
 Note: you need to replace the version by the correct value. Check the current value by listing the contents of the directory
 
-## Start from the docker image
+## Create your docker image
 
 Note: you may want to specify the Zeebe connection before starting. Check the next item.
 
@@ -138,7 +162,7 @@ Use this information in the application.properties, and provide the IP address t
 zeebe.client.broker.gateway-address=127.0.0.1:26500
 ````
 
-# Load connectors and workers at startup
+# Load connectors and workers at startup from a PVC
 
 The Cherry runtime monitor a path. This path is part of the configuration
 
@@ -156,6 +180,14 @@ The last parameter, `forcerefresh`, is used to force the runtime to reload all J
 runtime checks at the startup if the JAR is already loaded and ignores it if this is the case.
 
 Doing this way, it is possible to start a complete runtime, with all the connectors and workers, in a completely automatic way.
+
+TODO: describe an example
+
+
+
+# Load Connectors from MarketPlace
+TODO
+
 
 # Database
 The runtime use a database to save statistics, state (active/inactive) on connector / worker.
@@ -179,16 +211,4 @@ A JDBC Driver is required to access the database. By default, the runtime onboar
 For any new driver, the `pom.xml` must be upgraded, and the application must be rebuilt.
 
 Check the `docker-cherry/docker-compose-postgres.yml` example to see a different access.
-
-
-## Access the Web Application
-
-Access the webapp here: `http://localhost:<portNumber>`.
-
-Currently, there is just a single welcome page that calls the `/cherry/api/runner/list` to show
-Runners found in system:
-
-![Dashboard page](./DashboardPage.png?raw=true)
-
-All connectors / Worker available in the runtime are visible. Click on a Runner to access the detail.
 

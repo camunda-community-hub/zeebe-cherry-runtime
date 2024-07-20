@@ -9,7 +9,7 @@ package io.camunda.cherry.embeddedrunner.files;
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.filestorage.FileRepoFactory;
 import io.camunda.filestorage.FileVariableReference;

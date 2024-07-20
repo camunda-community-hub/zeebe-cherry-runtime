@@ -16,17 +16,51 @@ cherry:
 # Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe
 
 # -------------------- Self Manage
-zeebe:
+camunda:
   client:
-    broker:
-      gateway-address: host:docker:internal:26500
-    security.plaintext: true
-    worker:
-      threads: 14
-      maxJobsActive: 30
+    mode: simple
+    zeebe:
+      enabled: true
+      gateway-url: http://localhost:26500
+      prefer-rest-over-grpc: false
+      defaults:
+        max-jobs-active: 30
+      execution-threads: 14
+
+# 8.3 value:
+# zeebe.client:
+#   zeebe.client.
+#     security.plaintext: true
+# zeebe:
+#   client:
+#     broker:
+#       gateway-address=host:docker:internal:26500:
+#     security.plaintext: true
+#     worker:
+#       threads: 14
+#       maxJobsActive: 30
 
 
 # -------------------- Self Manage Multi-Tenancy
+# camunda:
+#   client:
+#     mode: oidc
+#     auth:
+#       client-id: <your client id>
+#       client-secret: <your client secret>
+#     tenant-ids:
+#       - <default>
+#       - red
+#     zeebe:
+#       enabled: true
+#       gateway-url: http://localhost:26500
+#       prefer-rest-over-grpc: false
+#       audience: zeebe-api
+#       defaults:
+#         max-jobs-active: 30
+#       execution-threads: 14
+
+# Previous 8.3
 # zeebe.clientMulti:
 #     broker.gateway-address: 127.0.0.1:26500
 #     # zeebe.client.broker.gateway-address=host.docker.internal:26500
@@ -41,13 +75,14 @@ zeebe:
 #       clientAudience: zeebe-api
 
 # -------------------- SAAS
-# zeebe:
+# camunda:
 #   client:
-#    cloud:
-#      region: bru-2
-#      clusterId: f867aa3d-5ee7-4324-96e8-21f557f104af
-#      clientId: si71NBAWtUlREmfKja5oQC3M.WsT~sHa
-#      clientSecret: pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
+#     mode: saas
+#     auth:
+#       client-id: GYv
+#       client-secret: Rth
+  #   cluster-id: 4b4
+  #   region: bru-2
 
 
 server.port: 9081

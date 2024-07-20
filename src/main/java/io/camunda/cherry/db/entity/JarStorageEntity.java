@@ -1,16 +1,17 @@
 package io.camunda.cherry.db.entity;
 
-import org.hibernate.annotations.Type;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
 import java.sql.Blob;
+import java.sql.Types;
 import java.time.LocalDateTime;
 
 
@@ -47,7 +48,7 @@ public class JarStorageEntity {
    */
   @Lob
   @Column(name = "jarfilebyte")
-  @Type(type = "org.hibernate.type.BinaryType")
+  @JdbcTypeCode(Types.BINARY)
   public byte[] jarfileByte;
 
   @Column(name = "load_log", length = 2000)

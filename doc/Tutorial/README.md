@@ -513,7 +513,7 @@ package io.camunda.cherry.helloword;
 
 import io.camunda.cherry.definition.AbstractWorker;
 import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
@@ -548,9 +548,8 @@ public class HelloWordWorker extends AbstractWorker {
     super( // Type
         "helloword",
         // List of Input
-        Arrays.asList(
-            RunnerParameter.getInstance(INPUT_COUNTRY, "Country name", String.class, RunnerParameter.Level.OPTIONAL,
-                    "Country to whom to say hello")
+        Arrays.asList(RunnerParameter.getInstance(INPUT_COUNTRY, "Country name", String.class,
+                    RunnerParameter.Level.OPTIONAL, "Country to whom to say hello")
                 .addChoice(COUNTRY_V_USA, "United State of America")
                 .addChoice(COUNTRY_V_GE, "Germany")
                 .addChoice(COUNTRY_V_FR, "France")
@@ -558,13 +557,14 @@ public class HelloWordWorker extends AbstractWorker {
                 .addChoice(COUNTRY_V_IT, "Italy")
                 .addChoice(COUNTRY_V_SP, "Spain"),
 
-            RunnerParameter.getInstance(INPUT_STATE, "State", String.class, RunnerParameter.Level.OPTIONAL, "State")
+            RunnerParameter.getInstance(INPUT_STATE, "State", String.class,
+                    RunnerParameter.Level.OPTIONAL, "State")
                 .addCondition(INPUT_COUNTRY, Collections.singletonList(COUNTRY_V_USA))),
 
         // list of Output
         Collections.singletonList(
-            RunnerParameter.getInstance(OUTPUT_MESSAGE, OUTPUT_MESSAGE, String.class, RunnerParameter.Level.REQUIRED,
-                "Welcome Message")),
+            RunnerParameter.getInstance(OUTPUT_MESSAGE, OUTPUT_MESSAGE, String.class,
+                RunnerParameter.Level.REQUIRED, "Welcome Message")),
         // List of BPMN Error
         Collections.singletonList(
             BpmnError.getInstance(BPMN_ERROR_NOTIME, "Sorry, no time to say hello now, I'm busy")));
@@ -591,16 +591,20 @@ public class HelloWordWorker extends AbstractWorker {
   }
 
   @Override
-  public void execute(final JobClient jobClient, final ActivatedJob activatedJob, ContextExecution contextExecution) {
+  public void execute(final JobClient jobClient,
+                      final ActivatedJob activatedJob,
+                      ContextExecution contextExecution) {
 
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(new Date());
     if (calendar.get(Calendar.HOUR_OF_DAY) < 6)
-      throw new ConnectorException(BPMN_ERROR_NOTIME, "Sorry, too early in the morning, I'm not weak up");
+      throw new ConnectorException(BPMN_ERROR_NOTIME,
+          "Sorry, too early in the morning, I'm not weak up");
 
     String country = getInputStringValue(INPUT_COUNTRY, null, activatedJob);
     String state = getInputStringValue(INPUT_STATE, null, activatedJob);
-    String message = "Hello" + (country != null ? " " + country : "") + (state != null ? " " + state : "");
+    String message =
+        "Hello" + (country != null ? " " + country : "") + (state != null ? " " + state : "");
 
     setOutputValue(OUTPUT_MESSAGE, message, contextExecution);
   }

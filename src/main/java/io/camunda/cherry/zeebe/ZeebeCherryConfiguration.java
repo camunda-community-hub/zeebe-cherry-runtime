@@ -12,37 +12,37 @@ import java.util.List;
 
 @Component
 @PropertySource("classpath:application.yaml")
-public class ZeebeConfiguration {
+public class ZeebeCherryConfiguration {
 
-  @Value("${zeebe.client.broker.gateway-address:localhost:26500}")
+  @Value("${cherry.zeebe.client.broker.gateway-address:localhost:26500}")
   @Nullable
   private String gatewayAddress;
 
-  @Value("${zeebe.client.security.plaintext:}")
+  @Value("${cherry.zeebe.client.broker.plain-text:true}")
   @Nullable
   private String plaintext;
 
-  @Value("${zeebe.client.cloud.region:}")
+  @Value("${cherry.zeebe.client.cloud.region:}")
   @Nullable
   private String region;
 
-  @Value("${zeebe.client.cloud.clusterId:}")
+  @Value("${cherry.zeebe.client.cloud.clusterId:}")
   @Nullable
   private String clusterId;
 
-  @Value("${zeebe.client.oauth.clientId:}")
+  @Value("${cherry.zeebe.client.oauth.clientId:}")
   @Nullable
   private String clientId;
 
-  @Value("${zeebe.client.oauth.clientSecret:}")
+  @Value("${cherry.zeebe.client.oauth.clientSecret:}")
   @Nullable
   private String clientSecret;
 
-  @Value("${zeebe.client.oauth.authorizationServerUrl:}")
+  @Value("${cherry.zeebe.client.oauth.authorizationServerUrl:}")
   @Nullable
   private String authorizationServerUrl;
 
-  @Value("#{'${zeebe.client.tenantIds:}'.split(';')}")
+  @Value("#{'${cherry.zeebe.client.tenantIds:}'.split(';')}")
   @Nullable
   private List<String> listTenantIds;
 
@@ -52,17 +52,20 @@ public class ZeebeConfiguration {
    * This class does not have a setter for audience
    * SpringBoot refuse to start
    */
-  @Value("${zeebe.client.oauth.clientAudience:zeebe-api}")
+  @Value("${cherry.zeebe.client.oauth.clientAudience:zeebe-api}")
   @Nullable
   private String audience;
 
-  @Value("${zeebe.client.worker.threads:10}")
+  @Value("${cherry.zeebe.client.number-of-threads:50}")
   private int numberOfThreads;
 
-  @Value("${zeebe.client.worker.maxJobsActive:10}")
+  @Value("${cherry.zeebe.client.max-jobs-active:50}")
   private int maxJobsActive;
 
-  @Value("${zeebe.client.worker.defaultJobDuration:}")
+  /**
+   * the default job duration is the lock time
+   */
+  @Value("${cherry.zeebe.client.worker.default-job-duration:}")
   private String defaultJobDuration;
 
 

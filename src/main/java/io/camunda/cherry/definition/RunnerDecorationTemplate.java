@@ -9,6 +9,7 @@ package io.camunda.cherry.definition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,9 +54,12 @@ public class RunnerDecorationTemplate {
   public static final String ATTR_GROUP = "group";
   public static final String TYPE_FIELD_STRING = "String";
   public static final String TYPE_FIELD_DROPDOWN = "Dropdown";
+  public static final String TYPE_FIELD_NUMBER = "Number";
+
   public static final String ATTR_CONSTRAINTS_NOT_EMPTY = "notEmpty";
   public static final String ATTR_CONSTRAINTS = "constraints";
   public static final String ATTR_FEEL = "feel";
+  public static final String ATTR_FEEL_OPTIONAL = "optional";
 
   private final AbstractRunner runner;
 
@@ -224,9 +228,8 @@ public class RunnerDecorationTemplate {
         condition.put("equals", runnerParameter.conditionEquals);
     }
 
-    // To have a checkbox, the parameter must be optional AND does not have already a condition
-    boolean addConditionCheckbox =
-        (runnerParameter.condition == null) && (RunnerParameter.Level.OPTIONAL.equals(runnerParameter.getLevel()));
+    // To have a checkbox, the parameter must be optional
+    boolean addConditionCheckbox = RunnerParameter.Level.OPTIONAL.equals(runnerParameter.getLevel());
 
     if (runnerParameter.visibleInTemplate)
       addConditionCheckbox = false;
@@ -271,7 +274,6 @@ public class RunnerDecorationTemplate {
     propertyParameter.put(ATTR_LABEL, runnerParameter.label);
     // don't have the group at this moment
     propertyParameter.put(ATTR_DESCRIPTION, runnerParameter.explanation);
-    propertyParameter.put(ATTR_FEEL, runnerParameter.feelOptional == null ? "optional" : runnerParameter.feelOptional);
 
     if (runnerParameter.defaultValue != null) {
       propertyParameter.put(ATTR_VALUE, runnerParameter.defaultValue);
@@ -293,7 +295,18 @@ public class RunnerDecorationTemplate {
       }
       propertyParameter.put(ATTR_CHOICES, listChoices);
     }
-    propertyParameter.put(ATTR_TYPE, typeParameter);
+    if (Number.class.equals(runnerParameter.clazz)) {
+      typeParameter = TYPE_FIELD_NUMBER;
+    }
+      propertyParameter.put(ATTR_TYPE, typeParameter);
+
+
+    boolean feelSupported = typeParameter.equals(TYPE_FIELD_STRING) || typeParameter.equals(TYPE_FIELD_NUMBER);
+    if (feelSupported) {
+      propertyParameter.put(ATTR_FEEL,
+          runnerParameter.feelOptional!=null? runnerParameter.feelOptional : ATTR_FEEL_OPTIONAL  );
+    }
+
     if (isInput) {
       propertyParameter.put(ATTR_BINDING, Map.of(ATTR_TYPE, "zeebe:input", ATTR_NAME, runnerParameter.name));
     } else {

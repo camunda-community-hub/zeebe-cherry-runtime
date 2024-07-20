@@ -15,6 +15,7 @@ package io.camunda.cherry.definition;
 import com.google.gson.Gson;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.filestorage.FileRepoFactory;
 import io.camunda.filestorage.FileVariable;
 import io.camunda.filestorage.FileVariableReference;

@@ -2,7 +2,7 @@ package io.camunda.cherry.watcher;
 
 import io.camunda.cherry.definition.AbstractWatcher;
 import io.camunda.cherry.definition.BpmnError;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.cherry.definition.WatcherOrderInformation;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.filestorage.FileRepoFactory;
