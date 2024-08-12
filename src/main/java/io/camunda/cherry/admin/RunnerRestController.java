@@ -400,8 +400,7 @@ public class RunnerRestController {
             collectionName = runner.getCollectionName();
         }
       } else {
-        // one file with all runner
-
+        // one file with all runners
         List<AbstractRunner> listRunners = getListRunners(withFrameworkRunnersIncluded);
         // generate for ALL runners
         List<Map<String, Object>> listTemplate = listRunners.stream()
@@ -416,7 +415,9 @@ public class RunnerRestController {
       ZipOperation zipOperation = new ZipOperation("element-template");
       try {
         for (Map.Entry<String, String> template : mapContent.entrySet()) {
-          zipOperation.addZipContent(template.getKey() + ".json", template.getValue());
+          String fileName = template.getKey()+".json";
+          fileName = fileName.replaceAll("([A-Z])", "-$1").toLowerCase();
+          zipOperation.addZipContent(fileName, template.getValue());
         }
         zipOperation.close();
       } catch (IOException e) {

@@ -1,7 +1,7 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.definition.RunnerParameter;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 

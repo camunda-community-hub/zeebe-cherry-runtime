@@ -16,15 +16,17 @@ import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
+import io.camunda.cherry.exception.OperationTooManyRunnersException;
 import io.camunda.cherry.exception.OperationAlreadyStartedException;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
+import io.camunda.cherry.exception.OperationCantStopRunnerException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
-import io.camunda.cherry.zeebe.ZeebeConfiguration;
+import io.camunda.cherry.zeebe.ZeebeCherryConfiguration;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.zeebe.client.api.worker.JobHandler;
@@ -51,9 +53,9 @@ public class JobRunnerFactory {
 
   public static final String RUNNER_NOT_FOUND = "RunnerNotFound";
 
-  public static final String TOO_MANY_RUNNERS = "TooManyRunners";
   public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
   public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
+
   private static final ObjectMapper objectMapper = new ObjectMapper();
   Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
   @Autowired
@@ -65,7 +67,7 @@ public class JobRunnerFactory {
   @Autowired
   ZeebeContainer zeebeContainer;
   @Autowired
-  ZeebeConfiguration zeebeConfiguration;
+  ZeebeCherryConfiguration zeebeConfiguration;
   @Autowired
   LogOperation logOperation;
   @Autowired
@@ -80,7 +82,7 @@ public class JobRunnerFactory {
   private Boolean executeEmbeddedRunner = Boolean.TRUE;
 
   @Value("${cherry.runners.pingrunner:true}")
-  private Boolean executePingRunner= Boolean.FALSE;
+  private Boolean executePingRunner = Boolean.FALSE;
 
   public void startAll() {
 
@@ -126,7 +128,7 @@ public class JobRunnerFactory {
   public void resumeAllRunners() {
     // get the list from the storage
     List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
-    logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}",executeEmbeddedRunner, executePingRunner );
+    logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
     if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
       logger.info("Don't start the EmbeddedWorker");
 
@@ -192,7 +194,7 @@ public class JobRunnerFactory {
     for (Running running : mapRunning.values()) {
       if (running.runner != null) {
         try {
-          stopRunner(running.runner.getIdentification());
+          stopRunner(running.runner.getType());
 
         } catch (Exception e) {
           logger.error("ControllerPage on runner [{}] : {}", running.runner.getIdentification(), e);
@@ -238,7 +240,7 @@ public class JobRunnerFactory {
       throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
     }
     if (listRunners.size() > 1) {
-      throw new OperationException(TOO_MANY_RUNNERS, "Too many runner with this runnerType [" + runnerType + "]");
+      throw new OperationTooManyRunnersException("runnerType [" + runnerType + "]");
     }
     AbstractRunner runner = listRunners.get(0);
     List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
@@ -284,9 +286,10 @@ public class JobRunnerFactory {
 
     // stop all running and restart them
     for (Running running : mapRunning.values()) {
-      closeJobWorker(running.containerJobWorker.getJobWorker());
       JobWorker jobWorker = null;
       try {
+        closeJobWorker(running.containerJobWorker.getJobWorker());
+
         jobWorker = createJobWorker(running.runner);
       } catch (OperationException e) {
         logger.error("Can't restart [{}] : {} ", running.runner.getName(), e.getMessage());
@@ -300,19 +303,23 @@ public class JobRunnerFactory {
   /*                                                          */
   /* -------------------------------------------------------- */
 
-  private void closeJobWorker(JobWorker jobWorker) {
+  private void closeJobWorker(JobWorker jobWorker) throws OperationCantStopRunnerException {
     if (jobWorker == null)
       return;
     if (jobWorker.isClosed())
       return;
     jobWorker.close();
-    while (!jobWorker.isClosed()) {
+    // protection: wait one minutes, and then we consider the worker as stopped
+    long beginTimeOperation = System.currentTimeMillis();
+    while (!jobWorker.isClosed() && System.currentTimeMillis() - beginTimeOperation < 1000 * 60) {
       try {
         Thread.sleep(100);
       } catch (Exception e) {
         // do nothing
       }
     }
+    if (!jobWorker.isClosed())
+      throw new OperationCantStopRunnerException();
   }
 
   /**

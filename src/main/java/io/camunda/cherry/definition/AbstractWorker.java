@@ -10,6 +10,7 @@ package io.camunda.cherry.definition;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import io.camunda.zeebe.client.api.worker.JobClient;
 import io.camunda.zeebe.client.api.worker.JobHandler;

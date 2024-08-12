@@ -6,18 +6,23 @@ cherry:
     forcerefresh: false
   runners:
     # the runtime load all embedded runners
-    embeddedrunner: false
+    embeddedrunner: true
 
     # the runtime load ping runners - attention, pingConnector and pingObjectConnector are embedded
     pingrunner: false
 
 # use a OnPremise Zeebe engine
-zeebe.client:
-  broker.gateway-address: 127.0.0.1:26500
-  # zeebe.client.broker.gateway-address=host.docker.internal:26500
-  security.plaintext: true
+  zeebe:
+    client:
+      broker:
+        gateway-address: 127.0.0.1:26500
+        plain-text: true
+    # zeebe.client.broker.gateway-address=host.docker.internal:26500
+      security.plaintext: true
+      number-of-threads: 100
+      max-jobs-active: 100
 
-  # use a cloud Zeebe engine
+    # use a cloud Zeebe engine
   # zeebe.client.cloud.region=bru-2
   # zeebe.client.cloud.clusterId=f867aa3d-5ee7-4324-96e8-21f557f104af
   # zeebe.client.cloud.clientId=si71NBAWtUlREmfKja5oQC3M.WsT~sHa
@@ -28,6 +33,29 @@ zeebe.client:
   worker:
     maxJobsActive: 10
     threads: 10
+
+
+zeebe:
+  client:
+    broker:
+      gateway-address: 127.0.0.1:26500
+      plain-text: true
+    # zeebe.client.broker.gateway-address=host.docker.internal:26500
+    security.plaintext: true
+
+
+camunda:
+  client:
+    mode: simple
+    zeebe:
+      enabled: true
+      gateway-url: http://localhost:26500
+      prefer-rest-over-grpc: false
+      defaults:
+        max-jobs-active: 30
+      execution-threads: 14
+
+
 server.port: 9081
 logging.level.root: INFO
 
@@ -35,8 +63,6 @@ logging.level.root: INFO
 server.error.include-message: always
 
 
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
 
 # Spring Boot Configuration
 spring:
@@ -73,9 +99,12 @@ spring:
     username: "camunda"
     password: "camunda"
     driver-class-name: "org.postgresql.Driver"
-  jpa.database-platform: org.hibernate.dialect.PostgreSQL94Dialect
+  jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-org.hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+org2:
+  hibernate:
+    dialect:
+      dialect: org.hibernate.dialect.PostgreSQLDialect
 # hibernate.jdbc.use_streams_for_binary: true
 
 # spring.datasource.validation-query: SELECT 1;

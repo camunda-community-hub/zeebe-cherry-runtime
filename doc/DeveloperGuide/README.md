@@ -11,9 +11,9 @@ The connector pattern embed the Connector SDK
 
 In the next part of the documentation, we use the term of **Runner**. A Runner is a Connector or a Worker.
 
-## Tutorial
 
-Check the [Tutorial](../Tutorial/README.md) chapter to see how to create a connector / worker.
+
+
 
 ## Connector or Worker?
 
@@ -41,32 +41,14 @@ To take advantage of the different tool, two abstract class are present in the l
 
 * The `AbstractWorker` is the second abstract class.
 
+# Develop a connector
+
+# Develop a worker
+
+# Add Cherry methods
+This part works for connector and worker.
 
 
-## Principle
-Let's create a new runner in your project. In order to keep the project consistent, some view rules has to be followed.
-The model is the collection message (``org.camunda.cherry.message``), and the worker ``SendMessageWorker``.
-
-- The first level of the Cherry project is the collection name. Your connector must be attached in a collection, and may be under a sub collection.
-  A collection is a package. For example, the runner ``SendMessage`` is under the collection ``message``.
-
-- The worker must be suffixed by the name ``Worker``, a connector by the name ``Connector``.
-  Example: Package is ``org.camunda.cherry.message``, class is ``SendMessageWorker``.
-  If this class need another class, it can be saved under the same package, or under a sub package.
-
-- type name Convention: type should start by ``v-<collectionName>-`` to identify a Cherry connector and don't mixup with different connectors.
-  It must follow the snake case convention (https://en.wikipedia.org/wiki/Snake_case)
-  Example: ``c-message-send``.
-
-- README in each collection. This file explains all runners present in the collection. For each runner, this information has to be fulfilled:
-    - the runner name
-    - a description
-    - the type
-    - Inputs
-    - Outputs
-    - Errors the runner can throw.
-
-# Reference guide
 
 
 ## Input declaration
