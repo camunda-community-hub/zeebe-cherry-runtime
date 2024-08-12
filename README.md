@@ -5,18 +5,28 @@
 # What is the Cherry Runtime?
 
 The Cherry Runtime is dedicated to executing Camunda 8 Connectors and Workers.
-It provides administrative pages to administrators and business developers.
+
+It provides 
+* Administrative pages 
+  * to monitor the activity of connectors/workers: speed, number of execution
+  * To stop/restart the execution
+
+* A connector can be uploaded 
+  * From the UI,
+  * From a shared folder
+  * Download it from the marketplace, or a GitHub repository (soon)
+  
+* Element template can be downloaded
+
+* A farm of runtime, all are managed from one single page
 
 ![Cherry Runtime Overview](doc/images/architecture.png)
 
-The Cherry runtime accepts any OUTBOUND connector. The definition can be downloaded from the MarketPlace or any GitHub repository (SOON).
-It provides an Administrator page where
-* a connector can be stop/start
-* execution statistics are available to size the cluster: Are multiple runtimes necessary to handle the load?
+The Cherry runtime accepts any OUTBOUND connector. 
 
 
 This documentation gives information:
-* for administrators to start and administrate a Collection
+* for administrators to start and administrate connector 
 * for BPM Designer, to access documentation and download Element-Template in your modeler
 * For developers, which information can be added during the development, to propose more information for administrators and BPM Designer
 
@@ -169,3 +179,49 @@ See .github/workflows/mvn-release.yml
 
 Visit
 https://github.com/camunda-community-hub/community-action-maven-release/tree/main
+
+
+## Deploy manually the image
+
+Rebuilt the image via
+````
+mvn clean install
+mvn springboot:build-image
+````
+
+The docker image is build using the Dockerfile present on the root level.
+
+
+Push the image to
+```
+ghcr.io/camunda-community-hub/zeebe-cherry-runtime:
+```
+
+## Detail
+
+Run command
+````
+mvn clean install
+````
+Now, create a docker image
+````
+docker build -t pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 .
+````
+
+
+Push the image to the Camunda hub (you must be login first to the docker registry)
+
+````
+docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.2.0
+docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.2.0
+````
+
+
+Tag as the latest:
+````
+docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+````
+
+Check on
+https://github.com/camunda-community-hub/zeebe-cherry-runtime/pkgs/container/process-execution-automator
