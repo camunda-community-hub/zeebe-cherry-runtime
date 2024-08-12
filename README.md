@@ -6,27 +6,27 @@
 
 The Cherry Runtime is dedicated to executing Camunda 8 Connectors and Workers.
 
-It provides 
-* Administrative pages 
+It provides
+* Administrative pages
   * to monitor the activity of connectors/workers: speed, number of execution
   * To stop/restart the execution
 
-* A connector can be uploaded 
+* A connector can be uploaded
   * From the UI,
   * From a shared folder
-  * Download it from the marketplace, or a GitHub repository (soon)
-  
+  * Download it from the marketplace or a GitHub repository (soon)
+
 * Element template can be downloaded
 
 * A farm of runtime, all are managed from one single page
 
 ![Cherry Runtime Overview](doc/images/architecture.png)
 
-The Cherry runtime accepts any OUTBOUND connector. 
+The Cherry runtime accepts any OUTBOUND connector.
 
 
 This documentation gives information:
-* for administrators to start and administrate connector 
+* for administrators to start and administrate connector
 * for BPM Designer, to access documentation and download Element-Template in your modeler
 * For developers, which information can be added during the development, to propose more information for administrators and BPM Designer
 
@@ -42,7 +42,7 @@ What do you need to do to start the runtime?
 
 Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
 
-Check the [Administration guide.md](doc/AdministrationGuide%2FREADME.md) for explanation on functions available.
+Check the [Administration guide.md](doc/AdministrationGuide%2FREADME.md) for an explanation of the functions available.
 
 In a short overview, to enable a Cherry runtime in your cluster:
 
@@ -65,7 +65,7 @@ Check the [application.yaml](src/main/resources/application.yaml) file to see al
 It is possible to pass parameters as a variable, for example.
 
 ``
-environment:
+Environment:
 - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
   ``
   To connect a local engine in the same cluster.
@@ -73,7 +73,7 @@ environment:
 An H2 database is configured by default to save information. Use a SQL database for a robust database.
 Looks [docker-compose-cherry-postgres.yaml](docker-cherry/docker-compose-cherry-postgres.yaml) to see an example.
 
-Using an SQL database allows you to configure not only one Cherry pod but a farm of pods. Each pod accesses the same database, and through Connectors, statistics are shared between all pots.
+Using an SQL database allows you to configure one Cherry pod and a farm of pods. Each pod accesses the same database, and statistics are shared between all pots through connectors.
 
 ## Start the application
 
@@ -94,7 +94,7 @@ Connect to the Administration page and navigate to the `Content` page. Upload a 
 # BPMN Designer
 Connectors can be accessible via the Cherry `Definition` page.
 
-Multiple functions are available if the connectors come from the marketplace or implement the Cherry additional methods.
+Multiple functions are available if the connectors come from the marketplace or additional Cherry methods are implemented.
 
 ##  Documentation
 
@@ -155,7 +155,7 @@ Because the library contains Java and React script, to deploy it, the machine mu
       run:  CI=false mvn --batch-mode --update-snapshots package
 `````
 
-CI=false, else any warning will stop the construction.
+CI=false; otherwise, any warning will stop the construction.
 
 The docker image is then available in the package
 `https://github.com/camunda-community-hub/zeebe-cherry-runtime/pkgs/container/zeebe-cherry-runtime`
@@ -165,7 +165,7 @@ The docker image is then available in the package
 
 
 # Build
-The project is configured to publish the JAR file automatically to Maven Central and to docker package a Docker image.
+The project is configured to publish the JAR file automatically to Maven Central and docker package a Docker image.
 
 If you want to build a local maven image, use
 
@@ -189,7 +189,7 @@ mvn clean install
 mvn springboot:build-image
 ````
 
-The docker image is build using the Dockerfile present on the root level.
+The docker image is built using the Dockerfile present on the root level.
 
 
 Push the image to
@@ -203,7 +203,7 @@ Run command
 ````
 mvn clean install
 ````
-Now, create a docker image
+Now, create a docker image.
 ````
 docker build -t pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 .
 ````
