@@ -9,6 +9,7 @@ package io.camunda.cherry.definition;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 
 import java.util.ArrayList;
@@ -38,7 +39,9 @@ public class RunnerDecorationTemplate {
   public static final String ATTR_VALUE = "value";
   public static final String ATTR_DESCRIPTION = "description";
   public static final String ATTR_BINDING = "binding";
-  public static final String ATTR_KEY_RESULT_VARIABLE = "Result Variable";
+  public static final String ATTR_KEY_RESULT_VARIABLE = "resultVariable";
+  public static final String ATTR_KEY_ERROR_EXPRESSION = "errorExpression";
+
   public static final String ZEEBE_TASK_DEFINITION_TYPE = "zeebe:taskDefinition:type";
   public static final String RESULT_VARIABLE = "result";
   public static final String ATTR_NAME = "name";
@@ -101,9 +104,16 @@ public class RunnerDecorationTemplate {
     if (runner.getLogo() != null)
       templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
     templateContent.put(ATTR_CATEGORY, Map.of(ATTR_ID, "connectors", ATTR_NAME, "connectors"));
-    templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo() != null ? runner.getAppliesTo() : List.of("bpmn:Task"));
-    if (runner.getAppliesTo() != null || runner.getAppliesTo().size() == 1) {
-      // We can force the element-type, else if there is more than one item or no item, do not force it
+
+    // Applies to and element type
+    if (runner.getAppliesTo() == null) {
+      templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
+      templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
+    } else if (runner.getAppliesTo().size() == 1) {
+      templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
+      templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+    } else {
+      templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
       templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
     }
     // no groups at this moment
@@ -196,7 +206,7 @@ public class RunnerDecorationTemplate {
       errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
       errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
       errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
-      errorParameters.put(ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, "ERROR_EXPRESSION_KEYWORD"));
+      errorParameters.put(ATTR_BINDING, Map.of(ATTR_TYPE, ZEEBE_TASK_HEADER, ATTR_KEY, ATTR_KEY_ERROR_EXPRESSION));
 
       listProperties.add(errorParameters);
     }
@@ -233,9 +243,9 @@ public class RunnerDecorationTemplate {
 
     if (runnerParameter.visibleInTemplate)
       addConditionCheckbox = false;
-    // Add the condition for all output
-    if (!isInput)
-      addConditionCheckbox = true;
+
+    // The output can decide to be REQUIRED or not. If the Input is REQUIRED, the designer decided this output MUST BE
+    // assign to a variable. Then, we don't add the checkbox. Same policy as Input.
 
     // is the parameter is optional? Add a checkbox first
     if (addConditionCheckbox) {
@@ -298,13 +308,12 @@ public class RunnerDecorationTemplate {
     if (Number.class.equals(runnerParameter.clazz)) {
       typeParameter = TYPE_FIELD_NUMBER;
     }
-      propertyParameter.put(ATTR_TYPE, typeParameter);
-
+    propertyParameter.put(ATTR_TYPE, typeParameter);
 
     boolean feelSupported = typeParameter.equals(TYPE_FIELD_STRING) || typeParameter.equals(TYPE_FIELD_NUMBER);
     if (feelSupported) {
       propertyParameter.put(ATTR_FEEL,
-          runnerParameter.feelOptional!=null? runnerParameter.feelOptional : ATTR_FEEL_OPTIONAL  );
+          runnerParameter.feelOptional != null ? runnerParameter.feelOptional : ATTR_FEEL_OPTIONAL);
     }
 
     if (isInput) {
