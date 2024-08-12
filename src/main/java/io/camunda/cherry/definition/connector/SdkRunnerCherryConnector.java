@@ -37,7 +37,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
 
   public SdkRunnerCherryConnector(OutboundConnectorFunction outboundConnectorFunction) {
 
-    super(outboundConnectorFunction); // listBpmnErrors);
+    super(outboundConnectorFunction);
     this.outboundConnectorFunction = outboundConnectorFunction;
   }
 
@@ -52,7 +52,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
   public static boolean isRunnerCherryConnector(Class<?> connectorClass) {
     try {
       Method method = connectorClass.getMethod("getLogo");
-      return true;
+      return method!=null;
     } catch (NoSuchMethodException e) {
       return false;
     }
@@ -86,6 +86,17 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
   @Override
   public String getCollectionName() {
     return callMethodString("getCollectionName");
+  }
+
+  @Override
+  public List<String> getAppliesTo() {
+    try {
+      return (List<String>) callMethod(outboundConnectorFunction, "getAppliesTo", List.class);
+    }
+    catch(Exception e) {
+      logger.error("method[List<String> getAppliesTo()]  is not correctly defined {}",e);
+      return Collections.emptyList();
+      }
   }
 
   @Override
@@ -177,11 +188,11 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     try {
       method = caller.getClass().getMethod(name);
       // if the developer forget to put it public
-      method.setAccessible(true);
       // the method does not exist, return value null
       if (method == null) {
         return null;
       }
+      method.setAccessible(true);
       Object value = method.invoke(caller);
       if (value != null && !valueClass.isInstance(value)) {
         logger.error("Error during {}(): on [{}] result class{} is not the expected result {}", name, this.getName(),
