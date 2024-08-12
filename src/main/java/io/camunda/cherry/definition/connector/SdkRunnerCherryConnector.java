@@ -219,7 +219,6 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
         } catch(Exception e) {
           logger.error("Can't convert RunnerParameter from map {} : {}", inputMap, e);
         }
-        // public RunnerParameter.Group group;
       } else // input is not a Map
         logger.error("Error during transformList {} : List Of Map expected, get {}", contextInfo,
             input == null ? "null" : input.getClass().getName());
