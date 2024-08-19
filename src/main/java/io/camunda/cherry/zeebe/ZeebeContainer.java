@@ -9,23 +9,18 @@ package io.camunda.cherry.zeebe;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.LogOperation;
 import io.camunda.zeebe.client.ZeebeClient;
-import io.camunda.zeebe.client.ZeebeClientBuilder;
 import io.camunda.zeebe.client.ZeebeClientConfiguration;
 import io.camunda.zeebe.client.api.ZeebeFuture;
 import io.camunda.zeebe.client.api.response.Topology;
-import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProvider;
-import io.camunda.zeebe.client.impl.oauth.OAuthCredentialsProviderBuilder;
+import io.camunda.zeebe.spring.client.properties.CamundaClientProperties;
+import io.camunda.zeebe.spring.client.properties.common.ZeebeClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
-
-import java.net.URI;
 
 @Component
 @Configuration
@@ -37,8 +32,6 @@ public class ZeebeContainer {
 
   @Autowired
   LogOperation logOperation;
-  @Autowired
-  private ZeebeCherryConfiguration zeebeCherryConfiguration;
 
   /**
    * Connection correct is zeebeClient !=null && isConnected = true
@@ -47,18 +40,13 @@ public class ZeebeContainer {
 
 
   private ZeebeClient zeebeClient;
-  private ZeebeCherryConfiguration zeebeConfiguration;
-  private ZeebeClientConfiguration clientConfiguration;
+  private CamundaClientProperties camundaClientProperties;
 
-
-  public ZeebeContainer(final ZeebeClient zeebeClient, final ZeebeCherryConfiguration zeebeConfiguration, final ZeebeClientConfiguration clientConfiguration) {
+  public ZeebeContainer(final ZeebeClient zeebeClient,
+                        final CamundaClientProperties camundaClientProperties) {
     this.zeebeClient = zeebeClient;
-    this.zeebeConfiguration = zeebeConfiguration;
-    this.clientConfiguration = clientConfiguration;
+    this.camundaClientProperties = camundaClientProperties;
   }
-
-
-
 
   /**
    * Return the current ZeebeClient Attention: do not save it, it may be deleted and recreated on
@@ -71,103 +59,29 @@ public class ZeebeContainer {
     return zeebeClient;
   }
 
-/*  public ZeebeCherryConfiguration getZeebeConfiguration() {
-    return zeebeCherryConfiguration;
-  }
-*/
 
-  public ZeebeClientConfiguration getClientConfiguration() { return clientConfiguration;};
+
+  public ZeebeClientConfiguration getZeebeClientConfiguration() { return zeebeClient.getConfiguration();}
   /**
+   *
+   *
    * Start the ZeebeClient
    */
-  public void startZeebeeClient() throws TechnicalException {
+  public void startZeebeClient() throws TechnicalException {
     // Do nothing, already started
-
-
-    /*
-
-    zeebeClient = null;
-    URI zeebeAddressURI;
-    try {
-      String gatewayAddress = zeebeConfiguration.getGatewayAddress();
-      if (!gatewayAddress.startsWith("http"))
-        gatewayAddress = "http://" + gatewayAddress;
-      zeebeAddressURI = new URI(gatewayAddress);
-    } catch (Exception e) {
-      // logger.error("Can't convert [{}] to URI", zeebeConfiguration.getGatewayAddress());
-      // throw new TechnicalException("Can't convert [" + zeebeConfiguration.getGatewayAddress() + " to URI", e);
-    }
-    String validation = zeebeConfiguration.checkValidation();
-    if (validation != null) {
-      logger.error("Incorrect configuration: " + validation);
-      logOperation.logError("Incorrect Zeebe configuration " + validation);
-      return;
-    }
-
-    logger.info("ZeebeContainer.startZeebe {} ", zeebeConfiguration.getLogConfiguration());
-    ZeebeClientBuilder zeebeClientBuilder = null;
-    switch (zeebeConfiguration.getTypeConnection()) {
-    // ---- CLOUD connection
-    case CLOUD -> {
-      zeebeClientBuilder = ZeebeClient.newCloudClientBuilder()
-          .withClusterId(zeebeConfiguration.getClusterId())
-          .withClientId(zeebeConfiguration.getClientId())
-          .withClientSecret(zeebeConfiguration.getClientSecret())
-          .withRegion(zeebeConfiguration.getRegion());
-      break;
-    }
-
-    // ---- IDENTITY connection (with OAuth)
-    case IDENTITY -> {
-      // zeebeClientBuilder = ZeebeClient.newClientBuilder().grpcAddress(zeebeAddressURI);
-      zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
-      if (zeebeConfiguration.isPlaintext())
-        zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
-
-      // see https://docs.camunda.io/docs/apis-tools/java-client/
-      // https://github.com/jwulf/zeebe-node-sm-mt-example
-      final OAuthCredentialsProvider provider = new OAuthCredentialsProviderBuilder() //
-          .clientId(zeebeConfiguration.getClientId())
-          .clientSecret(zeebeConfiguration.getClientSecret())
-          .audience(zeebeConfiguration.getAudience())
-          .build();
-      zeebeClientBuilder = zeebeClientBuilder.credentialsProvider(provider);
-      break;
-    }
-
-    // ---- CLASSIC connection
-
-    case DIRECTIPADDRESS -> {
-      zeebeClientBuilder = ZeebeClient.newClientBuilder().gatewayAddress(zeebeConfiguration.getGatewayAddress());
-      if (zeebeConfiguration.isPlaintext())
-        zeebeClientBuilder = zeebeClientBuilder.usePlaintext();
-    }
-    default -> throw new TechnicalException(
-        "Unknown connection type [" + zeebeConfiguration.getTypeConnection().toString() + "]");
-    }
-
-    // Multi tenancy?
-    if (!zeebeConfiguration.getListTenantIds().isEmpty())
-      zeebeClientBuilder = zeebeClientBuilder.defaultJobWorkerTenantIds(zeebeConfiguration.getListTenantIds());
-    if (zeebeConfiguration.getDefaultJobTimeout() != null)
-      zeebeClientBuilder = zeebeClientBuilder.defaultJobTimeout(zeebeConfiguration.getDefaultJobTimeout());
-
-    try {
-      zeebeClient = zeebeClientBuilder.numJobWorkerExecutionThreads(zeebeConfiguration.getNumberOfThreads())
-          .defaultJobWorkerMaxJobsActive(zeebeConfiguration.getMaxJobsActive())
-          .build();
-    } catch (Exception e) {
-      logOperation.logError("Can't start ZeebeClient ", e);
-      throw new TechnicalException("Can't start ZeebeClient", e);
-    }
-    isConnected = pingZeebeClient();
-
-    logger.info("ZeebeConnected: {} ClientNumberOfThreads=[{}]", isConnected,
-        zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads());
-
- */
   }
 
+
+  /**
+   * Stop the zeebeClient
+   */
+  public void stopZeebeClient() {
+    ZeebeClient localZeebe = zeebeClient;
+
+    if (localZeebe == null)
+      return;
+    localZeebe.close();
+  }
   /**
    * Check if the Zeebe Server is alive
    *
@@ -181,24 +95,15 @@ public class ZeebeContainer {
     try {
 
       ZeebeFuture<Topology> send = localZeebe.newTopologyRequest().send();
-      Topology join = send.join();
+
+      // Wait the result
+      send.join();
 
       return true;
     } catch (Exception e) {
       logger.error("PingZeebe exception {}", e.toString());
-      return false;
+      throw new TechnicalException(e);
     }
-  }
-
-  /**
-   * Stop the zeebeClient
-   */
-  public void stopZeebeeClient() {
-    ZeebeClient localZeebe = zeebeClient;
-
-    if (localZeebe == null)
-      return;
-    localZeebe.close();
   }
 
 
@@ -235,16 +140,22 @@ public class ZeebeContainer {
     return zeebeClient.getConfiguration().getDefaultJobWorkerMaxJobsActive();
   }
 
+  public void setNumberOfThreads( int numberOfThreads) {
+    if (zeebeClient.getConfiguration() instanceof ZeebeClientProperties zeebeClientProperties ) {
+      zeebeClientProperties.setExecutionThreads(numberOfThreads);
+    }
+    throw new TechnicalException("Can't upgrade the number of threads");
+  }
   /**
    * Check the connection, and restart it if it is possible
    *
    * @return true if the connection is up and running, false else
    */
-  public boolean retryConnection() {
+  public boolean checkConnection() {
     ZeebeClient localZeebe = zeebeClient;
 
     if (localZeebe==null)
-      startZeebeeClient();
+      startZeebeClient();
     return pingZeebeClient();
   }
 

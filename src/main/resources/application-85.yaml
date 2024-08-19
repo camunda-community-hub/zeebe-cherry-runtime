@@ -34,7 +34,7 @@ camunda:
 # zeebe:
 #   client:
 #     broker:
-#       gateway-address=host:docker:internal:26500:
+#       gateway-address=host:docker:internal:application-85:26500:
 #     security.plaintext: true
 #     worker:
 #       threads: 14

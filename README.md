@@ -42,13 +42,13 @@ What do you need to do to start the runtime?
 
 Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
 
-Check the [Administration guide.md](doc/AdministrationGuide%2FREADME.md) for an explanation of the functions available.
+Check the [Administration guide.md](doc/AdministrationGuide/README.md) for an explanation of the functions available.
 
 In a short overview, to enable a Cherry runtime in your cluster:
 
 ## Download the application
 
-Download the Docker Image, or use the docker-compose given in the [docker-Cherry](docker-cherry/README.md)
+Download the Docker Image, or use the docker-compose given in the [docker-Cherry](docker/README.md)
 The image is available here.
 
 ```
@@ -62,16 +62,68 @@ Cherry needs:
 * to save connectors and statistics
 
 Check the [application.yaml](src/main/resources/application.yaml) file to see all parameters.
+
+The connection use this approach https://github.com/camunda-community-hub/spring-zeebe?tab=readme-ov-file#configuring-camunda-8-connection
+
+### Saas
+Use
+```yaml
+camunda:
+  client:
+    mode: saas
+    auth:
+      client-id: <your client id>
+      client-secret: <your client secret>
+    cluster-id: <your cluster id>
+    region: <your cluster region>
+```
+
+### Self manage without Identity
+
+```yaml
+camunda:
+  client:
+    mode: simple
+    auth:
+      username: demo
+      password: demo
+    zeebe:
+      enabled: true
+      gateway-url: http://localhost:26500
+      base-url: http://localhost:8080
+      prefer-rest-over-grpc: false
+```
+
+## Self manage with Identity
+
+````yaml
+camunda:
+  client:
+    mode: oidc
+    auth:
+      client-id: <your client id>
+      client-secret: <your client secret>
+    zeebe:
+      enabled: true
+      gateway-url: http://localhost:26500
+      base-url: http://localhost:8080
+      prefer-rest-over-grpc: false
+````
+
+### Use parameter
 It is possible to pass parameters as a variable, for example.
 
 ``
 Environment:
-- ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
+- CAMUNDA_CLIENT_MODE=saas
   ``
   To connect a local engine in the same cluster.
 
+
+### Database
+
 An H2 database is configured by default to save information. Use a SQL database for a robust database.
-Looks [docker-compose-cherry-postgres.yaml](docker-cherry/docker-compose-cherry-postgres.yaml) to see an example.
+Looks [docker-compose-cherry-postgres.yaml](docker/docker-compose-cherry-postgres.yaml) to see an example.
 
 Using an SQL database allows you to configure one Cherry pod and a farm of pods. Each pod accesses the same database, and statistics are shared between all pots through connectors.
 
@@ -113,7 +165,7 @@ If the connector defines the additional Cherry method, Inputs, Outputs, and Erro
 The element template can be downloaded if the connector defines the additional Cherry methods or comes from the MarketPlace.
 
 Open the ZIP file, and upload content on the Desktop modeler, path `resources\element-templates.
-![ModelerElementTemplate.png](doc/Fimages/ModelerElementTemplate.png)
+![ModelerElementTemplate.png](doc/images/ModelerElementTemplate.png)
 
 It's possible to upload the file on the Web Modeler.
 
@@ -131,7 +183,7 @@ Cherry runtime has more critical features for the developers:
 
 The Cherry runtime manages execution, and many administrative functions are included: starting/stopping, changing the number of threads, and getting statistics on execution.
 
-Check the [Developer guide](doc/DeveloperGuide%2FREADME.md)
+Check the [Developer guide](doc/DeveloperGuide/README.md)
 
 
 # Internal tip

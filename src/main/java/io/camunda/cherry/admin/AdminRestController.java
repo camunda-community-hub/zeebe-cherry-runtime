@@ -9,8 +9,8 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.zeebe.ZeebeCherryConfiguration;
+import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.zeebe.spring.client.properties.CamundaClientProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,18 +35,18 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 public class AdminRestController {
 
   private final JobRunnerFactory jobRunnerFactory;
-  private final HistoryFactory historyFactory;
-  private final ZeebeCherryConfiguration zeebeConfiguration;
+  private final ZeebeContainer zeebeContainer;
+  private final CamundaClientProperties camundaClientProperties;
   private final DataSource dataSource;
   Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
   AdminRestController(JobRunnerFactory jobRunnerFactory,
-                      HistoryFactory historyFactory,
-                      ZeebeCherryConfiguration zeebeConfiguration,
+                      ZeebeContainer zeebeContainer,
+                      CamundaClientProperties camundaClientProperties,
                       DataSource dataSource) {
     this.jobRunnerFactory = jobRunnerFactory;
-    this.historyFactory = historyFactory;
-    this.zeebeConfiguration = zeebeConfiguration;
+    this.zeebeContainer = zeebeContainer;
+    this.camundaClientProperties = camundaClientProperties;
     this.dataSource = dataSource;
   }
 
@@ -60,37 +60,42 @@ public class AdminRestController {
   @GetMapping(value = "/api/runtime/parameters", produces = "application/json")
   public Map<String, Object> getParameters() {
     Map<String, Object> parameters = new HashMap<>();
-    parameters.put("zeebekindconnection", zeebeConfiguration.getTypeConnection().toString());
 
-    switch (zeebeConfiguration.getTypeConnection()) {
-    case CLOUD -> {
+    parameters.put("zeebekindconnection", camundaClientProperties.getMode().toString());
 
-      parameters.put("cloudRegion", zeebeConfiguration.getRegion());
-      parameters.put("cloudClusterID", zeebeConfiguration.getClusterId());
-      parameters.put("cloudClientID", zeebeConfiguration.getClientId());
-      parameters.put("cloudClientSecret", ""); // never send the client Secret
+    String clientSecret = camundaClientProperties.getAuth().getClientSecret();
+    if (clientSecret!=null) {
+      if (clientSecret.length() > 2)
+        clientSecret = clientSecret.substring(0, 2) + "***************";
+      else
+        clientSecret = "******************";
     }
-    case IDENTITY -> {
-      parameters.put("gatewayAddress", zeebeConfiguration.getGatewayAddress());
-      parameters.put("clientId", zeebeConfiguration.getClientId());
-      parameters.put("clientSecret",
-          (zeebeConfiguration.getClientSecret() != null && zeebeConfiguration.getClientSecret().length() > 0 ?
-              zeebeConfiguration.getClientSecret().charAt(0) :
-              "*") + "*********");
-      parameters.put("AutorizationServerUrl", zeebeConfiguration.getAuthorizationServerUrl());
-      parameters.put("clientAudience", zeebeConfiguration.getAudience());
 
-      parameters.put("plainText", zeebeConfiguration.isPlaintext());
+    switch(camundaClientProperties.getMode()) {
+      case saas:
+        parameters.put("cloudRegion", camundaClientProperties.getRegion());
+        parameters.put("cloudClusterID", camundaClientProperties.getClusterId());
+        parameters.put("cloudClientID", camundaClientProperties.getAuth().getClientId());
+        parameters.put("cloudClientSecret", clientSecret); // never send the client Secret
+        break;
+    case oidc:
+      parameters.put("gatewayAddress", camundaClientProperties.getZeebe().getGatewayUrl());
+      parameters.put("clientId",camundaClientProperties.getAuth().getClientId());
+      parameters.put("clientSecret",clientSecret);
+      parameters.put("AutorizationServerUrl",
+          camundaClientProperties.getAuth().getIssuer());
+      parameters.put("clientAudience", camundaClientProperties.getZeebe().getAudience());
+
       parameters.put("tenantIds",
-          zeebeConfiguration.getListTenantIds() == null ? "" : String.join(";", zeebeConfiguration.getListTenantIds()));
+          camundaClientProperties.getTenantIds() == null ? "" : String.join(";", camundaClientProperties.getTenantIds()));
+
+      break;
+      case simple:
+        parameters.put("gatewayAddress", camundaClientProperties.getZeebe().getGatewayUrl());
+        break;
+
     }
-    case DIRECTIPADDRESS -> {
-      parameters.put("gatewayAddress", zeebeConfiguration.getGatewayAddress());
-      parameters.put("plainText", zeebeConfiguration.isPlaintext());
-      parameters.put("tenantIds",
-          zeebeConfiguration.getListTenantIds() == null ? "" : String.join(";", zeebeConfiguration.getListTenantIds()));
-    }
-    }
+
     // we don't want the configuration here, but the running information
     parameters.put("maxJobsActive", jobRunnerFactory.getMaxJobActive());
     parameters.put("nbThreads", jobRunnerFactory.getNumberOfThreads());
@@ -101,7 +106,7 @@ public class AdminRestController {
       parameters.put("datasourceUserName", con.getMetaData().getUserName());
 
     } catch (Exception e) {
-      logger.error("During getParameters() " + e);
+      logger.error("During getParameters() : {}", e);
     }
 
     parameters.put("version", getVersion());
