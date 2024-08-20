@@ -257,21 +257,21 @@ mvn clean install
 ````
 Now, create a docker image.
 ````
-docker build -t pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 .
+docker build -t pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 .
 ````
 
 
 Push the image to the Camunda hub (you must be login first to the docker registry)
 
 ````
-docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.2.0
-docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.2.0
+docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.3.0
+docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.3.0
 ````
 
 
 Tag as the latest:
 ````
-docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.2.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
 docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
 ````
 
