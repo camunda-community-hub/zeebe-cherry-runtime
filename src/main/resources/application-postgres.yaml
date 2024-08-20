@@ -1,4 +1,3 @@
-
 cherry:
   connectorslib:
     uploadpath: ./localstorage/upload
@@ -11,49 +10,12 @@ cherry:
     # the runtime load ping runners - attention, pingConnector and pingObjectConnector are embedded
     pingrunner: false
 
-# use a OnPremise Zeebe engine
-  zeebe:
-    client:
-      broker:
-        gateway-address: 127.0.0.1:26500
-        plain-text: true
-    # zeebe.client.broker.gateway-address=host.docker.internal:26500
-      security.plaintext: true
-      number-of-threads: 100
-      max-jobs-active: 100
-
-    # use a cloud Zeebe engine
-  # zeebe.client.cloud.region=bru-2
-  # zeebe.client.cloud.clusterId=f867aa3d-5ee7-4324-96e8-21f557f104af
-  # zeebe.client.cloud.clientId=si71NBAWtUlREmfKja5oQC3M.WsT~sHa
-  # zeebe.client.cloud.clientSecret=pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
 
 
 
-  worker:
-    maxJobsActive: 10
-    threads: 10
 
+# Connection is defined in application.yaml
 
-zeebe:
-  client:
-    broker:
-      gateway-address: 127.0.0.1:26500
-      plain-text: true
-    # zeebe.client.broker.gateway-address=host.docker.internal:26500
-    security.plaintext: true
-
-
-camunda:
-  client:
-    mode: simple
-    zeebe:
-      enabled: true
-      gateway-url: http://localhost:26500
-      prefer-rest-over-grpc: false
-      defaults:
-        max-jobs-active: 30
-      execution-threads: 14
 
 
 server.port: 9081
@@ -84,24 +46,24 @@ spring:
         show-sql: true
 
 
-# spring.datasource:
-#   url: "jdbc:h2:file:./cherry.db"
-#   driver-class-name: "org.h2.Driver"
-#   username: "sa"
-#   password: "password"
-# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+  # spring.datasource:
+  #   url: "jdbc:h2:file:./cherry.db"
+  #   driver-class-name: "org.h2.Driver"
+  #   username: "sa"
+  #   password: "password"
+  # spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
 
-# Save statistics and information
+  # Save statistics and information
 
-# --------------------- Postgres
+  # --------------------- Postgres
   datasource:
     url: "jdbc:postgresql://localhost/cherrydb"
     username: "camunda"
     password: "camunda"
-    driver-class-name: "org.postgresql.Driver"
-  jpa.database-platform: org.hibernate.dialect.PostgreSQLDialect
+    driverClassName: "org.postgresql.Driver"
+  jpa.databasePlatform: org.hibernate.dialect.PostgreSQLDialect
 
-org2:
+org:
   hibernate:
     dialect:
       dialect: org.hibernate.dialect.PostgreSQLDialect

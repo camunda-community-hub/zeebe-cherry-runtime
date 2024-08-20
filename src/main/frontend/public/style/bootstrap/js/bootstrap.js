@@ -5,9 +5,10 @@
   */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('@popperjs/core')) :
-  typeof define === 'function' && define.amd ? define(['@popperjs/core'], factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.bootstrap = factory(global.Popper));
-}(this, (function (Popper) { 'use strict';
+    typeof define === 'function' && define.amd ? define(['@popperjs/core'], factory) :
+      (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.bootstrap = factory(global.Popper));
+}(this, (function (Popper) {
+  'use strict';
 
   function _interopNamespace(e) {
     if (e && e.__esModule) return e;
@@ -159,8 +160,8 @@
 
 
     var _window$getComputedSt = window.getComputedStyle(element),
-        transitionDuration = _window$getComputedSt.transitionDuration,
-        transitionDelay = _window$getComputedSt.transitionDelay;
+      transitionDuration = _window$getComputedSt.transitionDuration,
+      transitionDelay = _window$getComputedSt.transitionDelay;
 
     var floatTransitionDuration = Number.parseFloat(transitionDuration);
     var floatTransitionDelay = Number.parseFloat(transitionDelay); // Return 0 if element or transition duration is not found
@@ -251,7 +252,8 @@
   };
 
   var noop = function noop() {
-    return function () {};
+    return function () {
+    };
   };
 
   var reflow = function reflow(element) {
@@ -260,7 +262,7 @@
 
   var getjQuery = function getjQuery() {
     var _window = window,
-        jQuery = _window.jQuery;
+      jQuery = _window.jQuery;
 
     if (jQuery && !document.body.hasAttribute('data-bs-no-jquery')) {
       return jQuery;
@@ -387,6 +389,7 @@
     mouseleave: 'mouseout'
   };
   var nativeEvents = new Set(['click', 'dblclick', 'mouseup', 'mousedown', 'contextmenu', 'mousewheel', 'DOMMouseScroll', 'mouseover', 'mouseout', 'mousemove', 'selectstart', 'selectend', 'keydown', 'keypress', 'keyup', 'orientationchange', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'pointerdown', 'pointermove', 'pointerup', 'pointerleave', 'pointercancel', 'gesturestart', 'gesturechange', 'gestureend', 'focus', 'blur', 'change', 'reset', 'select', 'submit', 'focusin', 'focusout', 'load', 'unload', 'beforeunload', 'resize', 'move', 'DOMContentLoaded', 'readystatechange', 'error', 'abort', 'scroll']);
+
   /**
    * ------------------------------------------------------------------------
    * Private methods
@@ -489,9 +492,9 @@
     }
 
     var _normalizeParams = normalizeParams(originalTypeEvent, handler, delegationFn),
-        delegation = _normalizeParams[0],
-        originalHandler = _normalizeParams[1],
-        typeEvent = _normalizeParams[2];
+      delegation = _normalizeParams[0],
+      originalHandler = _normalizeParams[1],
+      typeEvent = _normalizeParams[2];
 
     var events = getEvent(element);
     var handlers = events[typeEvent] || (events[typeEvent] = {});
@@ -546,9 +549,9 @@
       }
 
       var _normalizeParams2 = normalizeParams(originalTypeEvent, handler, delegationFn),
-          delegation = _normalizeParams2[0],
-          originalHandler = _normalizeParams2[1],
-          typeEvent = _normalizeParams2[2];
+        delegation = _normalizeParams2[0],
+        originalHandler = _normalizeParams2[1],
+        typeEvent = _normalizeParams2[2];
 
       var inNamespace = typeEvent !== originalTypeEvent;
       var events = getEvent(element);
@@ -789,9 +792,9 @@
     _createClass(Alert, null, [{
       key: "DATA_KEY",
       get: // Getters
-      function get() {
-        return DATA_KEY;
-      }
+        function get() {
+          return DATA_KEY;
+        }
     }]);
 
     return Alert;
@@ -865,9 +868,9 @@
     _createClass(Button, null, [{
       key: "DATA_KEY",
       get: // Getters
-      function get() {
-        return DATA_KEY$1;
-      }
+        function get() {
+          return DATA_KEY$1;
+        }
     }]);
 
     return Button;
@@ -3241,6 +3244,7 @@
     u: [],
     ul: []
   };
+
   function sanitizeHtml(unsafeHtml, allowList, sanitizeFn) {
     var _ref;
 
@@ -3282,7 +3286,7 @@
     for (var i = 0, len = elements.length; i < len; i++) {
       var _ret = _loop(i);
 
-      if (_ret === "continue") continue;
+      if (_ret === "continue") ;
     }
 
     return createdDocument.body.innerHTML;
@@ -4184,9 +4188,9 @@
     _createClass(Popover, null, [{
       key: "Default",
       get: // Getters
-      function get() {
-        return Default$5;
-      }
+        function get() {
+          return Default$5;
+        }
     }, {
       key: "NAME",
       get: function get() {
@@ -4685,9 +4689,9 @@
     _createClass(Tab, null, [{
       key: "DATA_KEY",
       get: // Getters
-      function get() {
-        return DATA_KEY$9;
-      }
+        function get() {
+          return DATA_KEY$9;
+        }
     }]);
 
     return Tab;

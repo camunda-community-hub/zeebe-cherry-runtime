@@ -16,17 +16,16 @@ import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
-import io.camunda.cherry.exception.OperationTooManyRunnersException;
 import io.camunda.cherry.exception.OperationAlreadyStartedException;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationCantStopRunnerException;
 import io.camunda.cherry.exception.OperationException;
+import io.camunda.cherry.exception.OperationTooManyRunnersException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
-import io.camunda.cherry.zeebe.ZeebeCherryConfiguration;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.zeebe.client.api.worker.JobHandler;
@@ -67,8 +66,6 @@ public class JobRunnerFactory {
   @Autowired
   ZeebeContainer zeebeContainer;
   @Autowired
-  ZeebeCherryConfiguration zeebeConfiguration;
-  @Autowired
   LogOperation logOperation;
   @Autowired
   SecretProvider secretProvider;
@@ -86,12 +83,9 @@ public class JobRunnerFactory {
 
   public void startAll() {
 
-    // read the configuration
-    zeebeConfiguration.init();
-
     // now start the Zeebe Client
     try {
-      zeebeContainer.startZeebeeClient();
+      zeebeContainer.startZeebeClient();
     } catch (TechnicalException e) {
       logOperation.log(OperationEntity.Operation.ERROR, "Can't start zeebe Client " + e.getMessage());
       logger.error("ZeebeClient is not started, can't start runner");
@@ -119,7 +113,7 @@ public class JobRunnerFactory {
     logOperation.log(OperationEntity.Operation.STOPRUNTIME, "");
 
     suspendAllRunners();
-    zeebeContainer.stopZeebeeClient();
+    zeebeContainer.stopZeebeClient();
   }
 
   /**
@@ -242,7 +236,7 @@ public class JobRunnerFactory {
     if (listRunners.size() > 1) {
       throw new OperationTooManyRunnersException("runnerType [" + runnerType + "]");
     }
-    AbstractRunner runner = listRunners.get(0);
+    AbstractRunner runner = listRunners.getFirst();
     List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
     if (!listOfErrors.isEmpty())
       throw new OperationException(RUNNER_INVALID_DEFINITION,
@@ -280,9 +274,11 @@ public class JobRunnerFactory {
   }
 
   public void setNumberOfThreads(int numberOfThreadsRequired) throws TechnicalException {
-    zeebeConfiguration.setNumberOfThreads(numberOfThreadsRequired);
-    zeebeContainer.stopZeebeeClient();
-    zeebeContainer.startZeebeeClient();
+
+    zeebeContainer.setNumberOfThreads(numberOfThreadsRequired);
+
+    zeebeContainer.stopZeebeClient();
+    zeebeContainer.startZeebeClient();
 
     // stop all running and restart them
     for (Running running : mapRunning.values()) {
@@ -364,7 +360,7 @@ public class JobRunnerFactory {
 
   @Scheduled(fixedDelay = 30000)
   public void checkZeebeConnection() {
-    boolean checkConnection = zeebeContainer.retryConnection();
+    boolean checkConnection = zeebeContainer.checkConnection();
     // if the connection is false, pause all runners
 
     // if the connection is true, resume all runners which need to be resume
@@ -376,8 +372,8 @@ public class JobRunnerFactory {
   }
 
   private boolean isPingWorker(AbstractRunner runner) {
-    if (runner instanceof SdkRunnerWorker)
-      return ((SdkRunnerWorker) runner).getWorker() instanceof PingIntRunner;
+    if (runner instanceof SdkRunnerWorker skdRunner)
+      return skdRunner.getWorker() instanceof PingIntRunner;
     return runner instanceof PingIntRunner;
   }
 

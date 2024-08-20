@@ -415,7 +415,7 @@ public class RunnerRestController {
       ZipOperation zipOperation = new ZipOperation("element-template");
       try {
         for (Map.Entry<String, String> template : mapContent.entrySet()) {
-          String fileName = template.getKey()+".json";
+          String fileName = template.getKey() + ".json";
           fileName = fileName.replaceAll("([A-Z])", "-$1").toLowerCase();
           zipOperation.addZipContent(fileName, template.getValue());
         }

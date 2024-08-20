@@ -16,10 +16,6 @@ import com.google.gson.Gson;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
-import io.camunda.filestorage.FileRepoFactory;
-import io.camunda.filestorage.FileVariable;
-import io.camunda.filestorage.FileVariableReference;
-import io.camunda.filestorage.StorageDefinition;
 import io.camunda.zeebe.client.api.response.ActivatedJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +35,6 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractRunner {
 
-  public static final String BPMNERROR_ACCESS_FILEVARIABLE = "ACCESS_FILEVARIABLE";
-  public static final String BPMNERROR_SAVE_FILEVARIABLE = "SAVE_FILEVARIABLE";
   public static final String BOOLEAN_V_TRUE = "TRUE";
   public static final String BOOLEAN_V_YES = "YES";
   public static final String BOOLEAN_V_FALSE = "FALSE";
@@ -238,71 +232,6 @@ public abstract class AbstractRunner {
   }
 
   /**
-   * get the FileVariable. The file variable may be store in multiple storage. The format is given
-   * in the parameterStorageDefinition. This is a String which pilot how to load the file. The value
-   * can be saved a JSON, or saved in a specific directory (then the value is an ID)
-   *
-   * @param parameterName name where the value is stored
-   * @param activatedJob  job passed to the worker
-   * @return a FileVariable
-   */
-  public FileVariable getInputFileVariableValue(String parameterName, final ActivatedJob activatedJob)
-      throws ConnectorException {
-
-    try {
-      FileVariableReference fileVariableReference = getFileVariableReferenceValue(parameterName, activatedJob);
-      if (fileVariableReference == null)
-        return null;
-      FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
-      return fileRepoFactory.loadFileVariable(fileVariableReference);
-    } catch (Exception e) {
-      throw new ConnectorException(BPMNERROR_ACCESS_FILEVARIABLE,
-          "Worker [" + getName() + "] error during access parameterName[" + parameterName + "] :" + e);
-    }
-  }
-
-  /**
-   * get the FileVariable. The file variable may be store in multiple storage. The format is given
-   * in the parameterStorageDefinition. This is a String which pilot how to load the file. The value
-   * can be saved a JSON, or saved in a specific directory (then the value is an ID)
-   *
-   * @param parameterName name where the value is stored
-   * @param activatedJob  job passed to the worker
-   * @return a FileVariable
-   * @throws ConnectorException if the file variable cannot be load
-   * @deprecated use getInputFileVariableValue()
-   */
-  @Deprecated
-  public FileVariable getFileVariableValue(String parameterName, final ActivatedJob activatedJob)
-      throws ConnectorException {
-    return getInputFileVariableValue(parameterName, activatedJob);
-  }
-
-  /**
-   * Return the FileVariableReferenceValue. This information is needed to get access to the file
-   *
-   * @param parameterName name where the value is stored
-   * @param activatedJob  job passed to the worker
-   * @return a FileVariableReference
-   * @throws ConnectorException if the fileVariableReference cannot be load
-   */
-  public FileVariableReference getFileVariableReferenceValue(String parameterName, final ActivatedJob activatedJob)
-      throws ConnectorException {
-    if (!containsKeyInJob(parameterName, activatedJob))
-      return null;
-    Object fileVariableReferenceValue = getValueFromJob(parameterName, activatedJob);
-    try {
-      // result may be null
-      return FileVariableReference.fromJson(fileVariableReferenceValue.toString());
-
-    } catch (Exception e) {
-      throw new ConnectorException(BPMNERROR_ACCESS_FILEVARIABLE,
-          "Worker [" + getName() + "] error during access fileVariableReference[" + fileVariableReferenceValue + "] :"
-              + e);
-    }
-  }
-
-  /**
    * Retrieve a variable, and return the string representation. If the variable is not a String,
    * then a toString() is returned. If the value does not exist, then defaultValue is returned The
    * method can return null if the variable exists, but it is a null value.
@@ -457,7 +386,7 @@ public abstract class AbstractRunner {
       return defaultValue;
     List<RunnerParameter> inputFilter = listInput.stream().filter(t -> t.name.equals(parameterName)).toList();
     if (!inputFilter.isEmpty())
-      return inputFilter.get(0).defaultValue;
+      return inputFilter.getFirst().defaultValue;
     // definitively, no default value
     return null;
   }
@@ -485,48 +414,6 @@ public abstract class AbstractRunner {
     contextExecution.outVariablesValue.put(parameterName, value);
   }
 
-  /**
-   * Set a fileVariable value
-   *
-   * @param parameterName     name to save the fileValue
-   * @param storageDefinition parameter which pilot the way to retrieve the value
-   * @param fileVariableValue fileVariable to save
-   * @param contextExecution  context execution
-   */
-  public void setOutputFileVariableValue(String parameterName,
-                                         StorageDefinition storageDefinition,
-                                         FileVariable fileVariableValue,
-                                         AbstractWorker.ContextExecution contextExecution) {
-    try {
-      fileVariableValue.setStorageDefinition(storageDefinition);
-
-      FileRepoFactory fileRepoFactory = FileRepoFactory.getInstance();
-
-      FileVariableReference fileVariableReference = fileRepoFactory.saveFileVariable(fileVariableValue);
-      contextExecution.outVariablesValue.put(parameterName, fileVariableReference.toJson());
-    } catch (Exception e) {
-      logError("parameterName[" + parameterName + "] ControllerPage during setFileVariable read: " + e);
-      throw new ConnectorException(BPMNERROR_SAVE_FILEVARIABLE,
-          "Worker [" + getName() + "] error during access storageDefinition[" + storageDefinition + "] :" + e);
-    }
-  }
-
-  /**
-   * Set a fileVariable value
-   *
-   * @param parameterName     name to save the fileValue
-   * @param storageDefinition parameter which pilot the way to retrieve the value
-   * @param fileVariableValue fileVariable to save
-   * @param contextExecution  context execution
-   * @deprecated use setOuputFileVariableValue()
-   */
-  @Deprecated
-  public void setFileVariableValue(String parameterName,
-                                   StorageDefinition storageDefinition,
-                                   FileVariable fileVariableValue,
-                                   AbstractWorker.ContextExecution contextExecution) {
-    setOutputFileVariableValue(parameterName, storageDefinition, fileVariableValue, contextExecution);
-  }
 
   /* -------------------------------------------------------- */
   /*                                                          */
@@ -545,7 +432,7 @@ public abstract class AbstractRunner {
    * @param message message to log
    */
   public void logError(String message) {
-    loggerAbstract.error("CherryRunner[" + getName() + "]: " + message);
+    loggerAbstract.error("CherryRunner[{}] : ", getName(), message);
   }
 
   /**
@@ -554,7 +441,7 @@ public abstract class AbstractRunner {
    * @param message message to log
    */
   public void logInfo(String message) {
-    loggerAbstract.info("CherryRunner[" + getName() + "]: " + message);
+    loggerAbstract.info("CherryRunner[{}] : {} ", getName(), message);
   }
 
   /**
@@ -582,8 +469,7 @@ public abstract class AbstractRunner {
       }
 
       // check REQUIRED parameters
-      if ((value == null || value.toString().trim().length() == 0)
-          && parameter.level == RunnerParameter.Level.REQUIRED) {
+      if ((value == null || value.toString().trim().isEmpty()) && parameter.level == RunnerParameter.Level.REQUIRED) {
         listErrors.add("Param[" + parameter.name + "] is missing");
       }
     }
@@ -668,12 +554,14 @@ public abstract class AbstractRunner {
       return true; // by default, a null value respect any class
     try {
       if (Boolean.class.getName().equals(isInstanceOf.getName())) {
-        if (value instanceof Boolean)
+        if (value instanceof Boolean) {
           return true;
+        }
         // Accept this kind of value for a boolean
         if (BOOLEAN_V_TRUE.equalsIgnoreCase(value.toString()) || BOOLEAN_V_YES.equalsIgnoreCase(value.toString())
-            || BOOLEAN_V_FALSE.equalsIgnoreCase(value.toString()) || BOOLEAN_V_NO.equalsIgnoreCase(value.toString()))
+            || BOOLEAN_V_FALSE.equalsIgnoreCase(value.toString()) || BOOLEAN_V_NO.equalsIgnoreCase(value.toString())) {
           return true;
+        }
       }
 
       if (isInstanceOf.isInstance(value))
@@ -836,17 +724,19 @@ public abstract class AbstractRunner {
           if (word.length() == 1) {
             accumulator += word;
           } else {
-            if (accumulator.length() > 0)
+            if (!accumulator.isEmpty())
               transformWords.add(accumulator);
             transformWords.add(word.toLowerCase());
             accumulator = "";
           }
         }
-        if (accumulator.length() > 0)
+        if (!accumulator.isEmpty()) {
           transformWords.add(accumulator);
+        }
 
         // first word start by an upper case
-        transformWords.set(0, transformWords.get(0).substring(0, 1).toUpperCase() + transformWords.get(0).substring(1));
+        transformWords.set(0,
+            transformWords.getFirst().substring(0, 1).toUpperCase() + transformWords.getFirst().substring(1));
 
         return transformWords.stream().collect(Collectors.joining(" "));
       }

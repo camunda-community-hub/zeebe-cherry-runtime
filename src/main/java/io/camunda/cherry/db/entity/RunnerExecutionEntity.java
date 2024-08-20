@@ -1,7 +1,6 @@
 package io.camunda.cherry.db.entity;
 
 import io.camunda.cherry.definition.AbstractRunner;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+
 import java.time.LocalDateTime;
 
 @Entity

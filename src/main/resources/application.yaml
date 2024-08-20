@@ -1,4 +1,3 @@
-
 cherry:
   connectorslib:
     uploadpath: ./localstorage/upload
@@ -16,38 +15,51 @@ cherry:
 # Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe
 
 # -------------------- Self Manage
-zeebe:
+camunda:
   client:
-    broker:
-      gateway-address: host:docker:internal:26500
-    security.plaintext: true
-    worker:
-      threads: 14
-      maxJobsActive: 30
+    mode: simple
+    zeebe:
+      enabled: true
+      gatewayUrl: http://localhost:26500
+      preferRestOverGrpc: false
+      executionThreads: 200
+      defaults:
+        maxJobsActive: 58
+    operate:
+      enabled: false
+    tasklist:
+      enabled: false
 
+# -------------------- Self Manage Identity
+camundaIdentity:
+  client:
+    mode: oidc
+    auth:
+      clientId: zeebe
+      clientSecret: 6DOXVAFyoC
 
-# -------------------- Self Manage Multi-Tenancy
-# zeebe.clientMulti:
-#     broker.gateway-address: 127.0.0.1:26500
-#     # zeebe.client.broker.gateway-address=host.docker.internal:26500
-#     security:
-#       plaintext: false
-#     # list of tenant's ID separated with a semi colons
-#     tenantIds: <default>;red
-#     oauth:
-#       clientId: worker
-#       clientSecret: uMpRNGJciY7EHgv3yuuO4xEFdaeb85oa
-#       authorizationServerUrl: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
-#       clientAudience: zeebe-api
+    zeebe:
+      enabled: true
+      gatewayUrl: http://localhost:26500
+      preferRestOverGrpc: false
+      audience: zeebe-api
+
+    operate:
+      enabled: false
+    tasklist:
+      enabled: false
+
 
 # -------------------- SAAS
-# zeebe:
-#   client:
-#    cloud:
-#      region: bru-2
-#      clusterId: f867aa3d-5ee7-4324-96e8-21f557f104af
-#      clientId: si71NBAWtUlREmfKja5oQC3M.WsT~sHa
-#      clientSecret: pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
+camundaSaas:
+  client:
+    mode: saas
+    auth:
+      clientId: Lu.lVob..
+      clientSecret: aoO.....
+    clusterId: b16d70..
+    region: jfk-1
+
 
 
 server.port: 9081
@@ -80,7 +92,7 @@ springPostgresexample.datasource:
   url: "jdbc:postgresql://localhost/cherrydb"
   username: "camunda"
   password: "camunda"
-  driver-class-name: "org.postgresql.Driver"
+  driverClassName: "org.postgresql.Driver"
 spring2.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 
 orgPostgres.hibernate.dialect: "PostgreSQL94Dialect"

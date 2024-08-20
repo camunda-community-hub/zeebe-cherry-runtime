@@ -7,7 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button, NumberInput, Select, TextInput} from "carbon-components-react";
+import {Button, NumberInput, Select, Tag, TextInput} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
 import RestCallService from "../services/RestCallService";
@@ -19,7 +19,8 @@ class Parameters extends React.Component {
     super();
     this.state = {
       parameters: {},
-      display: {loading: false}
+      display: {loading: false},
+      pingZeebe: {status: "UNKNOWN"}
     };
   }
 
@@ -59,8 +60,19 @@ class Parameters extends React.Component {
             <div className="card" style={{width: "25rem;"}}>
               <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>Zeebe connection</div>
               <div className="card-body">
-
-
+                <div className="row">
+                  <Button className="btn btn-primary btn-sm"
+                          onClick={() => this.pingZeebe()}
+                          disabled={this.state.display.loading}>
+                    <ArrowRepeat/> Ping Zeebe
+                  </Button>
+                  <br/>
+                  {this.state.pingZeebe.status === "FAIL" &&
+                    <Tag type="red" title="Zeebe is not available">Not available</Tag>}
+                  {this.state.pingZeebe.status === "OK" &&
+                    <Tag type="green" title="Zeebe is not available">Up and running</Tag>}
+                  {this.state.pingZeebe.comment}
+                </div>
                 <div className="row">
                   <div className="col-md-4">
                     <Select
@@ -303,7 +315,7 @@ class Parameters extends React.Component {
                                readonly="true"
                                value={this.state.parameters.version}
                                style={{width: "300px"}}
-                              />
+                    />
                   </div>
                 </div>
               </div>
@@ -324,6 +336,24 @@ class Parameters extends React.Component {
 
   }
 
+  pingZeebe() {
+    let uri = 'cherry/api/monitoring/pingzeebe?';
+    console.log("parameters.pingzeebe http[" + uri + "]");
+    this.setDisplayProperty("loading", true);
+    this.setState({status: ""});
+    var restCallService = RestCallService.getInstance();
+    restCallService.getJson(uri, this, this.pingZeebeCallback);
+  }
+
+  pingZeebeCallback(httpPayload) {
+    this.setDisplayProperty("loading", false);
+    if (httpPayload.isError()) {
+      console.log("parameters.pingzeebe: error " + httpPayload.getError());
+      this.setState({status: httpPayload.getError()});
+    } else {
+      this.setState({pingZeebe: httpPayload.getData()});
+    }
+  }
 
   /**
    * Set a parameter
