@@ -20,7 +20,7 @@ class Parameters extends React.Component {
     this.state = {
       parameters: {},
       display: {loading: false},
-      pingZeebe: { status : "UNKNOWN" }
+      pingZeebe: {status: "UNKNOWN"}
     };
   }
 
@@ -315,7 +315,7 @@ class Parameters extends React.Component {
                                readonly="true"
                                value={this.state.parameters.version}
                                style={{width: "300px"}}
-                              />
+                    />
                   </div>
                 </div>
               </div>
@@ -344,6 +344,7 @@ class Parameters extends React.Component {
     var restCallService = RestCallService.getInstance();
     restCallService.getJson(uri, this, this.pingZeebeCallback);
   }
+
   pingZeebeCallback(httpPayload) {
     this.setDisplayProperty("loading", false);
     if (httpPayload.isError()) {

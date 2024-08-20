@@ -1,8 +1,8 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.BpmnError;
-import io.camunda.connector.cherrytemplate.RunnerParameter;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
+import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +52,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
   public static boolean isRunnerCherryConnector(Class<?> connectorClass) {
     try {
       Method method = connectorClass.getMethod("getLogo");
-      return method!=null;
+      return method != null;
     } catch (NoSuchMethodException e) {
       return false;
     }
@@ -92,11 +92,10 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
   public List<String> getAppliesTo() {
     try {
       return (List<String>) callMethod(outboundConnectorFunction, "getAppliesTo", List.class);
-    }
-    catch(Exception e) {
-      logger.error("method[List<String> getAppliesTo()]  is not correctly defined {}",e);
+    } catch (Exception e) {
+      logger.error("method[List<String> getAppliesTo()]  is not correctly defined {}", e);
       return Collections.emptyList();
-      }
+    }
   }
 
   @Override
@@ -216,7 +215,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
         try {
           RunnerParameter runner = RunnerParameter.fromMap(inputMap, contextInfo);
           listRunnersParameters.add(runner);
-        } catch(Exception e) {
+        } catch (Exception e) {
           logger.error("Can't convert RunnerParameter from map {} : {}", inputMap, e);
         }
       } else // input is not a Map

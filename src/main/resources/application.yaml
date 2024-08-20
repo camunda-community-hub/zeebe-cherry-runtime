@@ -1,4 +1,3 @@
-
 cherry:
   connectorslib:
     uploadpath: ./localstorage/upload

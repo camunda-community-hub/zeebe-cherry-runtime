@@ -57,7 +57,7 @@ public class RunnerAdminOperation {
       try {
         if (!jobRunnerFactory.stopRunner(runnerEntity.type))
           runnerNotStopped += runnerEntity.name + ";";
-      }catch(OperationAlreadyStoppedException e) {
+      } catch (OperationAlreadyStoppedException e) {
         // Ok, it's already stopped, proceed
       }
     }

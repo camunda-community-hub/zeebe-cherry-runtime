@@ -4,7 +4,7 @@
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
   */
 import * as Popper from '@popperjs/core';
-import { createPopper } from '@popperjs/core';
+import {createPopper} from '@popperjs/core';
 
 function _defineProperties(target, props) {
   for (var i = 0; i < props.length; i++) {
@@ -134,8 +134,8 @@ var getTransitionDurationFromElement = function getTransitionDurationFromElement
 
 
   var _window$getComputedSt = window.getComputedStyle(element),
-      transitionDuration = _window$getComputedSt.transitionDuration,
-      transitionDelay = _window$getComputedSt.transitionDelay;
+    transitionDuration = _window$getComputedSt.transitionDuration,
+    transitionDelay = _window$getComputedSt.transitionDelay;
 
   var floatTransitionDuration = Number.parseFloat(transitionDuration);
   var floatTransitionDelay = Number.parseFloat(transitionDelay); // Return 0 if element or transition duration is not found
@@ -226,7 +226,8 @@ var findShadowRoot = function findShadowRoot(element) {
 };
 
 var noop = function noop() {
-  return function () {};
+  return function () {
+  };
 };
 
 var reflow = function reflow(element) {
@@ -235,7 +236,7 @@ var reflow = function reflow(element) {
 
 var getjQuery = function getjQuery() {
   var _window = window,
-      jQuery = _window.jQuery;
+    jQuery = _window.jQuery;
 
   if (jQuery && !document.body.hasAttribute('data-bs-no-jquery')) {
     return jQuery;
@@ -362,6 +363,7 @@ var customEvents = {
   mouseleave: 'mouseout'
 };
 var nativeEvents = new Set(['click', 'dblclick', 'mouseup', 'mousedown', 'contextmenu', 'mousewheel', 'DOMMouseScroll', 'mouseover', 'mouseout', 'mousemove', 'selectstart', 'selectend', 'keydown', 'keypress', 'keyup', 'orientationchange', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'pointerdown', 'pointermove', 'pointerup', 'pointerleave', 'pointercancel', 'gesturestart', 'gesturechange', 'gestureend', 'focus', 'blur', 'change', 'reset', 'select', 'submit', 'focusin', 'focusout', 'load', 'unload', 'beforeunload', 'resize', 'move', 'DOMContentLoaded', 'readystatechange', 'error', 'abort', 'scroll']);
+
 /**
  * ------------------------------------------------------------------------
  * Private methods
@@ -464,9 +466,9 @@ function addHandler(element, originalTypeEvent, handler, delegationFn, oneOff) {
   }
 
   var _normalizeParams = normalizeParams(originalTypeEvent, handler, delegationFn),
-      delegation = _normalizeParams[0],
-      originalHandler = _normalizeParams[1],
-      typeEvent = _normalizeParams[2];
+    delegation = _normalizeParams[0],
+    originalHandler = _normalizeParams[1],
+    typeEvent = _normalizeParams[2];
 
   var events = getEvent(element);
   var handlers = events[typeEvent] || (events[typeEvent] = {});
@@ -521,9 +523,9 @@ var EventHandler = {
     }
 
     var _normalizeParams2 = normalizeParams(originalTypeEvent, handler, delegationFn),
-        delegation = _normalizeParams2[0],
-        originalHandler = _normalizeParams2[1],
-        typeEvent = _normalizeParams2[2];
+      delegation = _normalizeParams2[0],
+      originalHandler = _normalizeParams2[1],
+      typeEvent = _normalizeParams2[2];
 
     var inNamespace = typeEvent !== originalTypeEvent;
     var events = getEvent(element);
@@ -764,9 +766,9 @@ var Alert = /*#__PURE__*/function (_BaseComponent) {
   _createClass(Alert, null, [{
     key: "DATA_KEY",
     get: // Getters
-    function get() {
-      return DATA_KEY;
-    }
+      function get() {
+        return DATA_KEY;
+      }
   }]);
 
   return Alert;
@@ -840,9 +842,9 @@ var Button = /*#__PURE__*/function (_BaseComponent) {
   _createClass(Button, null, [{
     key: "DATA_KEY",
     get: // Getters
-    function get() {
-      return DATA_KEY$1;
-    }
+      function get() {
+        return DATA_KEY$1;
+      }
   }]);
 
   return Button;
@@ -3216,6 +3218,7 @@ var DefaultAllowlist = {
   u: [],
   ul: []
 };
+
 function sanitizeHtml(unsafeHtml, allowList, sanitizeFn) {
   var _ref;
 
@@ -3257,7 +3260,7 @@ function sanitizeHtml(unsafeHtml, allowList, sanitizeFn) {
   for (var i = 0, len = elements.length; i < len; i++) {
     var _ret = _loop(i);
 
-    if (_ret === "continue") continue;
+    if (_ret === "continue") ;
   }
 
   return createdDocument.body.innerHTML;
@@ -4159,9 +4162,9 @@ var Popover = /*#__PURE__*/function (_Tooltip) {
   _createClass(Popover, null, [{
     key: "Default",
     get: // Getters
-    function get() {
-      return Default$5;
-    }
+      function get() {
+        return Default$5;
+      }
   }, {
     key: "NAME",
     get: function get() {
@@ -4660,9 +4663,9 @@ var Tab = /*#__PURE__*/function (_BaseComponent) {
   _createClass(Tab, null, [{
     key: "DATA_KEY",
     get: // Getters
-    function get() {
-      return DATA_KEY$9;
-    }
+      function get() {
+        return DATA_KEY$9;
+      }
   }]);
 
   return Tab;
@@ -4900,5 +4903,5 @@ var Toast = /*#__PURE__*/function (_BaseComponent) {
 
 defineJQueryPlugin(NAME$a, Toast);
 
-export { Alert, Button, Carousel, Collapse, Dropdown, Modal, Popover, ScrollSpy, Tab, Toast, Tooltip };
+export {Alert, Button, Carousel, Collapse, Dropdown, Modal, Popover, ScrollSpy, Tab, Toast, Tooltip};
 //# sourceMappingURL=bootstrap.esm.js.map

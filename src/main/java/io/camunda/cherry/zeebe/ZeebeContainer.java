@@ -36,14 +36,12 @@ public class ZeebeContainer {
   /**
    * Connection correct is zeebeClient !=null && isConnected = true
    */
-  private boolean isConnected = false;
+  private final boolean isConnected = false;
 
+  private final ZeebeClient zeebeClient;
+  private final CamundaClientProperties camundaClientProperties;
 
-  private ZeebeClient zeebeClient;
-  private CamundaClientProperties camundaClientProperties;
-
-  public ZeebeContainer(final ZeebeClient zeebeClient,
-                        final CamundaClientProperties camundaClientProperties) {
+  public ZeebeContainer(final ZeebeClient zeebeClient, final CamundaClientProperties camundaClientProperties) {
     this.zeebeClient = zeebeClient;
     this.camundaClientProperties = camundaClientProperties;
   }
@@ -59,18 +57,16 @@ public class ZeebeContainer {
     return zeebeClient;
   }
 
+  public ZeebeClientConfiguration getZeebeClientConfiguration() {
+    return zeebeClient.getConfiguration();
+  }
 
-
-  public ZeebeClientConfiguration getZeebeClientConfiguration() { return zeebeClient.getConfiguration();}
   /**
-   *
-   *
    * Start the ZeebeClient
    */
   public void startZeebeClient() throws TechnicalException {
     // Do nothing, already started
   }
-
 
   /**
    * Stop the zeebeClient
@@ -82,6 +78,7 @@ public class ZeebeContainer {
       return;
     localZeebe.close();
   }
+
   /**
    * Check if the Zeebe Server is alive
    *
@@ -105,7 +102,6 @@ public class ZeebeContainer {
       throw new TechnicalException(e);
     }
   }
-
 
   /**
    * Note: the class io/camunda/zeebe/spring/client/configuration/ZeebeClientProdAutoConfiguration
@@ -133,6 +129,13 @@ public class ZeebeContainer {
     return zeebeClient.getConfiguration().getNumJobWorkerExecutionThreads();
   }
 
+  public void setNumberOfThreads(int numberOfThreads) {
+    if (zeebeClient.getConfiguration() instanceof ZeebeClientProperties zeebeClientProperties) {
+      zeebeClientProperties.setExecutionThreads(numberOfThreads);
+    }
+    throw new TechnicalException("Can't upgrade the number of threads");
+  }
+
   /**
    * @return the number of threads used when the ZeebeClient is started
    */
@@ -140,12 +143,6 @@ public class ZeebeContainer {
     return zeebeClient.getConfiguration().getDefaultJobWorkerMaxJobsActive();
   }
 
-  public void setNumberOfThreads( int numberOfThreads) {
-    if (zeebeClient.getConfiguration() instanceof ZeebeClientProperties zeebeClientProperties ) {
-      zeebeClientProperties.setExecutionThreads(numberOfThreads);
-    }
-    throw new TechnicalException("Can't upgrade the number of threads");
-  }
   /**
    * Check the connection, and restart it if it is possible
    *
@@ -154,7 +151,7 @@ public class ZeebeContainer {
   public boolean checkConnection() {
     ZeebeClient localZeebe = zeebeClient;
 
-    if (localZeebe==null)
+    if (localZeebe == null)
       startZeebeClient();
     return pingZeebeClient();
   }

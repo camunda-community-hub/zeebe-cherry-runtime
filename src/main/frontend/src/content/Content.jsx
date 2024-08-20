@@ -6,7 +6,7 @@
 //
 // -----------------------------------------------------------
 
-import React,{ createRef  } from 'react';
+import React, {createRef} from 'react';
 import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
@@ -21,7 +21,7 @@ class Content extends React.Component {
 
     this.state = {
       content: [],
-      files:[],
+      files: [],
       display: {loading: false},
       status: ""
     };
@@ -82,7 +82,7 @@ class Content extends React.Component {
                       <div>{usedby.name} {usedby.collectionName} <br/>
                         {usedby.activeRunner &&
                           <button className="start-runner button is-selected is-primary">Started</button>
-                          }
+                        }
                         {!usedby.activeRunner &&
                           <button className="stop-runner button is-selected is-danger">Stopped</button>
                         }
@@ -242,7 +242,7 @@ class Content extends React.Component {
       console.log("operationUploadJar.operationDeleteCallback: error " + httpResponse.getError());
       this.setState({statusUploadFailed: httpResponse.getError()});
     } else {
-        // Clear the file input field using JavaScript
+      // Clear the file input field using JavaScript
       if (this.fileUploaderRef.current) {
         this.fileUploaderRef.current.clearFiles();
       }

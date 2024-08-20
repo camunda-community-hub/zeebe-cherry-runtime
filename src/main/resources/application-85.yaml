@@ -1,4 +1,3 @@
-
 cherry:
   connectorslib:
     uploadpath: ./localstorage/upload
@@ -27,60 +26,60 @@ camunda:
         max-jobs-active: 30
       execution-threads: 14
 
-# 8.3 value:
-# zeebe.client:
-#   zeebe.client.
-#     security.plaintext: true
-# zeebe:
-#   client:
-#     broker:
-#       gateway-address=host:docker:internal:application-85:26500:
-#     security.plaintext: true
-#     worker:
-#       threads: 14
-#       maxJobsActive: 30
+  # 8.3 value:
+  # zeebe.client:
+  #   zeebe.client.
+  #     security.plaintext: true
+  # zeebe:
+  #   client:
+  #     broker:
+  #       gateway-address=host:docker:internal:application-85:26500:
+  #     security.plaintext: true
+  #     worker:
+  #       threads: 14
+  #       maxJobsActive: 30
 
 
-# -------------------- Self Manage Multi-Tenancy
-# camunda:
-#   client:
-#     mode: oidc
-#     auth:
-#       client-id: <your client id>
-#       client-secret: <your client secret>
-#     tenant-ids:
-#       - <default>
-#       - red
-#     zeebe:
-#       enabled: true
-#       gateway-url: http://localhost:26500
-#       prefer-rest-over-grpc: false
-#       audience: zeebe-api
-#       defaults:
-#         max-jobs-active: 30
-#       execution-threads: 14
+  # -------------------- Self Manage Multi-Tenancy
+  # camunda:
+  #   client:
+  #     mode: oidc
+  #     auth:
+  #       client-id: <your client id>
+  #       client-secret: <your client secret>
+  #     tenant-ids:
+  #       - <default>
+  #       - red
+  #     zeebe:
+  #       enabled: true
+  #       gateway-url: http://localhost:26500
+  #       prefer-rest-over-grpc: false
+  #       audience: zeebe-api
+  #       defaults:
+  #         max-jobs-active: 30
+  #       execution-threads: 14
 
-# Previous 8.3
-# zeebe.clientMulti:
-#     broker.gateway-address: 127.0.0.1:26500
-#     # zeebe.client.broker.gateway-address=host.docker.internal:26500
-#     security:
-#       plaintext: false
-#     # list of tenant's ID separated with a semi colons
-#     tenantIds: <default>;red
-#     oauth:
-#       clientId: worker
-#       clientSecret: uMpRNGJciY7EHgv3yuuO4xEFdaeb85oa
-#       authorizationServerUrl: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
-#       clientAudience: zeebe-api
+  # Previous 8.3
+  # zeebe.clientMulti:
+  #     broker.gateway-address: 127.0.0.1:26500
+  #     # zeebe.client.broker.gateway-address=host.docker.internal:26500
+  #     security:
+  #       plaintext: false
+  #     # list of tenant's ID separated with a semi colons
+  #     tenantIds: <default>;red
+  #     oauth:
+  #       clientId: worker
+  #       clientSecret: uMpRNGJciY7EHgv3yuuO4xEFdaeb85oa
+  #       authorizationServerUrl: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+  #       clientAudience: zeebe-api
 
-# -------------------- SAAS
-# camunda:
-#   client:
-#     mode: saas
-#     auth:
-#       client-id: GYv
-#       client-secret: Rth
+  # -------------------- SAAS
+  # camunda:
+  #   client:
+  #     mode: saas
+  #     auth:
+  #       client-id: GYv
+  #       client-secret: Rth
   #   cluster-id: 4b4
   #   region: bru-2
 

@@ -9,11 +9,6 @@
 import React from 'react';
 
 
-
-import RestCallService from "../services/RestCallService";
-
-
-
 class HeaderMessage extends React.Component {
 
 
@@ -32,13 +27,13 @@ class HeaderMessage extends React.Component {
   }
 
   componentDidMount() {
-    const intervalId = setInterval( this.performAction, 60000);
+    const intervalId = setInterval(this.performAction, 60000);
 
   }
 
   performAction = () => {
     console.log("Action executed");
-    this.setState({counter: this.state.counter+1})
+    this.setState({counter: this.state.counter + 1})
   };
 
   render() {

@@ -11,6 +11,9 @@ package io.camunda.cherry.admin;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.zeebe.spring.client.properties.CamundaClientProperties;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,10 +28,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 @RestController
 @RequestMapping("cherry")
@@ -64,35 +63,35 @@ public class AdminRestController {
     parameters.put("zeebekindconnection", camundaClientProperties.getMode().toString());
 
     String clientSecret = camundaClientProperties.getAuth().getClientSecret();
-    if (clientSecret!=null) {
+    if (clientSecret != null) {
       if (clientSecret.length() > 2)
         clientSecret = clientSecret.substring(0, 2) + "***************";
       else
         clientSecret = "******************";
     }
 
-    switch(camundaClientProperties.getMode()) {
-      case saas:
-        parameters.put("cloudRegion", camundaClientProperties.getRegion());
-        parameters.put("cloudClusterID", camundaClientProperties.getClusterId());
-        parameters.put("cloudClientID", camundaClientProperties.getAuth().getClientId());
-        parameters.put("cloudClientSecret", clientSecret); // never send the client Secret
-        break;
+    switch (camundaClientProperties.getMode()) {
+    case saas:
+      parameters.put("cloudRegion", camundaClientProperties.getRegion());
+      parameters.put("cloudClusterID", camundaClientProperties.getClusterId());
+      parameters.put("cloudClientID", camundaClientProperties.getAuth().getClientId());
+      parameters.put("cloudClientSecret", clientSecret); // never send the client Secret
+      break;
     case oidc:
       parameters.put("gatewayAddress", camundaClientProperties.getZeebe().getGatewayUrl());
-      parameters.put("clientId",camundaClientProperties.getAuth().getClientId());
-      parameters.put("clientSecret",clientSecret);
-      parameters.put("AutorizationServerUrl",
-          camundaClientProperties.getAuth().getIssuer());
+      parameters.put("clientId", camundaClientProperties.getAuth().getClientId());
+      parameters.put("clientSecret", clientSecret);
+      parameters.put("AutorizationServerUrl", camundaClientProperties.getAuth().getIssuer());
       parameters.put("clientAudience", camundaClientProperties.getZeebe().getAudience());
 
-      parameters.put("tenantIds",
-          camundaClientProperties.getTenantIds() == null ? "" : String.join(";", camundaClientProperties.getTenantIds()));
+      parameters.put("tenantIds", camundaClientProperties.getTenantIds() == null ?
+          "" :
+          String.join(";", camundaClientProperties.getTenantIds()));
 
       break;
-      case simple:
-        parameters.put("gatewayAddress", camundaClientProperties.getZeebe().getGatewayUrl());
-        break;
+    case simple:
+      parameters.put("gatewayAddress", camundaClientProperties.getZeebe().getGatewayUrl());
+      break;
 
     }
 

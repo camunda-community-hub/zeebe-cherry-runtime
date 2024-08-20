@@ -1,4 +1,3 @@
-
 cherry:
   connectorslib:
     uploadpath: ./localstorage/upload
@@ -47,16 +46,16 @@ spring:
         show-sql: true
 
 
-# spring.datasource:
-#   url: "jdbc:h2:file:./cherry.db"
-#   driver-class-name: "org.h2.Driver"
-#   username: "sa"
-#   password: "password"
-# spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+  # spring.datasource:
+  #   url: "jdbc:h2:file:./cherry.db"
+  #   driver-class-name: "org.h2.Driver"
+  #   username: "sa"
+  #   password: "password"
+  # spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
 
-# Save statistics and information
+  # Save statistics and information
 
-# --------------------- Postgres
+  # --------------------- Postgres
   datasource:
     url: "jdbc:postgresql://localhost/cherrydb"
     username: "camunda"

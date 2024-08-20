@@ -1,64 +1,205 @@
 @import "../utilities/mixins"
 
-$column-gap: 0.75rem !default
+$
+column-gap:
 
-                 .column
-                 display: block
-                 flex-basis: 0
-flex-grow: 1
-flex-shrink: 1
-padding: $column-gap
-          .columns.is-mobile > &.is-narrow
-          flex: none
-          width: unset
-          .columns.is-mobile > &.is-full
-          flex: none
-          width: 100%
+0.75
+rem ! default
+.column
+display: block
+flex-basis:
+
+0
+flex-grow:
+
+1
+flex-shrink:
+
+1
+padding:
+
+$
+column-gap
+.columns.is-mobile > &.is-narrow
+flex: none
+width: unset
+.columns.is-mobile > &.is-full
+flex: none
+width:
+
+100
+%
 .columns.is-mobile > &.is-three-quarters
 flex: none
-width: 75%
+width:
+
+75
+%
 .columns.is-mobile > &.is-two-thirds
 flex: none
-width: 66.6666%
+width:
+
+66.6666
+%
 .columns.is-mobile > &.is-half
 flex: none
-width: 50%
+width:
+
+50
+%
 .columns.is-mobile > &.is-one-third
 flex: none
-width: 33.3333%
+width:
+
+33.3333
+%
 .columns.is-mobile > &.is-one-quarter
 flex: none
-width: 25%
+width:
+
+25
+%
 .columns.is-mobile > &.is-one-fifth
 flex: none
-width: 20%
+width:
+
+20
+%
 .columns.is-mobile > &.is-two-fifths
 flex: none
-width: 40%
+width:
+
+40
+%
 .columns.is-mobile > &.is-three-fifths
 flex: none
-width: 60%
+width:
+
+60
+%
 .columns.is-mobile > &.is-four-fifths
 flex: none
-width: 80%
+width:
+
+80
+%
 .columns.is-mobile > &.is-offset-three-quarters
-+ltr-property("margin", 75%, false)
++
+
+ltr-property
+(
+"margin"
+,
+75
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-two-thirds
-+ltr-property("margin", 66.6666%, false)
++
+
+ltr-property
+(
+"margin"
+,
+66.6666
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-half
-+ltr-property("margin", 50%, false)
++
+
+ltr-property
+(
+"margin"
+,
+50
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-one-third
-+ltr-property("margin", 33.3333%, false)
++
+
+ltr-property
+(
+"margin"
+,
+33.3333
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-one-quarter
-+ltr-property("margin", 25%, false)
++
+
+ltr-property
+(
+"margin"
+,
+25
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-one-fifth
-+ltr-property("margin", 20%, false)
++
+
+ltr-property
+(
+"margin"
+,
+20
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-two-fifths
-+ltr-property("margin", 40%, false)
++
+
+ltr-property
+(
+"margin"
+,
+40
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-three-fifths
-+ltr-property("margin", 60%, false)
++
+
+ltr-property
+(
+"margin"
+,
+60
+%
+,
+false
+
+)
 .columns.is-mobile > &.is-offset-four-fifths
-+ltr-property("margin", 80%, false)
++
+
+ltr-property
+(
+"margin"
+,
+80
+%
+,
+false
+
+)
 @for $i from 0 through 12
 .columns.is-mobile > &.is-#{$i}
 flex: none

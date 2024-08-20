@@ -231,8 +231,6 @@ public abstract class AbstractRunner {
     }
   }
 
-
-
   /**
    * Retrieve a variable, and return the string representation. If the variable is not a String,
    * then a toString() is returned. If the value does not exist, then defaultValue is returned The
@@ -434,7 +432,7 @@ public abstract class AbstractRunner {
    * @param message message to log
    */
   public void logError(String message) {
-    loggerAbstract.error("CherryRunner[{}] : ",getName(), message);
+    loggerAbstract.error("CherryRunner[{}] : ", getName(), message);
   }
 
   /**
@@ -443,7 +441,7 @@ public abstract class AbstractRunner {
    * @param message message to log
    */
   public void logInfo(String message) {
-    loggerAbstract.info("CherryRunner[{}] : {} ",getName(), message);
+    loggerAbstract.info("CherryRunner[{}] : {} ", getName(), message);
   }
 
   /**
@@ -471,8 +469,7 @@ public abstract class AbstractRunner {
       }
 
       // check REQUIRED parameters
-      if ((value == null || value.toString().trim().isEmpty())
-          && parameter.level == RunnerParameter.Level.REQUIRED) {
+      if ((value == null || value.toString().trim().isEmpty()) && parameter.level == RunnerParameter.Level.REQUIRED) {
         listErrors.add("Param[" + parameter.name + "] is missing");
       }
     }
@@ -727,13 +724,13 @@ public abstract class AbstractRunner {
           if (word.length() == 1) {
             accumulator += word;
           } else {
-            if (! accumulator.isEmpty())
+            if (!accumulator.isEmpty())
               transformWords.add(accumulator);
             transformWords.add(word.toLowerCase());
             accumulator = "";
           }
         }
-        if (! accumulator.isEmpty()) {
+        if (!accumulator.isEmpty()) {
           transformWords.add(accumulator);
         }
 

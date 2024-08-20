@@ -51,9 +51,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class RunnerFactory {
@@ -136,9 +134,8 @@ public class RunnerFactory {
 
       // temp for debug
       AbstractRunner last = listDetectedRunners.get(listDetectedRunners.size() - 1);
-      logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] ",
-          candidateRunner.getClass().getName(), (last instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
-          last.getName(), last.getType());
+      logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] ", candidateRunner.getClass().getName(),
+          (last instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"), last.getName(), last.getType());
 
       return listDetectedRunners;
     }
@@ -256,14 +253,14 @@ public class RunnerFactory {
   public void synchronize() {
     // not possible to use a Stream: external worker may upgrade embedded worker
     Map<String, RunnerLightDefinition> mapExistingRunners = new HashMap<>();
-    for (RunnerLightDefinition runner: runnerEmbeddedFactory.getAllRunners()) {
+    for (RunnerLightDefinition runner : runnerEmbeddedFactory.getAllRunners()) {
       if (mapExistingRunners.containsKey(runner.getType()))
         logger.warn("RunnerEmbedded[{}] Already loaded", runner.getType());
       // last one is the winner
       mapExistingRunners.put(runner.getType(), runner);
     }
 
-    for (RunnerLightDefinition runner: runnerUploadFactory.getAllRunners()) {
+    for (RunnerLightDefinition runner : runnerUploadFactory.getAllRunners()) {
       if (mapExistingRunners.containsKey(runner.getType()))
         logger.warn("RunnerUpload[{}] Already loaded", runner.getType());
       // last one is the winner

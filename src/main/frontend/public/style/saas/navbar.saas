@@ -1,66 +1,234 @@
 @import "../utilities/mixins"
 
-$navbar-background-color: $scheme-main !default
-$navbar-box-shadow-size: 0 2px 0 0 !default
-$navbar-box-shadow-color: $background !default
-$navbar-height: 3.25rem !default
-$navbar-padding-vertical: 1rem !default
-$navbar-padding-horizontal: 2rem !default
-$navbar-z: 30 !default
-$navbar-fixed-z: 30 !default
+$
+navbar-background-color:
 
-$navbar-item-color: $text !default
-$navbar-item-hover-color: $link !default
-$navbar-item-hover-background-color: $scheme-main-bis !default
-$navbar-item-active-color: $scheme-invert !default
-$navbar-item-active-background-color: transparent !default
-$navbar-item-img-max-height: 1.75rem !default
+$
+scheme-main ! default
+$ navbar-box-shadow-size:
 
-$navbar-burger-color: $navbar-item-color !default
+0
+2
+px
 
-$navbar-tab-hover-background-color: transparent !default
-$navbar-tab-hover-border-bottom-color: $link !default
-$navbar-tab-active-color: $link !default
-$navbar-tab-active-background-color: transparent !default
-$navbar-tab-active-border-bottom-color: $link !default
-$navbar-tab-active-border-bottom-style: solid !default
-$navbar-tab-active-border-bottom-width: 3px !default
+0
+0
+!
+default
+$ navbar-box-shadow-color:
 
-$navbar-dropdown-background-color: $scheme-main !default
-$navbar-dropdown-border-top: 2px solid $border !default
-$navbar-dropdown-offset: -4px !default
-$navbar-dropdown-arrow: $link !default
-$navbar-dropdown-radius: $radius-large !default
-$navbar-dropdown-z: 20 !default
+$
+background ! default
+$ navbar-height:
 
-$navbar-dropdown-boxed-radius: $radius-large !default
-$navbar-dropdown-boxed-shadow: 0 8px 8px bulmaRgba($scheme-invert, 0.1), 0 0 0 1px bulmaRgba($scheme-invert, 0.1) !default
+3.25
+rem ! default
+$ navbar-padding-vertical:
 
-$navbar-dropdown-item-hover-color: $scheme-invert !default
-$navbar-dropdown-item-hover-background-color: $background !default
-$navbar-dropdown-item-active-color: $link !default
-$navbar-dropdown-item-active-background-color: $background !default
+1
+rem ! default
+$ navbar-padding-horizontal:
 
-$navbar-divider-background-color: $background !default
-$navbar-divider-height: 2px !default
+2
+rem ! default
+$ navbar-z:
 
-$navbar-bottom-box-shadow-size: 0 -2px 0 0 !default
+30
+!
+default
+$ navbar-fixed-z:
 
-$navbar-breakpoint: $desktop !default
+30
+!
+default
 
-$navbar-colors: $colors !default
+$ navbar-item-color:
 
-=navbar-fixed
- left: 0
+$
+text ! default
+$ navbar-item-hover-color:
+
+$
+link ! default
+$ navbar-item-hover-background-color:
+
+$
+scheme-main-bis ! default
+$ navbar-item-active-color:
+
+$
+scheme-invert ! default
+$ navbar-item-active-background-color: transparent ! default
+$ navbar-item-img-max-height:
+
+1.75
+rem ! default
+
+$ navbar-burger-color:
+
+$
+navbar-item-color ! default
+
+$ navbar-tab-hover-background-color: transparent ! default
+$ navbar-tab-hover-border-bottom-color:
+
+$
+link ! default
+$ navbar-tab-active-color:
+
+$
+link ! default
+$ navbar-tab-active-background-color: transparent ! default
+$ navbar-tab-active-border-bottom-color:
+
+$
+link ! default
+$ navbar-tab-active-border-bottom-style: solid ! default
+$ navbar-tab-active-border-bottom-width:
+
+3
+px ! default
+
+$ navbar-dropdown-background-color:
+
+$
+scheme-main ! default
+$ navbar-dropdown-border-top:
+
+2
+px solid $ border ! default
+$ navbar-dropdown-offset:
+
+-
+4
+px ! default
+$ navbar-dropdown-arrow:
+
+$
+link ! default
+$ navbar-dropdown-radius:
+
+$
+radius-large ! default
+$ navbar-dropdown-z:
+
+20
+!
+default
+
+$ navbar-dropdown-boxed-radius:
+
+$
+radius-large ! default
+$ navbar-dropdown-boxed-shadow:
+
+0
+8
+px
+
+8
+px
+
+bulmaRgba
+(
+$
+scheme-invert,
+
+0.1
+)
+,
+0
+0
+0
+1
+px
+
+bulmaRgba
+(
+$
+scheme-invert,
+
+0.1
+)
+!
+default
+
+$ navbar-dropdown-item-hover-color:
+
+$
+scheme-invert ! default
+$ navbar-dropdown-item-hover-background-color:
+
+$
+background ! default
+$ navbar-dropdown-item-active-color:
+
+$
+link ! default
+$ navbar-dropdown-item-active-background-color:
+
+$
+background ! default
+
+$ navbar-divider-background-color:
+
+$
+background ! default
+$ navbar-divider-height:
+
+2
+px ! default
+
+$ navbar-bottom-box-shadow-size:
+
+0
+-
+2
+px
+
+0
+0
+!
+default
+
+$ navbar-breakpoint:
+
+$
+desktop ! default
+
+$ navbar-colors:
+
+$
+colors ! default
+
+=
+navbar-fixed
+left:
+
+0
 position: fixed
-right: 0
-z-index: $navbar-fixed-z
+right:
 
-          .navbar
-          background-color: $navbar-background-color
-                             min-height: $navbar-height
-                                          position: relative
-                                          z-index: $navbar-z
+0
+z-index:
+
+$
+navbar-fixed-z
+.navbar
+background-color:
+
+$
+navbar-background-color
+min-height:
+
+$
+navbar-height
+position: relative
+z-index:
+
+$
+navbar-z
+
 @each $name, $pair in $navbar-colors
 $color: nth($pair, 1)
 $color-invert: nth($pair, 2)
@@ -126,8 +294,7 @@ box-shadow: $navbar-bottom-box-shadow-size $navbar-box-shadow-color
 &.is-fixed-top
 top: 0
 
-html,
-body
+html, body
 &.has-navbar-fixed-top
 padding-top: $navbar-height
 &.has-navbar-fixed-bottom
@@ -270,8 +437,7 @@ top: 0
 +overflow-touch
 max-height: calc(100vh - #{$navbar-height})
 overflow: auto
-html,
-body
+html, body
 &.has-navbar-fixed-top-touch
 padding-top: $navbar-height
 &.has-navbar-fixed-bottom-touch
@@ -415,8 +581,7 @@ bottom: 0
 box-shadow: 0 -2px 3px bulmaRgba($scheme-invert, 0.1)
 &.is-fixed-top-desktop
 top: 0
-html,
-body
+html, body
 &.has-navbar-fixed-top-desktop
 padding-top: $navbar-height
 &.has-navbar-fixed-bottom-desktop
