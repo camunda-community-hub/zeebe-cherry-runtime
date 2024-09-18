@@ -36,14 +36,14 @@ jobs:
         uses: camunda-community-hub/community-action-maven-release@main
         with:
           release-version: ${{ github.event.release.tag_name }}
+          maven-url: s01.oss.sonatype.org
           nexus-usr: ${{ secrets.NEXUS_USR }}
           nexus-psw: ${{ secrets.NEXUS_PSW }}
-          maven-usr: ${{ secrets.MAVEN_CENTRAL_DEPLOYMENT_USR }}
-          maven-psw: ${{ secrets.MAVEN_CENTRAL_DEPLOYMENT_PSW }}
+          maven-usr: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_S01_USR }}
+          maven-psw: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_S01_PSW }}
           maven-gpg-passphrase: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           maven-auto-release-after-close: true
-          maven-url: s01.oss.sonatype.org
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         id: release
 
       - if: github.event.release
