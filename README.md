@@ -221,7 +221,7 @@ The project is configured to publish the JAR file automatically to Maven Central
 
 If you want to build a local maven image, use
 
-````yaml
+````shell
 mvn spring-boot:build-image
 ````
 ## Maven Central repository

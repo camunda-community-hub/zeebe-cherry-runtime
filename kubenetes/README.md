@@ -19,3 +19,10 @@ A Postgres database is used. it can be replaced by a different database, or an H
 ## Connection to Zeebe
 The deployment must be run in the same cluster as Zeebe. If it is a different cluster, then the zeebe connection must be adapted
 
+# Operation
+
+```shell
+kubectl create -f cherry-runtime.yaml
+```
+
+kubectl port-forward svc/camunda-zeebe-gateway 26500:26500 -n camunda

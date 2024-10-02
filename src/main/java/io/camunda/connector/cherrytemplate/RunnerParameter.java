@@ -39,6 +39,14 @@ public class RunnerParameter {
   public List<WorkerParameterChoice> choiceList;
   public boolean visibleInTemplate = false;
   public Group group;
+  /* -------------------------------------------------------- */
+  /*                                                          */
+  /*  Attributes                                                */
+  /* to facilitate the parameter management, connector can    */
+  /* manage private attributes
+  /*                                                          */
+  /* -------------------------------------------------------- */
+  private Map<String, Object> attributes = new HashMap<>();
 
   public RunnerParameter() {
 
@@ -217,6 +225,23 @@ public class RunnerParameter {
   public Level getLevel() {
     return level;
   }
+
+  public void setAttribute(String name, Object value) {
+
+    attributes.put(name, value);
+  }
+
+  public Object getAttribute(String name) {
+    return attributes.get(name);
+  }
+
+  public int getAttributeInteger(String name, int defaultValue) {
+    if (attributes.get(name) instanceof Integer attributInteger)
+      return attributInteger.intValue();
+    return defaultValue;
+  }
+
+
   /* -------------------------------------------------------- */
   /*                                                          */
   /*  Conditions                                              */
@@ -246,7 +271,7 @@ public class RunnerParameter {
   /**
    * Set the default value in the parameter
    *
-   * @param defaultValue
+   * @param defaultValue use to set the default value
    * @return a runnerParameter where the attribute is set to true
    */
   public RunnerParameter setDefaultValue(Object defaultValue) {
@@ -268,7 +293,7 @@ public class RunnerParameter {
    */
   public RunnerParameter addCondition(String property, List<String> oneOf) {
     this.condition = property;
-    this.conditionOneOf = oneOf;
+    this.conditionOneOf = oneOf==null? null: oneOf.stream().distinct().toList();
     return this;
   }
 
@@ -353,7 +378,7 @@ public class RunnerParameter {
 
     oneParameter.put(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE, visibleInTemplate);
 
-    logger.info("PdfParameters getMap:{}", oneParameter);
+    logger.info("getMap:{}", oneParameter);
 
     return oneParameter;
   }
