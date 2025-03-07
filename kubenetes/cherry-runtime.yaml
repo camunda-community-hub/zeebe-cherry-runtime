@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: cherry-runtime-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: cherry-runtime
@@ -34,6 +34,9 @@ spec:
               value: "org.postgresql.Driver"
             - name: "JPA_DATABASE-PLATFORM"
               value: "org.hibernate.dialect.PostgreSQLDialect"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+              value: org.hibernate.dialect.PostgreSQLDialect
+
 ---
 apiVersion: v1
 kind: Service
@@ -44,58 +47,68 @@ spec:
     app: cherry-runtime
   ports:
     - protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: 9081
+      targetPort: 9081
   type: ClusterIP
 
 ---
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: cherry-postgres
+  name: postgres-pvc
 spec:
-  serviceName: "cherry-postgres"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cherry-postgres
+      app: postgres
   template:
     metadata:
       labels:
-        app: cherry-postgres
+        app: postgres
     spec:
       containers:
         - name: postgres
-          image: postgres:latest
+          image: postgres:16
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
           env:
-            - name: POSTGRES_DB
-              value: mydatabase
             - name: POSTGRES_USER
               value: "cherryUser"
             - name: POSTGRES_PASSWORD
               value: "cherryPassword"
+            - name: POSTGRES_DB
+              value: "cherrydb"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
-  volumeClaimTemplates:
-    - metadata:
-        name: postgres-storage
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: "standard"  # Replace with your storage class name if different
-        resources:
-          requests:
-            storage: 2Gi
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: cherry-postgres-svc
+  name: cherry-postgres
 spec:
   selector:
-    app: cherry-postgres
+    app: postgres
   ports:
     - protocol: TCP
       port: 5432
