@@ -25,65 +25,65 @@ import java.util.Random;
 /* ------------------------------------------------------------------- */
 
 @Component
-@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = { PingConnectorInput.INPUT_MESSAGE,
-    PingConnectorInput.INPUT_DELAY,
-    PingConnectorInput.INPUT_THROWERRORPLEASE }, type = PingConnector.TYPE_PINGCONNECTOR)
+@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = {PingConnectorInput.INPUT_MESSAGE,
+        PingConnectorInput.INPUT_DELAY,
+        PingConnectorInput.INPUT_THROWERRORPLEASE}, type = PingConnector.TYPE_PINGCONNECTOR)
 public class PingConnector extends AbstractConnector
-    implements IntFrameworkRunner, OutboundConnectorFunction, PingIntRunner {
+        implements IntFrameworkRunner, OutboundConnectorFunction, PingIntRunner {
 
-  public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
-  public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
+    public static final String ERROR_BAD_WEATHER = "BAD_WEATHER";
+    public static final String TYPE_PINGCONNECTOR = "c-pingconnector";
 
-  private final Random random = new Random();
+    private final Random random = new Random();
 
-  public PingConnector() {
-    super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
-        Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
-  }
-
-  /**
-   * mark this Connector as a Framework runner
-   *
-   * @return true because this worker is part of the Cherry framework
-   */
-  @Override
-  public boolean isFrameworkRunner() {
-    return true;
-  }
-
-  @Override
-  public String getName() {
-    return "Ping connector";
-  }
-
-  @Override
-  public String getLabel() {
-    return "Ping (ConnectorSDK)";
-  }
-
-  @Override
-  public String getDescription() {
-    return "Do a simple ping as a connector, and return timestamp, ipAdress. A Delay can be set as parameter";
-  }
-
-  @Override
-  public Object execute(OutboundConnectorContext context) throws Exception {
-
-    PingConnectorInput pingConnectorInput = context.bindVariables(PingConnectorInput.class);
-
-    if (pingConnectorInput.isThrowErrorPlease()) {
-      throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
-    }
-    // context.validate(pingConnectorInput);
-    int delay = pingConnectorInput.getDelay();
-    if (delay < 0) {
-      delay = random.nextInt(30000) + 1500;
+    public PingConnector() {
+        super(TYPE_PINGCONNECTOR, PingConnectorInput.class, PingConnectorOutput.class,
+                Collections.singletonList(new BpmnError(ERROR_BAD_WEATHER, "Why this is a bad weather?")));
     }
 
-    Thread.sleep(delay);
-    InetAddress ipAddress = InetAddress.getLocalHost();
+    /**
+     * mark this Connector as a Framework runner
+     *
+     * @return true because this worker is part of the Cherry framework
+     */
+    @Override
+    public boolean isFrameworkRunner() {
+        return true;
+    }
 
-    return new PingConnectorOutput(System.currentTimeMillis(), ipAddress.getHostAddress(),
-        Map.of("JDK", System.getProperty("java.version")));
-  }
+    @Override
+    public String getName() {
+        return "Ping connector";
+    }
+
+    @Override
+    public String getLabel() {
+        return "Ping (ConnectorSDK)";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Do a simple ping as a connector, and return timestamp, ipAdress. A Delay can be set as parameter";
+    }
+
+    @Override
+    public Object execute(OutboundConnectorContext context) throws Exception {
+
+        PingConnectorInput pingConnectorInput = context.bindVariables(PingConnectorInput.class);
+
+        if (pingConnectorInput.isThrowErrorPlease()) {
+            throw new ConnectorException(ERROR_BAD_WEATHER, "Raining too much");
+        }
+        // context.validate(pingConnectorInput);
+        int delay = pingConnectorInput.getDelay();
+        if (delay < 0) {
+            delay = random.nextInt(30000) + 1500;
+        }
+
+        Thread.sleep(delay);
+        InetAddress ipAddress = InetAddress.getLocalHost();
+
+        return new PingConnectorOutput(System.currentTimeMillis(), ipAddress.getHostAddress(),
+                Map.of("JDK", System.getProperty("java.version")));
+    }
 }

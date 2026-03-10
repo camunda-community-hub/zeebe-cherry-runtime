@@ -27,52 +27,52 @@ import java.util.stream.Collectors;
 @Service
 public class RunnerAdminOperation {
 
-  @Autowired
-  JarDefinitionRepository jarDefinitionRepository;
+    @Autowired
+    JarDefinitionRepository jarDefinitionRepository;
 
-  @Autowired
-  RunnerDefinitionRepository runnerDefinitionRepository;
+    @Autowired
+    RunnerDefinitionRepository runnerDefinitionRepository;
 
-  @Autowired
-  JobRunnerFactory jobRunnerFactory;
+    @Autowired
+    JobRunnerFactory jobRunnerFactory;
 
-  public boolean deleteJarFile(Long storageEntityId) throws OperationException {
+    public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
-    // search the StorageEntity
-    Optional<JarStorageEntity> storageEntity = jarDefinitionRepository.findById(storageEntityId);
-    if (storageEntity.isEmpty())
-      throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
+        // search the StorageEntity
+        Optional<JarStorageEntity> storageEntity = jarDefinitionRepository.findById(storageEntityId);
+        if (storageEntity.isEmpty())
+            throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
 
-    // Need that variable for the stream
-    // Identify all worker behind the JarEntity
-    List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
-    List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
-        .filter(t -> {
-          return storageEntity.get().id.equals(t.jar.id);
-        }).collect(Collectors.toList());
+        // Need that variable for the stream
+        // Identify all worker behind the JarEntity
+        List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
+        List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
+                .filter(t -> {
+                    return storageEntity.get().id.equals(t.jar.id);
+                }).collect(Collectors.toList());
 
-    // Stop all workers
-    String runnerNotStopped = "";
-    for (RunnerDefinitionEntity runnerEntity : listRunners) {
-      try {
-        if (!jobRunnerFactory.stopRunner(runnerEntity.type))
-          runnerNotStopped += runnerEntity.name + ";";
-      } catch (OperationAlreadyStoppedException e) {
-        // Ok, it's already stopped, proceed
-      }
+        // Stop all workers
+        String runnerNotStopped = "";
+        for (RunnerDefinitionEntity runnerEntity : listRunners) {
+            try {
+                if (!jobRunnerFactory.stopRunner(runnerEntity.type))
+                    runnerNotStopped += runnerEntity.name + ";";
+            } catch (OperationAlreadyStoppedException e) {
+                // Ok, it's already stopped, proceed
+            }
+        }
+
+        if (!runnerNotStopped.isEmpty())
+            throw new OperationException("CANT_STOP_RUNNER", "Runners[" + runnerNotStopped + "]");
+
+        // remove worker from database
+        for (RunnerDefinitionEntity runnerEntity : listRunners) {
+            runnerDefinitionRepository.delete(runnerEntity);
+        }
+        // remove Jar
+        jarDefinitionRepository.delete(storageEntity.get());
+
+        return true;
+
     }
-
-    if (!runnerNotStopped.isEmpty())
-      throw new OperationException("CANT_STOP_RUNNER", "Runners[" + runnerNotStopped + "]");
-
-    // remove worker from database
-    for (RunnerDefinitionEntity runnerEntity : listRunners) {
-      runnerDefinitionRepository.delete(runnerEntity);
-    }
-    // remove Jar
-    jarDefinitionRepository.delete(storageEntity.get());
-
-    return true;
-
-  }
 }

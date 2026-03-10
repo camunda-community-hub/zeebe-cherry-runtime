@@ -15,9 +15,9 @@ import java.util.List;
 
 public interface JarDefinitionRepository extends JpaRepository<JarStorageEntity, Long> {
 
-  @Query("select jarDefinition from JarStorageEntity jarDefinition" + " where jarDefinition.name = :name ")
-  JarStorageEntity findByName(@Param("name") String name);
+    @Query("select jarDefinition from JarStorageEntity jarDefinition" + " where jarDefinition.name = :name ")
+    JarStorageEntity findByName(@Param("name") String name);
 
-  @Query("select jarDefinition from JarStorageEntity jarDefinition")
-  List<JarStorageEntity> getAll();
+    @Query("select jarDefinition from JarStorageEntity jarDefinition")
+    List<JarStorageEntity> getAll();
 }

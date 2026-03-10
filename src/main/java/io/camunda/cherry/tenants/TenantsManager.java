@@ -29,20 +29,15 @@ public class TenantsManager {
 
     @Autowired
     ZeebeContainer zeebeContainer;
-
-    @Value("${cherry.tenants.automaticDetection:false}")
-    private Boolean automaticDetection;
-
-    @Value("${cherry.tenants.tenant-ids:}")
-    private List<String> listConfigurationTenants;
-
-    @Value("${cherry.tenants.refreshTenantsInMinutes:1}")
-    private Integer refreshTenantsInMinutes;
-
     @Autowired
     JobRunnerFactory jobRunnerFactory;
-
-    private boolean fixedListFromDatabase = false;
+    @Value("${cherry.tenants.automaticDetection:false}")
+    private Boolean automaticDetection;
+    @Value("${cherry.tenants.tenant-ids:}")
+    private List<String> listConfigurationTenants;
+    @Value("${cherry.tenants.refreshTenantsInMinutes:1}")
+    private Integer refreshTenantsInMinutes;
+    private final boolean fixedListFromDatabase = false;
 
     private Set<String> setCurrentTenants = new HashSet<>();
 
@@ -80,7 +75,7 @@ public class TenantsManager {
                 logger.debug("TenantsManager: Same list of tenants {}", setCurrentTenants);
                 return;
             }
-            logOperation.log(OperationEntity.Operation.TENANTUPDATE, "Tenants list[" + currentTenants.toString() + "]");
+            logOperation.log(OperationEntity.Operation.TENANTUPDATE, "Tenants list[" + currentTenants + "]");
 
             // Refresh and restart Zeebe with this new tenants list
             setCurrentTenants = currentTenants;

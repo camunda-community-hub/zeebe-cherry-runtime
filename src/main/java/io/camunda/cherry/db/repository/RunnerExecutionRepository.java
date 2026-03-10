@@ -17,35 +17,35 @@ import java.util.Map;
 @Transactional
 public interface RunnerExecutionRepository extends JpaRepository<RunnerExecutionEntity, Long> {
 
-  @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch ")
-  RunnerExecutionEntity findLastRecord(@Param("dateToSearch") Instant dateToSearch);
+    @Query("select runnerexecution from RunnerExecutionEntity runnerexecution"
+            + " where runnerexecution.executionTime >= :dateToSearch ")
+    RunnerExecutionEntity findLastRecord(@Param("dateToSearch") Instant dateToSearch);
 
-  @Query(
-      "select runnerexecution.status as status, count(runnerexecution) as number from RunnerExecutionEntity runnerexecution"
-          + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
-          + " group by runnerexecution.status")
-  List<Map<String, Object>> selectStatusStats(@Param("runnerType") String runnerType,
-                                              @Param("dateToSearch") LocalDateTime dateToSearch);
+    @Query(
+            "select runnerexecution.status as status, count(runnerexecution) as number from RunnerExecutionEntity runnerexecution"
+                    + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+                    + " group by runnerexecution.status")
+    List<Map<String, Object>> selectStatusStats(@Param("runnerType") String runnerType,
+                                                @Param("dateToSearch") LocalDateTime dateToSearch);
 
-  @Query(value = "select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
-      + " order by runnerexecution.executionTime desc")
-  List<RunnerExecutionEntity> selectRunnerRecords(@Param("runnerType") String runnerType,
-                                                  @Param("dateToSearch") LocalDateTime dateToSearch,
-                                                  Pageable pageable);
+    @Query(value = "select runnerexecution from RunnerExecutionEntity runnerexecution"
+            + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+            + " order by runnerexecution.executionTime desc")
+    List<RunnerExecutionEntity> selectRunnerRecords(@Param("runnerType") String runnerType,
+                                                    @Param("dateToSearch") LocalDateTime dateToSearch,
+                                                    Pageable pageable);
 
-  @Query(value = "select runnerexecution from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
-      + " and runnerexecution.status in (:listStates)" + " order by runnerexecution.executionTime desc")
-  List<RunnerExecutionEntity> selectRunnerRecordsByStates(@Param("runnerType") String runnerType,
-                                                          @Param("dateToSearch") LocalDateTime dateToSearch,
-                                                          @Param("listStates") List<AbstractRunner.ExecutionStatusEnum> listStates,
-                                                          Pageable pageable);
+    @Query(value = "select runnerexecution from RunnerExecutionEntity runnerexecution"
+            + " where runnerexecution.executionTime >= :dateToSearch " + " and runnerexecution.runnerType = :runnerType"
+            + " and runnerexecution.status in (:listStates)" + " order by runnerexecution.executionTime desc")
+    List<RunnerExecutionEntity> selectRunnerRecordsByStates(@Param("runnerType") String runnerType,
+                                                            @Param("dateToSearch") LocalDateTime dateToSearch,
+                                                            @Param("listStates") List<AbstractRunner.ExecutionStatusEnum> listStates,
+                                                            Pageable pageable);
 
-  @Modifying
-  @Query(value = "delete from RunnerExecutionEntity runnerexecution"
-      + " where runnerexecution.runnerType = :runnerType")
-  void deleteFromEntityType(@Param("runnerType") String runnerType);
+    @Modifying
+    @Query(value = "delete from RunnerExecutionEntity runnerexecution"
+            + " where runnerexecution.runnerType = :runnerType")
+    void deleteFromEntityType(@Param("runnerType") String runnerType);
 
 }

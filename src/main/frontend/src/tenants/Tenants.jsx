@@ -7,8 +7,8 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button, Tag} from "carbon-components-react";
-import {ArrowRepeat, CloudDownloadFill, ConeStriped} from "react-bootstrap-icons";
+import {Button} from "carbon-components-react";
+import {ArrowRepeat} from "react-bootstrap-icons";
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";

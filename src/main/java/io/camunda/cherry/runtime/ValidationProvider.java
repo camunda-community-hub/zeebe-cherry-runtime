@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ValidationProvider implements io.camunda.connector.api.validation.ValidationProvider {
 
-  public void validate(Object objectToValidate) {
-  }
+    public void validate(Object objectToValidate) {
+    }
 
 }

@@ -27,37 +27,37 @@ import java.util.Map;
 
 public class MonitoringRestController {
 
-  private final JobRunnerFactory jobRunnerFactory;
-  private final HistoryFactory historyFactory;
-  private final ZeebeContainer zeebeContainer;
-  private final DataSource dataSource;
-  Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
+    private final JobRunnerFactory jobRunnerFactory;
+    private final HistoryFactory historyFactory;
+    private final ZeebeContainer zeebeContainer;
+    private final DataSource dataSource;
+    Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
-  MonitoringRestController(JobRunnerFactory jobRunnerFactory,
-                           HistoryFactory historyFactory,
-                           ZeebeContainer zeebeContainer,
-                           DataSource dataSource) {
-    this.jobRunnerFactory = jobRunnerFactory;
-    this.historyFactory = historyFactory;
-    this.zeebeContainer = zeebeContainer;
-    this.dataSource = dataSource;
-  }
-
-  @GetMapping(value = "/api/monitoring/pingzeebe", produces = "application/json")
-  public Map<String, Object> pingZeebe() {
-    logger.info("Monitoring.pingZeebe - start");
-    Map<String, Object> parameters = new HashMap<>();
-
-    try {
-      parameters.put("timestamp", System.currentTimeMillis());
-      parameters.put("status", zeebeContainer.pingZeebeClient() ? "OK" : "FAIL");
-      parameters.put("comment", "");
-    } catch (TechnicalException te) {
-      parameters.put("status", "FAIL");
-      parameters.put("comment", te.getMessage());
+    MonitoringRestController(JobRunnerFactory jobRunnerFactory,
+                             HistoryFactory historyFactory,
+                             ZeebeContainer zeebeContainer,
+                             DataSource dataSource) {
+        this.jobRunnerFactory = jobRunnerFactory;
+        this.historyFactory = historyFactory;
+        this.zeebeContainer = zeebeContainer;
+        this.dataSource = dataSource;
     }
 
-    logger.info("Monitoring.pingZeebe - end {}", parameters);
-    return parameters;
-  }
+    @GetMapping(value = "/api/monitoring/pingzeebe", produces = "application/json")
+    public Map<String, Object> pingZeebe() {
+        logger.info("Monitoring.pingZeebe - start");
+        Map<String, Object> parameters = new HashMap<>();
+
+        try {
+            parameters.put("timestamp", System.currentTimeMillis());
+            parameters.put("status", zeebeContainer.pingZeebeClient() ? "OK" : "FAIL");
+            parameters.put("comment", "");
+        } catch (TechnicalException te) {
+            parameters.put("status", "FAIL");
+            parameters.put("comment", te.getMessage());
+        }
+
+        logger.info("Monitoring.pingZeebe - end {}", parameters);
+        return parameters;
+    }
 }

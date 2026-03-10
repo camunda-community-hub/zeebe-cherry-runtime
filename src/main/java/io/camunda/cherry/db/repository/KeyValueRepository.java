@@ -9,11 +9,11 @@ import java.util.List;
 
 public interface KeyValueRepository extends JpaRepository<KeyValueEntity, Long> {
 
-  @Query("select keyValue from KeyValueEntity keyValue" + " where keyValue.name = :name "
-      + " and keyValue.origin = :origin ")
-  KeyValueEntity findByName(@Param("name") String name, @Param("origin") KeyValueEntity.KeyValueType origin);
+    @Query("select keyValue from KeyValueEntity keyValue" + " where keyValue.name = :name "
+            + " and keyValue.origin = :origin ")
+    KeyValueEntity findByName(@Param("name") String name, @Param("origin") KeyValueEntity.KeyValueType origin);
 
-  @Query("select keyValue from KeyValueEntity keyValue" + " where keyValue.origin = :origin ")
-  List<KeyValueEntity> getAllByOrigin(@Param("origin") KeyValueEntity.KeyValueType origin);
+    @Query("select keyValue from KeyValueEntity keyValue" + " where keyValue.origin = :origin ")
+    List<KeyValueEntity> getAllByOrigin(@Param("origin") KeyValueEntity.KeyValueType origin);
 
 }

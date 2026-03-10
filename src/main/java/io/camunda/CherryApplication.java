@@ -20,12 +20,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class CherryApplication {
 
-  public static void main(String[] args) {
+    public static void main(String[] args) {
 
-    SpringApplication.run(CherryApplication.class, args);
-    // thanks to Spring, the class CherryJobRunnerFactory is active. All runners (worker,
-    // connectors) start then
-  }
-  // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
+        SpringApplication.run(CherryApplication.class, args);
+        // thanks to Spring, the class CherryJobRunnerFactory is active. All runners (worker,
+        // connectors) start then
+    }
+    // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
 }

@@ -18,34 +18,34 @@ import org.springframework.stereotype.Service;
 @Service
 public class CherryMain {
 
-  Logger logger = LoggerFactory.getLogger(CherryMain.class.getName());
+    Logger logger = LoggerFactory.getLogger(CherryMain.class.getName());
 
-  @Autowired
-  RunnerFactory runnerFactory;
+    @Autowired
+    RunnerFactory runnerFactory;
 
-  @Autowired
-  JobRunnerFactory jobRunnerFactory;
+    @Autowired
+    JobRunnerFactory jobRunnerFactory;
 
-  @PostConstruct
-  public void init() {
-    // first, check all internal runner
-    logger.info("----- CherryMain.1 Load all embedded runners");
-    runnerFactory.init();
+    @PostConstruct
+    public void init() {
+        // first, check all internal runner
+        logger.info("----- CherryMain.1 Load all embedded runners");
+        runnerFactory.init();
 
-    logger.info("----- CherryMain.2 purge non existing anymore runners");
-    runnerFactory.synchronize();
+        logger.info("----- CherryMain.2 purge non existing anymore runners");
+        runnerFactory.synchronize();
 
-    // at this point, the table is up-to-date, class loader is correct : let's start all runners
-    logger.info("----- CherryMain.3 Start all runners");
-    jobRunnerFactory.startAll();
-  }
+        // at this point, the table is up-to-date, class loader is correct : let's start all runners
+        logger.info("----- CherryMain.3 Start all runners");
+        jobRunnerFactory.startAll();
+    }
 
-  @PreDestroy
-  public void end() {
-    logger.info("----- End is called");
+    @PreDestroy
+    public void end() {
+        logger.info("----- End is called");
 
-    jobRunnerFactory.stopAll();
+        jobRunnerFactory.stopAll();
 
-  }
+    }
 
 }

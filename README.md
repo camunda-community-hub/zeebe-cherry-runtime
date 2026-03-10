@@ -78,7 +78,7 @@ camunda:
     region: <your cluster region>
 ```
 
-### Self manage without Identity
+### Self-manage without Identity
 
 ```yaml
 camunda:
@@ -94,7 +94,7 @@ camunda:
       prefer-rest-over-grpc: false
 ```
 
-## Self manage with Identity
+## Self-manage with Identity
 
 ````yaml
 camunda:

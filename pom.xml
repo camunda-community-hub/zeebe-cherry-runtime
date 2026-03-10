@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- 3.2.0 using Zeebe 8.5.x/ SporingBoot 3.3.x -->
-    <!-- 3.4.0 Multi tenant access -->
+    <!-- 3.4.0 Multi tenant access and 8.8 -->
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
     <version>3.4.0</version>
@@ -14,17 +14,20 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
 
-        <!-- versin in https://central.sonatype.com/artifact/io.camunda.connector/connector-validation/versions -->
+        <!-- version in https://central.sonatype.com/artifact/io.camunda.connector/connector-validation/versions -->
         <!--Version 8.3.0-->
-        <version.zeebe>8.6.5</version.zeebe>
+        <version.zeebe>8.8.7</version.zeebe>
         <!--Version 8.3.3-->
         <!-- <version.zeebe-client>8.5.5</version.zeebe-client> -->
         <!--Version 8.3.1-->
 
-        <version.connector-runtime>8.5.4</version.connector-runtime>
+        <!-- Zeebe 3.4.0: 8.7.8 -->
+        <!-- Zeebe 3.5.0: 8.8.7 -->
+        <version.connector-runtime>8.8.7</version.connector-runtime>
         <!--Version 8.3.1-->
-        <version.connector-validation>8.5.4</version.connector-validation>
-        <version.operate-client>8.6.2</version.operate-client>
+        <version.connector-validation>8.8.7</version.connector-validation>
+        <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
+        <version.operate-client>8.7.1</version.operate-client>
 
         <!-- 2.7.4 -->
         <!-- According https://github.com/camunda-community-hub/spring-zeebe/blob/main/pom.xml -->
@@ -60,11 +63,24 @@
 
     <dependencies>
 
-
+        <!--
+        Not exist after 8.8
+        <dependency>
+            <groupId>io.camunda.connector</groupId>
+            <artifactId>connector-document</artifactId>
+            <version>${version.zeebe}</version>
+        </dependency>
+        -->
         <dependency>
             <groupId>io.camunda</groupId>
             <artifactId>spring-boot-starter-camunda-sdk</artifactId>
             <version>${version.zeebe}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.camunda</groupId>
+                    <artifactId>zeebe-client-java</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java -->
@@ -74,18 +90,17 @@
             <version>${version.operate-client}</version>
         </dependency>
 
-        <!--
-            <dependency>
-              <groupId>io.camunda</groupId>
-              <artifactId>zeebe-client-java</artifactId>
-              <version>${version.zeebe-client}</version>
-            </dependency>
-        -->
 
         <!-- Accept Camunda Connector -->
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-core</artifactId>
+            <version>${version.connector-runtime}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.camunda.connector</groupId>
+            <artifactId>connector-runtime-spring</artifactId>
             <version>${version.connector-runtime}</version>
         </dependency>
 
@@ -97,6 +112,10 @@
 
         <!-- https://mvnrepository.com/artifact/io.camunda.connector/connector-validation -->
 
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+        </dependency>
 
         <!-- JSON LocalDateTime -->
         <dependency>
@@ -150,12 +169,6 @@
 
 
         <!-- tests -->
-        <dependency>
-            <groupId>io.zeebe</groupId>
-            <artifactId>zeebe-worker-java-testutils</artifactId>
-            <version>8.1.3</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

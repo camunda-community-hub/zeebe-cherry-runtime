@@ -22,135 +22,135 @@ import java.time.ZoneOffset;
 @Service
 public class LogOperation {
 
-  Logger logger = LoggerFactory.getLogger(LogOperation.class.getName());
+    Logger logger = LoggerFactory.getLogger(LogOperation.class.getName());
 
-  @Autowired
-  OperationRepository operationRepository;
+    @Autowired
+    OperationRepository operationRepository;
 
-  /**
-   * log an operation
-   *
-   * @param operation type of operation
-   * @param message   message
-   */
-  public void log(OperationEntity.Operation operation, String message) {
-    logger.info("Operation {} message[{}]", operation.toString(), message);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.operation = operation;
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message;
-    saveOperationEntity(operationEntity);
-  }
-
-  /**
-   * log an operation on a specific worker
-   *
-   * @param operation type of operation
-   * @param runner    specific runner
-   * @param message   message to log
-   */
-  public void log(OperationEntity.Operation operation, AbstractRunner runner, String message) {
-    logger.info("Operation {} on Runner[{}] message: {}", operation, runner.getName(), message);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.operation = operation;
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.runnerType = runner.getType();
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message;
-    saveOperationEntity(operationEntity);
-  }
-
-  /**
-   * log an exception on a worker
-   *
-   * @param runner  an error on a specific runner
-   * @param message contextual message (what operation was performed)
-   * @param e       exception during the error
-   */
-  public void logException(AbstractRunner runner, String message, Exception e) {
-    logger.error("Exception Runner[{}] message[{}] : {}", runner.getName(), message, e);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.operation = OperationEntity.Operation.ERROR;
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.runnerType = runner.getType();
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message + ": " + e.getMessage();
-    saveOperationEntity(operationEntity);
-  }
-
-  public void logError(String runnerType, String message, Error er) {
-    logger.error("Error Runner[{}] message[{}] : {}", runnerType, message, er);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.operation = OperationEntity.Operation.ERROR;
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.runnerType = runnerType;
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message + ": " + er.getMessage();
-    saveOperationEntity(operationEntity);
-  }
-
-  public void logException(String runnerType, String message, Exception ex) {
-    logger.error("Exception Runner[{}] message[{}] : {}", runnerType, message, ex);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.operation = OperationEntity.Operation.ERROR;
-    operationEntity.runnerType = runnerType;
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message + ": " + ex.getMessage();
-    saveOperationEntity(operationEntity);
-  }
-
-  /**
-   * OperationLog an error
-   *
-   * @param message contextual message (what operation was performed)
-   * @param e       exception
-   */
-  public void logError(String message, Exception e) {
-    logger.error("Error message[{}] : {}", message, e.getMessage());
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.operation = OperationEntity.Operation.ERROR;
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message + ": " + e.getMessage();
-    saveOperationEntity(operationEntity);
-  }
-
-  /**
-   * OperationLog an error
-   *
-   * @param message contextual message (what operation was performed)
-   */
-  public void logError(String message) {
-    logger.error("Error {}", message);
-    OperationEntity operationEntity = new OperationEntity();
-    operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
-    operationEntity.operation = OperationEntity.Operation.ERROR;
-    operationEntity.hostName = getHostName();
-    operationEntity.message = message;
-    saveOperationEntity(operationEntity);
-  }
-
-  private String rootgetServerIdentification() {
-    return getHostName();
-  }
-
-  private String getHostName() {
-    try {
-      InetAddress ipAddress = InetAddress.getLocalHost();
-
-      return ipAddress.getHostName();
-    } catch (Exception e) {
-      return "CherryHostName";
+    /**
+     * log an operation
+     *
+     * @param operation type of operation
+     * @param message   message
+     */
+    public void log(OperationEntity.Operation operation, String message) {
+        logger.info("Operation {} message[{}]", operation.toString(), message);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.operation = operation;
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message;
+        saveOperationEntity(operationEntity);
     }
-  }
 
-  private void saveOperationEntity(OperationEntity operationEntity) {
-    try {
-      operationRepository.save(operationEntity);
-    } catch (Exception e) {
-      logger.error("Can't save OperationEntity [{}]", operationEntity);
+    /**
+     * log an operation on a specific worker
+     *
+     * @param operation type of operation
+     * @param runner    specific runner
+     * @param message   message to log
+     */
+    public void log(OperationEntity.Operation operation, AbstractRunner runner, String message) {
+        logger.info("Operation {} on Runner[{}] message: {}", operation, runner.getName(), message);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.operation = operation;
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.runnerType = runner.getType();
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message;
+        saveOperationEntity(operationEntity);
     }
-  }
+
+    /**
+     * log an exception on a worker
+     *
+     * @param runner  an error on a specific runner
+     * @param message contextual message (what operation was performed)
+     * @param e       exception during the error
+     */
+    public void logException(AbstractRunner runner, String message, Exception e) {
+        logger.error("Exception Runner[{}] message[{}] : {}", runner.getName(), message, e);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.operation = OperationEntity.Operation.ERROR;
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.runnerType = runner.getType();
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message + ": " + e.getMessage();
+        saveOperationEntity(operationEntity);
+    }
+
+    public void logError(String runnerType, String message, Error er) {
+        logger.error("Error Runner[{}] message[{}] : {}", runnerType, message, er);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.operation = OperationEntity.Operation.ERROR;
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.runnerType = runnerType;
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message + ": " + er.getMessage();
+        saveOperationEntity(operationEntity);
+    }
+
+    public void logException(String runnerType, String message, Exception ex) {
+        logger.error("Exception Runner[{}] message[{}] : {}", runnerType, message, ex);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.operation = OperationEntity.Operation.ERROR;
+        operationEntity.runnerType = runnerType;
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message + ": " + ex.getMessage();
+        saveOperationEntity(operationEntity);
+    }
+
+    /**
+     * OperationLog an error
+     *
+     * @param message contextual message (what operation was performed)
+     * @param e       exception
+     */
+    public void logError(String message, Exception e) {
+        logger.error("Error message[{}] : {}", message, e.getMessage());
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.operation = OperationEntity.Operation.ERROR;
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message + ": " + e.getMessage();
+        saveOperationEntity(operationEntity);
+    }
+
+    /**
+     * OperationLog an error
+     *
+     * @param message contextual message (what operation was performed)
+     */
+    public void logError(String message) {
+        logger.error("Error {}", message);
+        OperationEntity operationEntity = new OperationEntity();
+        operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        operationEntity.operation = OperationEntity.Operation.ERROR;
+        operationEntity.hostName = getHostName();
+        operationEntity.message = message;
+        saveOperationEntity(operationEntity);
+    }
+
+    private String rootgetServerIdentification() {
+        return getHostName();
+    }
+
+    private String getHostName() {
+        try {
+            InetAddress ipAddress = InetAddress.getLocalHost();
+
+            return ipAddress.getHostName();
+        } catch (Exception e) {
+            return "CherryHostName";
+        }
+    }
+
+    private void saveOperationEntity(OperationEntity operationEntity) {
+        try {
+            operationRepository.save(operationEntity);
+        } catch (Exception e) {
+            logger.error("Can't save OperationEntity [{}]", operationEntity);
+        }
+    }
 }

@@ -26,9 +26,8 @@ public class OperateContainer {
     CamundaOperateClient camundaOperateClient;
     CamundaOperateClientConfiguration operateConfiguration;
 
-    public OperateContainer(CamundaOperateClientConfiguration operateConfiguration)
-    {
-        this.operateConfiguration =operateConfiguration;
+    public OperateContainer(CamundaOperateClientConfiguration operateConfiguration) {
+        this.operateConfiguration = operateConfiguration;
     }
 
     public Set<String> getListTenants() {
@@ -44,7 +43,7 @@ public class OperateContainer {
             return setTenantIds;
         } catch (Exception e) {
             logger.error("Can't get listTenantsId from OperateConfiguration [{}] : {}",
-                    operateConfiguration!=null? operateConfiguration.toString(): "",e.getMessage());
+                    operateConfiguration != null ? operateConfiguration.toString() : "", e.getMessage());
             // don't return an error, maybe operate is not accessible, so return an empty list
             return Collections.emptySet();
         }

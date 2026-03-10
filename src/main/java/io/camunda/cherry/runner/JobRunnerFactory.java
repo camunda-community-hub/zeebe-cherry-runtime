@@ -4,6 +4,12 @@
 /*                                                                      */
 /*  Detect and start workers                                            */
 /* ******************************************************************** */
+/* ******************************************************************** */
+/*                                                                      */
+/*  JobRunnerFactory                                                 */
+/*                                                                      */
+/*  Detect and start workers                                            */
+/* ******************************************************************** */
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,11 +27,13 @@ import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.SecretProvider;
+import io.camunda.cherry.runtime.ValidationProvider;
 import io.camunda.cherry.zeebe.ZeebeContainer;
-import io.camunda.connector.api.validation.ValidationProvider;
-import io.camunda.zeebe.client.api.worker.JobHandler;
-import io.camunda.zeebe.client.api.worker.JobWorker;
-import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
+import io.camunda.client.CamundaClient;
+import io.camunda.client.api.worker.JobHandler;
+import io.camunda.client.api.worker.JobWorker;
+import io.camunda.client.api.worker.JobWorkerBuilderStep1;
+import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,20 +70,20 @@ public class JobRunnerFactory {
     SecretProvider secretProvider;
     @Autowired
     ValidationProvider validationProvider;
+    @Autowired
+    CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
+    CamundaClient camundaClient;
 
     /**
      * Key is runnerType
      */
     Map<String, Running> mapRunning = new HashMap<>();
+    List<String> listTenants = null;
     @Value("${cherry.runners.embeddedrunner:true}")
     private Boolean executeEmbeddedRunner = Boolean.TRUE;
-
     @Value("${cherry.runners.pingrunner:true}")
     private Boolean executePingRunner = Boolean.FALSE;
-
-    List<String> listTenants = null;
-
 
     public void startAll() {
 
@@ -123,16 +131,16 @@ public class JobRunnerFactory {
             logger.info("Don't start the EmbeddedWorker");
 
             // remove from the list the embeddedRunner
-            listRunners = listRunners.stream().filter(t -> {
-                return !isEmbeddedWorker(t);
-            }).toList();
+            listRunners = listRunners.stream()
+                    .filter(java.util.function.Predicate.not(this::isEmbeddedWorker))
+                    .toList();
         }
         if (Boolean.FALSE.equals(executePingRunner)) {
             logger.info("Don't start the PingWorker");
             // remove from the list the embeddedRunner
-            listRunners = listRunners.stream().filter(t -> {
-                return !isPingWorker(t);
-            }).toList();
+            listRunners = listRunners.stream()
+                    .filter(java.util.function.Predicate.not(this::isPingWorker))
+                    .toList();
         }
 
         List<AbstractRunner> listSdkRunners = listRunners.stream()
@@ -173,7 +181,7 @@ public class JobRunnerFactory {
                 try {
                     stopRunner(running.runner.getType());
                 } catch (Exception e) {
-                    logger.error("ControllerPage on runner [{}] : {}", running.runner.getIdentification(), e);
+                    logger.error("ControllerPage on runner [{}] : ", running.runner.getIdentification(), e);
                 }
             }
         }
@@ -190,7 +198,7 @@ public class JobRunnerFactory {
                     stopRunner(running.runner.getType());
 
                 } catch (Exception e) {
-                    logger.error("ControllerPage on runner [{}] : {}", running.runner.getIdentification(), e);
+                    logger.error("ControllerPage on runner [{}] : ", running.runner.getIdentification(), e);
                 }
             }
         }
@@ -272,10 +280,6 @@ public class JobRunnerFactory {
         return zeebeContainer.getNumberOfThreads();
     }
 
-    public void setListTenants(List<String> listTenants) {
-        this.listTenants = listTenants;
-    }
-
     public void setNumberOfThreads(int numberOfThreadsRequired) throws TechnicalException {
 
         zeebeContainer.setNumberOfThreads(numberOfThreadsRequired);
@@ -295,6 +299,10 @@ public class JobRunnerFactory {
             }
             running.containerJobWorker.setJobWorker(jobWorker);
         }
+    }
+
+    public void setListTenants(List<String> listTenants) {
+        this.listTenants = listTenants;
     }
 
     /* -------------------------------------------------------- */
@@ -336,10 +344,22 @@ public class JobRunnerFactory {
         if (runner instanceof AbstractWorker abstractWorker)
             jobHandler = abstractWorker;
         else if (runner instanceof AbstractConnector abstractConnector) {
-            jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory, secretProvider, validationProvider,
+            jobHandler = new CherryConnectorJobHandler(
+                    abstractConnector,
+                    historyFactory,
+                    secretProvider,
+                    validationProvider,
+                    commandExceptionHandlingStrategy,
+                    camundaClient,
+                    zeebeContainer.getDocumentFactory(),
                     objectMapper);
         } else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
-            jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider, validationProvider,
+            jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector,
+                    historyFactory,
+                    secretProvider,
+                    validationProvider,
+                    commandExceptionHandlingStrategy,
+                    zeebeContainer.getDocumentFactory(),
                     objectMapper);
         } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
             jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
@@ -384,28 +404,6 @@ public class JobRunnerFactory {
     }
 
     /**
-     * Not possible to restart a jobWorker: must be created again !
-     */
-    private static class ContainerJobWorker {
-        private JobWorker jobWorker;
-
-        public ContainerJobWorker(JobWorker jobWorker) {
-            this.jobWorker = jobWorker;
-        }
-
-        public JobWorker getJobWorker() {
-            return jobWorker;
-        }
-
-        public void setJobWorker(JobWorker jobWorker) {
-            this.jobWorker = jobWorker;
-        }
-    }
-
-    record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
-    }
-
-    /**
      * Start a list of runners
      *
      * @param listRunners
@@ -425,5 +423,27 @@ public class JobRunnerFactory {
                 logger.error("Can't start runner [{}] : {} ", runner.getIdentification(), e);
             }
         }
+    }
+
+    /**
+     * Not possible to restart a jobWorker: must be created again !
+     */
+    private static class ContainerJobWorker {
+        private JobWorker jobWorker;
+
+        public ContainerJobWorker(JobWorker jobWorker) {
+            this.jobWorker = jobWorker;
+        }
+
+        public JobWorker getJobWorker() {
+            return jobWorker;
+        }
+
+        public void setJobWorker(JobWorker jobWorker) {
+            this.jobWorker = jobWorker;
+        }
+    }
+
+    record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
     }
 }

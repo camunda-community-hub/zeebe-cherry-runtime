@@ -3,15 +3,17 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Installation package
+
 * npm version 8.1.0
 
 * Python 3.13
 
 * nodejs version 16.13.0
-Version upper does not work (https://stackoverflow.com/questions/70082657/npm-err-gyp-err-when-installing-node-sass-in-windows-11-with-visual-studio-202)
+  Version upper does not
+  work (https://stackoverflow.com/questions/70082657/npm-err-gyp-err-when-installing-node-sass-in-windows-11-with-visual-studio-202)
 
 * Windows SDK 10 (10.0.1904)
-Windows 11 SDK  not supported (https://github.com/nodejs/node-gyp/issues/2527)
+  Windows 11 SDK not supported (https://github.com/nodejs/node-gyp/issues/2527)
 
 ## Available Scripts
 

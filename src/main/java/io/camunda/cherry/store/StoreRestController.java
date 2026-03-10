@@ -30,70 +30,70 @@ import java.util.stream.Collectors;
 @RequestMapping("cherry")
 public class StoreRestController {
 
-  @Autowired
-  StoreService storeService;
+    @Autowired
+    StoreService storeService;
 
-  @Autowired
-  RunnerFactory runnerFactory;
+    @Autowired
+    RunnerFactory runnerFactory;
 
-  @Autowired
-  LogOperation logOperation;
+    @Autowired
+    LogOperation logOperation;
 
-  @GetMapping(value = "/api/store/lastrelease", produces = "application/json")
-  public String outOfTheBoxLastRelease() {
-    return storeService.getLatestRelease();
-  }
+    @GetMapping(value = "/api/store/lastrelease", produces = "application/json")
+    public String outOfTheBoxLastRelease() {
+        return storeService.getLatestRelease();
+    }
 
-  @GetMapping(value = "/api/store/list", produces = "application/json")
-  public List<Map<String, Object>> listConnectorInStore() {
-    try {
-      String lastRelease = storeService.getLatestRelease();
-      Map<String, String> connectors = storeService.listConnectors(lastRelease);
+    @GetMapping(value = "/api/store/list", produces = "application/json")
+    public List<Map<String, Object>> listConnectorInStore() {
+        try {
+            String lastRelease = storeService.getLatestRelease();
+            Map<String, String> connectors = storeService.listConnectors(lastRelease);
 
-      List<RunnerDefinitionEntity> listRunnersEntity = runnerFactory.getAllRunnersEntity(
-          new StorageRunner.Filter().isStore(true));
-      Map<String, RunnerDefinitionEntity> mapRunners = listRunnersEntity.stream()
-          .collect(Collectors.toMap(x -> x.name, x -> {
-            return x;
-          }));
+            List<RunnerDefinitionEntity> listRunnersEntity = runnerFactory.getAllRunnersEntity(
+                    new StorageRunner.Filter().isStore(true));
+            Map<String, RunnerDefinitionEntity> mapRunners = listRunnersEntity.stream()
+                    .collect(Collectors.toMap(x -> x.name, x -> {
+                        return x;
+                    }));
 
-      List<Map<String, Object>> result = new ArrayList<>();
-      return connectors.keySet().stream().sorted().map(t -> {
-        Map<String, Object> mapConnector = new HashMap<>();
-        mapConnector.put("name", t);
-        RunnerDefinitionEntity runnerEntity = mapRunners.get(t);
-        if (runnerEntity == null) {
-          mapConnector.put("status", "NEW");
-        } else if (lastRelease.equals(runnerEntity.release)) {
-          mapConnector.put("status", "UPDATED");
-        } else {
-          mapConnector.put("status", "OLD");
+            List<Map<String, Object>> result = new ArrayList<>();
+            return connectors.keySet().stream().sorted().map(t -> {
+                Map<String, Object> mapConnector = new HashMap<>();
+                mapConnector.put("name", t);
+                RunnerDefinitionEntity runnerEntity = mapRunners.get(t);
+                if (runnerEntity == null) {
+                    mapConnector.put("status", "NEW");
+                } else if (lastRelease.equals(runnerEntity.release)) {
+                    mapConnector.put("status", "UPDATED");
+                } else {
+                    mapConnector.put("status", "OLD");
+                }
+                mapConnector.put("currentrelease", runnerEntity == null ? "" : runnerEntity.release);
+                mapConnector.put("storerelease", lastRelease);
+
+                return mapConnector;
+            }).toList();
+        } catch (TechnicalException e) {
+            logOperation.log(OperationEntity.Operation.ERROR, "Can't access Store " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
-        mapConnector.put("currentrelease", runnerEntity == null ? "" : runnerEntity.release);
-        mapConnector.put("storerelease", lastRelease);
-
-        return mapConnector;
-      }).toList();
-    } catch (TechnicalException e) {
-      logOperation.log(OperationEntity.Operation.ERROR, "Can't access Store " + e.getMessage());
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
     }
-  }
 
-  @GetMapping(value = "/api/store/download", produces = "application/json")
-  public Map<String, Object> download(@RequestParam(name = "name", required = false) String connectorName) {
-    try {
-      Map<String, Object> connectorDownloaded = new HashMap<>();
+    @GetMapping(value = "/api/store/download", produces = "application/json")
+    public Map<String, Object> download(@RequestParam(name = "name", required = false) String connectorName) {
+        try {
+            Map<String, Object> connectorDownloaded = new HashMap<>();
 
-      String lastRelease = storeService.getLatestRelease();
-      StoreService.ConnectorStore connectorStore = storeService.downloadConnector(connectorName, lastRelease);
-      // Now, save this new connector
+            String lastRelease = storeService.getLatestRelease();
+            StoreService.ConnectorStore connectorStore = storeService.downloadConnector(connectorName, lastRelease);
+            // Now, save this new connector
 
-      return connectorDownloaded;
-    } catch (TechnicalException e) {
-      logOperation.log(OperationEntity.Operation.ERROR,
-          "Can't download connector[" + connectorName + "] " + e.getMessage());
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            return connectorDownloaded;
+        } catch (TechnicalException e) {
+            logOperation.log(OperationEntity.Operation.ERROR,
+                    "Can't download connector[" + connectorName + "] " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
     }
-  }
 }

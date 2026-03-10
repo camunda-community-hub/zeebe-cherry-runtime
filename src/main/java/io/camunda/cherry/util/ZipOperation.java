@@ -10,44 +10,44 @@ import java.util.zip.ZipOutputStream;
 
 public class ZipOperation {
 
-  ByteArrayOutputStream zipContent;
-  ZipOutputStream zipOut;
-  String fileName;
+    ByteArrayOutputStream zipContent;
+    ZipOutputStream zipOut;
+    String fileName;
 
-  public ZipOperation(String zipFileName) {
-    zipContent = new ByteArrayOutputStream();
-    zipOut = new ZipOutputStream(zipContent);
-    fileName = zipFileName;
-  }
+    public ZipOperation(String zipFileName) {
+        zipContent = new ByteArrayOutputStream();
+        zipOut = new ZipOutputStream(zipContent);
+        fileName = zipFileName;
+    }
 
-  /**
-   * Add a file in the Zip
-   *
-   * @param fileName file name
-   * @param content  content to add
-   * @throws IOException in case of error
-   */
-  public void addZipContent(String fileName, String content) throws IOException {
-    ZipEntry zipEntry = new ZipEntry(fileName);
-    zipOut.putNextEntry(zipEntry);
-    byte[] contentByte = content.getBytes(StandardCharsets.UTF_8);
+    /**
+     * Add a file in the Zip
+     *
+     * @param fileName file name
+     * @param content  content to add
+     * @throws IOException in case of error
+     */
+    public void addZipContent(String fileName, String content) throws IOException {
+        ZipEntry zipEntry = new ZipEntry(fileName);
+        zipOut.putNextEntry(zipEntry);
+        byte[] contentByte = content.getBytes(StandardCharsets.UTF_8);
 
-    zipOut.write(contentByte, 0, contentByte.length);
-  }
+        zipOut.write(contentByte, 0, contentByte.length);
+    }
 
-  public void close() throws IOException {
-    zipOut.close();
-  }
+    public void close() throws IOException {
+        zipOut.close();
+    }
 
-  public InputStream getInputStream() {
-    return new ByteArrayInputStream(zipContent.toByteArray());
-  }
+    public InputStream getInputStream() {
+        return new ByteArrayInputStream(zipContent.toByteArray());
+    }
 
-  public byte[] getBytes() {
-    return zipContent.toByteArray();
-  }
+    public byte[] getBytes() {
+        return zipContent.toByteArray();
+    }
 
-  public String getFileName() {
-    return fileName;
-  }
+    public String getFileName() {
+        return fileName;
+    }
 }
