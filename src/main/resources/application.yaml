@@ -4,6 +4,14 @@ cherry:
     classloaderpath: ./localstorage/classloader
     forcerefresh: true
 
+  initialisation:
+    runners:
+      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
+      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+
+  repository:
+    - https://github.com/camunda-community-hub/
+
   runners:
     # the runtime load all embedded runners
     embeddedrunner: true
@@ -12,12 +20,19 @@ cherry:
     pingrunner: false
 
 
+  tenants:
+    # Enable the tenants functionality "autoDectection" implie to connect to Operate
+    automaticDetection: true
+    refreshTenantsInMinutes: 1
+    tenants-ids:
+
+
 # Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe
 
 # -------------------- Self Manage
 camunda:
   client:
-    mode: simple
+    mode: selfmanaged
     zeebe:
       enabled: true
       gatewayUrl: http://localhost:26500
@@ -25,18 +40,24 @@ camunda:
       executionThreads: 200
       defaults:
         maxJobsActive: 58
-    operate:
-      enabled: false
-    tasklist:
-      enabled: false
 
-# -------------------- Self Manage Identity
-camundaIdentity:
+  tasklist:
+    enabled: false
+operate:
   client:
-    mode: oidc
+    profile: simple
+    enabled: true
+    base-url: http://localhost:8081
+    session-timeout: PT10M
+    username: demo
+    password: demo
+# -------------------- Self Manage Identity
+camundaOidc:
+  client:
+    mode: selfmanaged
     auth:
       clientId: zeebe
-      clientSecret: 6DOXVAFyoC
+      clientSecret: AnDBsKoVjI
 
     zeebe:
       enabled: true
@@ -44,11 +65,23 @@ camundaIdentity:
       preferRestOverGrpc: false
       audience: zeebe-api
 
-    operate:
-      enabled: false
-    tasklist:
-      enabled: false
-
+operateOidc:
+  client:
+    profile: oidc
+    enabled: true
+    base-url: http://localhost:8081
+    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+    audience: operate-api
+    client-id: operate
+    client-secret: FK05vxEU8D
+operate2:
+  client:
+    profile: oidc
+    client-id: operate
+    client-secret: FK05vxEU8D
+    scope: # optional
+    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+    audience: operate-api
 
 # -------------------- SAAS
 camundaSaas:
@@ -61,8 +94,8 @@ camundaSaas:
     region: jfk-1
 
 
-
-server.port: 9081
+server:
+  port: 9081
 logging.level.root: INFO
 
 
@@ -88,14 +121,14 @@ org.hibernate.dialect: "H2Dialect"
 
 
 # --------------------- Postgres
-springPostgresexample.datasource:
+postgres.spring.datasource:
   url: "jdbc:postgresql://localhost/cherrydb"
   username: "camunda"
   password: "camunda"
   driverClassName: "org.postgresql.Driver"
-spring2.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
+postgres.spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"
 
-orgPostgres.hibernate.dialect: "PostgreSQL94Dialect"
+postgres.org.hibernate.dialect: "PostgreSQL94Dialect"
 
 
 

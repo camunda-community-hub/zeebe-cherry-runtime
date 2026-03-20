@@ -12,42 +12,43 @@ import java.util.Map;
 
 public interface CherryInput {
 
-  /**
-   * These constant map PARAMETER_NAME_xxx constant in SDKRunnerCherryConnector
-   */
+    /**
+     * These constant map PARAMETER_NAME_xxx constant in SDKRunnerCherryConnector
+     */
 
-  String PARAMETER_MAP_NAME = "name";
-  String PARAMETER_MAP_LABEL = "label";
-  String PARAMETER_MAP_CLASS = "class";
-  String PARAMETER_MAP_LEVEL = "level";
-  String PARAMETER_MAP_LEVEL_REQUIRED = "REQUIRED";
-  String PARAMETER_MAP_LEVEL_OPTIONAL = "OPTIONAL";
-  String PARAMETER_MAP_EXPLANATION = "explanation";
-  String PARAMETER_MAP_DEFAULT_VALUE = "defaultValue";
-  String PARAMETER_MAP_GSON_TEMPLATE = "gsonTemplate";
+    String PARAMETER_MAP_NAME = "name";
+    String PARAMETER_MAP_LABEL = "label";
+    String PARAMETER_MAP_CLASS = "class";
+    String PARAMETER_MAP_LEVEL = "level";
+    String PARAMETER_MAP_LEVEL_REQUIRED = "REQUIRED";
+    String PARAMETER_MAP_LEVEL_OPTIONAL = "OPTIONAL";
+    String PARAMETER_MAP_EXPLANATION = "explanation";
+    String PARAMETER_MAP_DEFAULT_VALUE = "defaultValue";
+    String PARAMETER_MAP_GSON_TEMPLATE = "gsonTemplate";
 
-  String PARAMETER_MAP_CONDITION = "condition";
-  String PARAMETER_MAP_CONDITION_EQUALS = "conditionEquals";
-  String PARAMETER_MAP_CONDITION_ONE_OF = "conditionOneOf";
-  String PARAMETER_MAP_CHOICE_LIST = "choiceList";
-  String PARAMETER_MAP_CHOICE_LIST_CODE = "code";
-  String PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME = "displayName";
-  String PARAMETER_MAP_VISIBLE_IN_TEMPLATE = "visibleInTemplate";
-  /* use 'optional' or empty (empty is translate to optional) */ String PARAMETER_MAP_FEEL = "feel";
+    String PARAMETER_MAP_CONDITION = "condition";
+    String PARAMETER_MAP_CONDITION_EQUALS = "conditionEquals";
+    String PARAMETER_MAP_CONDITION_ONE_OF = "conditionOneOf";
+    String PARAMETER_MAP_CHOICE_LIST = "choiceList";
+    String PARAMETER_MAP_CHOICE_LIST_CODE = "code";
+    String PARAMETER_MAP_CHOICE_LIST_DISPLAY_NAME = "displayName";
+    String PARAMETER_MAP_VISIBLE_IN_TEMPLATE = "visibleInTemplate";
+    /* use 'optional' or empty (empty is translate to optional) */ String PARAMETER_MAP_FEEL = "feel";
 
-  String PARAMETER_MAP_GROUP_ID = "groupId";
-  String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
+    String PARAMETER_MAP_GROUP_ID = "groupId";
+    String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
 
-  String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
-  String PARAMETER_APPLIES_V_STARTEVENT = "bpmn:StartEvent";
-  String PARAMETER_APPLIES_V_INTERMEDIATE_CATCH_EVENT = "bpmn:IntermediateCatchEvent";
-  String PARAMETER_APPLIES_V_INTERMEDIATE_THROW_EVENT = "bpmn:IntermediateThrowEvent";
+    String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
+    String PARAMETER_APPLIES_V_TASK = "bpmn:Task";
+    String PARAMETER_APPLIES_V_STARTEVENT = "bpmn:StartEvent";
+    String PARAMETER_APPLIES_V_INTERMEDIATE_CATCH_EVENT = "bpmn:IntermediateCatchEvent";
+    String PARAMETER_APPLIES_V_INTERMEDIATE_THROW_EVENT = "bpmn:IntermediateThrowEvent";
 
-  /**
-   * get the list of Input Parameters
-   *
-   * @return list of Map. Map contains key "name", "label", "defaultValue", "class", "level", "explanation"
-   */
-  List<Map<String, Object>> getInputParameters();
+    /**
+     * get the list of Input Parameters
+     *
+     * @return list of Map. Map contains key "name", "label", "defaultValue", "class", "level", "explanation"
+     */
+    List<Map<String, Object>> getInputParameters();
 
 }

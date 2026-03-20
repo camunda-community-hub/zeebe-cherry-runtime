@@ -7,73 +7,73 @@ import java.util.Collections;
 
 public class SdkRunnerWorker extends AbstractRunner {
 
-  public final io.camunda.zeebe.spring.client.annotation.JobWorker annotation;
-  public final Method handleMethod;
-  private final Object worker;
+    public final io.camunda.client.annotation.JobWorker annotation;
+    public final Method handleMethod;
+    private final Object worker;
 
-  public SdkRunnerWorker(Object worker,
-                         io.camunda.zeebe.spring.client.annotation.JobWorker annotation,
-                         Method handleMethod) {
+    public SdkRunnerWorker(Object worker,
+                           io.camunda.client.annotation.JobWorker annotation,
+                           Method handleMethod) {
 
-    super("", // String type
-        Collections.emptyList(), //  listInput
-        Collections.emptyList(), //  listOutput
-        Collections.emptyList()); // listBpmnErrors
-    this.worker = worker;
-    this.annotation = annotation;
-    this.handleMethod = handleMethod;
-  }
+        super("", // String type
+                Collections.emptyList(), //  listInput
+                Collections.emptyList(), //  listOutput
+                Collections.emptyList()); // listBpmnErrors
+        this.worker = worker;
+        this.annotation = annotation;
+        this.handleMethod = handleMethod;
+    }
 
-  public Object getTransportedObject() {
-    return worker;
-  }
+    public Object getTransportedObject() {
+        return worker;
+    }
 
-  public Method getHandleMethod() {
-    return handleMethod;
-  }
+    public Method getHandleMethod() {
+        return handleMethod;
+    }
 
-  /**
-   * Get the type from the annotation
-   */
-  @Override
-  public String getType() {
-    return annotation.type();
-  }
+    /**
+     * Get the type from the annotation
+     */
+    @Override
+    public String getType() {
+        return annotation.type();
+    }
 
-  /**
-   * Return the name
-   *
-   * @return name
-   */
-  @Override
-  public String getName() {
-    return annotation.name();
-  }
+    /**
+     * Return the name
+     *
+     * @return name
+     */
+    @Override
+    public String getName() {
+        return annotation.name();
+    }
 
-  /**
-   * For the ID, we return the name of the transported object, not the RunnerConnector
-   *
-   * @return the ID of the runner
-   */
-  @Override
-  public String getId() {
-    return getTransportedObject().getClass().getName();
-  }
+    /**
+     * For the ID, we return the name of the transported object, not the RunnerConnector
+     *
+     * @return the ID of the runner
+     */
+    @Override
+    public String getId() {
+        return getTransportedObject().getClass().getName();
+    }
 
-  public boolean isWorker() {
-    return true;
-  }
+    public boolean isWorker() {
+        return true;
+    }
 
-  public boolean isConnector() {
-    return false;
-  }
+    public boolean isConnector() {
+        return false;
+    }
 
-  public String toString() {
-    return "SdkRunnerWorker:" + getName();
-  }
+    public String toString() {
+        return "SdkRunnerWorker:" + getName();
+    }
 
-  public Object getWorker() {
-    return worker;
-  }
+    public Object getWorker() {
+        return worker;
+    }
 }
 

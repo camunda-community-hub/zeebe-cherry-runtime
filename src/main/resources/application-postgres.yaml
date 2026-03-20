@@ -25,7 +25,6 @@ logging.level.root: INFO
 server.error.include-message: always
 
 
-
 # Spring Boot Configuration
 spring:
   application.name: ZeebeCherry

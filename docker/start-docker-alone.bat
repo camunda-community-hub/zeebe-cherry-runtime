@@ -1,1 +1,1 @@
-docker-compose -f docker-compose-alone.yml up -d
+docker-compose -f docker-compose-cherry-postgres.yaml up -d

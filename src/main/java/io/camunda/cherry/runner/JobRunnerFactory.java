@@ -4,6 +4,12 @@
 /*                                                                      */
 /*  Detect and start workers                                            */
 /* ******************************************************************** */
+/* ******************************************************************** */
+/*                                                                      */
+/*  JobRunnerFactory                                                 */
+/*                                                                      */
+/*  Detect and start workers                                            */
+/* ******************************************************************** */
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,21 +22,19 @@ import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
-import io.camunda.cherry.exception.OperationAlreadyStartedException;
-import io.camunda.cherry.exception.OperationAlreadyStoppedException;
-import io.camunda.cherry.exception.OperationCantStopRunnerException;
-import io.camunda.cherry.exception.OperationException;
-import io.camunda.cherry.exception.OperationTooManyRunnersException;
-import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.exception.*;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
+import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.runtime.SecretProvider;
+import io.camunda.cherry.zeebe.OrchestrationAPI;
 import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.client.CamundaClient;
+import io.camunda.client.api.worker.JobHandler;
+import io.camunda.client.api.worker.JobWorker;
+import io.camunda.client.api.worker.JobWorkerBuilderStep1;
+import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
 import io.camunda.connector.api.validation.ValidationProvider;
-import io.camunda.zeebe.client.api.worker.JobHandler;
-import io.camunda.zeebe.client.api.worker.JobWorker;
-import io.camunda.zeebe.client.api.worker.JobWorkerBuilderStep1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,364 +43,436 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
 @Service
 public class JobRunnerFactory {
 
-  public static final String RUNNER_NOT_FOUND = "RunnerNotFound";
+    public static final String RUNNER_NOT_FOUND = "RunnerNotFound";
 
-  public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
-  public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
+    public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
+    public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
-  Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
-  @Autowired
-  HistoryFactory historyFactory;
-  @Autowired
-  StorageRunner storageRunner;
-  @Autowired
-  RunnerFactory runnerFactory;
-  @Autowired
-  ZeebeContainer zeebeContainer;
-  @Autowired
-  LogOperation logOperation;
-  @Autowired
-  SecretProvider secretProvider;
-  @Autowired
-  ValidationProvider validationProvider;
-  /**
-   * Key is runnerType
-   */
-  Map<String, Running> mapRunning = new HashMap<>();
-  @Value("${cherry.runners.embeddedrunner:true}")
-  private Boolean executeEmbeddedRunner = Boolean.TRUE;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final ValidationProvider validationProvider;
+    Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
+    @Autowired
+    HistoryFactory historyFactory;
+    @Autowired
+    RunnerFactory runnerFactory;
+    @Autowired
+    ZeebeContainer zeebeContainer;
+    @Autowired
+    LogOperation logOperation;
+    @Autowired
+    CherrySecretProvider cherrySecretProvider;
+    @Autowired
+    CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
-  @Value("${cherry.runners.pingrunner:true}")
-  private Boolean executePingRunner = Boolean.FALSE;
+    CamundaClient camundaClient;
+    /**
+     * Key is runnerType
+     */
+    Map<String, Running> mapRunning = new HashMap<>();
+    List<OrchestrationAPI.TenantInformation> listTenants = null;
+    @Value("${cherry.runners.embeddedrunner:true}")
+    private Boolean executeEmbeddedRunner = Boolean.TRUE;
+    @Value("${cherry.runners.pingrunner:true}")
+    private Boolean executePingRunner = Boolean.FALSE;
+    private boolean isStarted = false;
 
-  public void startAll() {
-
-    // now start the Zeebe Client
-    try {
-      zeebeContainer.startZeebeClient();
-    } catch (TechnicalException e) {
-      logOperation.log(OperationEntity.Operation.ERROR, "Can't start zeebe Client " + e.getMessage());
-      logger.error("ZeebeClient is not started, can't start runner");
-      return;
+    public JobRunnerFactory(ValidationProvider validationProvider) {
+        this.validationProvider = validationProvider;
     }
 
-    if (!zeebeContainer.isOk()) {
-      logger.error("ZeebeClient is not started, can't start runner");
-      return;
-    }
+    public void startAll() {
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-    String utcDateString = sdf.format(new Date());
-
-    logOperation.log(OperationEntity.Operation.STARTRUNTIME, utcDateString + " UTC");
-
-    resumeAllRunners();
-  }
-
-  /**
-   *
-   */
-  public void stopAll() {
-    logOperation.log(OperationEntity.Operation.STOPRUNTIME, "");
-
-    suspendAllRunners();
-    zeebeContainer.stopZeebeClient();
-  }
-
-  /**
-   * Restart all runners
-   */
-  public void resumeAllRunners() {
-    // get the list from the storage
-    List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
-    logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
-    if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
-      logger.info("Don't start the EmbeddedWorker");
-
-      // remove from the list the embeddedRunner
-      listRunners = listRunners.stream().filter(t -> {
-        return !isEmbeddedWorker(t);
-      }).toList();
-    }
-    if (Boolean.FALSE.equals(executePingRunner)) {
-      logger.info("Don't start the PingWorker");
-      // remove from the list the embeddedRunner
-      listRunners = listRunners.stream().filter(t -> {
-        return !isPingWorker(t);
-      }).toList();
-    }
-
-    List<AbstractRunner> listSdkRunners = listRunners.stream()
-        .filter(t -> t instanceof SdkRunnerConnector)
-        .filter(t -> !(t instanceof SdkRunnerCherryConnector))
-        .toList();
-    List<AbstractRunner> listSdkCherryRunners = listRunners.stream()
-        .filter(t -> t instanceof SdkRunnerCherryConnector)
-        .toList();
-    List<AbstractRunner> listOtherRunners = listRunners.stream()
-        .filter(element -> !listSdkRunners.contains(element))
-        .filter(element -> !listSdkCherryRunners.contains(element))
-        .toList();
-
-    logger.info("--- SdkRunner to start (active runner only)");
-    for (AbstractRunner runner : listSdkRunners) {
-      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
-    }
-    logger.info("--- SdkCherryRunner to start");
-    for (AbstractRunner runner : listSdkCherryRunners) {
-      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
-    }
-    logger.info("--- OtherRunners to start");
-    for (AbstractRunner runner : listOtherRunners) {
-      logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
-    }
-    logger.info("---");
-
-    for (AbstractRunner runner : listRunners) {
-
-      try {
-        JobWorker jobWorker = createJobWorker(runner);
-        if (jobWorker != null) {
-          logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "Started[" + runner.getType() + "]");
-
-          mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
-        }
-
-      } catch (Exception e) {
-        logger.error("Can't start runner [{}] : {} ", runner.getIdentification(), e);
-      }
-    }
-  }
-
-  /**
-   * stop all runners
-   */
-  public void suspendAllRunners() {
-    for (Running running : mapRunning.values()) {
-      if (running.runner != null) {
+        // now start the Zeebe Client
         try {
-          stopRunner(running.runner.getType());
-
-        } catch (Exception e) {
-          logger.error("ControllerPage on runner [{}] : {}", running.runner.getIdentification(), e);
+            zeebeContainer.startZeebeClient();
+        } catch (TechnicalException e) {
+            logOperation.log(OperationEntity.Operation.ERROR, "Can't start zeebe Client " + e.getMessage());
+            logger.error("ZeebeClient is not started, can't start runner");
+            return;
         }
-      }
+
+        if (!zeebeContainer.isOk()) {
+            logger.error("ZeebeClient is not started, can't start runner");
+            return;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String utcDateString = sdf.format(new Date());
+
+        logOperation.log(OperationEntity.Operation.STARTRUNTIME, utcDateString + " UTC");
+        isStarted = true;
+        resumeAllRunners();
     }
 
-  }
+    /**
+     *
+     */
+    public void stopAll() {
+        logOperation.log(OperationEntity.Operation.STOPRUNTIME, "");
 
-  /**
-   * Stop a runner
-   *
-   * @param runnerType name of the runner (connector/worker)
-   * @return true if the runner is stopped
-   */
-  public boolean stopRunner(String runnerType) throws OperationException {
-    Running running = mapRunning.get(runnerType);
-    if (running == null) {
-      throw new OperationAlreadyStoppedException();
+        suspendAllRunners();
+        zeebeContainer.stopZeebeClient();
     }
-    closeJobWorker(running.containerJobWorker.getJobWorker());
-    running.containerJobWorker.setJobWorker(null);
-    mapRunning.remove(runnerType);
-    logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
 
-    return true;
-  }
+    /**
+     * Restart all runners
+     */
+    public void resumeAllRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore resumeAllRunners");
+            return;
+        }
+        // get the list from the storage
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
+        logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
+        if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
+            logger.info("Don't start the EmbeddedWorker");
 
-  /**
-   * Start a runner
-   *
-   * @param runnerType name of the runner (connector/worker)
-   * @return true if the runner started
-   * @throws OperationException runner can't start
-   */
-  public boolean startRunner(String runnerType) throws OperationException {
-    if (mapRunning.containsKey(runnerType)) {
-      throw new OperationAlreadyStartedException();
+            // remove from the list the embeddedRunner
+            listRunners = listRunners.stream()
+                    .filter(java.util.function.Predicate.not(this::isEmbeddedWorker))
+                    .toList();
+        }
+        if (Boolean.FALSE.equals(executePingRunner)) {
+            logger.info("Don't start the PingWorker");
+            // remove from the list the embeddedRunner
+            listRunners = listRunners.stream()
+                    .filter(java.util.function.Predicate.not(this::isPingWorker))
+                    .toList();
+        }
+
+        List<AbstractRunner> listSdkRunners = listRunners.stream()
+                .filter(t -> t instanceof SdkRunnerConnector)
+                .filter(t -> !(t instanceof SdkRunnerCherryConnector))
+                .toList();
+        List<AbstractRunner> listSdkCherryRunners = listRunners.stream()
+                .filter(t -> t instanceof SdkRunnerCherryConnector)
+                .toList();
+        List<AbstractRunner> listOtherRunners = listRunners.stream()
+                .filter(element -> !listSdkRunners.contains(element))
+                .filter(element -> !listSdkCherryRunners.contains(element))
+                .toList();
+
+        logger.info("--- SdkRunner to start (active runner only)");
+        for (AbstractRunner runner : listSdkRunners) {
+            logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+        }
+        logger.info("--- SdkCherryRunner to start");
+        for (AbstractRunner runner : listSdkCherryRunners) {
+            logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+        }
+        logger.info("--- OtherRunners to start");
+        for (AbstractRunner runner : listOtherRunners) {
+            logger.info("  [{}] - [{}]", runner.getName(), runner.getType());
+        }
+        logger.info("---");
+        startListRunners(listRunners);
     }
-    List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
-    // we expect only one runner
-    if (listRunners.isEmpty()) {
-      throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
+
+    /**
+     * Restart the running runners. For example, a new tenants show up and all workers has to be restarted
+     */
+    public void restartRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactory is not ready, ignore restartRunners");
+            return;
+        }
+
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
+        for (Running running : mapRunning.values()) {
+            if (running.runner != null) {
+                try {
+                    stopRunner(running.runner.getType());
+                } catch (Exception e) {
+                    logger.error("ControllerPage on runner [{}] : ", running.runner.getIdentification(), e);
+                }
+            }
+        }
+        startListRunners(listRunners);
     }
-    if (listRunners.size() > 1) {
-      throw new OperationTooManyRunnersException("runnerType [" + runnerType + "]");
+
+    /**
+     * stop all runners
+     */
+    public void suspendAllRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore suspendAllRunners");
+            return;
+        }
+
+        for (Running running : mapRunning.values()) {
+            if (running.runner != null) {
+                try {
+                    stopRunner(running.runner.getType());
+
+                } catch (Exception e) {
+                    logger.error("ControllerPage on runner [{}] : ", running.runner.getIdentification(), e);
+                }
+            }
+        }
+
     }
-    AbstractRunner runner = listRunners.getFirst();
-    List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
-    if (!listOfErrors.isEmpty())
-      throw new OperationException(RUNNER_INVALID_DEFINITION,
-          "Worker has error in the definition : " + String.join(";", listOfErrors));
 
-    JobWorker jobWorker = createJobWorker(runner);
-    mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
-    logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
+    /**
+     * Stop a runner
+     *
+     * @param runnerType name of the runner (connector/worker)
+     * @return true if the runner is stopped
+     */
+    public boolean stopRunner(String runnerType) throws OperationException {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore stopRunner");
+            return false;
+        }
 
-    return true;
-  }
-
-  public boolean isRunnerExist(String runnerType) {
-    return mapRunning.containsKey(runnerType);
-  }
-
-  public boolean isActiveRunner(String runnerType) {
-    if (!mapRunning.containsKey(runnerType))
-      return false;
-    Running running = mapRunning.get(runnerType);
-    return running.containerJobWorker.getJobWorker() != null;
-  }
-
-  /**
-   * We ask the container what is the number of job active configured
-   *
-   * @return number of job active
-   */
-  public int getMaxJobActive() {
-    return zeebeContainer.getMaxJobsActive();
-  }
-
-  public int getNumberOfThreads() {
-    return zeebeContainer.getNumberOfThreads();
-  }
-
-  public void setNumberOfThreads(int numberOfThreadsRequired) throws TechnicalException {
-
-    zeebeContainer.setNumberOfThreads(numberOfThreadsRequired);
-
-    zeebeContainer.stopZeebeClient();
-    zeebeContainer.startZeebeClient();
-
-    // stop all running and restart them
-    for (Running running : mapRunning.values()) {
-      JobWorker jobWorker = null;
-      try {
+        Running running = mapRunning.get(runnerType);
+        if (running == null) {
+            throw new OperationAlreadyStoppedException();
+        }
         closeJobWorker(running.containerJobWorker.getJobWorker());
+        running.containerJobWorker.setJobWorker(null);
+        mapRunning.remove(runnerType);
+        logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
 
-        jobWorker = createJobWorker(running.runner);
-      } catch (OperationException e) {
-        logger.error("Can't restart [{}] : {} ", running.runner.getName(), e.getMessage());
-      }
-      running.containerJobWorker.setJobWorker(jobWorker);
-    }
-  }
-  /* -------------------------------------------------------- */
-  /*                                                          */
-  /*  Administration on Runner (stop,start)                   */
-  /*                                                          */
-  /* -------------------------------------------------------- */
-
-  private void closeJobWorker(JobWorker jobWorker) throws OperationCantStopRunnerException {
-    if (jobWorker == null)
-      return;
-    if (jobWorker.isClosed())
-      return;
-    jobWorker.close();
-    // protection: wait one minutes, and then we consider the worker as stopped
-    long beginTimeOperation = System.currentTimeMillis();
-    while (!jobWorker.isClosed() && System.currentTimeMillis() - beginTimeOperation < 1000 * 60) {
-      try {
-        Thread.sleep(100);
-      } catch (Exception e) {
-        // do nothing
-      }
-    }
-    if (!jobWorker.isClosed())
-      throw new OperationCantStopRunnerException();
-  }
-
-  /**
-   * Create the jobWorker from the Runner
-   *
-   * @param runner runner to start
-   * @return the JobWorker
-   * @throws OperationException in case of error
-   */
-  private JobWorker createJobWorker(AbstractRunner runner) throws OperationException {
-
-    JobHandler jobHandler;
-
-    if (runner instanceof AbstractWorker abstractWorker)
-      jobHandler = abstractWorker;
-    else if (runner instanceof AbstractConnector abstractConnector) {
-      jobHandler = new CherryConnectorJobHandler(abstractConnector, historyFactory, secretProvider, validationProvider,
-          objectMapper);
-    } else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
-      jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector, historyFactory, secretProvider, validationProvider,
-          objectMapper);
-    } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
-      jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
-    } else {
-      throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
-    }
-    JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild3 = zeebeContainer.getZeebeClient()
-        .newWorker()
-        .jobType(runner.getType())
-        .handler(jobHandler)
-        .name(runner.getName() == null ? runner.getType() : runner.getName());
-
-    // jobWorkerBuild3.maxJobsActive()
-
-    List<String> listVariablesInput = runner.getListFetchVariables();
-    if (listVariablesInput != null && !listVariablesInput.isEmpty()) {
-      jobWorkerBuild3.fetchVariables(listVariablesInput);
-    }
-    return jobWorkerBuild3.open();
-
-  }
-
-  @Scheduled(fixedDelay = 30000)
-  public void checkZeebeConnection() {
-    boolean checkConnection = zeebeContainer.checkConnection();
-    // if the connection is false, pause all runners
-
-    // if the connection is true, resume all runners which need to be resume
-
-  }
-
-  private boolean isEmbeddedWorker(AbstractRunner runner) {
-    return runner instanceof IntFrameworkRunner && !(runner instanceof PingIntRunner);
-  }
-
-  private boolean isPingWorker(AbstractRunner runner) {
-    if (runner instanceof SdkRunnerWorker skdRunner)
-      return skdRunner.getWorker() instanceof PingIntRunner;
-    return runner instanceof PingIntRunner;
-  }
-
-  /**
-   * Not possible to restart a jobWorker: must be created again !
-   */
-  private static class ContainerJobWorker {
-    private JobWorker jobWorker;
-
-    public ContainerJobWorker(JobWorker jobWorker) {
-      this.jobWorker = jobWorker;
+        return true;
     }
 
-    public JobWorker getJobWorker() {
-      return jobWorker;
+    /**
+     * Start a runner
+     *
+     * @param runnerType name of the runner (connector/worker)
+     * @return true if the runner started
+     * @throws OperationException runner can't start
+     */
+    public boolean startRunner(String runnerType) throws OperationException {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore startRunner");
+            return false;
+        }
+        if (mapRunning.containsKey(runnerType)) {
+            throw new OperationAlreadyStartedException();
+        }
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
+        // we expect only one runner
+        if (listRunners.isEmpty()) {
+            throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
+        }
+        if (listRunners.size() > 1) {
+            throw new OperationTooManyRunnersException("runnerType [" + runnerType + "]");
+        }
+        AbstractRunner runner = listRunners.getFirst();
+        List<String> listOfErrors = runner.checkValidDefinition().listOfErrors();
+        if (!listOfErrors.isEmpty())
+            throw new OperationException(RUNNER_INVALID_DEFINITION,
+                    "Worker has error in the definition : " + String.join(";", listOfErrors));
+
+        JobWorker jobWorker = createJobWorker(runner);
+        mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
+        logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "");
+
+        return true;
     }
 
-    public void setJobWorker(JobWorker jobWorker) {
-      this.jobWorker = jobWorker;
+    public boolean isRunnerExist(String runnerType) {
+        return mapRunning.containsKey(runnerType);
     }
-  }
 
-  record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
-  }
+    public boolean isActiveRunner(String runnerType) {
+        if (!mapRunning.containsKey(runnerType))
+            return false;
+        Running running = mapRunning.get(runnerType);
+        return running.containerJobWorker.getJobWorker() != null;
+    }
 
+    /**
+     * We ask the container what is the number of job active configured
+     *
+     * @return number of job active
+     */
+    public int getMaxJobActive() {
+        return zeebeContainer.getMaxJobsActive();
+    }
+
+    public int getNumberOfThreads() {
+        return zeebeContainer.getNumberOfThreads();
+    }
+
+    public void setNumberOfThreads(int numberOfThreadsRequired) throws TechnicalException {
+
+        zeebeContainer.setNumberOfThreads(numberOfThreadsRequired);
+
+        zeebeContainer.stopZeebeClient();
+        zeebeContainer.startZeebeClient();
+
+        // stop all running and restart them
+        for (Running running : mapRunning.values()) {
+            JobWorker jobWorker = null;
+            try {
+                closeJobWorker(running.containerJobWorker.getJobWorker());
+
+                jobWorker = createJobWorker(running.runner);
+            } catch (OperationException e) {
+                logger.error("Can't restart [{}] : {} ", running.runner.getName(), e.getMessage());
+            }
+            running.containerJobWorker.setJobWorker(jobWorker);
+        }
+    }
+
+    public List<OrchestrationAPI.TenantInformation> getListTenants() {
+        return this.listTenants;
+    }
+
+    public void setListTenants(List<OrchestrationAPI.TenantInformation> listTenants) {
+        this.listTenants = listTenants;
+    }
+
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Administration on Runner (stop,start)                   */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
+    private void closeJobWorker(JobWorker jobWorker) throws OperationCantStopRunnerException {
+        if (jobWorker == null)
+            return;
+        if (jobWorker.isClosed())
+            return;
+        jobWorker.close();
+        // protection: wait one minutes, and then we consider the worker as stopped
+        long beginTimeOperation = System.currentTimeMillis();
+        while (!jobWorker.isClosed() && System.currentTimeMillis() - beginTimeOperation < 1000 * 60) {
+            try {
+                Thread.sleep(100);
+            } catch (Exception e) {
+                // do nothing
+            }
+        }
+        if (!jobWorker.isClosed())
+            throw new OperationCantStopRunnerException();
+    }
+
+    /**
+     * Create the jobWorker from the Runner
+     *
+     * @param runner runner to start
+     * @return the JobWorker
+     * @throws OperationException in case of error
+     */
+    private JobWorker createJobWorker(AbstractRunner runner) throws OperationException {
+
+        JobHandler jobHandler;
+
+        if (runner instanceof AbstractWorker abstractWorker)
+            jobHandler = abstractWorker;
+        else if (runner instanceof AbstractConnector abstractConnector) {
+            jobHandler = new CherryConnectorJobHandler(
+                    abstractConnector,
+                    historyFactory,
+                    cherrySecretProvider,
+                    validationProvider,
+                    commandExceptionHandlingStrategy,
+                    camundaClient,
+                    zeebeContainer.getDocumentFactory(),
+                    objectMapper);
+        } else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
+            jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector,
+                    historyFactory,
+                    cherrySecretProvider,
+                    validationProvider,
+                    commandExceptionHandlingStrategy,
+                    zeebeContainer.getDocumentFactory(),
+                    objectMapper);
+        } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
+            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, cherrySecretProvider);
+        } else {
+            throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
+        }
+        JobWorkerBuilderStep1.JobWorkerBuilderStep3 jobWorkerBuild3 = zeebeContainer.getZeebeClient()
+                .newWorker()
+                .jobType(runner.getType())
+                .handler(jobHandler)
+                .name(runner.getName() == null ? runner.getType() : runner.getName());
+        if (listTenants != null && !listTenants.isEmpty()) {
+            jobWorkerBuild3 = jobWorkerBuild3.tenantIds(listTenants.stream().map(t -> t.tenantId).toList());
+        }
+        // jobWorkerBuild3.maxJobsActive()
+
+        List<String> listVariablesInput = runner.getListFetchVariables();
+        if (listVariablesInput != null && !listVariablesInput.isEmpty()) {
+            jobWorkerBuild3.fetchVariables(listVariablesInput);
+        }
+        return jobWorkerBuild3.open();
+
+    }
+
+    @Scheduled(fixedDelay = 30000)
+    public void checkZeebeConnection() {
+        boolean checkConnection = zeebeContainer.checkConnection();
+        // if the connection is false, pause all runners
+
+        // if the connection is true, resume all runners which need to be resume
+
+    }
+
+    private boolean isEmbeddedWorker(AbstractRunner runner) {
+        return runner instanceof IntFrameworkRunner && !(runner instanceof PingIntRunner);
+    }
+
+    private boolean isPingWorker(AbstractRunner runner) {
+        if (runner instanceof SdkRunnerWorker skdRunner)
+            return skdRunner.getWorker() instanceof PingIntRunner;
+        return runner instanceof PingIntRunner;
+    }
+
+    /**
+     * Start a list of runners
+     *
+     * @param listRunners list of runners to start
+     */
+    private void startListRunners(List<AbstractRunner> listRunners) {
+        for (AbstractRunner runner : listRunners) {
+
+            try {
+                JobWorker jobWorker = createJobWorker(runner);
+                if (jobWorker != null) {
+                    logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "Started[" + runner.getType() + "] tenants[" + (listTenants == null ? "no-filter" : listTenants.stream().map(t -> t.tenantId).toList()) + "]");
+
+                    mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
+                }
+
+            } catch (Exception e) {
+                logger.error("Can't start runner [{}] : {} ", runner.getIdentification(), e);
+            }
+        }
+    }
+
+    /**
+     * Not possible to restart a jobWorker: must be created again !
+     */
+    private static class ContainerJobWorker {
+        private JobWorker jobWorker;
+
+        public ContainerJobWorker(JobWorker jobWorker) {
+            this.jobWorker = jobWorker;
+        }
+
+        public JobWorker getJobWorker() {
+            return jobWorker;
+        }
+
+        public void setJobWorker(JobWorker jobWorker) {
+            this.jobWorker = jobWorker;
+        }
+    }
+
+    record Running(AbstractRunner runner, ContainerJobWorker containerJobWorker) {
+    }
 }

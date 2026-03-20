@@ -42,7 +42,7 @@ What do you need to do to start the runtime?
 
 Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
 
-Check the [Administration guide.md](doc/AdministrationGuide/README.md) for an explanation of the functions available.
+Check the [Administration guide.md](doc/AdministrationGuide/README.md) for an explanation of the available functions.
 
 In a short overview, to enable a Cherry runtime in your cluster:
 
@@ -78,7 +78,7 @@ camunda:
     region: <your cluster region>
 ```
 
-### Self manage without Identity
+### Self-manage without Identity
 
 ```yaml
 camunda:
@@ -94,7 +94,7 @@ camunda:
       prefer-rest-over-grpc: false
 ```
 
-## Self manage with Identity
+## Self-manage with Identity
 
 ````yaml
 camunda:

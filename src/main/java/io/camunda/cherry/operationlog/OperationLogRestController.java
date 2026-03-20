@@ -22,47 +22,47 @@ import java.util.Map;
 @RequestMapping("cherry")
 public class OperationLogRestController {
 
-  Logger logger = LoggerFactory.getLogger(OperationLogRestController.class.getName());
+    Logger logger = LoggerFactory.getLogger(OperationLogRestController.class.getName());
 
-  @Autowired
-  OperationFactory operationFactory;
+    @Autowired
+    OperationFactory operationFactory;
 
-  @GetMapping(value = "/api/operationlog/list", produces = "application/json")
-  public Map<String, Object> listOperations(@RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring,
-                                            @RequestParam(name = "pagenumber", required = false) Integer pageNumber,
-                                            @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
-                                            @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
-    Map<String, Object> info = new HashMap<>();
-    LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
-    int nbHours;
-    try {
-      nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring, 1);
-      nbHours = Math.min(30 * 7 * 24, nbHours);
-    } catch (Exception e) {
-      logger.error("RunnerRestController.getOperation: value not acceptable [{}]", nbHoursMonitoring);
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value not acceptable [" + nbHoursMonitoring + "]");
+    @GetMapping(value = "/api/operationlog/list", produces = "application/json")
+    public Map<String, Object> listOperations(@RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring,
+                                              @RequestParam(name = "pagenumber", required = false) Integer pageNumber,
+                                              @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
+                                              @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
+        Map<String, Object> info = new HashMap<>();
+        LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
+        int nbHours;
+        try {
+            nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring, 1);
+            nbHours = Math.min(30 * 7 * 24, nbHours);
+        } catch (Exception e) {
+            logger.error("RunnerRestController.getOperation: value not acceptable [{}]", nbHoursMonitoring);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value not acceptable [" + nbHoursMonitoring + "]");
+        }
+
+        int pageNumberInt = pageNumber == null ? 0 : pageNumber;
+        int rowsPerPageInt = rowsPerPage == null ? 20 : rowsPerPage;
+        if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
+
+        LocalDateTime dateThreshold = DateOperation.getLocalDateTimeNow().minusHours(nbHours);
+
+        List<OperationEntity> listOperations = operationFactory.getAllOperations(dateNow, dateThreshold);
+        List<Map<String, Object>> listOperationsMap = listOperations.stream().map(t -> {
+            Map<String, Object> infoOperation = new HashMap<>();
+            infoOperation.put("hostname", t.hostName);
+            infoOperation.put("runnerType", t.runnerType);
+            infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
+            infoOperation.put("operation", t.operation.toString());
+            infoOperation.put("message", t.message);
+            return infoOperation;
+        }).toList();
+        info.put("operations", listOperationsMap);
+
+        return info;
     }
-
-    int pageNumberInt = pageNumber == null ? 0 : pageNumber;
-    int rowsPerPageInt = rowsPerPage == null ? 20 : rowsPerPage;
-    if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
-
-    LocalDateTime dateThreshold = DateOperation.getLocalDateTimeNow().minusHours(nbHours);
-
-    List<OperationEntity> listOperations = operationFactory.getAllOperations(dateNow, dateThreshold);
-    List<Map<String, Object>> listOperationsMap = listOperations.stream().map(t -> {
-      Map<String, Object> infoOperation = new HashMap<>();
-      infoOperation.put("hostname", t.hostName);
-      infoOperation.put("runnerType", t.runnerType);
-      infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
-      infoOperation.put("operation", t.operation.toString());
-      infoOperation.put("message", t.message);
-      return infoOperation;
-    }).toList();
-    info.put("operations", listOperationsMap);
-
-    return info;
-  }
 
 }

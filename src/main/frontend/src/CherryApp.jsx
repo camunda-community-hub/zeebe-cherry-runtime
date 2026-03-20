@@ -18,92 +18,99 @@ import Parameters from "./parameter/Parameters"
 import Secrets from "./secrets/Secrets"
 import Content from "./content/Content"
 import Store from "./store/Store"
+import Tenants from "./tenants/Tenants"
 import OperationLog from "./operationlog/OperationLog"
 import HeaderMessage from "./HeaderMessage/HeaderMessage";
 
 const FRAME_NAME = {
-  DASHBOARD: "Dashboard",
-  DEFINITION: "Definition",
-  SECRET: "Secret",
-  ENVIRONMENT: "Environment",
-  CONTENT: "Content",
-  PARAMETERS: "Parameters",
-  STORE: "Store",
-  OPERATIONLOG: "OperationLog"
+    DASHBOARD: "Dashboard",
+    DEFINITION: "Definition",
+    SECRET: "Secret",
+    ENVIRONMENT: "Environment",
+    CONTENT: "Content",
+    PARAMETERS: "Parameters",
+    STORE: "Store",
+    TENANTs: "Tenants",
+    OPERATIONLOG: "OperationLog"
 
 }
 
 class CherryApp extends React.Component {
 
 
-  constructor(_props) {
-    super();
-    this.state = {frameContent: FRAME_NAME.DASHBOARD};
-    this.clickMenu = this.clickMenu.bind(this);
-  }
+    constructor(_props) {
+        super();
+        this.state = {frameContent: FRAME_NAME.DASHBOARD};
+        this.clickMenu = this.clickMenu.bind(this);
+    }
 
 
-  render() {
-    return (
-      <div>
+    render() {
+        return (
+            <div>
 
-        <Navbar bg="light" variant="light">
-          <Container>
-            <Nav className="mr-auto">
-              <Navbar.Brand href="#home">
-                <img src="/img/cherries.png" width="28" height="28" alt="cherry"/>
-                Cherry Runtime
-              </Navbar.Brand>
+                <Navbar bg="light" variant="light">
+                    <Container>
+                        <Nav className="mr-auto">
+                            <Navbar.Brand href="#home">
+                                <img src="/img/cherries.png" width="28" height="28" alt="cherry"/>
+                                Cherry Runtime
+                            </Navbar.Brand>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.DASHBOARD)
-              }}>Dashboard</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.DASHBOARD)
+                            }}>Dashboard</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.DEFINITION)
-              }}>Definition</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.DEFINITION)
+                            }}>Definition</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.SECRET)
-              }}>Secrets</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.SECRET)
+                            }}>Secrets</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.CONTENT)
-              }}>Content</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.CONTENT)
+                            }}>Content</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.STORE)
-              }}>Store</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.STORE)
+                            }}>Store</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.OPERATIONLOG)
-              }}>Log</Nav.Link>
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.TENANTS)
+                            }}>Tenants</Nav.Link>
 
-              <Nav.Link onClick={() => {
-                this.clickMenu(FRAME_NAME.PARAMETERS)
-              }}>Parameters</Nav.Link>
-            </Nav>
-          </Container>
-        </Navbar>
-        <HeaderMessage/>
-        {this.state.frameContent === FRAME_NAME.DASHBOARD && <Dashboard/>}
-        {this.state.frameContent === FRAME_NAME.DEFINITION && <Definition/>}
-        {this.state.frameContent === FRAME_NAME.SECRET && <Secrets/>}
-        {this.state.frameContent === FRAME_NAME.CONTENT && <Content/>}
-        {this.state.frameContent === FRAME_NAME.STORE && <Store/>}
-        {this.state.frameContent === FRAME_NAME.OPERATIONLOG && <OperationLog/>}
-        {this.state.frameContent === FRAME_NAME.PARAMETERS && <Parameters/>}
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.OPERATIONLOG)
+                            }}>Log</Nav.Link>
+
+                            <Nav.Link onClick={() => {
+                                this.clickMenu(FRAME_NAME.PARAMETERS)
+                            }}>Parameters</Nav.Link>
+                        </Nav>
+                    </Container>
+                </Navbar>
+                <HeaderMessage/>
+                {this.state.frameContent === FRAME_NAME.DASHBOARD && <Dashboard/>}
+                {this.state.frameContent === FRAME_NAME.DEFINITION && <Definition/>}
+                {this.state.frameContent === FRAME_NAME.SECRET && <Secrets/>}
+                {this.state.frameContent === FRAME_NAME.CONTENT && <Content/>}
+                {this.state.frameContent === FRAME_NAME.STORE && <Store/>}
+                {this.state.frameContent === FRAME_NAME.TENANTS && <Tenants/>}
+                {this.state.frameContent === FRAME_NAME.OPERATIONLOG && <OperationLog/>}
+                {this.state.frameContent === FRAME_NAME.PARAMETERS && <Parameters/>}
 
 
-      </div>);
-  }
+            </div>);
+    }
 
 
-  clickMenu(menu) {
-    console.log("ClickMenu " + menu);
-    this.setState({frameContent: menu});
+    clickMenu(menu) {
+        console.log("ClickMenu " + menu);
+        this.setState({frameContent: menu});
 
-  }
+    }
 
 }
 

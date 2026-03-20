@@ -10,14 +10,14 @@ import java.util.List;
 
 public interface OperationRepository extends JpaRepository<OperationEntity, Long> {
 
-  @Query("select operationEntity from OperationEntity operationEntity"
-      + " where operationEntity.executionTime >= :dateAfter" + " and operationEntity.runnerType = :runnerType "
-      + " order by operationEntity.executionTime desc")
-  List<OperationEntity> selectByRunnerType(@Param("runnerType") String runnerType,
-                                           @Param("dateAfter") LocalDateTime dateAfter);
+    @Query("select operationEntity from OperationEntity operationEntity"
+            + " where operationEntity.executionTime >= :dateAfter" + " and operationEntity.runnerType = :runnerType "
+            + " order by operationEntity.executionTime desc")
+    List<OperationEntity> selectByRunnerType(@Param("runnerType") String runnerType,
+                                             @Param("dateAfter") LocalDateTime dateAfter);
 
-  @Query("select operationEntity from OperationEntity operationEntity"
-      + " where operationEntity.executionTime >= :dateAfter" + " order by operationEntity.executionTime desc")
-  List<OperationEntity> selectAll(@Param("dateAfter") LocalDateTime dateAfter);
+    @Query("select operationEntity from OperationEntity operationEntity"
+            + " where operationEntity.executionTime >= :dateAfter" + " order by operationEntity.executionTime desc")
+    List<OperationEntity> selectAll(@Param("dateAfter") LocalDateTime dateAfter);
 
 }

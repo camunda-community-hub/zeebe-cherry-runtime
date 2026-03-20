@@ -6,7 +6,7 @@ services:
     ports:
       - "9081:9081"
     environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=localhost:26500
       - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
 #      - ZEEBE_CLIENT_CLOUD_REGION=
 #      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
@@ -24,7 +24,6 @@ services:
     networks:
       - camunda-platform
     depends_on:
-      - zeebe
       - postgres
 
   postgres: # https://hub.docker.com/_/postgres

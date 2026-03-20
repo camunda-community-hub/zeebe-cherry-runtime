@@ -1,59 +1,63 @@
 # todo
 
-Main new feature are registered via the github issue, but here are additionnal (easy to write)
+Main new feature are registered via the GitHub issue, but here are additionnal
 
-# Element Template
-
-## version 
-The element template accept a version number
-in the element template and in the Cherry
-
-
-## handle message
-
-The XML must contain this 
-````
-<bpmn:messageEventDefinition id="MessageEventDefinition_0eo5tes" />
-```` 
-to let the connector catch the throw event.
-How to add it in the element-template?
-
-This should be the correct information, but does not work
-
-```` 
-
-{
-  "type": "Hidden",
-  "generatedValue": {
-  "type": "uuid"
-  },
-  "binding": {
-  "type": "bpmn:Message#property",
-  "name": "name"
-  }
-  }
-
-```` 
 
 # Inbound connector
 Cherry handle Inbound connector
 
+# Initial Upload
+
+via an environment variable, upload JAR file directly at startup. It helps to deploy quickly any worker/connector.
+it's possible to give an HTTP link to access the component, a GitHub project or a connector in the marketplace. 
+With a GitHub project, Cherry explore the release attached.
 
 
-## PVC
-Documentation: via a PVC, upload the JAR and Cherry load it at the beginning.
+```yaml
+cherry:
+  initialisation:
+    runners:
+      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
+      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+      - https://github.com/camunda-community-hub/connector-8-CMIS
+      - https://marketplace.camunda.com/en-US/apps/782060/telegram-connector
+````
 
-## Manual upload
-Create a load from the UI
+# GitHub repository
 
-## marketPlace 
-jar can be upload diretly from the marketplace
+Initialise private GitHub
+Cherry explore all projects in this GitHub to search for worker/connector, and propose the list in the Store tab
 
-## Google Drive
-A google drive access is provided in the configuration (or via the UI), and Cherry upload JAR in this google drive
+```yaml
+cherry:
+  repository:
+    - https://github.com/camunda-community-hub/
+```
 
-## Bucket access
-A Bucket access is provided in the configuration (or via the UI), and Cherry upload JAR in this bucket
+# PVC - Google Drive - S3
+Explore PVC, Google Drive, S3 bucket for connectors
 
-## Git Repository
-A Git repository is provided in the configuration (or via the UI), and Cherry upload JAR in this Gir Repo (in the release)
+To be defined
+
+# MarketPlace 
+jar can be uploaded directly from the marketplace
+
+
+# Job active tracker
+With the new 8.8 API, it's possible to know the number of active job for a specific topic.
+```
+GET /jobs/statistics/global?jobType=payment-processor
+```
+https://docs.camunda.io/docs/apis-tools/orchestration-cluster-api-rest/specifications/search-jobs/
+
+
+Cherry search for the number of active jobs every x seconds (default: 5 seconds). 
+* The dashboard display in the current curb this graph: in the same graph with the execution in time, a new value is the number of active job waiting
+* A threshold can be configured for the active job, per topic. When the number oversize the threshold, an alert show up
+* the current number of job waiting is displayed just after the current statistics
+* a dynamic scale can be set up: each topic can have a minum thread/maximum thread. if the number of active job < number of thread, then the number can decrease. Else, it will increase.
+
+
+# Provide telemetry
+ConnectorRuntime provide meter, which can be exploded by Grafana.
+Same information should be provided by CherryRuntime
