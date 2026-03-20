@@ -96,8 +96,10 @@ public class RunnerEmbeddedFactory {
     }
 
     private Stream<AbstractRunner> concatAllRunners() {
-        return Stream.concat(Stream.concat(listAbstractConnector.stream(), listAbstractWorker.stream()),
-                listClassicalRunnersFromComponent.stream());
+        return Stream.concat(
+                Stream.concat(listAbstractConnector == null ? Stream.empty() : listAbstractConnector.stream(),
+                        listAbstractWorker == null ? Stream.empty() : listAbstractWorker.stream()),
+                listClassicalRunnersFromComponent == null ? Stream.empty() : listClassicalRunnersFromComponent.stream());
     }
 
     /**

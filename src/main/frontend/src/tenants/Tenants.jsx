@@ -12,6 +12,8 @@ import {ArrowRepeat} from "react-bootstrap-icons";
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
+import {Tag} from "carbon-components-react";
+
 
 class Tenants extends React.Component {
 
@@ -19,7 +21,8 @@ class Tenants extends React.Component {
     constructor(_props) {
         super();
         this.state = {
-            connectors: [],
+            tenants: [],
+            status: "",
             display: {loading: false}
         };
     }
@@ -50,9 +53,41 @@ class Tenants extends React.Component {
                         </div>
                     </div>
 
+
+
                     <div className="row" style={{width: "100%"}}>
                         <div className="col-md-12">
-                            Tenants
+
+                            <table id="runnersTable" className="table is-hoverable is-fullwidth">
+                                <thead>
+                                <tr>
+                                    <th>TenantId</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {this.state.tenants ? this.state.tenants.map((content, _index) =>
+                                    <tr >
+                                        <td style={{verticalAlign: "top"}}>
+                                            {content.tenantId}
+                                            {content.active &&
+                                                <Tag type="green"
+                                                     title="Activate">Active</Tag>
+                                                    }
+                                        </td>
+                                        <td style={{verticalAlign: "top"}}>
+                                            {content.name}
+                                        </td>
+                                        <td style={{verticalAlign: "top"}}>
+                                            {content.description}
+                                        </td>
+                                    </tr>
+                                ) : <div/>}
+                                </tbody>
+                            </table>
+
                         </div>
                     </div>
                 </div>
@@ -80,7 +115,8 @@ class Tenants extends React.Component {
             console.log("Store.refreshListTenantsCallback: error " + httpPayload.getError());
             this.setState({status: "ControllerPage " + httpPayload.getError()});
         } else {
-            this.setState({connectors: httpPayload.getData()});
+            this.setState({tenants: httpPayload.getData().tenants, status: httpPayload.getData().status});
+
         }
     }
 

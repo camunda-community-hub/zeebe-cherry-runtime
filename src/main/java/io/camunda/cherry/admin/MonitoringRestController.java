@@ -9,8 +9,6 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.exception.TechnicalException;
-import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,20 +24,13 @@ import java.util.Map;
 
 public class MonitoringRestController {
 
-    private final JobRunnerFactory jobRunnerFactory;
-    private final HistoryFactory historyFactory;
-    private final ZeebeContainer zeebeContainer;
-    private final DataSource dataSource;
-    Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
 
-    MonitoringRestController(JobRunnerFactory jobRunnerFactory,
-                             HistoryFactory historyFactory,
-                             ZeebeContainer zeebeContainer,
-                             DataSource dataSource) {
-        this.jobRunnerFactory = jobRunnerFactory;
-        this.historyFactory = historyFactory;
+    private final ZeebeContainer zeebeContainer;
+
+    Logger logger = LoggerFactory.getLogger(RuntimeRestController.class.getName());
+
+    MonitoringRestController(ZeebeContainer zeebeContainer) {
         this.zeebeContainer = zeebeContainer;
-        this.dataSource = dataSource;
     }
 
     @GetMapping(value = "/api/monitoring/pingzeebe", produces = "application/json")

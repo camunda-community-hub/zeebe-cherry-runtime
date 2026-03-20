@@ -25,15 +25,16 @@ import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.cherry.exception.*;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
+import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.runtime.SecretProvider;
-import io.camunda.cherry.runtime.ValidationProvider;
+import io.camunda.cherry.zeebe.OrchestrationAPI;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.worker.JobHandler;
 import io.camunda.client.api.worker.JobWorker;
 import io.camunda.client.api.worker.JobWorkerBuilderStep1;
 import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
+import io.camunda.connector.api.validation.ValidationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,11 +56,10 @@ public class JobRunnerFactory {
     public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final ValidationProvider validationProvider;
     Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
     @Autowired
     HistoryFactory historyFactory;
-    @Autowired
-    StorageRunner storageRunner;
     @Autowired
     RunnerFactory runnerFactory;
     @Autowired
@@ -67,23 +67,25 @@ public class JobRunnerFactory {
     @Autowired
     LogOperation logOperation;
     @Autowired
-    SecretProvider secretProvider;
-    @Autowired
-    ValidationProvider validationProvider;
+    CherrySecretProvider cherrySecretProvider;
     @Autowired
     CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
     CamundaClient camundaClient;
-
     /**
      * Key is runnerType
      */
     Map<String, Running> mapRunning = new HashMap<>();
-    List<String> listTenants = null;
+    List<OrchestrationAPI.TenantInformation> listTenants = null;
     @Value("${cherry.runners.embeddedrunner:true}")
     private Boolean executeEmbeddedRunner = Boolean.TRUE;
     @Value("${cherry.runners.pingrunner:true}")
     private Boolean executePingRunner = Boolean.FALSE;
+    private boolean isStarted = false;
+
+    public JobRunnerFactory(ValidationProvider validationProvider) {
+        this.validationProvider = validationProvider;
+    }
 
     public void startAll() {
 
@@ -106,7 +108,7 @@ public class JobRunnerFactory {
         String utcDateString = sdf.format(new Date());
 
         logOperation.log(OperationEntity.Operation.STARTRUNTIME, utcDateString + " UTC");
-
+        isStarted = true;
         resumeAllRunners();
     }
 
@@ -124,6 +126,10 @@ public class JobRunnerFactory {
      * Restart all runners
      */
     public void resumeAllRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore resumeAllRunners");
+            return;
+        }
         // get the list from the storage
         List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
         logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
@@ -175,6 +181,11 @@ public class JobRunnerFactory {
      * Restart the running runners. For example, a new tenants show up and all workers has to be restarted
      */
     public void restartRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactory is not ready, ignore restartRunners");
+            return;
+        }
+
         List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
         for (Running running : mapRunning.values()) {
             if (running.runner != null) {
@@ -192,6 +203,11 @@ public class JobRunnerFactory {
      * stop all runners
      */
     public void suspendAllRunners() {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore suspendAllRunners");
+            return;
+        }
+
         for (Running running : mapRunning.values()) {
             if (running.runner != null) {
                 try {
@@ -212,6 +228,11 @@ public class JobRunnerFactory {
      * @return true if the runner is stopped
      */
     public boolean stopRunner(String runnerType) throws OperationException {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore stopRunner");
+            return false;
+        }
+
         Running running = mapRunning.get(runnerType);
         if (running == null) {
             throw new OperationAlreadyStoppedException();
@@ -232,6 +253,10 @@ public class JobRunnerFactory {
      * @throws OperationException runner can't start
      */
     public boolean startRunner(String runnerType) throws OperationException {
+        if (!isStarted) {
+            logger.info("JobRunnerFactor is not ready, ignore startRunner");
+            return false;
+        }
         if (mapRunning.containsKey(runnerType)) {
             throw new OperationAlreadyStartedException();
         }
@@ -301,7 +326,11 @@ public class JobRunnerFactory {
         }
     }
 
-    public void setListTenants(List<String> listTenants) {
+    public List<OrchestrationAPI.TenantInformation> getListTenants() {
+        return this.listTenants;
+    }
+
+    public void setListTenants(List<OrchestrationAPI.TenantInformation> listTenants) {
         this.listTenants = listTenants;
     }
 
@@ -347,7 +376,7 @@ public class JobRunnerFactory {
             jobHandler = new CherryConnectorJobHandler(
                     abstractConnector,
                     historyFactory,
-                    secretProvider,
+                    cherrySecretProvider,
                     validationProvider,
                     commandExceptionHandlingStrategy,
                     camundaClient,
@@ -356,13 +385,13 @@ public class JobRunnerFactory {
         } else if (runner instanceof SdkRunnerConnector sdkRunnerConnector) {
             jobHandler = new CherryConnectorJobHandler(sdkRunnerConnector,
                     historyFactory,
-                    secretProvider,
+                    cherrySecretProvider,
                     validationProvider,
                     commandExceptionHandlingStrategy,
                     zeebeContainer.getDocumentFactory(),
                     objectMapper);
         } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
-            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, secretProvider);
+            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, cherrySecretProvider);
         } else {
             throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
         }
@@ -372,7 +401,7 @@ public class JobRunnerFactory {
                 .handler(jobHandler)
                 .name(runner.getName() == null ? runner.getType() : runner.getName());
         if (listTenants != null && !listTenants.isEmpty()) {
-            jobWorkerBuild3 = jobWorkerBuild3.tenantIds(listTenants);
+            jobWorkerBuild3 = jobWorkerBuild3.tenantIds(listTenants.stream().map(t -> t.tenantId).toList());
         }
         // jobWorkerBuild3.maxJobsActive()
 
@@ -406,7 +435,7 @@ public class JobRunnerFactory {
     /**
      * Start a list of runners
      *
-     * @param listRunners
+     * @param listRunners list of runners to start
      */
     private void startListRunners(List<AbstractRunner> listRunners) {
         for (AbstractRunner runner : listRunners) {
@@ -414,7 +443,7 @@ public class JobRunnerFactory {
             try {
                 JobWorker jobWorker = createJobWorker(runner);
                 if (jobWorker != null) {
-                    logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "Started[" + runner.getType() + "] tenants[" + listTenants + "]");
+                    logOperation.log(OperationEntity.Operation.STARTRUNNER, runner, "Started[" + runner.getType() + "] tenants[" + (listTenants == null ? "no-filter" : listTenants.stream().map(t -> t.tenantId).toList()) + "]");
 
                     mapRunning.put(runner.getType(), new Running(runner, new ContainerJobWorker(jobWorker)));
                 }

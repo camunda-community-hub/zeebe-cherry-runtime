@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  AdminRestController                                                 */
+/*  RuntimeRestController                                                 */
 /*                                                                      */
 /*  Rest API for the admin application                                  */
 /* example: http://localhost:8080/cherry/api/runtime/nbthreads          */
@@ -9,7 +9,7 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.cherry.tenants.TenantsManager;
 import io.camunda.client.spring.properties.CamundaClientProperties;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -24,25 +24,25 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("cherry")
-public class AdminRestController {
+public class RuntimeRestController {
 
     private final JobRunnerFactory jobRunnerFactory;
-    private final ZeebeContainer zeebeContainer;
     private final CamundaClientProperties camundaClientProperties;
     private final DataSource dataSource;
-    Logger logger = LoggerFactory.getLogger(AdminRestController.class.getName());
+    private final TenantsManager tenantsManager;
+    Logger logger = LoggerFactory.getLogger(RuntimeRestController.class.getName());
 
-    AdminRestController(JobRunnerFactory jobRunnerFactory,
-                        ZeebeContainer zeebeContainer,
-                        CamundaClientProperties camundaClientProperties,
-                        DataSource dataSource) {
+    RuntimeRestController(JobRunnerFactory jobRunnerFactory,
+                          CamundaClientProperties camundaClientProperties,
+                          DataSource dataSource, TenantsManager tenantsManager) {
         this.jobRunnerFactory = jobRunnerFactory;
-        this.zeebeContainer = zeebeContainer;
         this.camundaClientProperties = camundaClientProperties;
         this.dataSource = dataSource;
+        this.tenantsManager = tenantsManager;
     }
 
     @GetMapping(value = "/api/ping", produces = "application/json")
@@ -56,7 +56,7 @@ public class AdminRestController {
     public Map<String, Object> getParameters() {
         Map<String, Object> parameters = new HashMap<>();
 
-        parameters.put("zeebekindconnection", camundaClientProperties.getMode().toString());
+        parameters.put("zeebekindconnection", camundaClientProperties.getMode().toString().toLowerCase());
 
         String clientSecret = camundaClientProperties.getAuth().getClientSecret();
         if (clientSecret != null) {
@@ -74,14 +74,15 @@ public class AdminRestController {
                 parameters.put("cloudClientSecret", clientSecret); // never send the client Secret
                 break;
             case selfManaged:
-                parameters.put("gatewayAddress", camundaClientProperties.getGrpcAddress().toString());
+                parameters.put("grpcAddress", camundaClientProperties.getGrpcAddress().toString());
+                parameters.put("restAddress", camundaClientProperties.getRestAddress().toString());
                 parameters.put("clientId", camundaClientProperties.getAuth().getClientId());
                 parameters.put("clientSecret", clientSecret);
                 parameters.put("AutorizationServerUrl",
                         camundaClientProperties.getAuth().getTokenUrl().toString());
                 parameters.put("clientAudience", camundaClientProperties.getAuth().getAudience());
-                var tenantIds = camundaClientProperties.getWorker().getDefaults().getTenantIds();
-                parameters.put("tenantIds", tenantIds == null ? "" : String.join(";", tenantIds));
+                Set<String> tenantIds = tenantsManager.getActiveTenantsIds();
+                parameters.put("tenantIds", tenantIds == null ? "" : String.join(",", tenantIds));
 
                 break;
 
@@ -97,7 +98,7 @@ public class AdminRestController {
             parameters.put("datasourceUserName", con.getMetaData().getUserName());
 
         } catch (Exception e) {
-            logger.error("During getParameters() : {}", e);
+            logger.error("During getParameters()", e);
         }
 
         parameters.put("version", getVersion());

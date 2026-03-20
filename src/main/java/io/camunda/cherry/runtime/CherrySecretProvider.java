@@ -1,6 +1,6 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  SecretProvider                                                      */
+/*  CherrySecretProvider                                                      */
 /*                                                                      */
 /*  Manage secret inside the framework                                  */
 /*  There is two secret available:                                      */
@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Service
 @Configuration
-public class SecretProvider implements io.camunda.connector.api.secret.SecretProvider {
+public class CherrySecretProvider implements io.camunda.connector.api.secret.SecretProvider {
 
     @Autowired
     SecretEnvService secretEnvService;

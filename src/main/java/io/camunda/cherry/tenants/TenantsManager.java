@@ -3,118 +3,114 @@ package io.camunda.cherry.tenants;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.LogOperation;
-import io.camunda.cherry.zeebe.OperateContainer;
-import io.camunda.cherry.zeebe.ZeebeContainer;
+import io.camunda.cherry.zeebe.OrchestrationAPI;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
+@Configuration
 public class TenantsManager {
     Logger logger = LoggerFactory.getLogger(TenantsManager.class.getName());
 
-    @Autowired
-    OperateContainer operateContainer;
 
-    @Autowired
-    ZeebeContainer zeebeContainer;
     @Autowired
     JobRunnerFactory jobRunnerFactory;
-    @Value("${cherry.tenants.automaticDetection:false}")
-    private Boolean automaticDetection;
-    @Value("${cherry.tenants.tenant-ids:}")
-    private List<String> listConfigurationTenants;
+    @Autowired
+    OrchestrationAPI orchestrationAPI;
+    @Value("#{'${cherry.tenants.activeIds:}'.split(',')}")
+    private Set<String> activeTenantIds;
     @Value("${cherry.tenants.refreshTenantsInMinutes:1}")
     private Integer refreshTenantsInMinutes;
-    private final boolean fixedListFromDatabase = false;
-
-    private Set<String> setCurrentTenants = new HashSet<>();
-
-    private boolean initialized = false;
+    private List<OrchestrationAPI.TenantInformation> currentTenants = new ArrayList<>();
+    private final String errorMessage = "";
     @Autowired
     private LogOperation logOperation;
     @Autowired
     private TaskScheduler scheduler;
 
     public void refreshListTenants() {
-        if (!automaticDetection) {
-            logger.debug("TenantsManager: Automatic detection is disabled");
-            return;
-        }
 
         try {
-            if (!initialized) {
-                logger.debug("TenantsManager:Initialization in progress");
-                return;
-            }
+            logger.debug("start Refreshing list tenants");
 
-            if (listConfigurationTenants != null && !listConfigurationTenants.isEmpty()) {
-                // a list is hard coded on this instance: do nothing
-                logger.debug("TenantsManager:List of tenants fixed in the configuration");
-                return;
+            currentTenants = orchestrationAPI.getListTenants();
+            for (OrchestrationAPI.TenantInformation tenant : currentTenants) {
+                if (activeTenantIds.isEmpty())
+                    tenant.active = true;
+                else
+                    tenant.active = activeTenantIds.contains(tenant.tenantId);
             }
-            if (fixedListFromDatabase) {
-                logger.debug("TenantsManager: List is fixed in the database (administrator configuration)");
-                return;
-            }
-            // now, we ask the engine for an automatic detection
-            Set<String> currentTenants = operateContainer.getListTenants();
+            logger.info("Refreshing list tenants {}", currentTenants.stream()
+                    .map(t -> t.tenantId + "-" + t.name + "-active? " + t.active).toList());
+
+            // now we compare this list with the one that jobRunner has. If something change, we have to update jobRunner and ask for a restart
+            List<OrchestrationAPI.TenantInformation> runnerListTenants = Optional.ofNullable(jobRunnerFactory.getListTenants()).orElse(Collections.emptyList());
+
+
+            Set<String> setJobRunner = runnerListTenants.stream().map(t -> t.tenantId).collect(Collectors.toSet());
+            Set<String> setTenants = currentTenants.stream()
+                    .filter(t -> t.active)
+                    .map(t -> t.tenantId)
+                    .collect(Collectors.toSet());
+
             // does the list change since the last execution?
-            if (currentTenants.equals(setCurrentTenants)) {
-                logger.debug("TenantsManager: Same list of tenants {}", setCurrentTenants);
+            if (setJobRunner.equals(setTenants)) {
+                logger.debug("TenantsManager: Same list of Active  tenants {}", setTenants);
                 return;
             }
-            logOperation.log(OperationEntity.Operation.TENANTUPDATE, "Tenants list[" + currentTenants + "]");
-
+            logOperation.log(OperationEntity.Operation.TENANTUPDATE, "Tenants list" +
+                    currentTenants.stream()
+                            .filter(t -> t.active)
+                            .map(t -> t.tenantId + ":" + t.name)
+                            .toList());
             // Refresh and restart Zeebe with this new tenants list
-            setCurrentTenants = currentTenants;
-            jobRunnerFactory.setListTenants(new ArrayList<>(setCurrentTenants));
+            // send only the active tenants
+            jobRunnerFactory.setListTenants(currentTenants.stream().filter(t -> t.active).collect(Collectors.toList()));
+
             jobRunnerFactory.restartRunners();
 
         } catch (Exception e) {
             logger.error("TenantsManager: during HeartBeat ", e.getMessage());
         } finally {
-            scheduler.schedule(this::refreshListTenants, Instant.now().plusSeconds(this.refreshTenantsInMinutes * 30));
+            scheduler.schedule(this::refreshListTenants, Instant.now().plusSeconds(this.refreshTenantsInMinutes * 60));
         }
     }
 
     public boolean isTenantsActive() {
-        return !setCurrentTenants.isEmpty();
+        return currentTenants.size() > 1;
     }
 
-    public Set<String> getListTenants() {
-        return setCurrentTenants;
+    public List<OrchestrationAPI.TenantInformation> getListTenants() {
+        return currentTenants;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public Integer getDelayRefreshInMinutes() {
+        return refreshTenantsInMinutes;
+    }
+
+    public Set<String> getActiveTenantsIds() {
+        return activeTenantIds;
     }
 
     @PostConstruct
     public void init() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-
-        // get the list of tenants to run. It ùay come the database, or come a specific configuration.
-        if (automaticDetection) {
-            // ask the current list
-            setCurrentTenants = operateContainer.getListTenants();
-            // Update the database with that list
-
-        } else {
-            // get the information from the database: is the list is fixed?
-            // initialize fixedListFromDatabase and setCurrentTenants
-
-        }
-        // set the tenants now
-        jobRunnerFactory.setListTenants(new ArrayList<>(setCurrentTenants));
-        initialized = true;
+        refreshListTenants();
         scheduleNext();
     }
 

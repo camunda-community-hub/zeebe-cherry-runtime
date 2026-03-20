@@ -17,11 +17,18 @@ import java.util.Map;
 public class RunnerParameter {
     public static final String ACCESS_ALL_VARIABLES = "*";
     static Logger logger = LoggerFactory.getLogger(RunnerParameter.class.getName());
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Attributes                                                */
+    /* to facilitate the parameter management, connector can    */
+  /* manage private attributes
+  /*                                                          */
+    /* -------------------------------------------------------- */
+    private final Map<String, Object> attributes = new HashMap<>();
     /**
      * class to declare a parameter
      */
     public String name;
-
     public String label;
     public Class<?> clazz;
     public Object defaultValue;
@@ -34,19 +41,10 @@ public class RunnerParameter {
      */
     public String condition;
     public String conditionEquals;
-
     public List<String> conditionOneOf;
     public List<WorkerParameterChoice> choiceList;
     public boolean visibleInTemplate = false;
     public Group group;
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Attributes                                                */
-    /* to facilitate the parameter management, connector can    */
-  /* manage private attributes
-  /*                                                          */
-    /* -------------------------------------------------------- */
-    private final Map<String, Object> attributes = new HashMap<>();
 
     public RunnerParameter() {
 

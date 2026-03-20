@@ -20,8 +20,8 @@ import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.client.CamundaClient;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
@@ -46,7 +46,7 @@ import java.time.Instant;
  * This job handler intercept the execution to the result
  */
 public class CherryConnectorJobHandler implements JobHandler {
-    final SecretProvider secretProvider;
+    final CherrySecretProvider cherrySecretProvider;
     final ValidationProvider validationProvider;
     final CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
     final ObjectMapper objectMapper;
@@ -60,7 +60,7 @@ public class CherryConnectorJobHandler implements JobHandler {
 
     public CherryConnectorJobHandler(AbstractConnector abstractConnector,
                                      HistoryFactory historyFactory,
-                                     SecretProvider secretProvider,
+                                     CherrySecretProvider cherrySecretProvider,
                                      ValidationProvider validationProvider,
                                      CommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
                                      CamundaClient camundaClient,
@@ -69,7 +69,7 @@ public class CherryConnectorJobHandler implements JobHandler {
         this.abstractConnector = abstractConnector;
         this.sdkRunnerConnector = null;
         this.historyFactory = historyFactory;
-        this.secretProvider = secretProvider;
+        this.cherrySecretProvider = cherrySecretProvider;
         this.validationProvider = validationProvider;
         this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
         this.camundaClient = camundaClient;
@@ -82,7 +82,7 @@ public class CherryConnectorJobHandler implements JobHandler {
 
     public CherryConnectorJobHandler(SdkRunnerConnector sdkRunnerConnector,
                                      HistoryFactory historyFactory,
-                                     SecretProvider secretProvider,
+                                     CherrySecretProvider cherrySecretProvider,
                                      ValidationProvider validationProvider,
                                      CommandExceptionHandlingStrategy commandExceptionHandlingStrategy,
                                      DocumentFactory documentFactory,
@@ -90,7 +90,7 @@ public class CherryConnectorJobHandler implements JobHandler {
         this.sdkRunnerConnector = sdkRunnerConnector;
         this.abstractConnector = null;
         this.historyFactory = historyFactory;
-        this.secretProvider = secretProvider;
+        this.cherrySecretProvider = cherrySecretProvider;
         this.validationProvider = validationProvider;
         this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
         this.documentFactory = documentFactory;
@@ -128,7 +128,7 @@ public class CherryConnectorJobHandler implements JobHandler {
             SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
                     outboundMetrics,
                     jobWorkerMetrics,
-                    secretProvider,
+                    cherrySecretProvider,
                     validationProvider,
                     commandExceptionHandlingStrategy,
                     documentFactory,

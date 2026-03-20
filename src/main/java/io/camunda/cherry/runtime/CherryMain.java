@@ -38,6 +38,7 @@ public class CherryMain {
         // at this point, the table is up-to-date, class loader is correct : let's start all runners
         logger.info("----- CherryMain.3 Start all runners");
         jobRunnerFactory.startAll();
+        logger.info("----- CherryMain.4 Up and running!");
     }
 
     @PreDestroy

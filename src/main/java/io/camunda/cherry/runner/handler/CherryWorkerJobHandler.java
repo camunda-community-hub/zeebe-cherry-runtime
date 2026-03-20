@@ -16,8 +16,8 @@ package io.camunda.cherry.runner.handler;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
+import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
-import io.camunda.cherry.runtime.SecretProvider;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.client.api.worker.JobClient;
 import io.camunda.client.api.worker.JobHandler;
@@ -35,7 +35,7 @@ public class CherryWorkerJobHandler implements JobHandler {
 
     public CherryWorkerJobHandler(SdkRunnerWorker sdkRunnerWorker,
                                   HistoryFactory historyFactory,
-                                  SecretProvider secretProvider) {
+                                  CherrySecretProvider cherrySecretProvider) {
         this.sdkRunnerWorker = sdkRunnerWorker;
         this.historyFactory = historyFactory;
     }

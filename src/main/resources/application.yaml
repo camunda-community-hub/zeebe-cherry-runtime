@@ -4,6 +4,13 @@ cherry:
     classloaderpath: ./localstorage/classloader
     forcerefresh: true
 
+  initialisation:
+    runners:
+      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
+      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+
+  repository:
+    - https://github.com/camunda-community-hub/
 
   runners:
     # the runtime load all embedded runners

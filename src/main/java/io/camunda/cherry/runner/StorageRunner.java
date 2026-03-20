@@ -11,7 +11,7 @@ package io.camunda.cherry.runner;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarDefinitionRepository;
+import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.TechnicalException;
@@ -40,7 +40,7 @@ public class StorageRunner {
     RunnerDefinitionRepository runnerDefinitionRepository;
 
     @Autowired
-    JarDefinitionRepository jarDefinitionRepository;
+    JarStorageEntityRepository jarStorageEntityRepository;
 
     @Autowired
     SessionFactory sessionFactory;
@@ -86,7 +86,7 @@ public class StorageRunner {
             }
             // Save it
             // session.persist(jarStorageEntity);
-            jarDefinitionRepository.save(jarStorageEntity);
+            jarStorageEntityRepository.save(jarStorageEntity);
             return jarStorageEntity;
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR,
@@ -105,7 +105,7 @@ public class StorageRunner {
         String connectorName = jarFile.getName();
         logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
 
-        JarStorageEntity jarStorageEntity = jarDefinitionRepository.findByName(connectorName);
+        JarStorageEntity jarStorageEntity = jarStorageEntityRepository.findByName(connectorName);
         if (jarStorageEntity != null)
             return jarStorageEntity;
 
@@ -118,7 +118,18 @@ public class StorageRunner {
      * @param jarStorageEntity entity to update
      */
     public void updateJarStorage(JarStorageEntity jarStorageEntity) {
-        jarDefinitionRepository.save(jarStorageEntity);
+        jarStorageEntityRepository.save(jarStorageEntity);
+    }
+
+    /**
+     * Upload just the loadLog
+     *
+     * @param jarStorageEntity jarEntity to update
+     * @param loadLog          load loag
+     */
+    public void uploadLoadLog(JarStorageEntity jarStorageEntity, String loadLog) {
+        jarStorageEntityRepository.updateLog(jarStorageEntity.id, loadLog);
+        jarStorageEntity.loadLog = loadLog;
     }
 
     /**
@@ -128,7 +139,7 @@ public class StorageRunner {
      * @return JarStorageEntity, null if not exist
      */
     public JarStorageEntity getJarStorageByName(String jarFileName) {
-        return jarDefinitionRepository.findByName(jarFileName);
+        return jarStorageEntityRepository.findByName(jarFileName);
     }
 
     /**
@@ -137,7 +148,7 @@ public class StorageRunner {
      * @return all StorageEntity in the database
      */
     public List<JarStorageEntity> getAll() {
-        return jarDefinitionRepository.getAll();
+        return jarStorageEntityRepository.getAll();
     }
 
     /**
@@ -147,7 +158,7 @@ public class StorageRunner {
      * @return true if exist
      */
     public boolean existJarDefinition(String jarFileName) {
-        return jarDefinitionRepository.findByName(jarFileName) != null;
+        return jarStorageEntityRepository.findByName(jarFileName) != null;
     }
 
     /**

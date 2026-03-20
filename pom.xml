@@ -58,30 +58,27 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
 
-        <!--
-        Not exist after 8.8
+        <!-- red : not enought, we need to define OutboundConnectorFunction, the runtime manage this kind of class
         <dependency>
-            <groupId>io.camunda.connector</groupId>
-            <artifactId>connector-document</artifactId>
+            <groupId>io.camunda</groupId>
+            <artifactId>camunda-spring-boot-starter</artifactId>
             <version>${version.zeebe}</version>
         </dependency>
-        -->
+-->
+
         <dependency>
             <groupId>io.camunda</groupId>
             <artifactId>spring-boot-starter-camunda-sdk</artifactId>
             <version>${version.zeebe}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.camunda</groupId>
-                    <artifactId>zeebe-client-java</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
+
 
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java -->
         <dependency>
@@ -92,23 +89,29 @@
 
 
         <!-- Accept Camunda Connector -->
+
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-core</artifactId>
             <version>${version.connector-runtime}</version>
         </dependency>
 
+
+        <!-- need that for ConnectorsOutboundMetrics -->
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-spring</artifactId>
             <version>${version.connector-runtime}</version>
         </dependency>
 
+
+        <!-- Need that for PingConnectorInput -->
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-validation</artifactId>
             <version>${version.connector-validation}</version>
         </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/io.camunda.connector/connector-validation -->
 

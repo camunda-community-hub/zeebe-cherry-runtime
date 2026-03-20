@@ -38,7 +38,7 @@ class ControllerPage extends React.Component {
     /*           {JSON.stringify(this.state.runners, null, 2) } */
     render() {
         return (
-            <div style={{height: "50px"}}>
+            <div style={{height: "50px", margin: "10px 10px 20px 10px"}}>
                 {this.state.loading &&
                     <table>
                         <tr>
@@ -48,7 +48,7 @@ class ControllerPage extends React.Component {
                     </table>}
 
                 {this.state.errorMessage &&
-                    <div className="alert alert-danger" style={{margin: "10px 10px 10px 10px"}}>
+                    <div className="alert alert-danger" >
                         Error:{this.state.errorMessage}
                     </div>}
             </div>

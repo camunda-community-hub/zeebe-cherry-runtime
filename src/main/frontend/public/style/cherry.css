@@ -120,3 +120,8 @@ html, body {
     min-width: 90%;
     maxWidth: none;
 }
+
+.card-header.cherry-header {
+    background-color: #FFF4F8;  /* #FFE5EC; */
+    color: #5A0018;
+}

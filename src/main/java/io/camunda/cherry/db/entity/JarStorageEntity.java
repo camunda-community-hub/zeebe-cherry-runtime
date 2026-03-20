@@ -59,4 +59,6 @@ public class JarStorageEntity {
     @SequenceGenerator(name = "jarconnectors", sequenceName = "jarconnectors", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     public Long id;
+
+
 }

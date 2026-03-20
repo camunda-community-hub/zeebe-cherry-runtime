@@ -11,7 +11,7 @@ package io.camunda.cherry.runner;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarDefinitionRepository;
+import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 // https://docs.camunda.io/docs/components/best-practices/development/writing-good-workers/
 
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 public class RunnerAdminOperation {
 
     @Autowired
-    JarDefinitionRepository jarDefinitionRepository;
+    JarStorageEntityRepository jarStorageEntityRepository;
 
     @Autowired
     RunnerDefinitionRepository runnerDefinitionRepository;
@@ -39,7 +38,7 @@ public class RunnerAdminOperation {
     public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
         // search the StorageEntity
-        Optional<JarStorageEntity> storageEntity = jarDefinitionRepository.findById(storageEntityId);
+        Optional<JarStorageEntity> storageEntity = jarStorageEntityRepository.findById(storageEntityId);
         if (storageEntity.isEmpty())
             throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
 
@@ -49,7 +48,7 @@ public class RunnerAdminOperation {
         List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
                 .filter(t -> {
                     return storageEntity.get().id.equals(t.jar.id);
-                }).collect(Collectors.toList());
+                }).toList();
 
         // Stop all workers
         String runnerNotStopped = "";
@@ -70,7 +69,7 @@ public class RunnerAdminOperation {
             runnerDefinitionRepository.delete(runnerEntity);
         }
         // remove Jar
-        jarDefinitionRepository.delete(storageEntity.get());
+        jarStorageEntityRepository.delete(storageEntity.get());
 
         return true;
 

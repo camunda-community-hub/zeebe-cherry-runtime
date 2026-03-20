@@ -11,7 +11,6 @@ import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.BpmnError;
 import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
-import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorContext;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
@@ -25,9 +24,7 @@ import java.util.Random;
 /* ------------------------------------------------------------------- */
 
 @Component
-@OutboundConnector(name = PingConnector.TYPE_PINGCONNECTOR, inputVariables = {PingConnectorInput.INPUT_MESSAGE,
-        PingConnectorInput.INPUT_DELAY,
-        PingConnectorInput.INPUT_THROWERRORPLEASE}, type = PingConnector.TYPE_PINGCONNECTOR)
+
 public class PingConnector extends AbstractConnector
         implements IntFrameworkRunner, OutboundConnectorFunction, PingIntRunner {
 

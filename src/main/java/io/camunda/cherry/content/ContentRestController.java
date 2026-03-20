@@ -2,7 +2,7 @@ package io.camunda.cherry.content;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarDefinitionRepository;
+import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequestMapping("cherry")
 public class ContentRestController {
 
-    JarDefinitionRepository jarDefinitionRepository;
+    JarStorageEntityRepository jarStorageEntityRepository;
     RunnerDefinitionRepository runnerDefinitionRepository;
     RunnerAdminOperation runnerAdminOperation;
     RunnerFactory runnerFactory;
@@ -32,12 +32,12 @@ public class ContentRestController {
     @Autowired
     JobRunnerFactory cherryJobRunnerFactory;
 
-    public ContentRestController(JarDefinitionRepository jarDefinitionRepository,
+    public ContentRestController(JarStorageEntityRepository jarStorageEntityRepository,
                                  RunnerDefinitionRepository runnerDefinitionRepository,
                                  RunnerAdminOperation runnerAdminOperation,
                                  RunnerFactory runnerFactory,
                                  JobRunnerFactory jobRunnerFactory) {
-        this.jarDefinitionRepository = jarDefinitionRepository;
+        this.jarStorageEntityRepository = jarStorageEntityRepository;
         this.runnerDefinitionRepository = runnerDefinitionRepository;
         this.runnerAdminOperation = runnerAdminOperation;
         this.runnerFactory = runnerFactory;
@@ -47,7 +47,7 @@ public class ContentRestController {
     @GetMapping(value = "/api/content/list", produces = "application/json")
     public List<Map<String, Object>> listContent(@RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         List<Map<String, Object>> listContent = new ArrayList<>();
-        List<JarStorageEntity> listJarStorageEntity = jarDefinitionRepository.getAll();
+        List<JarStorageEntity> listJarStorageEntity = jarStorageEntityRepository.getAll();
         List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
 
         for (JarStorageEntity storageEntity : listJarStorageEntity) {

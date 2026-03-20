@@ -256,82 +256,97 @@ public class RunnerUploadFactory {
         long beginOperation = System.currentTimeMillis();
         logger.info("---- Start load Jar[{}]", jarFile.getPath());
 
+
         // Explore the JAR file and detect any connector inside
         try (ZipFile zipJarFile = new ZipFile(jarFile);
              URLClassLoader loader = new URLClassLoader(new URL[]{jarFile.toURI().toURL()},
                      this.getClass().getClassLoader())) {
 
+            int totalClasses = Collections.list(zipJarFile.entries()).size();
+
+            // now process it
             Enumeration<? extends ZipEntry> entries = zipJarFile.entries();
             int nbConnectors = 0;
             int nbRunners = 0;
+            int nbClass = 0;
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 String entryName = entry.getName();
-                if (entryName.endsWith(".class")) {
-                    String className = entryName.replace(".class", "").replace('/', '.');
-                    // save time
-                    if (className.startsWith("org.apache"))
-                        continue;
-                    // Connector onboard the CamundaStarter function
-                    if (className.startsWith("io.camunda.connector.runtime") || className.startsWith("io.camunda.zeebe"))
-                        continue;
-                    try {
-                        Class<?> clazz = loader.loadClass(className);
-                        OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
-                        if (AbstractRunner.class.isAssignableFrom(clazz)) {
-                            Object instanceClass = clazz.getDeclaredConstructor().newInstance();
-                            // this is a AbstractConnector
-                            AbstractRunner runner = (AbstractRunner) instanceClass;
-                            storageRunner.saveUploadRunner(runner, jarStorageEntity);
-                            listRunnersDetected.add(getLightFromRunner(runner));
+                nbClass++;
+                if (nbClass % 1000 == 0 && System.currentTimeMillis() - beginOperation > 2000) {
+                    logger.info("JAR [{}] check {}/{} classes in {} ms", jarFile.getName(), nbClass, totalClasses, System.currentTimeMillis() - beginOperation);
+                }
 
-                            logLoadJar.append("RunnerDectection[");
-                            logLoadJar.append(runner.getName());
-                            logLoadJar.append("], type[");
-                            logLoadJar.append(runner.getType());
-                            logLoadJar.append("]; ");
-                            logOperation.log(OperationEntity.Operation.SERVERINFO,
-                                    "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type[" + runner.getType()
-                                            + "]");
-                            nbRunners++;
-                        } else if (connectorAnnotation != null) {
-                            // this is a Outbound connector
-                            storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
-                                    jarStorageEntity);
+                if (!entryName.endsWith(".class")) {
+                    continue;
+                }
+                String className = entryName.replace(".class", "").replace('/', '.');
+                // save time
+                if (className.startsWith("org.apache")
+                        || className.startsWith("com.google")
+                        || className.startsWith("scala")
+                        || className.startsWith("com.fasterxml"))
+                    continue;
+                // Connector onboard the CamundaStarter function
+                if (className.startsWith("io.camunda.connector.runtime") || className.startsWith("io.camunda.zeebe"))
+                    continue;
+                try {
+                    Class<?> clazz = loader.loadClass(className);
+                    OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
+                    if (AbstractRunner.class.isAssignableFrom(clazz)) {
+                        Object instanceClass = clazz.getDeclaredConstructor().newInstance();
+                        // this is a AbstractConnector
+                        AbstractRunner runner = (AbstractRunner) instanceClass;
+                        storageRunner.saveUploadRunner(runner, jarStorageEntity);
+                        listRunnersDetected.add(getLightFromRunner(runner));
 
-                            listRunnersDetected.add(getLightFromConnectorAnnotation(connectorAnnotation));
+                        logLoadJar.append("RunnerDectection[");
+                        logLoadJar.append(runner.getName());
+                        logLoadJar.append("], type[");
+                        logLoadJar.append(runner.getType());
+                        logLoadJar.append("]; ");
+                        logOperation.log(OperationEntity.Operation.SERVERINFO,
+                                "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type[" + runner.getType()
+                                        + "]");
+                        nbRunners++;
+                    } else if (connectorAnnotation != null) {
+                        // this is a Outbound connector
+                        storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
+                                jarStorageEntity);
 
-                            logLoadJar.append("ConnectorDetection[");
-                            logLoadJar.append(connectorAnnotation.name());
-                            logLoadJar.append("], type[");
-                            logLoadJar.append(connectorAnnotation.type());
-                            logLoadJar.append("]; ");
-                            logOperation.log(OperationEntity.Operation.SERVERINFO,
-                                    "Load Connector[" + connectorAnnotation.name() + "] type[" + connectorAnnotation.type()
-                                            + "] from Jar[" + jarFile.getName() + "]");
-                            nbConnectors++;
-                        }
+                        listRunnersDetected.add(getLightFromConnectorAnnotation(connectorAnnotation));
 
-                    } catch (Error er) {
-                        if (className.startsWith("io.camunda")) {
-                            logger.info("ErrLoadClass [{}] : {} ", className, er.getMessage());
-                            errLogLoadJar.append("ERROR, Class[");
-                            errLogLoadJar.append(className);
-                            errLogLoadJar.append("]:");
-                            errLogLoadJar.append(er.getMessage());
-                            errLogLoadJar.append("; ");
-                        }
-                    } catch (Exception e) {
-                        // the class may extend some class which are not present at this moment
-                        if (className.startsWith("io.camunda")) {
-                            logger.info("Can't load class [{}] : {}", className, e.getMessage());
-                            errLogLoadJar.append("ERROR,Class[");
-                            errLogLoadJar.append(className);
-                            errLogLoadJar.append("]:");
-                            errLogLoadJar.append(e.getMessage());
-                            errLogLoadJar.append("; ");
-                        }
+                        logLoadJar.append("ConnectorDetection[");
+                        logLoadJar.append(connectorAnnotation.name());
+                        logLoadJar.append("], type[");
+                        logLoadJar.append(connectorAnnotation.type());
+                        logLoadJar.append("]; ");
+                        logOperation.log(OperationEntity.Operation.SERVERINFO,
+                                "Load Connector[" + connectorAnnotation.name() + "] type[" + connectorAnnotation.type()
+                                        + "] from Jar[" + jarFile.getName() + "]");
+                        nbConnectors++;
                     }
+
+                } catch (Error er) {
+                    if (className.startsWith("io.camunda")) {
+                        logger.info("ErrLoadClass [{}] : {} ", className, er.getMessage());
+                        errLogLoadJar.append("ERROR, Class[");
+                        errLogLoadJar.append(className);
+                        errLogLoadJar.append("]:");
+                        errLogLoadJar.append(er.getMessage());
+                        errLogLoadJar.append("; ");
+                    }
+                } catch (Exception e) {
+                    // the class may extend some class which are not present at this moment
+                    if (className.startsWith("io.camunda")) {
+                        logger.info("Can't load class [{}] : {}", className, e.getMessage());
+                        errLogLoadJar.append("ERROR,Class[");
+                        errLogLoadJar.append(className);
+                        errLogLoadJar.append("]:");
+                        errLogLoadJar.append(e.getMessage());
+                        errLogLoadJar.append("; ");
+                    }
+
                 }
             }
             // update the Jar information
@@ -340,11 +355,11 @@ public class RunnerUploadFactory {
             logLoadJar.append(endOperation - beginOperation);
             logLoadJar.append(" ms");
 
-            jarStorageEntity.loadLog = logLoadJar.toString() + errLogLoadJar;
-            if (jarStorageEntity.loadLog.length() > 1999)
-                jarStorageEntity.loadLog = jarStorageEntity.loadLog.substring(0, 1999);
+            String logLoadJarSt = logLoadJar.toString() + errLogLoadJar;
+            if (logLoadJarSt.length() > 1999)
+                logLoadJarSt = logLoadJarSt.substring(0, 1999);
 
-            storageRunner.updateJarStorage(jarStorageEntity);
+            storageRunner.uploadLoadLog(jarStorageEntity, logLoadJarSt);
             logOperation.log(OperationEntity.Operation.SERVERINFO,
                     "Load [" + jarFile.getName() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in " + (
                             endOperation - beginOperation) + " ms ");

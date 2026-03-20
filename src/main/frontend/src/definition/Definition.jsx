@@ -30,48 +30,56 @@ class Definition extends React.Component {
     render() {
         return (<div>
             <div className="container">
-                <h1 className="title">Zeebe Connectors</h1>
+                <div className="row" style={{width: "100%"}}>
+                    <div className="col-md-12">
+                        <h1 className="title">Zeebe Connectors</h1>
 
-                <div className="block">
-                    <table id="runnersTable" className="table is-hoverable is-fullwidth">
-                        <thead>
-                        <tr>
-                            <th>Runner Name</th>
-                            <th>Type</th>
-                            <th>Type Runner</th>
-                            <th>Class Name</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {this.state.runners ? this.state.runners.map((runner, _index) =>
-                            <tr onClick={() => this.openModal(runner)}>
-                                <td>
-                                    <img style={{width: "30px"}} src={runner.logo} alt="logo runner"/>
-                                    &nbsp;
-                                    {runner.name}</td>
-                                <td>{runner.type}</td>
-                                <td>{runner.typeRunner}</td>
-                                <td>{runner.className}</td>
-                            </tr>
-                        ) : <tr/>}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div style={{paddingTop: "30px"}}>
-                <div className="card" style={{width: "25rem;"}}>
-                    <div className="card-header" style={{backgroundColor: "rgba(0,0,0,.03)"}}>Element template</div>
-                    <div className="card-body">
-
-                        <div className="block" style={{paddingTop: "10px"}}>
-                            <a target="top" href={this.getDownloadUrl()}
-                               className="button is-info"
-                               download>Download Collection Element Template</a>
+                        <div className="block">
+                            <table id="runnersTable" className="table is-hoverable is-fullwidth">
+                                <thead>
+                                <tr>
+                                    <th>Runner Name</th>
+                                    <th>Type</th>
+                                    <th>Type Runner</th>
+                                    <th>Class Name</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {this.state.runners ? this.state.runners.map((runner, _index) =>
+                                    <tr onClick={() => this.openModal(runner)}>
+                                        <td>
+                                            <img style={{width: "30px"}} src={runner.logo} alt="logo runner"/>
+                                            &nbsp;
+                                            {runner.name}</td>
+                                        <td>{runner.type}</td>
+                                        <td>{runner.typeRunner}</td>
+                                        <td>{runner.className}</td>
+                                    </tr>
+                                ) : <tr/>}
+                                </tbody>
+                            </table>
                         </div>
-                        <p><i>Download the complete collection and place it in the Desktop modeler to access in your
-                            process all
-                            templates</i></p>
+                    </div>
+                </div>
+
+                <div className="row" style={{width: "100%", paddingTop: "30px"}}>
+                    <div className="col-md-12">
+
+                        <div className="card" style={{width: "25rem;"}}>
+                            <div className="card-header cherry-header">Element template</div>
+                            <div className="card-body">
+
+                                <div className="block" style={{paddingTop: "10px"}}>
+                                    <a target="top" href={this.getDownloadUrl()}
+                                       className="button is-info"
+                                       download>Download Collection Element Template</a>
+                                </div>
+                                <p><i>Download the complete collection and place it in the Desktop modeler to access in
+                                    your
+                                    process all
+                                    templates</i></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
