@@ -20,7 +20,9 @@ It provides
 
 * A farm of runtime, all are managed from one single page
 
-![Cherry Runtime Overview](doc/images/architecture.png)
+* For developpers, a library is avaiable to generate element-templates for Connectors and Workers
+
+![Cherry Runtime Overview](doc/images/Architecture.png)
 
 The Cherry runtime accepts any OUTBOUND connector.
 
@@ -31,7 +33,7 @@ This documentation gives information:
 * For developers, which information can be added during the development, to propose more information for administrators and BPM Designer
 
 
-# Administrator
+# For Administrator
 Any connectors OUTBOUND can be executable by the runtime. INBOUND connectors are not supported for the moment.
 
 A connector can be available:
@@ -94,7 +96,7 @@ camunda:
       prefer-rest-over-grpc: false
 ```
 
-## Self-manage with Identity
+### Self-manage with Identity
 
 ````yaml
 camunda:
@@ -143,7 +145,8 @@ Connect to the Administration page and navigate to the `Content` page. Upload a 
 ![LoadConnector.png](doc/images/CherryPageContent.png)
 
 
-# BPMN Designer
+
+# For BPMN Designer
 Connectors can be accessible via the Cherry `Definition` page.
 
 Multiple functions are available if the connectors come from the marketplace or additional Cherry methods are implemented.
@@ -169,27 +172,22 @@ Open the ZIP file, and upload content on the Desktop modeler, path `resources\el
 
 It's possible to upload the file on the Web Modeler.
 
-# For the Developer
 
-Cherry runtime can run any connector.
-The connector must include some extra methods to allow the Business Developers to access new functions, like the documentation.
 
-The second advantage of implementing this method is element-template generation.
-When Inputs and Outputs are explained, the Cherry runtime can generate the element template and hide the complexity.
+# For Developers
 
-Cherry runtime has more critical features for the developers:
-* The Cherry runtime controls the contract. If a variable is mandatory, the Framework controls its existence. On the Execute() method, the developer does not need to worry about the variable.
-* if the connector declares a BPMN Error, the glue between the code and the throw is taken in charge by the Cherry runtime.
+The Cherry runtime can run any connector or worker. This execution host is called a runner.
 
-The Cherry runtime manages execution, and many administrative functions are included: starting/stopping, changing the number of threads, and getting statistics on execution.
+A runner extends the base connector/worker with extra capabilities aimed at Business Developers: built-in documentation access and, critically, element-template generation. 
+Once Inputs and Outputs are declared on a connector, the runner can generate the corresponding element template automatically, hiding that complexity entirely.
 
-Check the [Developer guide](doc/DeveloperGuide/README.md)
+Read the [Developer guide](doc/DeveloperGuide/README.md)
 
 
 # Internal tip
 
 ## Create the Docker image
-Because the library contains Java and React script, to deploy it, the machine must have two environments
+The library contains Java and React script. To deploy it, the machine must have two environments
 
 .github/workflows/mvn-build.yml
 
