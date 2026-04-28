@@ -1,37 +1,52 @@
-cherry.connectorslib:
-  uploadpath: ./localstorage/upload
-  classloaderpath: ./localstorage/classloader
-  forcerefresh: false
-
-# use a OnPremise Zeebe engine
-zeebe.client:
-  broker.gateway-address: 127.0.0.1:26500
-  # zeebe.client.broker.gateway-address=host.docker.internal:26500
-  security.plaintext: true
-
-  # use a cloud Zeebe engine
-  # zeebe.client.cloud.region=bru-2
-  # zeebe.client.cloud.clusterId=f867aa3d-5ee7-4324-96e8-21f557f104af
-  # zeebe.client.cloud.clientId=si71NBAWtUlREmfKja5oQC3M.WsT~sHa
-  # zeebe.client.cloud.clientSecret=pCTITndkvyNsaSkfJ-ji5w38vaP19QAXWURM3UVC1.J.eVyxa44uITFv3_c8iFi2
+cherry:
+  connectorslib:
+    uploadpath: ./localstorage/upload
+    classloaderpath: ./localstorage/classloader
+    forcerefresh: true
 
 
+  runners:
+    # the runtime load all embedded runners
+    embeddedrunner: true
 
-  worker:
-    maxJobsActive: 32
-    threads: 1
+    # the runtime load ping runners
+    pingrunner: false
+
+
+  tenants:
+    # Enable the tenants functionality "autoDectection" implie to connect to Operate
+    automaticDetection: false
+    refreshTenantsInMinutes: 1
+    tenants-ids:
+
+
+# -------------------- Self Manage
+camunda:
+  client:
+    mode: selfmanaged
+    zeebe:
+      enabled: true
+      gatewayUrl: http://localhost:26500
+      preferRestOverGrpc: false
+      executionThreads: 200
+      defaults:
+        maxJobsActive: 58
+
 server.port: 9081
 logging.level.root: INFO
+
 
 # return message with BAD_REQUEST to the client
 server.error.include-message: always
 
 # Spring Boot Configuration
-spring.application.name: ZeebeCherry
-# TODO change this to /cherry. Need to figure out how to access this from mustache templates
-server.servlet.context-path: /
-# spring.mustache.prefix: classpath:static/templates/
+spring.application.name: CherryRuntime
+# Cherry will override the zeebeClient bean
+spring:
+  main:
+    allow-bean-definition-overriding: true
 
+#
 # spring.datasource:
 #   url: "jdbc:h2:file:./cherry.db"
 #   driver-class-name: "org.h2.Driver"

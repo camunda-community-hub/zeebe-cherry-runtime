@@ -23,6 +23,7 @@ import java.util.List;
  */
 @Component
 public class OrchestrationAPI {
+    public static final String ACCESS_TOKEN = "\"access_token\":\"";
     private final CamundaClientProperties camundaClientProperties;
     Logger logger = LoggerFactory.getLogger(OrchestrationAPI.class.getName());
 
@@ -95,12 +96,22 @@ public class OrchestrationAPI {
 
     }
 
+    /**
+     * Get the accesstoken, according the type of connection.
+     * @return the access token
+     * @throws Exception if any error
+     */
     private String getAccessToken() throws Exception {
 
+        String audience = camundaClientProperties.getAuth().getAudience();
+        if (CamundaClientProperties.ClientMode.saas.equals(camundaClientProperties.getMode())
+                && (audience==null || audience.isEmpty())) {
+            audience= "zeebe.camunda.io";
+        }
         String body = "grant_type=client_credentials"
                 + "&client_id=" + camundaClientProperties.getAuth().getClientId()
                 + "&client_secret=" + camundaClientProperties.getAuth().getClientSecret()
-                + "&audience" + camundaClientProperties.getAuth().getAudience();
+                + "&audience=" + audience;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(camundaClientProperties.getAuth().getTokenUrl())
@@ -108,15 +119,20 @@ public class OrchestrationAPI {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        try(HttpClient client = HttpClient.newHttpClient()) {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        String json = response.body();
-
-        // extract access_token (quick & dirty)
-        String accessToken = json.split("\"access_token\":\"")[1].split("\"")[0];
-
-        return accessToken;
+            String json = response.body();
+            if (json.isEmpty())
+                throw new Exception("Can't get access token: body is empty.");
+            if (! json.contains(ACCESS_TOKEN))
+                throw new Exception("Can't get access token: " + json);
+            // extract access_token (quick & dirty)
+            return json.split(ACCESS_TOKEN)[1].split("\"")[0];
+        } catch (Exception e) {
+            logger.error("Can't get access token: " + e.getMessage());
+            throw new Exception(e);
+        }
     }
 
     public static class TenantInformation {
