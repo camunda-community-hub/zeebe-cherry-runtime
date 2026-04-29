@@ -54,6 +54,8 @@ public class HistoryPerformance {
         IntervalRule intervalRule = getIntervalRuleByPeriod(periodStatistic);
 
         // --- populate all the map
+
+        // start time for interval
         LocalDateTime indexTime = dateThreshold;
 
         // according the period, we determine theses parameters:
@@ -63,7 +65,6 @@ public class HistoryPerformance {
         // - the rule to round a time, to find the intervalle
 
         // We want to keep at the end 24*4 interval
-
         for (int index = 0; index <= intervalRule.numberOfIntervals; index++) {
             String slotString = intervalRule.getSlotFromDate(indexTime);
             mapInterval.put(slotString, new Interval(slotString, indexTime));
@@ -91,6 +92,22 @@ public class HistoryPerformance {
             }
             if (runnerExecutionEntity.executionMs > interval.peakTimeInMs)
                 interval.peakTimeInMs = runnerExecutionEntity.executionMs;
+        }
+
+        // complete interval by the topic count - reques the last 10000 records from DateThreshold to now
+        List<TopicCountEntity> listTopicCount = topicCountRepository.selectRunnerRecords(runnerType,
+                dateThreshold, PageRequest.of(0, 10000));
+        for(TopicCountEntity topicEntity: listTopicCount )
+        {
+            LocalDateTime slotTime = topicEntity.executionTime;
+            String slotString = intervalRule.getSlotFromDate(slotTime);
+            Interval interval = mapInterval.get(slotString);
+            if (interval == null) {
+                // this must not arrive
+                logger.error("Interval is not populated [" + slotString + "]");
+                continue;
+            }
+            interval.topicCount = topicEntity.topicCount;
         }
 
         // build the list and calculate average
