@@ -1,1 +1,67 @@
-cherry:  connectorslib:    uploadpath: ./localstorage/upload    classloaderpath: ./localstorage/classloader    forcerefresh: true  initialisation:    runners:      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar  repository:    - https://github.com/camunda-community-hub/  runners:    # the runtime load all embedded runners    embeddedrunner: true    # the runtime load ping runners    pingrunner: false  tenants:    # Enable the tenants functionality "autoDectection" implie to connect to Operate    automaticDetection: true    refreshTenantsInMinutes: 1    tenants-ids:# Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe# -------------------- Self ManagecamundaSelfManage:  client:    mode: selfmanaged    zeebe:      enabled: true      gatewayUrl: http://localhost:26500      preferRestOverGrpc: false      executionThreads: 200      defaults:        maxJobsActive: 58  tasklist:    enabled: falseoperate:  client:    profile: simple    enabled: true    base-url: http://localhost:8081    session-timeout: PT10M    username: demo    password: demo# -------------------- Self Manage IdentitycamundaOidc:  client:    mode: selfmanaged    auth:      clientId: zeebe      clientSecret: AnDBsKoVjI    zeebe:      enabled: true      gatewayUrl: http://localhost:26500      preferRestOverGrpc: false      audience: zeebe-apioperateOidc:  client:    profile: oidc    enabled: true    base-url: http://localhost:8081    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token    audience: operate-api    client-id: operate    client-secret: FK05vxEU8Doperate2:  client:    profile: oidc    client-id: operate    client-secret: FK05vxEU8D    scope: # optional    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token    audience: operate-api# -------------------- SAAScamunda:  client:    mode: saas    auth:      clientId: 1_gABXztNnzVKZrygsUHTfO1nB_KNmPg      clientSecret: 9APvPNGmLDlCPW_yuF00ylOqTK48DewCr~wORqoNO4SM5D0~pqlXuADYTmKx9sAf      audience: zeebe.camunda.io    cloud:      clusterId: 3a20587e-9917-4be0-9fe6-87f90224c9ea      region: lhr-1server:  port: 9081logging.level.root: INFO# return message with BAD_REQUEST to the clientserver.error.include-message: always# Spring Boot Configurationspring.application.name: CherryRuntime# Cherry will override the zeebeClient beanspring:  main:    allow-bean-definition-overriding: true# --------------------- H2 - defaultspring.datasource:  url: "jdbc:h2:file:./cherry.db"  driver-class-name: "org.h2.Driver"  username: "sa"  password: "password"spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"org.hibernate.dialect: "H2Dialect"# --------------------- Postgrespostgres.spring.datasource:  url: "jdbc:postgresql://localhost/cherrydb"  username: "camunda"  password: "camunda"  driverClassName: "org.postgresql.Driver"postgres.spring.jpa.database-platform: "org.hibernate.dialect.PostgreSQL94Dialect"postgres.org.hibernate.dialect: "PostgreSQL94Dialect"# allow CLOB in Postgresspring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: truespring.jpa:  generate-ddl: true  hibernate.ddl-auto: "update"  properties:    hibernate:      format_sql: true      show-sql: true# logging.level.org.hibernate.SQL: TRACE# logging.level.org.hibernate.type.descriptor.sql.BasicBinder: TRACE# logging.level.org.hibernate.postgresql : TRACE# spring.jpa.properties.hibernate.show_sql: true# spring.jpa.properties.hibernate.use_sql_comments: true# spring.jpa.properties.hibernate.format_sql: true
+
+cherry:
+  runner:
+    refreshTopicsInSeconds: 10
+
+  connectorslib:
+    uploadpath: ./localstorage/upload
+    classloaderpath: ./localstorage/classloader
+    forcerefresh: true
+
+  initialisation:
+    runners:
+      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
+      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+
+  repository:
+    - https://github.com/camunda-community-hub/
+
+  runners:
+    # the runtime load all embedded runners
+    embeddedrunner: true
+
+    # the runtime load ping runners
+    pingrunner: false
+
+
+  tenants:
+    # Enable the tenants functionality "autoDectection" implie to connect to Operate
+    automaticDetection: true
+    refreshTenantsInMinutes: 1
+    tenants-ids:
+
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/getting-started/
+# https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/configuration/
+
+camunda:
+  client:
+    mode: saas
+    auth:
+      client-id: 2AJSqmrUHsnA4oBUQB1AO_sZXzTJoqre
+      client-secret: 7SPYZDd6tPUSYh9FQeXWUVQRjIePz1nFaqo5_N1VsD.zaAN.hijdsCyJ_2zbN1Ca
+    cloud:
+      cluster-id: 3a20587e-9917-4be0-9fe6-87f90224c9ea
+      region: lhr-1
+camundajo:
+  client:
+    mode: saas
+    auth:
+      client-id: Riy18RliB0nYB5-ZyOG0v07DyVHHvwJW
+      client-secret: iN6cw_7tv3mKpeg_nt.cLNfkohiS_.cu~nqvHVou5I_JFlVURG_q4c4zLXR5ZUBB
+    cloud:
+      cluster-id: fe65ee66-4bcf-4cb9-8acc-d2fc90618507
+      region: dsm-1
+
+server:
+  port: 9081
+logging.level.root: INFO
+logging.level.io.camunda.cherry: INFO
+
+spring.datasource:
+  url: "jdbc:h2:file:./cherry.db"
+  driver-class-name: "org.h2.Driver"
+  username: "sa"
+  password: "password"
+spring.jpa.database-platform: "org.hibernate.dialect.H2Dialect"
+org.hibernate.dialect: "H2Dialect"
+
