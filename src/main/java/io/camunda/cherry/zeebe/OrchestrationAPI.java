@@ -135,6 +135,57 @@ public class OrchestrationAPI {
         }
     }
 
+    /**
+     * Returns the number of jobs currently waiting (state=CREATED) for the given job type.
+     * Uses POST /v2/jobs/search — state-based, not time-windowed, so it captures
+     * jobs regardless of when the process instance started.
+     */
+    public long getJobCount(String jobType) {
+        String body = "{\"filter\":{\"type\":\"" + jobType + "\",\"state\":\"CREATED\"},\"page\":{\"limit\":1}}";
+        try {
+            HttpResponse<String> response = callPostHttp("/v2/jobs/search", body);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode totalItems = root.path("page").path("totalItems");
+            if (totalItems.isMissingNode()) {
+                logger.warn("getJobCount: no page.totalItems in response for jobType[{}]", jobType);
+                return 0;
+            }
+            return totalItems.asLong();
+        } catch (JsonProcessingException e) {
+            logger.error("getJobCount: failed to parse response for jobType[{}]: {}", jobType, e.getMessage());
+            return 0;
+        }
+    }
+
+    public HttpResponse<String> callGetHttp(String url) {
+        StringBuilder logBuilder = new StringBuilder();
+        try (HttpClient httpClient = HttpClient.newHttpClient()) {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(camundaClientProperties.getRestAddress() + url));
+            logBuilder.append("RESTAddress[").append(camundaClientProperties.getRestAddress()).append("] Url[").append(url).append("]");
+
+            if (camundaClientProperties.getAuth() != null &&
+                    CamundaClientAuthProperties.AuthMethod.oidc.equals(camundaClientProperties.getAuth().getMethod())) {
+                String accessToken = getAccessToken();
+                builder = builder.header("Authorization", "Bearer " + accessToken);
+            }
+            if (camundaClientProperties.getAuth() != null &&
+                    CamundaClientAuthProperties.AuthMethod.basic.equals(camundaClientProperties.getAuth().getMethod())) {
+                String basic = Base64.getEncoder()
+                        .encodeToString((camundaClientProperties.getAuth().getUsername() + ":" + camundaClientProperties.getAuth().getPassword()).getBytes(StandardCharsets.UTF_8));
+                builder = builder.header("Authorization", "Basic " + basic);
+            }
+            builder = builder.GET();
+
+            HttpRequest request = builder.build();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            logger.error("Error during GET HTTP request Url{} Log{}", url, logBuilder, e);
+            throw new RuntimeException(e);
+        }
+    }
+
     public static class TenantInformation {
         public String tenantId;
         public String name;

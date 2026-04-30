@@ -1,5 +1,8 @@
 
 cherry:
+  runner:
+    refreshTopicsInSeconds: 10
+
   connectorslib:
     uploadpath: ./localstorage/upload
     classloaderpath: ./localstorage/classloader
@@ -30,7 +33,7 @@ cherry:
 # https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/getting-started/
 # https://docs.camunda.io/docs/apis-tools/spring-zeebe-sdk/configuration/
 
-camundaJo:
+camunda:
   client:
     mode: saas
     auth:
@@ -39,7 +42,7 @@ camundaJo:
     cloud:
       cluster-id: 3a20587e-9917-4be0-9fe6-87f90224c9ea
       region: lhr-1
-camunda:
+camundajo:
   client:
     mode: saas
     auth:
@@ -52,6 +55,7 @@ camunda:
 server:
   port: 9081
 logging.level.root: INFO
+logging.level.io.camunda.cherry: INFO
 
 spring.datasource:
   url: "jdbc:h2:file:./cherry.db"
