@@ -83,14 +83,6 @@ operateOidc:
     audience: operate-api
     client-id: operate
     client-secret: FK05vxEU8D
-operate2:
-  client:
-    profile: oidc
-    client-id: operate
-    client-secret: FK05vxEU8D
-    scope: # optional
-    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
-    audience: operate-api
 
 # -------------------- SAAS
 camundaSaas:
@@ -105,6 +97,16 @@ camundaSaas:
 
 server:
   port: 9081
+
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+  main:
+    allow-bean-definition-overriding: true
+
 
 logging:
   level:
@@ -123,9 +125,6 @@ server.error.include-message: always
 spring.application.name: CherryRuntime
 
 # Cherry will override the zeebeClient bean
-spring:
-  main:
-    allow-bean-definition-overriding: true
 
 # --------------------- H2 - default
 spring.datasource:
