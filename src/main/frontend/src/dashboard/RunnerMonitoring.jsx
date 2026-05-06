@@ -349,7 +349,7 @@ class RunnerMonitoring extends React.Component {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
-            this.setState({status: "Error"});
+            this.setState({status: httpPayload.getError()});
         } else {
 
             let operationsContent = this.state.operations;

@@ -115,7 +115,7 @@ class Store extends React.Component {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Store.refreshListConnectorsCallback: error " + httpPayload.getError());
-            this.setState({status: "ControllerPage " + httpPayload.getError()});
+            this.setState({status: httpPayload.getError()});
         } else {
 
             this.setState({connectors: httpPayload.getData()});

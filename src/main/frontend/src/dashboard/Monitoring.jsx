@@ -68,7 +68,7 @@ class Monitoring extends React.Component {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Monitoring.refreshMonitoringCallback: error " + httpPayload.getError());
-            this.setState({status: "ERROR"});
+            this.setState({status: httpPayload.getError()});
         } else {
             let firstRunner = httpPayload.getData().details[0];
             console.log("Monitoring: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");

@@ -11,13 +11,20 @@ import {Button, Modal} from "react-bootstrap";
 
 import RestCallService from "../services/RestCallService";
 import RunnerDefinition from "./RunnerDefinition";
+import ControllerPage from "../component/ControllerPage";
 
 class Definition extends React.Component {
 
 
     constructor(_props) {
         super();
-        this.state = {runners: [], isOpen: false};
+        this.state = {
+            status: "",
+            display: {
+                loading: false
+            },
+            runners: [],
+            isOpen: false};
         this.openModal = this.openModal.bind(this);
         this.closeModal = this.closeModal.bind(this);
     }
@@ -34,6 +41,11 @@ class Definition extends React.Component {
                     <div className="col-md-12">
                         <h1 className="title">Zeebe Connectors</h1>
 
+                        <div className="row" style={{width: "100%"}}>
+                            <div className="col-md-12">
+                                <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
+                            </div>
+                        </div>
                         <div className="block">
                             <table id="runnersTable" className="table is-hoverable is-fullwidth">
                                 <thead>
@@ -113,7 +125,7 @@ class Definition extends React.Component {
 
     refreshListCallback(httpPayload) {
         if (httpPayload.isError()) {
-            this.setState({status: "Error"});
+            this.setState({status: httpPayload.getError()});
         } else {
             this.setState({runners: httpPayload.getData()});
 
