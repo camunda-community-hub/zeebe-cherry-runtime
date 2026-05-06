@@ -20,6 +20,9 @@ cherry:
     pingrunner: false
 
 
+  database:
+    purgeRetentionDays: 5
+
   tenants:
     # Enable the tenants functionality "autoDectection" implie to connect to Operate
     automaticDetection: true
@@ -97,6 +100,7 @@ camundaSaas:
 server:
   port: 9081
 logging.level.root: INFO
+logging.level.io.camunda.cherry: INFO
 
 
 # return message with BAD_REQUEST to the client

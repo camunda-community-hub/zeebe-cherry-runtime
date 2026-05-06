@@ -25,4 +25,8 @@ public interface TopicCountRepository extends JpaRepository<TopicCountEntity, Lo
     @Modifying
     @Query("delete from TopicCountEntity tc where tc.runnerType = :runnerType")
     void deleteFromRunnerType(@Param("runnerType") String runnerType);
+
+    @Modifying
+    @Query("delete from TopicCountEntity tc where tc.executionTime < :cutoff")
+    int deleteByExecutionTimeBefore(@Param("cutoff") LocalDateTime cutoff);
 }
