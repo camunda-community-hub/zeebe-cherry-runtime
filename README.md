@@ -8,7 +8,7 @@ The Cherry Runtime is dedicated to executing Camunda 8 Connectors and Workers.
 
 It provides
 * Administrative pages
-  * to monitor the activity of connectors/workers: speed, number of execution
+  * to monitor the activity of connectors/workers: speed, number of executions
   * To stop/restart the execution
 
 * A connector can be uploaded
@@ -20,7 +20,7 @@ It provides
 
 * A farm of runtime, all are managed from one single page
 
-* For developpers, a library is avaiable to generate element-templates for Connectors and Workers
+* For developpers, a library is available to generate element-templates for Connectors and Workers
 
 ![Cherry Runtime Overview](doc/images/Architecture.png)
 
@@ -37,8 +37,8 @@ This documentation gives information:
 Any connectors OUTBOUND can be executable by the runtime. INBOUND connectors are not supported for the moment.
 
 A connector can be available:
-* as a JAR file, downloaded from a GitHub repository
-* from the Camunda Marketplace. Then, it's possible to access the JAR file or to download the connector directly from the Cherry administration page (SOON)
+* As a JAR file, downloaded from a GitHub repository and upload the Jar file at startup (visit the installation guide)
+* From the Camunda Marketplace. Then, it's possible to access the JAR file or to download the connector directly from the Cherry administration page
 
 What do you need to do to start the runtime?
 
@@ -112,7 +112,7 @@ camunda:
       prefer-rest-over-grpc: false
 ````
 
-### Use parameter
+### Use parameters
 It is possible to pass parameters as a variable, for example.
 
 ``
@@ -220,8 +220,10 @@ The project is configured to publish the JAR file automatically to Maven Central
 If you want to build a local maven image, use
 
 ````shell
-mvn spring-boot:build-image
+cd k8s
+./buildDockerImage.sh
 ````
+
 ## Maven Central repository
 
 See .github/workflows/mvn-release.yml
@@ -236,42 +238,10 @@ https://github.com/camunda-community-hub/community-action-maven-release/tree/mai
 Rebuilt the image via
 ````
 mvn clean install
-mvn springboot:build-image
+k8s/buildDockerImage.sh
 ````
 
 The docker image is built using the Dockerfile present on the root level.
-
-
-Push the image to
-```
-ghcr.io/camunda-community-hub/zeebe-cherry-runtime:
-```
-
-## Detail
-
-Run command
-````
-mvn clean install
-````
-Now, create a docker image.
-````
-docker build -t pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 .
-````
-
-
-Push the image to the Camunda hub (you must be login first to the docker registry)
-
-````
-docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.3.0
-docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:3.3.0
-````
-
-
-Tag as the latest:
-````
-docker tag pierre-yves-monnet/zeebe-cherry-runtime:3.3.0 ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
-docker push ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
-````
 
 Check on
 https://github.com/camunda-community-hub/zeebe-cherry-runtime/pkgs/container/process-execution-automator

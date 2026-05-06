@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 # Version of the image
 VERSION=$(grep -m1 "<version>" ../pom.xml | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
 

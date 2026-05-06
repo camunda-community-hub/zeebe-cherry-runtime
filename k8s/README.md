@@ -1,7 +1,6 @@
 # Introduction
 This directory contains a help deployment to deploy Cherry runtime on 2 pods, using a Postgres database.
 
-Note: this deployment is a tentative
 
 
 # Deployment

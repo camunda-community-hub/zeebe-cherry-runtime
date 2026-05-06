@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cherry-runtime-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cherry-runtime
+  template:
+    metadata:
+      labels:
+        app: cherry-runtime
+    spec:
+      initContainers:
+        - name: download-connectors
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+              - >
+                set -eux;
+                curl -L -o /usr/local/cherry/upload/office-to-pdf.jar
+                https://github.com/camunda-community-hub/camunda-8-connector-officetopdf/releases/download/1.1.0/office-to-pdf-1.1.0-with-dependencies.jar
+                &&
+                curl -L -o /usr/local/cherry/upload/pdf-function.jar
+                https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.3/pdf-function-3.1.3.jar
+                &&
+                ls -al /usr/local/cherry/upload
+
+          volumeMounts:
+            - name: custom-connectors
+              mountPath: /usr/local/cherry/upload
+      containers:
+        - name: cherry-runtime-container
+          image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CHERRY_CONNECTORSLIB_UPLOADPATH
+              value: /usr/local/cherry/upload
+            - name:  CHERRY_CONNECTORSLIB_CLASSLOADERPATH
+              value: /usr/local/cherry/classloader
+            - name: CAMUNDA_CLIENT_GRPC-ADDRESS
+              value: http://camunda-zeebe-gateway:26500
+            - name: CAMUNDA_CLIENT_REST-ADDRESS
+              value: http://camunda-zeebe-gateway:8080
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://cherry-postgres/cherrydb"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "cherryUser"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "cherryPassword"
+            - name: SPRING_DATASOURCE_DRIVER-CLASS-NAME
+              value: "org.postgresql.Driver"
+            - name: "JPA_DATABASE-PLATFORM"
+              value: "org.hibernate.dialect.PostgreSQLDialect"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+              value: org.hibernate.dialect.PostgreSQLDialect
+            - name: CAMUNDA_CONNECTOR_INBOUND_ENABLED
+              value: "false"
+          volumeMounts:
+            - name: custom-connectors
+              mountPath: /usr/local/cherry/upload
+
+      volumes:
+        - name: custom-connectors
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cherry-runtime-service
+spec:
+  selector:
+    app: cherry-runtime
+  ports:
+    - protocol: TCP
+      port: 9081
+      targetPort: 9081
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "cherryUser"
+            - name: POSTGRES_PASSWORD
+              value: "cherryPassword"
+            - name: POSTGRES_DB
+              value: "cherrydb"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cherry-postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP

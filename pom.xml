@@ -6,9 +6,10 @@
     <!-- 3.2.0 using Zeebe 8.5.x/ SporingBoot 3.3.x -->
     <!-- 3.4.0 Multi tenant access and 8.8 -->
     <!-- 3.4.1 SaaS connection -->
+    <!-- 3.4.2 Error in image -->
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
-    <version>3.4.1</version>
+    <version>3.4.2</version>
 
     <properties>
         <java.version>21</java.version>
@@ -30,6 +31,7 @@
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
         <version.operate-client>8.7.1</version.operate-client>
 
+        <version.feel-engine>1.21.0</version.feel-engine>
         <!-- 2.7.4 -->
         <!-- According https://github.com/camunda-community-hub/spring-zeebe/blob/main/pom.xml -->
         <version.spring.boot>3.3.0</version.spring.boot>
@@ -121,6 +123,12 @@
             <artifactId>micrometer-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.camunda.feel</groupId>
+            <artifactId>feel-engine</artifactId>
+            <version>${version.feel-engine}</version>
+
+        </dependency>
         <!-- JSON LocalDateTime -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -190,6 +198,14 @@
     </dependencies>
 
     <build>
+        <resources>
+            <!-- Solve the project.version in the banner.txt -->
+            <!-- spring-boot-starter-parent : delimiter is @@ -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
 
         <plugins>
             <!-- connect the React application in the Springboot application -->
@@ -299,13 +315,14 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <classifier>exec</classifier>
+                    <classifier>jar-with-dependencies</classifier>
                     <mainClass>io.camunda.CherryApplication</mainClass>
                     <image>
                         <name>ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest</name>
                     </image>
                 </configuration>
             </plugin>
+
 
         </plugins>
     </build>

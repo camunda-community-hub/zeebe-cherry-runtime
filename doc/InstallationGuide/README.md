@@ -162,9 +162,9 @@ Use this information in the application.properties, and provide the IP address t
 zeebe.client.broker.gateway-address=127.0.0.1:26500
 ````
 
-# Load connectors and workers at startup from a PVC
+# Load connectors and workers at startup 
 
-The Cherry runtime monitor a path. This path is part of the configuration
+The Cherry runtime monitor the `uploadpath` . This path is part of the configuration
 
 ````yaml
 cherry.connectorslib:
@@ -173,19 +173,52 @@ cherry.connectorslib:
   forcerefresh: false
 ````
 
-Each JAR file in the `uploadpath` is loaded in the runtime.
-The second path, `classloaderpath`, is used internally to save all JAR files. A connector/worker can be uploaded directly
-or can be downloaded from a *store*. To be loaded by the Java machine, it must be saved on the disk.
+Each JAR file in the `uploadpath` is loaded in the runtime. The second path, `classloaderpath` is used internally to save all JAR files. 
 The last parameter, `forcerefresh`, is used to force the runtime to reload all JAR files on the upload path systematically. Else, the
 runtime checks at the startup if the JAR is already loaded and ignores it if this is the case.
 
-Doing this way, it is possible to start a complete runtime, with all the connectors and workers, in a completely automatic way.
+In a Kubernetes deployment, these parameters are updated to 
 
-TODO: describe an example
+```yaml
+          env:
+            - name: CHERRY_CONNECTORSLIB_UPLOADPATH
+              value: /usr/local/cherry/upload
+            - name:  CHERRY_CONNECTORSLIB_CLASSLOADERPATH
+              value: /usr/localstorage/classloader
+
+```
 
 
+## From an initcontainer
 
-# Load Connectors from MarketPlace
+The initContainer download the JAR and copy it on the uploadpath.
+This example download two different JAR file. 
+
+```yaml
+    spec:
+      initContainers:
+        - name: download-connectors
+          image: curlimages/curl:latest
+          command: ["sh", "-c"]
+          args:
+              - >
+                curl -L -o /usr/local/cherry/upload/office-to-pdf.jar
+                https://github.com/camunda-community-hub/camunda-8-connector-officetopdf/releases/download/1.1.0/office-to-pdf-1.1.0-with-dependencies.jar
+                &&
+                curl -L -o /usr/local/cherry/upload/pdf-function.jar
+                https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.3/pdf-function-3.1.3.jar
+          volumeMounts:
+              - name: custom-connectors
+                mountPath: /usr/local/cherry/upload
+```
+
+Adapt [cherry-runtime-with-uploadconnector.yaml](../../k8s/cherry-runtime-with-uploadconnector.yaml) and start it via
+
+```shell
+kubectl create -f cherry-runtime-with-uploadconnector.yaml -n camunda
+```
+
+## From the MarketPlace
 TODO
 
 

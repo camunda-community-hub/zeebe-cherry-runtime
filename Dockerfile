@@ -10,5 +10,6 @@ RUN mkdir -p /localstorage/uploadpath
 RUN mkdir -p /localstorage/classloader
 WORKDIR  /
 
+
 ENTRYPOINT ["java","-jar","/zeebe-cherry-runtime.jar"]
 

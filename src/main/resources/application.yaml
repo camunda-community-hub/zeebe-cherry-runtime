@@ -32,17 +32,26 @@ cherry:
 # -------------------- Self Manage
 camunda:
   client:
-    mode: selfmanaged
-    zeebe:
-      enabled: true
-      gatewayUrl: http://localhost:26500
-      preferRestOverGrpc: false
-      executionThreads: 200
+    mode: self-managed
+    auth:
+      method: basic
+      username: "demo"
+      password: "demo"
+
+    worker:
       defaults:
-        maxJobsActive: 58
+        max-jobs-active: 50
+    grpc-address: http://localhost:26500
+    rest-address: http://localhost:8080
+    execution-thread: 50
 
   tasklist:
     enabled: false
+
+  connector:
+    inbound:
+      enabled: false
+
 operate:
   client:
     profile: simple
@@ -96,7 +105,15 @@ camundaSaas:
 
 server:
   port: 9081
-logging.level.root: INFO
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        boot:
+          context:
+            properties=TRACE:
 
 
 # return message with BAD_REQUEST to the client
