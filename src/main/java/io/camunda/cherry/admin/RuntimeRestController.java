@@ -9,6 +9,7 @@
 package io.camunda.cherry.admin;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
+import io.camunda.cherry.store.StoreFactory;
 import io.camunda.cherry.tenants.TenantsManager;
 import io.camunda.client.spring.properties.CamundaClientProperties;
 import org.apache.maven.model.Model;
@@ -34,15 +35,18 @@ public class RuntimeRestController {
     private final CamundaClientProperties camundaClientProperties;
     private final DataSource dataSource;
     private final TenantsManager tenantsManager;
+    private final StoreFactory storeFactory;
     Logger logger = LoggerFactory.getLogger(RuntimeRestController.class.getName());
 
     RuntimeRestController(JobRunnerFactory jobRunnerFactory,
                           CamundaClientProperties camundaClientProperties,
-                          DataSource dataSource, TenantsManager tenantsManager) {
+                          DataSource dataSource, TenantsManager tenantsManager,
+                          StoreFactory storeFactory) {
         this.jobRunnerFactory = jobRunnerFactory;
         this.camundaClientProperties = camundaClientProperties;
         this.dataSource = dataSource;
         this.tenantsManager = tenantsManager;
+        this.storeFactory = storeFactory;
     }
 
     @GetMapping(value = "/api/ping", produces = "application/json")
@@ -79,7 +83,7 @@ public class RuntimeRestController {
                 parameters.put("clientId", camundaClientProperties.getAuth().getClientId());
                 parameters.put("clientSecret", clientSecret);
                 parameters.put("AutorizationServerUrl",
-                        camundaClientProperties.getAuth().getTokenUrl().toString());
+                        camundaClientProperties.getAuth().getTokenUrl());
                 parameters.put("clientAudience", camundaClientProperties.getAuth().getAudience());
                 Set<String> tenantIds = tenantsManager.getActiveTenantsIds();
                 parameters.put("tenantIds", tenantIds == null ? "" : String.join(",", tenantIds));
@@ -102,6 +106,12 @@ public class RuntimeRestController {
         }
 
         parameters.put("version", getVersion());
+
+        parameters.put("stores",
+                storeFactory.getStores().stream()
+                .map(s -> Map.of("name", s.getName(), "url", s.getUrl(), "type", s.getType()))
+                .toList()
+                );
 
         return parameters;
     }

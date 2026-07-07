@@ -206,7 +206,27 @@ class Parameters extends React.Component {
 
                     <div className="col-md-6">
                         <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >Database</div>
+                            <div className="card-header cherry-header">About</div>
+                            <div className="card-body">
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <TextInput labelText="Version"
+                                                   readonly="true"
+                                                   value={this.state.parameters.version}
+                                                   style={{ width: "100%" }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div className="row" style={{marginTop: "10px"}}>
+                    <div className="col-md-6">
+                        <div className="card" style={{width: "25rem;"}}>
+                            <div className="card-header cherry-header">Database</div>
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col-md-6">
@@ -237,13 +257,10 @@ class Parameters extends React.Component {
                             </div>
                         </div>
                     </div>
-                </div>
 
-
-                <div className="row" style={{marginTop: "10px"}}>
                     <div className="col-md-6">
                         <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >Worker</div>
+                            <div className="card-header cherry-header">Worker</div>
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col-md-12">
@@ -272,21 +289,29 @@ class Parameters extends React.Component {
                     </div>
                 </div>
 
-
                 <div className="row" style={{marginTop: "10px"}}>
-                    <div className="col-md-6">
-                        <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >About</div>
+                    <div className="col-md-12">
+                        <div className="card">
+                            <div className="card-header cherry-header">Stores</div>
                             <div className="card-body">
-                                <div className="row">
-                                    <div className="col-md-12">
-                                        <TextInput labelText="Version"
-                                                   readonly="true"
-                                                   value={this.state.parameters.version}
-                                                   style={{ width: "100%" }}
-                                        />
-                                    </div>
-                                </div>
+                                <table className="table is-hoverable is-fullwidth">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>URL</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {(this.state.parameters.stores || []).map((store, _index) =>
+                                        <tr key={store.name}>
+                                            <td>{store.name}</td>
+                                            <td>{store.type}</td>
+                                            <td>{store.url}</td>
+                                        </tr>
+                                    )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -360,12 +385,13 @@ class Parameters extends React.Component {
     refreshListParametersCallback(httpPayload) {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
-            console.log("parameters.refreshListContentCallback: error " + httpPayload.getError());
+            console.log("parameters.refreshListParametersCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
             this.setState({parameters: httpPayload.getData()});
         }
     }
+
 }
 
 export default Parameters;
