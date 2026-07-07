@@ -9,6 +9,11 @@ cherry:
       - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
       - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
 
+  github:
+    # Optional GitHub personal access token to avoid API rate limiting (60 req/h unauthenticated → 5000 req/h authenticated)
+    # Generate at https://github.com/settings/tokens (no scopes needed for public repos)
+    token: ""
+
   repository:
     - https://github.com/camunda-community-hub/
 

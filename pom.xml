@@ -7,9 +7,10 @@
     <!-- 3.4.0 Multi tenant access and 8.8 -->
     <!-- 3.4.1 SaaS connection -->
     <!-- 3.4.2 Error in image -->
+    <!-- 3.5.0 Connector download from store -->
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
-    <version>3.4.2</version>
+    <version>3.5.0</version>
 
     <properties>
         <java.version>21</java.version>
