@@ -50,6 +50,8 @@ public class RunnerDecorationTemplate {
     public static final String ATTR_DOCUMENTATION_REF = "documentationRef";
     public static final String ATTR_ICON = "icon";
     public static final String ATTR_CATEGORY = "category";
+    public static final String ATTR_VERSION = "version";
+    public static final String ATTR_RELEASE = "release";
     public static final String ATTR_APPLIES_TO = "appliesTo";
     public static final String ATTR_ELEMENT_TYPE = "elementType";
     public static final String ATTR_PROPERTIES = "properties";
@@ -154,7 +156,9 @@ public class RunnerDecorationTemplate {
 
         templateContent.put("$schema",
                 "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json");
-        templateContent.put(ATTR_NAME, runner.getDisplayLabel());
+
+        // Super important to use the name in the template
+        templateContent.put(ATTR_NAME, runner.getName());
         templateContent.put(ATTR_ID, runner.getId());
         templateContent.put(ATTR_DESCRIPTION, runner.getDescription());
         templateContent.put(ATTR_DOCUMENTATION_REF,
@@ -162,6 +166,11 @@ public class RunnerDecorationTemplate {
         if (runner.getLogo() != null)
             templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
         templateContent.put(ATTR_CATEGORY, fixMapOf(ATTR_ID, "connectors", ATTR_NAME, "Connectors"));
+
+        if (runner.getVersion()>0)
+            templateContent.put(ATTR_VERSION, runner.getVersion());
+        if (runner.getRelease()!=null && ! runner.getRelease().isEmpty())
+            templateContent.put(ATTR_RELEASE, runner.getRelease());
 
         // Applies to and element type
         if (runner.getAppliesTo() == null) {

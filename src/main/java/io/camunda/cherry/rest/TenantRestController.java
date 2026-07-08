@@ -1,4 +1,4 @@
-package io.camunda.cherry.admin;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.tenants.TenantsManager;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
@@ -28,9 +28,9 @@ public class TenantRestController {
 
         logger.info("Tenants {}", listTenants.toString());
         Map<String, Object> operation = new HashMap<>();
-        operation.put("tenants", listTenants);
-        operation.put("status", tenantsManager.getErrorMessage());
-        operation.put("delayRefresh", tenantsManager.getDelayRefreshInMinutes());
+        operation.put(RestAttribute.TENANTS, listTenants);
+        operation.put(RestAttribute.STATUS, tenantsManager.getErrorMessage());
+        operation.put(RestAttribute.DELAY_REFRESH, tenantsManager.getDelayRefreshInMinutes());
         return operation;
     }
 }

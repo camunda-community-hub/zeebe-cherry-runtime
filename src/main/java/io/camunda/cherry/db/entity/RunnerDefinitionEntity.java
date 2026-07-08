@@ -42,6 +42,10 @@ public class RunnerDefinitionEntity {
     @Column(name = "release", length = 50)
     public String release;
 
+    @Column(name = "version")
+    public Integer version;
+
+
     @Column(name = "activerunner")
     public boolean activeRunner;
 

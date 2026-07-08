@@ -6,7 +6,7 @@
 /*  This class works as a facade. It's easy then to get the JSON        */
 /*  from this object                                                    */
 /* ******************************************************************** */
-package io.camunda.cherry.admin;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;

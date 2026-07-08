@@ -8,6 +8,7 @@ package io.camunda.cherry.secretenv;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runner.LogOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -36,12 +37,12 @@ public class SecretEnvRestController {
             List<KeyValueEntity> listKeyValue = secretEnvService.getListKeyValue(keyValueType);
             return listKeyValue.stream().map(t -> {
                 Map<String, Object> record = new HashMap<>();
-                record.put("name", t.name == null ? "" : t.name);
-                record.put("value", t.isSecret ? "" : t.valueKey);
-                record.put("issecret", t.isSecret);
-                record.put("id", String.valueOf(t.id));
+                record.put(RestAttribute.NAME, t.name == null ? "" : t.name);
+                record.put(RestAttribute.VALUE, t.isSecret ? "" : t.valueKey);
+                record.put(RestAttribute.IS_SECRET, t.isSecret);
+                record.put(RestAttribute.ID, String.valueOf(t.id));
                 return record;
-            }).sorted((e1, e2) -> e1.get("name").toString().compareTo(e2.get("name").toString())).toList();
+            }).sorted((e1, e2) -> e1.get(RestAttribute.NAME).toString().compareTo(e2.get(RestAttribute.NAME).toString())).toList();
 
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR, "Can't access SecretEnv " + e.getMessage());
@@ -60,11 +61,11 @@ public class SecretEnvRestController {
             KeyValueEntity keyValueEntity = secretEnvService.saveKeyValue(id == null ? null : Long.valueOf(id), keyValueType,
                     name, value, isSecret);
             Map<String, Object> info = new HashMap<>();
-            info.put("id", keyValueEntity != null ? String.valueOf(keyValueEntity.id) : null);
+            info.put(RestAttribute.ID, keyValueEntity != null ? String.valueOf(keyValueEntity.id) : null);
             return info;
         } catch (DataIntegrityViolationException vioex) {
             Map<String, Object> info = new HashMap<>();
-            info.put("error", "This name already exist");
+            info.put(RestAttribute.ERROR, "This name already exist");
             return info;
 
         } catch (Exception e) {
@@ -78,7 +79,7 @@ public class SecretEnvRestController {
         try {
             secretEnvService.deleteKeyValue(Long.valueOf(id));
             Map<String, Object> info = new HashMap<>();
-            info.put("id", id);
+            info.put(RestAttribute.ID, id);
             return info;
 
         } catch (Exception e) {

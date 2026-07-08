@@ -78,4 +78,8 @@ public interface CherryConnector {
      * @return list of bpmn item
      */
     List<String> getAppliesTo();
+
+    int getVersion();
+
+    String getRelease();
 }

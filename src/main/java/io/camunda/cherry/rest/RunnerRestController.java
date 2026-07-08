@@ -6,7 +6,7 @@
 /* example: http://localhost:8080/cherry/api/runner/list                */
 /*  http://localhost:8080/cherry/api/runner/c-files-load-from-disk/stop */
 /* ******************************************************************** */
-package io.camunda.cherry.admin;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
@@ -43,8 +43,7 @@ import java.util.*;
 @RequestMapping("cherry")
 public class RunnerRestController {
 
-    public static final String PARAM_NBEXEC = "nbexec";
-    public static final String PARAM_NBFAIL = "nbfail";
+
     Logger logger = LoggerFactory.getLogger(RunnerRestController.class.getName());
     @Autowired
     JobRunnerFactory cherryJobRunnerFactory;
@@ -114,19 +113,21 @@ public class RunnerRestController {
             HistoryPerformance.Performance performanceRunner = historyFactory.getPerformance(runner.getType(), dateNow,
                     periodStatistic);
 
-            infoRunner.put("name", (runner.getName() == null ? "" : runner.getName()));
-            infoRunner.put("type", runner.getType());
-            infoRunner.put("classrunner", runner.isWorker() ? "worker" : "connector");
-            infoRunner.put("collectionname", runner.getCollectionName());
-            infoRunner.put("frameworkrunner", runner instanceof IntFrameworkRunner ? "true" : "false");
+            infoRunner.put(RestAttribute.NAME, (runner.getName() == null ? "" : runner.getName()));
+            infoRunner.put(RestAttribute.TYPE, runner.getType());
+            infoRunner.put(RestAttribute.CONNECTOR_TYPE, runner.getType());
+            infoRunner.put(RestAttribute.DESCRIPTION, runner.getDescription());
+            infoRunner.put(RestAttribute.CLASS_RUNNER, runner.isWorker() ? "worker" : "connector");
+            infoRunner.put(RestAttribute.COLLECTION_NAME_RUNNER, runner.getCollectionName());
+            infoRunner.put(RestAttribute.FRAMEWORK_RUNNER, runner instanceof IntFrameworkRunner ? "true" : "false");
 
-            infoRunner.put("logo", runner.getLogo());
-            infoRunner.put("active", cherryJobRunnerFactory.isActiveRunner(runner.getType()));
-            infoRunner.put("statistic", statisticRunner);
-            infoRunner.put(PARAM_NBEXEC, statisticRunner.executions);
-            infoRunner.put(PARAM_NBFAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
-            infoRunner.put("nboverthreshold", 0);
-            infoRunner.put("performance", performanceRunner);
+            infoRunner.put(RestAttribute.LOGO, runner.getLogo());
+            infoRunner.put(RestAttribute.ACTIVE, cherryJobRunnerFactory.isActiveRunner(runner.getType()));
+            infoRunner.put(RestAttribute.STATISTIC, statisticRunner);
+            infoRunner.put(RestAttribute.NB_EXEC, statisticRunner.executions);
+            infoRunner.put(RestAttribute.NB_FAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
+            infoRunner.put(RestAttribute.NB_OVER_THRESHOLD, 0);
+            infoRunner.put(RestAttribute.PERFORMANCE, performanceRunner);
             listDetails.add(infoRunner);
 
             totalSucceeded += statisticRunner.executionsSucceeded;
@@ -136,26 +137,26 @@ public class RunnerRestController {
         Comparator<Map<String, Object>> orderComparator;
 
         orderComparator = switch (orderBy) {
-            case NAMEASC -> (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
-            case NAMEDES -> (h1, h2) -> ((String) h2.get("name")).compareTo((String) h1.get("name"));
-            case EXECASC -> (h1, h2) -> ((Long) h1.get(PARAM_NBEXEC)).compareTo((Long) h2.get(PARAM_NBEXEC));
-            case EXECDES -> (h1, h2) -> ((Long) h2.get(PARAM_NBEXEC)).compareTo((Long) h1.get(PARAM_NBEXEC));
-            case FAILASC -> (h1, h2) -> ((Long) h1.get(PARAM_NBFAIL)).compareTo((Long) h2.get(PARAM_NBFAIL));
-            case FAILDES -> (h1, h2) -> ((Long) h2.get(PARAM_NBFAIL)).compareTo((Long) h1.get(PARAM_NBFAIL));
+            case NAMEASC -> (h1, h2) -> ((String) h1.get(RestAttribute.NAME)).compareTo((String) h2.get(RestAttribute.NAME));
+            case NAMEDES -> (h1, h2) -> ((String) h2.get(RestAttribute.NAME)).compareTo((String) h1.get(RestAttribute.NAME));
+            case EXECASC -> (h1, h2) -> ((Long) h1.get(RestAttribute.NB_EXEC)).compareTo((Long) h2.get(RestAttribute.NB_EXEC));
+            case EXECDES -> (h1, h2) -> ((Long) h2.get(RestAttribute.NB_EXEC)).compareTo((Long) h1.get(RestAttribute.NB_EXEC));
+            case FAILASC -> (h1, h2) -> ((Long) h1.get(RestAttribute.NB_FAIL)).compareTo((Long) h2.get(RestAttribute.NB_FAIL));
+            case FAILDES -> (h1, h2) -> ((Long) h2.get(RestAttribute.NB_FAIL)).compareTo((Long) h1.get(RestAttribute.NB_FAIL));
         };
 
         listDetails = listDetails.stream().sorted(orderComparator).toList();
         if (!listDetails.isEmpty()) {
-            logger.info("RunnerRestController.orderBy[{}] First[{}]", orderBy, listDetails.get(0).get("name"));
+            logger.info("RunnerRestController.orderBy[{}] First[{}]", orderBy, listDetails.get(0).get(RestAttribute.NAME));
         }
 
-        info.put("details", listDetails);
-        info.put("totalExecutionsSucceeded", totalSucceeded);
-        info.put("totalExecutionsFailed", totalFailed);
-        info.put("totalExecutionsBpmnErrors", totalBpmnError);
-        info.put("totalExecutions", totalSucceeded + totalFailed + totalBpmnError);
-        info.put("nbRunners", listRunners.size());
-        info.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        info.put(RestAttribute.DETAILS, listDetails);
+        info.put(RestAttribute.TOTAL_EXECUTIONS_SUCCEEDED, totalSucceeded);
+        info.put(RestAttribute.TOTAL_EXECUTIONS_FAILED, totalFailed);
+        info.put(RestAttribute.TOTAL_EXECUTIONS_BPMN_ERRORS, totalBpmnError);
+        info.put(RestAttribute.TOTAL_EXECUTIONS, totalSucceeded + totalFailed + totalBpmnError);
+        info.put(RestAttribute.NB_RUNNERS, listRunners.size());
+        info.put(RestAttribute.TIMESTAMP, String.valueOf(System.currentTimeMillis()));
         return info;
     }
 
@@ -173,8 +174,7 @@ public class RunnerRestController {
                 .filter(worker -> worker.getIdentification().equals(runnerType))
                 .map(RunnerInformation::getRunnerInformation)
                 .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
-                        // false if not asked
-                        dateNow, periodStatistic)) // 23 hours is not set
+                        dateNow, periodStatistic))
                 .findFirst();
     }
 
@@ -221,28 +221,28 @@ public class RunnerRestController {
                     dateThreshold, pageNumberInt, rowsPerPageInt);
             List<Map<String, Object>> listErrors = listExecutions.stream().map(t -> {
                 Map<String, Object> infoExecution = new HashMap<>();
-                infoExecution.put("typeExecutor", t.typeExecutor);
-                infoExecution.put("runnerType", t.runnerType);
-                infoExecution.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
-                infoExecution.put("executionMs", t.executionMs);
-                infoExecution.put("status", t.status.toString());
-                infoExecution.put("errorCode", t.errorCode);
-                infoExecution.put("errorExplanation", t.errorExplanation);
+                infoExecution.put(RestAttribute.TYPE_EXECUTOR, t.typeExecutor);
+                infoExecution.put(RestAttribute.RUNNER_TYPE, t.runnerType);
+                infoExecution.put(RestAttribute.EXECUTION_TIME, DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
+                infoExecution.put(RestAttribute.EXECUTION_MS, t.executionMs);
+                infoExecution.put(RestAttribute.STATUS, t.status.toString());
+                infoExecution.put(RestAttribute.ERROR_CODE, t.errorCode);
+                infoExecution.put(RestAttribute.ERROR_EXPLANATION, t.errorExplanation);
                 return infoExecution;
             }).toList();
-            info.put("errors", listErrors);
+            info.put(RestAttribute.ERRORS, listErrors);
         }
         // operation
         if ("EXECUTIONS".equals(operationType)) {
             List<RunnerExecutionEntity> listExecutions = historyFactory.getExecutions(runnerType, dateNow, dateThreshold,
                     pageNumberInt, rowsPerPageInt);
 
-            info.put("executions", listExecutions.stream() // Stream
+            info.put(RestAttribute.EXECUTIONS, listExecutions.stream()
                     .map(t -> {
                         Map<String, Object> item = new HashMap<>();
-                        item.put("status", t.status.toString());
-                        item.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
-                        item.put("durationms", t.executionMs);
+                        item.put(RestAttribute.STATUS, t.status.toString());
+                        item.put(RestAttribute.EXECUTION_TIME, DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
+                        item.put(RestAttribute.DURATION_MS, t.executionMs);
                         return item;
                     }).toList());
         }
@@ -251,13 +251,13 @@ public class RunnerRestController {
             List<OperationEntity> listOperations = operationFactory.getOperations(runnerType, dateNow, dateThreshold);
             List<Map<String, Object>> listOperationsMap = listOperations.stream().map(t -> {
                 Map<String, Object> infoOperation = new HashMap<>();
-                infoOperation.put("hostname", t.hostName);
-                infoOperation.put("runnerType", t.runnerType);
-                infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
-                infoOperation.put("operation", t.operation.toString());
+                infoOperation.put(RestAttribute.HOSTNAME, t.hostName);
+                infoOperation.put(RestAttribute.RUNNER_TYPE, t.runnerType);
+                infoOperation.put(RestAttribute.EXECUTION_TIME, DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
+                infoOperation.put(RestAttribute.OPERATION, t.operation.toString());
                 return infoOperation;
             }).toList();
-            info.put("operations", listOperationsMap);
+            info.put(RestAttribute.OPERATIONS, listOperationsMap);
         }
         return info;
     }

@@ -1,6 +1,7 @@
 package io.camunda.cherry.operationlog;
 
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runtime.OperationFactory;
 import io.camunda.cherry.util.DateOperation;
 import org.slf4j.Logger;
@@ -53,14 +54,14 @@ public class OperationLogRestController {
         List<OperationEntity> listOperations = operationFactory.getAllOperations(dateNow, dateThreshold);
         List<Map<String, Object>> listOperationsMap = listOperations.stream().map(t -> {
             Map<String, Object> infoOperation = new HashMap<>();
-            infoOperation.put("hostname", t.hostName);
-            infoOperation.put("runnerType", t.runnerType);
-            infoOperation.put("executionTime", DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
-            infoOperation.put("operation", t.operation.toString());
-            infoOperation.put("message", t.message);
+            infoOperation.put(RestAttribute.HOSTNAME, t.hostName);
+            infoOperation.put(RestAttribute.RUNNER_TYPE, t.runnerType);
+            infoOperation.put(RestAttribute.EXECUTION_TIME, DateOperation.dateTimeToHumanString(t.executionTime, timezoneOffset));
+            infoOperation.put(RestAttribute.OPERATION, t.operation.toString());
+            infoOperation.put(RestAttribute.MESSAGE, t.message);
             return infoOperation;
         }).toList();
-        info.put("operations", listOperationsMap);
+        info.put(RestAttribute.OPERATIONS, listOperationsMap);
 
         return info;
     }

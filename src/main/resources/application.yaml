@@ -14,8 +14,12 @@ cherry:
     # Generate at https://github.com/settings/tokens (no scopes needed for public repos)
     token: ""
 
-  repository:
-    - https://github.com/camunda-community-hub/
+  store:
+    stores:
+      - https://github.com/pierre-yves-monnet
+    download:
+      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+      - pdf-function
 
   runners:
     # the runtime load all embedded runners
