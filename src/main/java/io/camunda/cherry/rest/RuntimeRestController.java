@@ -6,7 +6,7 @@
 /* example: http://localhost:8080/cherry/api/runtime/nbthreads          */
 
 /* ******************************************************************** */
-package io.camunda.cherry.admin;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.store.StoreFactory;
@@ -52,7 +52,7 @@ public class RuntimeRestController {
     @GetMapping(value = "/api/ping", produces = "application/json")
     public Map<String, Object> ping() {
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("timestamp", System.currentTimeMillis());
+        parameters.put(RestAttribute.TIMESTAMP, System.currentTimeMillis());
         return parameters;
     }
 
@@ -60,7 +60,7 @@ public class RuntimeRestController {
     public Map<String, Object> getParameters() {
         Map<String, Object> parameters = new HashMap<>();
 
-        parameters.put("zeebekindconnection", camundaClientProperties.getMode().toString().toLowerCase());
+        parameters.put(RestAttribute.ZEEBE_KIND_CONNECTION, camundaClientProperties.getMode().toString().toLowerCase());
 
         String clientSecret = camundaClientProperties.getAuth().getClientSecret();
         if (clientSecret != null) {
@@ -72,46 +72,41 @@ public class RuntimeRestController {
 
         switch (camundaClientProperties.getMode()) {
             case saas:
-                parameters.put("cloudRegion", camundaClientProperties.getCloud().getRegion());
-                parameters.put("cloudClusterID", camundaClientProperties.getCloud().getClusterId());
-                parameters.put("cloudClientID", camundaClientProperties.getAuth().getClientId());
-                parameters.put("cloudClientSecret", clientSecret); // never send the client Secret
+                parameters.put(RestAttribute.CLOUD_REGION, camundaClientProperties.getCloud().getRegion());
+                parameters.put(RestAttribute.CLOUD_CLUSTER_ID, camundaClientProperties.getCloud().getClusterId());
+                parameters.put(RestAttribute.CLOUD_CLIENT_ID, camundaClientProperties.getAuth().getClientId());
+                parameters.put(RestAttribute.CLOUD_CLIENT_SECRET, clientSecret);
                 break;
             case selfManaged:
-                parameters.put("grpcAddress", camundaClientProperties.getGrpcAddress().toString());
-                parameters.put("restAddress", camundaClientProperties.getRestAddress().toString());
-                parameters.put("clientId", camundaClientProperties.getAuth().getClientId());
-                parameters.put("clientSecret", clientSecret);
-                parameters.put("AutorizationServerUrl",
+                parameters.put(RestAttribute.GRPC_ADDRESS, camundaClientProperties.getGrpcAddress().toString());
+                parameters.put(RestAttribute.REST_ADDRESS, camundaClientProperties.getRestAddress().toString());
+                parameters.put(RestAttribute.CLIENT_ID, camundaClientProperties.getAuth().getClientId());
+                parameters.put(RestAttribute.CLIENT_SECRET, clientSecret);
+                parameters.put(RestAttribute.AUTORIZATION_SERVER_URL,
                         camundaClientProperties.getAuth().getTokenUrl());
-                parameters.put("clientAudience", camundaClientProperties.getAuth().getAudience());
+                parameters.put(RestAttribute.CLIENT_AUDIENCE, camundaClientProperties.getAuth().getAudience());
                 Set<String> tenantIds = tenantsManager.getActiveTenantsIds();
-                parameters.put("tenantIds", tenantIds == null ? "" : String.join(",", tenantIds));
-
+                parameters.put(RestAttribute.TENANT_IDS, tenantIds == null ? "" : String.join(",", tenantIds));
                 break;
-
         }
 
-        // we don't want the configuration here, but the running information
-        parameters.put("maxJobsActive", jobRunnerFactory.getMaxJobActive());
-        parameters.put("nbThreads", jobRunnerFactory.getNumberOfThreads());
+        parameters.put(RestAttribute.MAX_JOBS_ACTIVE, jobRunnerFactory.getMaxJobActive());
+        parameters.put(RestAttribute.NB_THREADS, jobRunnerFactory.getNumberOfThreads());
 
         try (Connection con = dataSource.getConnection()) {
-            parameters.put("datasourceProductName", con.getMetaData().getDatabaseProductName());
-            parameters.put("datasourceUrl", con.getMetaData().getURL());
-            parameters.put("datasourceUserName", con.getMetaData().getUserName());
-
+            parameters.put(RestAttribute.DATASOURCE_PRODUCT_NAME, con.getMetaData().getDatabaseProductName());
+            parameters.put(RestAttribute.DATASOURCE_URL, con.getMetaData().getURL());
+            parameters.put(RestAttribute.DATASOURCE_USER_NAME, con.getMetaData().getUserName());
         } catch (Exception e) {
             logger.error("During getParameters()", e);
         }
 
-        parameters.put("version", getVersion());
+        parameters.put(RestAttribute.VERSION, getVersion());
 
-        parameters.put("stores",
+        parameters.put(RestAttribute.STORES,
                 storeFactory.getStores().stream()
-                .map(s -> Map.of("name", s.getName(), "url", s.getUrl(), "type", s.getType()))
-                .toList()
-                );
+                        .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
+                        .toList());
 
         return parameters;
     }

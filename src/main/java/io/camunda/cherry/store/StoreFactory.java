@@ -62,6 +62,7 @@ public class StoreFactory {
     @PostConstruct
     private void postConstruct() {
         explore();
+        // Now, check if some runner must be downloaded and started
     }
 
 

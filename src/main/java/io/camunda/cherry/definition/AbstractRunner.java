@@ -781,6 +781,13 @@ public abstract class AbstractRunner {
         return List.of("bpmn:Task");
     }
 
+    public int getVersion() {
+        return -1;
+    };
+
+    public String getRelease() {
+        return "";
+    }
     /**
      * Qualify the runner
      *

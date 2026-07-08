@@ -6,7 +6,7 @@
 /* example: http://localhost:8080/cherry/api/monitoring/pingzeebe       */
 /*                                                                      */
 /* ******************************************************************** */
-package io.camunda.cherry.admin;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.zeebe.ZeebeContainer;
@@ -39,12 +39,12 @@ public class MonitoringRestController {
         Map<String, Object> parameters = new HashMap<>();
 
         try {
-            parameters.put("timestamp", System.currentTimeMillis());
-            parameters.put("status", zeebeContainer.pingZeebeClient() ? "OK" : "FAIL");
-            parameters.put("comment", "");
+            parameters.put(RestAttribute.TIMESTAMP, System.currentTimeMillis());
+            parameters.put(RestAttribute.STATUS, zeebeContainer.pingZeebeClient() ? "OK" : "FAIL");
+            parameters.put(RestAttribute.COMMENT, "");
         } catch (TechnicalException te) {
-            parameters.put("status", "FAIL");
-            parameters.put("comment", te.getMessage());
+            parameters.put(RestAttribute.STATUS, "FAIL");
+            parameters.put(RestAttribute.COMMENT, te.getMessage());
         }
 
         logger.info("Monitoring.pingZeebe - end {}", parameters);

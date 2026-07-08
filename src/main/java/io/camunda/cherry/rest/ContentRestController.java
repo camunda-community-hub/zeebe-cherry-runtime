@@ -1,4 +1,4 @@
-package io.camunda.cherry.content;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
@@ -52,24 +52,24 @@ public class ContentRestController {
 
         for (JarStorageEntity storageEntity : listJarStorageEntity) {
             Map<String, Object> recordStorage = new HashMap<>();
-            recordStorage.put("name", storageEntity.name);
-            recordStorage.put("storageentityid", storageEntity.id);
+            recordStorage.put(RestAttribute.NAME, storageEntity.name);
+            recordStorage.put(RestAttribute.STORAGE_ENTITY_ID, storageEntity.id);
 
             List<Map<String, Object>> listUsedBy = listRunnersDefinition.stream().filter(t -> {
                 return t.jar.id.equals(storageEntity.id);
             }).map(t -> {
                 Map<String, Object> recordRunner = new HashMap<>();
-                recordRunner.put("name", t.name);
-                recordRunner.put("collectionName", t.collectionName);
-                recordRunner.put("activeRunner", cherryJobRunnerFactory.isActiveRunner(t.type));
+                recordRunner.put(RestAttribute.NAME, t.name);
+                recordRunner.put(RestAttribute.COLLECTION_NAME, t.collectionName);
+                recordRunner.put(RestAttribute.ACTIVE_RUNNER, cherryJobRunnerFactory.isActiveRunner(t.type));
                 return recordRunner;
             }).toList();
-            recordStorage.put("usedby", listUsedBy);
-            recordStorage.put("loadedtime", DateOperation.dateTimeToHumanString(storageEntity.loadedTime, timezoneOffset));
+            recordStorage.put(RestAttribute.USED_BY, listUsedBy);
+            recordStorage.put(RestAttribute.LOADED_TIME, DateOperation.dateTimeToHumanString(storageEntity.loadedTime, timezoneOffset));
             listContent.add(recordStorage);
         }
         List<Map<String, Object>> sortedList = listContent.stream()
-                .sorted(Comparator.comparing(map -> (String) map.get("name")))
+                .sorted(Comparator.comparing(map -> (String) map.get(RestAttribute.NAME)))
                 .collect(Collectors.toList());
         return sortedList;
     }
@@ -81,16 +81,14 @@ public class ContentRestController {
         Map<String, Object> status = new HashMap<>();
         try {
             runnerAdminOperation.deleteJarFile(Long.valueOf(storageEntityId));
-            status.put("status", "OK");
+            status.put(RestAttribute.STATUS, "OK");
         } catch (OperationException e) {
             if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "storageEntityId [" + storageEntityId + "] not found");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "storageEntityId [" + storageEntityId + "] error " + e);
-
         }
         return status;
-
     }
 
     @PostMapping(value = "/api/content/add", consumes = {
@@ -103,11 +101,9 @@ public class ContentRestController {
         for (MultipartFile file : uploadedfiles) {
             String resultFile = "Load [" + file.getName() + "]";
 
-            // is this worker is running?
             String jarFileName = file.getOriginalFilename();
             List<RunnerLightDefinition> listRunnerLightDefinitions = runnerFactory.saveFromMultiPartFile(file, jarFileName);
 
-            // Now, stop all the runners containing in the jar
             Map<String, Boolean> runnerIsRunningBefore = new HashMap<>();
             for (RunnerLightDefinition runner : listRunnerLightDefinitions) {
                 String analysis = "runner [" + runner.getType() + "]: ";
@@ -122,26 +118,21 @@ public class ContentRestController {
                         boolean isStopped = jobRunnerFactory.stopRunner(runner.getType());
                         analysis += "Stopped, ";
                     } catch (OperationException operationException) {
-                        // we have a problem here, the copy will failed...
                         analysis += "Can't stop it " + operationException.getHumanInformation() + ", ";
                     }
                 }
                 analysisPerRunner.put(runner.getType(), analysis);
             }
-            // Now, copy the JarFile in the ClassLoader factory
             runnerFactory.jarFileToClassLoader(jarFileName);
 
-            // Now, start all runners
             for (RunnerLightDefinition runner : listRunnerLightDefinitions) {
                 {
                     String analysis = analysisPerRunner.getOrDefault(runner.getType(), "");
 
-                    // if the runner is new, we start it
                     boolean restart = runnerIsRunningBefore.getOrDefault(runner.getType(), Boolean.TRUE);
                     if (restart) {
                         try {
                             analysis += "Start,";
-
                             jobRunnerFactory.startRunner(runner.getType());
                         } catch (OperationException operationException) {
                             analysis += "Can't Start it " + operationException.getHumanInformation() + ", ";
@@ -154,8 +145,8 @@ public class ContentRestController {
             }
         }
 
-        status.put("status", "OK");
-        status.put("resultLoad", resultLoad);
+        status.put(RestAttribute.STATUS, "OK");
+        status.put(RestAttribute.RESULT_LOAD, resultLoad);
         return status;
     }
 

@@ -253,6 +253,8 @@ public class StorePrivateGithub implements StoreAccess {
 
             JsonNode jsonNode = gitHubAccess.getJsonNode(rawUrl);
             connectorDefinition.description = jsonNode.path("description").asText(connectorDefinition.description);
+            // update the name by the name in the element-template
+            connectorDefinition.name = jsonNode.path("name").asText(connectorDefinition.name);
             connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
             connectorDefinition.connectorType = extractTaskDefinitionType(jsonNode);
             JsonNode iconNode = jsonNode.path("icon");

@@ -45,11 +45,12 @@ public interface StoreAccess {
          * If the connector is store in GitHub, save the Github repository something like
 
          */
-        String githubRepoName;
-        String githubRepoPath;
+        public String githubRepoName;
+        public String githubRepoPath;
 
-        String release;
-        String icon;
+        public int version;
+        public String release;
+        public String icon;
         String description;
         EXPLORATION status;
         String documentationRef;
@@ -96,5 +97,6 @@ public interface StoreAccess {
         public String name;
         public String type;
     }
+
 
 }
