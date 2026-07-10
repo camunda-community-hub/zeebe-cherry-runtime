@@ -783,11 +783,12 @@ public abstract class AbstractRunner {
 
     public int getVersion() {
         return -1;
-    };
+    }
 
     public String getRelease() {
         return "";
     }
+
     /**
      * Qualify the runner
      *

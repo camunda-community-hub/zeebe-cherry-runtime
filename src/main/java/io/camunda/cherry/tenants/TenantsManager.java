@@ -21,9 +21,8 @@ import java.util.stream.Collectors;
 @Component
 @Configuration
 public class TenantsManager {
+    private final String errorMessage = "";
     Logger logger = LoggerFactory.getLogger(TenantsManager.class.getName());
-
-
     @Autowired
     JobRunnerFactory jobRunnerFactory;
     @Autowired
@@ -33,7 +32,6 @@ public class TenantsManager {
     @Value("${cherry.tenants.refreshTenantsInMinutes:1}")
     private Integer refreshTenantsInMinutes;
     private List<OrchestrationAPI.TenantInformation> currentTenants = new ArrayList<>();
-    private final String errorMessage = "";
     @Autowired
     private LogOperation logOperation;
     @Autowired

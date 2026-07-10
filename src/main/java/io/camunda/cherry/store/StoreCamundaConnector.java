@@ -40,16 +40,13 @@ import java.util.zip.ZipFile;
 
 
 public class StoreCamundaConnector implements StoreAccess {
-    Logger logger = LoggerFactory.getLogger(StoreCamundaConnector.class.getName());
-
     public static final String REPO = "camunda/connectors";
     public static final String CONTENTS_URL = "https://api.github.com/repos/" + REPO + "/contents/connectors";
     public static final List<String> IGNORE = List.of("README.md");
-
     private final List<ConnectorDefinition> connectors = new ArrayList<>();
-
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
+    Logger logger = LoggerFactory.getLogger(StoreCamundaConnector.class.getName());
 
     public StoreCamundaConnector(GitHubAccess gitHubAccess) {
         // No auth token — camunda/connectors is a public repo and SAML enforcement
@@ -100,10 +97,10 @@ public class StoreCamundaConnector implements StoreAccess {
             for (JsonNode item : items) {
                 result.addAll(exploreConnectorsInGithub("connectors", release, item));
             }
-            logger.info("Store[{}] found {} connectors with release in {} ms", getName(), result.size(), release, System.currentTimeMillis()-startTime );
+            logger.info("Store[{}] found {} connectors with release in {} ms", getName(), result.size(), release, System.currentTimeMillis() - startTime);
             return result;
         } catch (Exception e) {
-            logger.error("Store[{}] error {}", getName(),  e);
+            logger.error("Store[{}] error {}", getName(), e);
             return result;
         }
     }
@@ -121,21 +118,21 @@ public class StoreCamundaConnector implements StoreAccess {
 
         // Check if element-templates subfolder exists — if so, this dir is a connector
         String apiUrl = "https://api.github.com/repos/" + REPO + "/contents/" + repoPath + "/" + name;
-        GitHubAccess.GithubConnectorStatus githubConnectorStatus= gitHubAccess.isGithubConnector(apiUrl, release, true, false);
+        GitHubAccess.GithubConnectorStatus githubConnectorStatus = gitHubAccess.isGithubConnector(apiUrl, release, true, false);
         if (githubConnectorStatus.elementTemplates && githubConnectorStatus.pomXml) {
             logger.info("Store[{}] Detect connector[{}] in url[{}]", getName(), name, htmlUrl);
-            ConnectorDefinition connectorDefinition= ConnectorDefinition.getInstance(this, name, htmlUrl, release);
-            connectorDefinition.githubRepoName= REPO;
-            connectorDefinition.githubRepoPath =  repoPath + "/" + name;
+            ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, name, htmlUrl, release);
+            connectorDefinition.githubRepoName = REPO;
+            connectorDefinition.githubRepoPath = repoPath + "/" + name;
             result.add(connectorDefinition);
             return result;
         }
         if (githubConnectorStatus.elementTemplates) {
             logger.info("Store[{}] Detect connector [{}] with element-template, but no code, in url [{}]", getName(), name, htmlUrl);
-            ConnectorDefinition connectorDefinition= ConnectorDefinition.getInstance(this, name, htmlUrl, release);
-            connectorDefinition.githubRepoName= REPO;
-            connectorDefinition.githubRepoPath =  repoPath + "/" + name;
-            connectorDefinition.hasImplementation= false;
+            ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, name, htmlUrl, release);
+            connectorDefinition.githubRepoName = REPO;
+            connectorDefinition.githubRepoPath = repoPath + "/" + name;
+            connectorDefinition.hasImplementation = false;
 
             result.add(connectorDefinition);
 
@@ -164,13 +161,13 @@ public class StoreCamundaConnector implements StoreAccess {
 
 
     @Override
-    public void exploreDetails(ConnectorDefinition connectorDefinition) throws TechnicalException {
+    public boolean exploreDetails(ConnectorDefinition connectorDefinition) throws TechnicalException {
         if (connectorDefinition.hasImplementation) {
             connectorDefinition = fillJarDownload(connectorDefinition);
         }
         // Search the element template
         connectorDefinition = fillElementTemplate(connectorDefinition);
-        connectorDefinition.status = EXPLORATION.READY;
+        return true;
     }
 
 
@@ -202,15 +199,16 @@ public class StoreCamundaConnector implements StoreAccess {
 
     /**
      * Searching the properties
-     *  "properties": [
-     *     {
-     *       "type": "Hidden",
-     *       "value": "io.camunda:http-json:1",
-     *       "binding": {
-     *         "type": "zeebe:taskDefinition",
-     *         "property": "type"
-     *       }
-     *     },
+     * "properties": [
+     * {
+     * "type": "Hidden",
+     * "value": "io.camunda:http-json:1",
+     * "binding": {
+     * "type": "zeebe:taskDefinition",
+     * "property": "type"
+     * }
+     * },
+     *
      * @param elementTemplate the elementTemplate
      * @return the type
      */
@@ -297,7 +295,7 @@ public class StoreCamundaConnector implements StoreAccess {
             File tempFile = new File(tempPath.toString());
             FileOutputStream tempOut = new FileOutputStream(tempFile);
             IOUtils.copy(connectorDownload.jarContent, tempOut);
-            connectorDownload.listConnectors = fetchDetails(tempFile);
+            connectorDownload.connectorDetails = fetchDetails(tempFile);
             tempFile.delete();
             // get the element Template now
             JsonNode jsonNode = getElementTemplate(connectorDefinition);
@@ -314,7 +312,6 @@ public class StoreCamundaConnector implements StoreAccess {
     /*  Toolbox                                                             */
     /*                                                                      */
     /* ******************************************************************** */
-
 
 
     private boolean jarExists(String url) {

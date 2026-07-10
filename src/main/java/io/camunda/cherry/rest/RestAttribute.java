@@ -2,9 +2,6 @@ package io.camunda.cherry.rest;
 
 public class RestAttribute {
 
-    private RestAttribute() {
-    }
-
     // --- Common ---
     public static final String NAME = "name";
     public static final String TYPE = "type";
@@ -19,7 +16,6 @@ public class RestAttribute {
     public static final String ERRORS = "errors";
     public static final String COMMENT = "comment";
     public static final String MESSAGE = "message";
-
     // --- Runner / Dashboard ---
     public static final String CONNECTOR_TYPE = "connectorType";
     public static final String CLASS_RUNNER = "classrunner";
@@ -39,7 +35,6 @@ public class RestAttribute {
     public static final String TOTAL_EXECUTIONS_FAILED = "totalExecutionsFailed";
     public static final String TOTAL_EXECUTIONS_BPMN_ERRORS = "totalExecutionsBpmnErrors";
     public static final String TOTAL_EXECUTIONS = "totalExecutions";
-
     // --- Execution / Operation log ---
     public static final String HOSTNAME = "hostname";
     public static final String RUNNER_TYPE = "runnerType";
@@ -52,7 +47,6 @@ public class RestAttribute {
     public static final String TYPE_EXECUTOR = "typeExecutor";
     public static final String ERROR_CODE = "errorCode";
     public static final String ERROR_EXPLANATION = "errorExplanation";
-
     // --- Store / Connector ---
     public static final String STORE = "store";
     public static final String STORES = "stores";
@@ -66,18 +60,16 @@ public class RestAttribute {
     public static final String URL_JAR_FILE = "urlJarFile";
     public static final String URL_MAVEN = "urlMaven";
     public static final String HAS_IMPLEMENTATION = "hasImplementation";
-
+    public static final String CREATOR = "creator";
     // --- Secret / Env ---
     public static final String VALUE = "value";
     public static final String IS_SECRET = "issecret";
-
     // --- Content / Jar ---
     public static final String STORAGE_ENTITY_ID = "storageentityid";
     public static final String ACTIVE_RUNNER = "activeRunner";
     public static final String USED_BY = "usedby";
     public static final String LOADED_TIME = "loadedtime";
     public static final String RESULT_LOAD = "resultLoad";
-
     // --- Monitoring / Zeebe ---
     public static final String ZEEBE_KIND_CONNECTION = "zeebekindconnection";
     public static final String CLOUD_REGION = "cloudRegion";
@@ -96,8 +88,9 @@ public class RestAttribute {
     public static final String DATASOURCE_PRODUCT_NAME = "datasourceProductName";
     public static final String DATASOURCE_URL = "datasourceUrl";
     public static final String DATASOURCE_USER_NAME = "datasourceUserName";
-
     // --- Tenant ---
     public static final String TENANTS = "tenants";
     public static final String DELAY_REFRESH = "delayRefresh";
+    private RestAttribute() {
+    }
 }
