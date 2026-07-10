@@ -37,14 +37,14 @@ public class OrchestrationAPI {
         HttpResponse<String> stringHttpResponse = callPostHttp("/v2/tenants/search", "{}");
         if (stringHttpResponse.statusCode() != 200) {
             logger.error("url [{}] status Code[{}]", "/v2/tenants/search", stringHttpResponse.body());
-            throw new RuntimeException("Http Status "+stringHttpResponse.statusCode());
+            throw new RuntimeException("Http Status " + stringHttpResponse.statusCode());
         }
         ObjectMapper mapper = new ObjectMapper();
 
         try {
             JsonNode root = mapper.readTree(stringHttpResponse.body());
             JsonNode itemsNode = root.get("items");
-            if (itemsNode==null) {
+            if (itemsNode == null) {
                 logger.error("in Url [{}] not found [items] in JSON Body [{}]", "/v2/tenants/search", stringHttpResponse.body());
                 throw new RuntimeException("Incorrect content [items] not found in JSON");
 
@@ -107,6 +107,7 @@ public class OrchestrationAPI {
 
     /**
      * Get the accesstoken, according the type of connection.
+     *
      * @return the access token
      * @throws Exception if any error
      */
@@ -114,8 +115,8 @@ public class OrchestrationAPI {
 
         String audience = camundaClientProperties.getAuth().getAudience();
         if (CamundaClientProperties.ClientMode.saas.equals(camundaClientProperties.getMode())
-                && (audience==null || audience.isEmpty())) {
-            audience= "zeebe.camunda.io";
+                && (audience == null || audience.isEmpty())) {
+            audience = "zeebe.camunda.io";
         }
         String body = "grant_type=client_credentials"
                 + "&client_id=" + camundaClientProperties.getAuth().getClientId()
@@ -128,13 +129,13 @@ public class OrchestrationAPI {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        try(HttpClient client = HttpClient.newHttpClient()) {
+        try (HttpClient client = HttpClient.newHttpClient()) {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             String json = response.body();
             if (json.isEmpty())
                 throw new Exception("Can't get access token: body is empty.");
-            if (! json.contains(ACCESS_TOKEN))
+            if (!json.contains(ACCESS_TOKEN))
                 throw new Exception("Can't get access token: " + json);
             // extract access_token (quick & dirty)
             return json.split(ACCESS_TOKEN)[1].split("\"")[0];
