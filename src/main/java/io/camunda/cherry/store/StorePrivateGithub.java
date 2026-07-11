@@ -15,17 +15,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StorePrivateGithub implements StoreAccess {
-
     private static final List<String> IGNORE = List.of("README.md", ".github", "docs");
-
     private final String name;
     private final String url;
     private final String filterProjectName;
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
-
     Logger logger = LoggerFactory.getLogger(StorePrivateGithub.class.getName());
 
+
+    private String REPOS_PER_PAGE = "50";
     public StorePrivateGithub(String name, String url, GitHubAccess gitHubAccess) {
         this.name = name;
         this.url = url;
@@ -80,9 +79,10 @@ public class StorePrivateGithub implements StoreAccess {
     @Override
     public List<ConnectorDefinition> getListConnectors() {
         long startTime = System.currentTimeMillis();
+        logger.info("Store[{}] startListDetector ", getName());
         List<ConnectorDefinition> result = new ArrayList<>();
         try {
-            String apiReposUrl = buildReposApiUrl(url);
+            String apiReposUrl = buildReposApiUrl(url, getTypeRepo());
             if (apiReposUrl == null) {
                 logger.error("Store[{}] cannot build repos API URL from url[{}]", getName(), url);
                 return result;
@@ -95,19 +95,14 @@ public class StorePrivateGithub implements StoreAccess {
                 String htmlUrl = "https://github.com/" + fullName;
 
                 GitHubAccess.GithubConnectorStatus status = gitHubAccess.isGithubConnector(apiContentsUrl, null, true, true);
-                if (status.elementTemplates && status.pomXml && status.gitReleases) {
-                    logger.info("Store[{}] Detect connector[{}] in url[{}]", getName(), shortName, htmlUrl);
+                if (status.elementTemplates) {
                     ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
                     connectorDefinition.githubRepoName = fullName;
                     connectorDefinition.githubRepoPath = "";
-                    result.add(connectorDefinition);
+                    connectorDefinition.sourceUrl = htmlUrl;
+                    connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
+                    logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl,connectorDefinition.hasImplementation );
 
-                } else if (status.elementTemplates) {
-                    logger.info("Store[{}] Detect connector[{}] without implementation in url[{}]", getName(), shortName, htmlUrl);
-                    ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
-                    connectorDefinition.githubRepoName = fullName;
-                    connectorDefinition.githubRepoPath = "";
-                    connectorDefinition.hasImplementation = false;
                     result.add(connectorDefinition);
                 }
             }
@@ -159,7 +154,7 @@ public class StorePrivateGithub implements StoreAccess {
             page++;
         }
 
-        logger.info("Store[{}] detected {} projects total, kept {} repositories (filter={})",
+        logger.debug("Store[{}] detected {} projects total, kept {} repositories (filter={})",
                 getName(), totalProjects, listRepositories.size(), filterProjectName);
         return listRepositories;
     }
@@ -173,103 +168,12 @@ public class StorePrivateGithub implements StoreAccess {
     /* ******************************************************************** */
 
     @Override
-    public void exploreDetails(ConnectorDefinition connectorDefinition) throws TechnicalException {
+    public boolean exploreDetails(ConnectorDefinition connectorDefinition) throws TechnicalException {
         if (connectorDefinition.hasImplementation) {
-            connectorDefinition = fillJarDownload(connectorDefinition);
+            connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
         }
-        // Search the element template
-        connectorDefinition = fillElementTemplate(connectorDefinition);
-        connectorDefinition.status = EXPLORATION.READY;
-    }
-
-
-    /**
-     * Finds the latest official release for the connector's GitHub repo,
-     * saves it in connectorDefinition.release, then checks whether any
-     * release asset is a JAR file.
-     * If no JAR is found, connectorDefinition.hasImplementation is set to false.
-     */
-    private ConnectorDefinition fillJarDownload(ConnectorDefinition connectorDefinition) {
-        // githubRepoName is "owner/repo" (e.g. "camunda-community-hub/my-connector")
-        String repo = connectorDefinition.githubRepoName;
-
-        // 1. Get the latest official release tag
-        String release = gitHubAccess.getLatestRelease(repo);
-        if (release == null) {
-            logger.warn("Store[{}] connector[{}] has no official release", getName(), connectorDefinition.name);
-            connectorDefinition.hasImplementation = false;
-            return connectorDefinition;
-        }
-        connectorDefinition.release = release;
-
-        // 2. List assets of that release and look for a JAR
-        try {
-            // GET /repos/{owner}/{repo}/releases/tags/{tag}
-            String releaseUrl = "https://api.github.com/repos/" + repo + "/releases/tags/" + release;
-            JsonNode releaseNode = gitHubAccess.getJsonNode(releaseUrl);
-            JsonNode assets = releaseNode.path("assets");
-
-            if (assets.isArray()) {
-                for (JsonNode asset : assets) {
-                    String assetName = asset.path("name").asText("");
-                    if (assetName.endsWith(".jar")) {
-                        connectorDefinition.urlJarFile = asset.path("browser_download_url").asText();
-                        logger.info("Store[{}] connector[{}] release[{}] jar[{}]",
-                                getName(), connectorDefinition.name, release, connectorDefinition.urlJarFile);
-                        return connectorDefinition;
-                    }
-                }
-            }
-            // No JAR asset found
-            logger.warn("Store[{}] connector[{}] release[{}] has no JAR asset — marking hasImplementation=false",
-                    getName(), connectorDefinition.name, release);
-            connectorDefinition.hasImplementation = false;
-        } catch (Exception e) {
-            logger.error("Store[{}] connector[{}] error fetching release assets: {}",
-                    getName(), connectorDefinition.name, e.getMessage());
-            connectorDefinition.hasImplementation = false;
-        }
-        return connectorDefinition;
-    }
-
-    /**
-     * Searches the repo's element-templates directory for the first *.json file
-     * using the default branch (HEAD), then reads description, documentationRef,
-     * icon and connectorType from it.
-     */
-    private ConnectorDefinition fillElementTemplate(ConnectorDefinition connectorDefinition) {
-        try {
-            String rawUrl = gitHubAccess.exploreElementTemplate(
-                    connectorDefinition.githubRepoName,
-                    connectorDefinition.githubRepoPath,
-                    "HEAD");
-
-            if (rawUrl == null) {
-                logger.warn("Store[{}] connector[{}] no .json found in element-templates",
-                        getName(), connectorDefinition.name);
-                return connectorDefinition;
-            }
-            connectorDefinition.urlElementTemplate = rawUrl;
-
-            JsonNode jsonNode = gitHubAccess.getJsonNode(rawUrl);
-            connectorDefinition.description = jsonNode.path("description").asText(connectorDefinition.description);
-            // update the name by the name in the element-template
-            connectorDefinition.name = jsonNode.path("name").asText(connectorDefinition.name);
-            connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
-            connectorDefinition.connectorType = extractTaskDefinitionType(jsonNode);
-            JsonNode iconNode = jsonNode.path("icon");
-            if (!iconNode.isMissingNode() && !iconNode.isNull()) {
-                connectorDefinition.icon = iconNode.path("contents").asText(iconNode.asText(""));
-            }
-        } catch (Exception e) {
-            logger.error("Store[{}] connector[{}] error in fillElementTemplate: {}",
-                    getName(), connectorDefinition.name, e.getMessage());
-        }
-        return connectorDefinition;
-    }
-
-    private String extractTaskDefinitionType(JsonNode elementTemplate) {
-        return gitHubAccess.extractTaskDefinitionType(elementTemplate);
+        connectorDefinition = gitHubAccess.fillElementTemplate(getName(), connectorDefinition);
+        return true;
     }
 
 
@@ -281,7 +185,37 @@ public class StorePrivateGithub implements StoreAccess {
 
     @Override
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
-        return null;
+        logger.info("Store[{}] Download connector[{}] from url[{}]", getName(), connectorDefinition.name, connectorDefinition.urlJarFile);
+        ConnectorDownload connectorDownload = new ConnectorDownload();
+        if (connectorDefinition.urlJarFile == null || connectorDefinition.urlJarFile.isEmpty()) {
+            connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
+            connectorDownload.explanation = "No JAR file URL available for connector [" + connectorDefinition.name + "]";
+            return connectorDownload;
+        }
+        try {
+            long startTime = System.currentTimeMillis();
+            connectorDownload.jarName = connectorDefinition.urlJarFile.substring(
+                    connectorDefinition.urlJarFile.lastIndexOf('/') + 1);
+            byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
+            if (jarBytes == null) {
+                connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
+                connectorDownload.explanation = "Empty response from [" + connectorDefinition.urlJarFile + "]";
+                return connectorDownload;
+            }
+            connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);
+            connectorDownload.status = STATUSDOWNLOAD.OK;
+            connectorDownload.explanation = "Downloaded " + jarBytes.length + " bytes from [" + connectorDefinition.urlJarFile + "]";
+            logger.info("Store[{}] Download connector[{}] from url[{}] length {} in ms", getName(), connectorDefinition.name, connectorDefinition.urlJarFile,
+                    jarBytes.length,
+                    System.currentTimeMillis() - startTime);
+
+        } catch (Exception e) {
+            logger.error("Store[{}] connector[{}] error downloading JAR from [{}]: {}",
+                    getName(), connectorDefinition.name, connectorDefinition.urlJarFile, e.getMessage());
+            connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
+            connectorDownload.explanation = "Error downloading JAR: " + e.getMessage();
+        }
+        return connectorDownload;
     }
 
 
@@ -300,9 +234,9 @@ public class StorePrivateGithub implements StoreAccess {
      * -> https://api.github.com/orgs/camunda-community-hub/repos?per_page=100&type=all&sort=full_name
      * <p>
      * https://github.com/pierre-yves-monnet
-     * -> https://api.github.com/users/pierre-yves-monnet/repos?per_page=100&type=all&sort=full_name
+     * -> https://api.github.com/users/pierre-yves-monnet/repos?per_page=100&type=owner&sort=full_name
      */
-    private String buildReposApiUrl(String githubUrl) {
+    private String buildReposApiUrl(String githubUrl, String type) {
         if (githubUrl == null) return null;
         String trimmed = githubUrl.endsWith("/") ? githubUrl.substring(0, githubUrl.length() - 1) : githubUrl;
 
@@ -311,7 +245,7 @@ public class StorePrivateGithub implements StoreAccess {
                 .compile("github\\.com/orgs/([^/]+)$")
                 .matcher(trimmed);
         if (orgMatcher.find()) {
-            return "https://api.github.com/orgs/" + orgMatcher.group(1) + "/repos?per_page=100&type=all&sort=full_name";
+            return "https://api.github.com/orgs/" + orgMatcher.group(1) + "/repos?per_page=" + REPOS_PER_PAGE + "&type="+type+"&sort=full_name";
         }
 
         // user URL: github.com/{user}
@@ -319,9 +253,13 @@ public class StorePrivateGithub implements StoreAccess {
                 .compile("github\\.com/([^/]+)$")
                 .matcher(trimmed);
         if (userMatcher.find()) {
-            return "https://api.github.com/users/" + userMatcher.group(1) + "/repos?per_page=100&type=all&sort=full_name";
+            return "https://api.github.com/users/" + userMatcher.group(1) + "/repos?per_page="+REPOS_PER_PAGE+"&type=owner&sort=full_name";
         }
 
         return null;
+    }
+
+    private String getTypeRepo() {
+        return "owner";
     }
 }

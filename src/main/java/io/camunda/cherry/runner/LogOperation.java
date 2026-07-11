@@ -51,7 +51,7 @@ public class LogOperation {
      * @param message   message to log
      */
     public void log(OperationEntity.Operation operation, AbstractRunner runner, String message) {
-        logger.info("Operation {} on Runner[{}] message: {}", operation, runner.getName(), message);
+        logger.info("Operation {} on Runner[{}] type|{}] message: {}", operation, runner.getName(), runner.getType(), message);
         OperationEntity operationEntity = new OperationEntity();
         operationEntity.operation = operation;
         operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -69,7 +69,7 @@ public class LogOperation {
      * @param e       exception during the error
      */
     public void logException(AbstractRunner runner, String message, Exception e) {
-        logger.error("Exception Runner[{}] message[{}] : {}", runner.getName(), message, e);
+        logger.error("Exception Runner[{}] type[{}] message[{}] : {}", runner.getName(), runner.getType(), message, e);
         OperationEntity operationEntity = new OperationEntity();
         operationEntity.operation = OperationEntity.Operation.ERROR;
         operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -80,7 +80,7 @@ public class LogOperation {
     }
 
     public void logError(String runnerType, String message, Error er) {
-        logger.error("Error Runner[{}] message[{}] : {}", runnerType, message, er);
+        logger.error("Error Runner[{}]  message[{}] : {}", runnerType, message, er);
         OperationEntity operationEntity = new OperationEntity();
         operationEntity.operation = OperationEntity.Operation.ERROR;
         operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);

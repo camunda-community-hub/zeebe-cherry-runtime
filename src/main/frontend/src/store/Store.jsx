@@ -8,7 +8,7 @@
 
 import React from 'react';
 import {Button, Select, TextInput, Tag} from "carbon-components-react";
-import {ArrowRepeat, ChevronDown, ChevronUp, CloudDownloadFill, ConeStriped, FileEarmarkText, FileEarmarkCode, FileEarmarkZip} from "react-bootstrap-icons";
+import {ArrowRepeat, ChevronDown, ChevronRight, CloudDownloadFill, ConeStriped, FileEarmarkText, FileEarmarkCode, FileEarmarkZip} from "react-bootstrap-icons";
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
@@ -58,9 +58,16 @@ class Store extends React.Component {
     render() {
         return (
             <div className={"container"}>
-                <div className="row" style={{width: "100%"}}>
-                    <div className="col-md-12">
+                <div className="row" style={{width: "100%", alignItems: "center"}}>
+                    <div className="col-md-auto">
                         <h1 className="title">Store</h1>
+                    </div>
+                    <div className="col-md-auto" style={{marginLeft: "auto"}}>
+                        <Button className="btn btn-warning btn-sm"
+                                onClick={() => this.exploreAgain()}
+                                disabled={this.state.display.loading}>
+                            <ArrowRepeat/> Explore again
+                        </Button>
                     </div>
                 </div>
 
@@ -77,7 +84,7 @@ class Store extends React.Component {
                             {this.state.stores.map((store) =>
                                 <button key={store.name}
                                         className={this.getButtonClass(store.selected)}
-                                        style={{ fontSize: "10px"}}
+                                        style={{ fontSize: "10px", height: "40px"}}
                                         disabled={this.state.display.loading}
                                         onClick={() => this.setStoreFilter(store.name)}>
                                     {store.name}
@@ -90,19 +97,25 @@ class Store extends React.Component {
                     <div className="col-md-auto">
                         <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
                             <button className={this.getButtonClass(this.state.display.statusFilter === "ALL")}
-                                    style={{marginLeft: "10px", fontSize: "10px"}}
+                                    style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                     disabled={this.state.display.loading}
                                     onClick={() => this.setStatusFilter("ALL")}>
                                 All
                             </button>
+                            <button className={this.getButtonClass(this.state.display.statusFilter === "INSTALLABLE")}
+                                    style={{fontSize: "10px", height: "40px"}}
+                                    disabled={this.state.display.loading}
+                                    onClick={() => this.setStatusFilter("INSTALLABLE")}>
+                                Installable
+                            </button>
                             <button className={this.getButtonClass(this.state.display.statusFilter === "NOT-INSTALLED")}
-                                    style={{fontSize: "10px"}}
+                                    style={{fontSize: "10px", height: "40px"}}
                                     disabled={this.state.display.loading}
                                     onClick={() => this.setStatusFilter("NOT-INSTALLED")}>
                                 Not installed
                             </button>
                             <button className={this.getButtonClass(this.state.display.statusFilter === "OLD")}
-                                    style={{fontSize: "10px"}}
+                                    style={{fontSize: "10px", height: "40px"}}
                                     disabled={this.state.display.loading}
                                     onClick={() => this.setStatusFilter("OLD")}>
                                 Old
@@ -140,6 +153,7 @@ class Store extends React.Component {
                             <ArrowRepeat/> Refresh
                         </Button>
                     </div>
+
                 </div>
 
                 <div className="row" style={{width: "100%"}}>
@@ -158,110 +172,145 @@ class Store extends React.Component {
                             </tr>
                             </thead>
                             <tbody>
-                            {this.state.connectors ? this.state.connectors.map((connectorStore, index) => (
+                            {this.state.connectors ? this.state.connectors.map((connectorDefinition, index) => (
                                 <React.Fragment key={index}>
-                                    <tr style={this.getStyleRow(connectorStore)}>
+                                    <tr style={this.getStyleRow(connectorDefinition)}>
                                         <td style={{width: "30px", cursor: "pointer"}}
                                             onClick={() => this.toggleRow(index)}>
                                             {this.state.expandedRows[index]
                                                 ? <ChevronDown/>
-                                                : <ChevronUp/>}
+                                                : <ChevronRight/>}
                                         </td>
                                         <td style={{width: "32px"}}>
-                                            {connectorStore.icon &&
-                                                <img src={connectorStore.icon} alt=""
+                                            {connectorDefinition.icon &&
+                                                <img src={connectorDefinition.icon} alt=""
                                                      style={{width: "24px", height: "24px"}}/>}
                                         </td>
                                         <td>
-                                            {connectorStore.name}
-                                            {connectorStore.documentationRef && (
-                                                <a href={connectorStore.documentationRef} target="_blank" rel="noreferrer" title="Documentation" style={{marginLeft: "6px"}}>
+                                            {connectorDefinition.name}
+                                            {connectorDefinition.documentationRef && (
+                                                <a href={connectorDefinition.documentationRef} target="_blank" rel="noreferrer" title="Documentation" style={{marginLeft: "6px"}}>
                                                     <FileEarmarkText/>
                                                 </a>
                                             )}
-                                            {connectorStore.urlElementTemplate && (
-                                                <a href={`cherry/api/store/connectors/downloadElementTemplate?store=${encodeURIComponent(connectorStore.store)}&connectorName=${encodeURIComponent(connectorStore.name)}&release=${encodeURIComponent(connectorStore.storerelease)}`}
+                                            {connectorDefinition.urlElementTemplate && (
+                                                <a href={`cherry/api/store/connectors/downloadElementTemplate?store=${encodeURIComponent(connectorDefinition.store)}&connectorName=${encodeURIComponent(connectorDefinition.name)}&release=${encodeURIComponent(connectorDefinition.storerelease)}`}
                                                    title="Download Element Template" style={{marginLeft: "6px"}}>
                                                     <FileEarmarkCode/>
                                                 </a>
                                             )}
-                                            {connectorStore.urlJarFile && (
-                                                <a href={`cherry/api/store/connectors/downloadJarFile?store=${encodeURIComponent(connectorStore.store)}&connectorName=${encodeURIComponent(connectorStore.name)}&release=${encodeURIComponent(connectorStore.storerelease)}`}
+                                            {connectorDefinition.urlJarFile && (
+                                                <a href={`cherry/api/store/connectors/downloadJarFile?store=${encodeURIComponent(connectorDefinition.store)}&connectorName=${encodeURIComponent(connectorDefinition.name)}&release=${encodeURIComponent(connectorDefinition.storerelease)}`}
                                                    title="Download JAR" style={{marginLeft: "6px"}}>
                                                     <FileEarmarkZip/>
                                                 </a>
                                             )}
                                         </td>
                                         <td>
-                                            <Tag type="blue">{connectorStore.store}</Tag>
+                                            <Tag type="blue">{connectorDefinition.store}</Tag>
                                         </td>
                                         <td>
-                                            {connectorStore.currentrelease} ({connectorStore.storerelease})
+                                            {connectorDefinition.currentrelease} ({connectorDefinition.storerelease})
                                         </td>
                                         <td>
-                                            {connectorStore.explorationStatus === "FAILED" &&
+                                            {connectorDefinition.explorationStatus === "FAILED" &&
                                                 <Tag type="red" title="Exploration failed">Exploration Failed</Tag>}
-                                            {connectorStore.status === "NOT-INSTALLED" &&
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "NOT-INSTALLED" &&
                                                 <Tag type="purple" title="Not installed">Not installed</Tag>}
-                                            {connectorStore.status === "UPDATED" &&
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "NO_IMPLEMENTATION" &&
+                                                <Tag type="purple" title="No implementation">No implementation</Tag>}
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "PARENT-NOT-INSTALLED" &&
+                                                <div>
+                                                    <Tag type="purple" title="Parent Not installed">Parent Not installed</Tag>
+                                                    <div style={{fontSize: "10px"}}>Parent connector type: {connectorDefinition.connectorType}</div>
+                                                </div>}
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "UPDATED" &&
                                                 <Tag type="blue" title="Up to date">Up to date</Tag>}
-                                            {connectorStore.status === "OLD" &&
-                                                <Tag type="warm-gray" title="Old">New version {connectorStore.storerelease}</Tag>}
-                                            {connectorStore.status === "NO-RELEASE" &&
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "OLD" &&
+                                                <Tag type="warm-gray" title="Old">New version {connectorDefinition.storerelease}</Tag>}
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "NO-RELEASE" &&
                                                 <Tag type="gray" title="No release">No release</Tag>}
+                                            {connectorDefinition.status === "IN-PROGRESS" &&
+                                                <Tag type="cyan" title="In progress">In progress</Tag>}
                                         </td>
                                         <td>
-                                            {connectorStore.explorationStatus !== "FAILED" &&
-                                             (connectorStore.status === "NOT-INSTALLED" || connectorStore.status === "OLD") &&
+                                            {connectorDefinition.explorationStatus !== "FAILED" &&
+                                             (connectorDefinition.status === "NOT-INSTALLED" || connectorDefinition.status === "OLD" || connectorDefinition.status === "NO-RELEASE") &&
                                                 <Button className="btn btn-primary btn-sm"
-                                                        onClick={() => this.downloadConnector(connectorStore)}>
-                                                    <ConeStriped style={{color: "red"}}/>
+                                                        onClick={() => this.installConnector(connectorDefinition)}>
                                                     <CloudDownloadFill/> Install
                                                 </Button>
+                                            }
+                                            {connectorDefinition.download &&
+                                                <div style={{marginTop: "4px", fontSize: "10px"}}>
+                                                    <Tag type={connectorDefinition.download.status === "OK" ? "green" : "red"}>
+                                                        {connectorDefinition.download.status}
+                                                    </Tag>
+                                                    <div>{connectorDefinition.download.explanation}</div>
+                                                </div>
                                             }
                                         </td>
                                     </tr>
                                     {this.state.expandedRows[index] && (
-                                        <tr style={this.getStyleRow(connectorStore)}>
+                                        <tr style={this.getStyleRow(connectorDefinition)}>
                                             <td colSpan="8">
                                                 <div className="card" style={{margin: "8px 0 8px 60px"}}>
                                                     <div className="card-header"><strong>Information</strong></div>
                                                     <div className="card-body" style={{fontSize: "12px"}}>
-                                                        {connectorStore.icon && (
+                                                        {connectorDefinition.icon && (
                                                             <div style={{display: "flex", alignItems: "center", marginBottom: "6px"}}>
-                                                                <img src={connectorStore.icon} alt=""
+                                                                <img src={connectorDefinition.icon} alt=""
                                                                      style={{width: "48px", height: "48px", marginRight: "12px"}}/>
-                                                                <strong style={{fontSize: "14px"}}>{connectorStore.name}</strong>
+                                                                <strong style={{fontSize: "14px"}}>{connectorDefinition.name}</strong>
                                                             </div>
                                                         )}
-                                                        <div><strong>Connector Type:</strong> {connectorStore.connectorType}</div>
-                                                        <div><strong>Description:</strong> {connectorStore.description}</div>
-                                                        <div><strong>Store:</strong> {connectorStore.store}</div>
-                                                        <div><strong>Store Release:</strong> {connectorStore.storerelease}</div>
+                                                        {connectorDefinition.status === "IN-PROGRESS" &&
+                                                            <div><Tag type="cyan" title="In progress">In progress</Tag></div>}
+                                                        {connectorDefinition.sourceUrl && (
+                                                            <div><strong>Source:</strong>&nbsp;
+                                                                <a href={connectorDefinition.sourceUrl} target="_blank" rel="noreferrer">{connectorDefinition.sourceUrl}</a>
+                                                            </div>
+                                                        )}
+                                                        <div><strong>Connector Type:</strong> {connectorDefinition.connectorType}</div>
+                                                        <div><strong>Description:</strong> {connectorDefinition.description}</div>
+                                                        {connectorDefinition.creator && <div><strong>Creator:</strong> {connectorDefinition.creator}</div>}
+                                                        <div><strong>Store:</strong> {connectorDefinition.store}</div>
+                                                        <div><strong>Store Release:</strong> {connectorDefinition.storerelease}</div>
                                                         <div><strong>Documentation:</strong>&nbsp;
-                                                            {connectorStore.documentationRef
-                                                                ? <a href={connectorStore.documentationRef} target="_blank" rel="noreferrer">{connectorStore.documentationRef}</a>
+                                                            {connectorDefinition.documentationRef
+                                                                ? <a href={connectorDefinition.documentationRef} target="_blank" rel="noreferrer">{connectorDefinition.documentationRef}</a>
                                                                 : "-"}
                                                         </div>
-                                                        <div><strong>GitHub Repo:</strong> {connectorStore.githubRepoName}</div>
-                                                        <div><strong>GitHub Path:</strong> {connectorStore.githubRepoPath}</div>
-                                                        <div><strong>Exploration Status:</strong> {connectorStore.explorationStatus}</div>
-                                                        <div><strong>Element Template URL:</strong>&nbsp;
-                                                            {connectorStore.urlElementTemplate
-                                                                ? <a href={connectorStore.urlElementTemplate} target="_blank" rel="noreferrer">{connectorStore.urlElementTemplate}</a>
+                                                        <div><strong>GitHub Repo:</strong>&nbsp;
+                                                            {connectorDefinition.githubRepoName
+                                                                ? <a href={"https://github.com/" + connectorDefinition.githubRepoName} target="_blank" rel="noreferrer">{connectorDefinition.githubRepoName}</a>
                                                                 : "-"}
+                                                        </div>
+                                                        <div><strong>GitHub Path:</strong> {connectorDefinition.githubRepoPath}</div>
+                                                        <div><strong>Exploration Status:</strong> {connectorDefinition.explorationStatus}</div>
+                                                        <div><strong>Element Template URL:</strong>&nbsp;
+                                                            {!connectorDefinition.urlElementTemplate || connectorDefinition.urlElementTemplate.length === 0
+                                                                ? "-"
+                                                                : connectorDefinition.urlElementTemplate.length === 1
+                                                                    ? <a href={connectorDefinition.urlElementTemplate[0]} target="_blank" rel="noreferrer">{connectorDefinition.urlElementTemplate[0]}</a>
+                                                                    : <ul style={{margin: "2px 0 0 0", paddingLeft: "18px"}}>
+                                                                        {connectorDefinition.urlElementTemplate.map((u, i) => (
+                                                                            <li key={i}><a href={u} target="_blank" rel="noreferrer">{u}</a></li>
+                                                                        ))}
+                                                                      </ul>
+                                                            }
                                                         </div>
                                                         <div><strong>Jar File URL:</strong>&nbsp;
-                                                            {connectorStore.urlJarFile
-                                                                ? <a href={connectorStore.urlJarFile} target="_blank" rel="noreferrer">{connectorStore.urlJarFile}</a>
+                                                            {connectorDefinition.urlJarFile
+                                                                ? <a href={connectorDefinition.urlJarFile} target="_blank" rel="noreferrer">{connectorDefinition.urlJarFile}</a>
                                                                 : "-"}
                                                         </div>
                                                         <div><strong>Maven URL:</strong>&nbsp;
-                                                            {connectorStore.urlMaven
-                                                                ? <a href={connectorStore.urlMaven} target="_blank" rel="noreferrer">{connectorStore.urlMaven}</a>
+                                                            {connectorDefinition.urlMaven
+                                                                ? <a href={connectorDefinition.urlMaven} target="_blank" rel="noreferrer">{connectorDefinition.urlMaven}</a>
                                                                 : "-"}
                                                         </div>
-                                                        <div><strong>Has Implementation:</strong> {String(connectorStore.hasImplementation)}</div>
+                                                        <div><strong>Has Implementation:</strong> {String(connectorDefinition.hasImplementation)}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -273,17 +322,33 @@ class Store extends React.Component {
                         </table>
                     </div>
                 </div>
+            {this.state.explorationInProgress && (
+                <div className="row" style={{width: "100%", marginTop: "8px"}}>
+                    <div className="col-md-12" style={{fontStyle: "italic", color: "#666"}}>
+                        Exploration in progress...
+                    </div>
+                </div>
+            )}
             </div>
         );
     }
 
     getStyleRow(connector) {
         const {statusFilter, filterSearch} = this.state.display;
-        if (statusFilter !== "ALL" && connector.status !== statusFilter)
+        if (statusFilter === "INSTALLABLE" && !connector.isInstallable)
+            return {display: "none"};
+        if (statusFilter !== "ALL" && statusFilter !== "INSTALLABLE" && connector.status !== statusFilter)
             return {display: "none"};
         if (filterSearch && !connector.name.toLowerCase().includes(filterSearch.toLowerCase()))
             return {display: "none"};
         return {};
+    }
+
+    exploreAgain() {
+        this.setDisplayProperty("loading", true);
+        this.setState({status: ""});
+        let restCallService = RestCallService.getInstance();
+        restCallService.getJson('cherry/api/store/connectors/explore?', this, this.refreshListConnectorsCallback);
     }
 
     refreshListConnectors() {
@@ -307,7 +372,15 @@ class Store extends React.Component {
             console.log("Store.refreshListConnectorsCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
-            this.setState({connectors: httpPayload.getData()});
+            const data = httpPayload.getData();
+            const incomingStores = data.stores || [];
+            const existingStores = this.state.stores;
+            const existingByName = Object.fromEntries(existingStores.map(s => [s.name, s]));
+            const incomingNames = new Set(incomingStores.map(s => s.name));
+            const mergedStores = incomingStores.map(s =>
+                existingByName[s.name] ? existingByName[s.name] : {...s, selected: true}
+            ).filter(s => incomingNames.has(s.name));
+            this.setState({connectors: data.connectors || [], stores: mergedStores, explorationInProgress: !!(data.status && data.status.inprogress)});
         }
     }
 
@@ -328,6 +401,28 @@ class Store extends React.Component {
         } else {
             this.setState({connectors: httpPayload.getData()});
         }
+    }
+
+    installConnector(connector) {
+        connector.download = null;
+        this.setState({connectors: [...this.state.connectors]});
+        let uri = 'cherry/api/store/connectors/install?store='+connector.store+'&connectorname=' + connector.name+'&release='+connector.storerelease;
+
+        this.setDisplayProperty("loading", true);
+        this.setState({status: ""});
+        let restCallService = RestCallService.getInstance();
+        restCallService.getJson(uri, this, (httpPayload) => this.installConnectorsCallback(httpPayload, connector));
+    }
+
+    installConnectorsCallback(httpPayload, connector) {
+        this.setDisplayProperty("loading", false);
+        if (httpPayload.isError()) {
+            console.log("Store.downloadConnectorsCallback: error " + httpPayload.getError());
+            connector.download = {status: "ERROR", explanation: httpPayload.getError()};
+        } else {
+            connector.download = httpPayload.getData();
+        }
+        this.setState({connectors: [...this.state.connectors]});
     }
 
     getButtonClass(active) {

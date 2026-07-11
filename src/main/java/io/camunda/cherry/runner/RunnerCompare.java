@@ -5,8 +5,6 @@ import io.camunda.cherry.store.StoreAccess;
 
 public class RunnerCompare {
 
-    public enum COMPARISON {ENTITY_OLD, EQUALS, ENTITY_NEW}
-
     public static COMPARISON compare(StoreAccess.ConnectorDefinition connectorDefinition, RunnerDefinitionEntity runnerEntity) {
         if (connectorDefinition.release != null && runnerEntity.release != null) {
             int cmp = compareSemanticVersion(connectorDefinition.release, runnerEntity.release);
@@ -48,4 +46,6 @@ public class RunnerCompare {
             return 0;
         }
     }
+
+    public enum COMPARISON {ENTITY_OLD, EQUALS, ENTITY_NEW}
 }

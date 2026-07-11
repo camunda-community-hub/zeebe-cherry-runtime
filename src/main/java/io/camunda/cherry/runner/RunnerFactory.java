@@ -2,7 +2,7 @@
 /*                                                                      */
 /*  RunnerFactory                                                       */
 /*                                                                      */
-/*  manipulate all runners.                                             */
+/* Manipulate all runners, and portal class for all access to runner.   */
 /* main API for RunnerEmbedded, RunnerUpload to manipulate different    */
 /* kind of runners, and interface to RunnerStorage                      */
 /*                                                                      */
@@ -14,10 +14,13 @@
 /* Note: workers are created in the JobRunnerFactory. This class manage */
 /* the runner definition, not the execution                             */
 /*                                                                      */
+/*                                                                      */
+/*                                                                      */
+/*                                                                      */
+/*                                                                      */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
-import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
@@ -37,29 +40,23 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.support.GenericWebApplicationContext;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class RunnerFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
     private final RunnerEmbeddedFactory runnerEmbeddedFactory;
-    private final RunnerUploadFactory runnerUploadFactory;
     private final RunnerClassLoaderFactory runnerClassLoaderFactory;
     private final StorageRunner storageRunner;
     private final RunnerExecutionRepository runnerExecutionRepository;
     private final LogOperation logOperation;
     private final SessionFactory sessionFactory;
+    private final RunnerUploadFactory runnerUploadFactory;
 
     /**
      * A runner (worker, connector) is instantiate only one time. it maybe a object to create, or a component.
@@ -74,27 +71,20 @@ public class RunnerFactory {
     private ApplicationContext context;
 
     RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
-                  RunnerUploadFactory runnerUploadFactory,
                   RunnerClassLoaderFactory runnerClassLoaderFactory,
                   StorageRunner storageRunner,
                   RunnerExecutionRepository runnerExecutionRepository,
+                  RunnerUploadFactory runnerUploadFactory,
                   LogOperation logOperation,
                   SessionFactory sessionFactory) {
         this.runnerEmbeddedFactory = runnerEmbeddedFactory;
-        this.runnerUploadFactory = runnerUploadFactory;
         this.runnerClassLoaderFactory = runnerClassLoaderFactory;
         this.storageRunner = storageRunner;
         this.runnerExecutionRepository = runnerExecutionRepository;
         this.logOperation = logOperation;
         this.sessionFactory = sessionFactory;
+        this.runnerUploadFactory = runnerUploadFactory;
     }
-
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Operations                                                          */
-    /*                                                                      */
-    /* ******************************************************************** */
 
     /**
      * Detect classical runner in an object
@@ -141,102 +131,24 @@ public class RunnerFactory {
             if (annotation != null)
                 listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
         }
-
         return listDetectedRunners;
-    }
-
-    /**
-     * Initialise step
-     * 1: detect/load all runners in the storage:
-     * - from embedbed (thanks to runnerEmbeddedFactory),
-     * - UploadPath (runnerUploadFactory)
-     * 2; copy all Jar from the storage to the Classloaderpath (runnerUploadFactory)
-     * <p>
-     * The class does not start any runners
-     */
-    public void init() {
-        logger.info("----- RunnerFactory.1 Load all embedded runner");
-
-        runnerEmbeddedFactory.registerInternalRunner();
-
-        // second, check all library connector
-        logger.info("----- RunnerFactory.2 Load to storage all upload JAR");
-        List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.loadStorageFromUploadPath();
-        String logInfo = runnerLightDefinitions.stream()
-                .map(RunnerLightDefinition::getName)
-                .collect(Collectors.joining(","));
-        logger.info("Load StorageFromUploadPath [{}]", logInfo);
-
-        // Upload the ClassLoaderPath, and load the class
-        logger.info("----- RunnerFactory.3 Load JavaClassLoaderPath from storage");
-        List<String> lisJars = runnerUploadFactory.loadClassLoaderJarsFromStorage(true);
-        logInfo = String.join(",", lisJars);
-        logger.info("Load JarUploadPath [{}]", logInfo);
-
-    }
-
-    /**
-     * Save a new Jar file. A Jar file contains multiple runners. This method does not stop/restart runners.
-     * The method save in the storage and in the classloader path. The load in the JavaClassLoader is not under
-     * the responsability of the method, just to place the jar in the storage and the classloader.
-     *
-     * @param file multipart file
-     * @return list of runners detected in the jar file
-     */
-    public List<RunnerLightDefinition> saveFromMultiPartFile(MultipartFile file, String jarFileName) {
-
-        List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
-        JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
-
-        // save the file on a temporary disk
-        OutputStream outputStream = null;
-        Path jarTemp = null;
-        try {
-            jarTemp = Files.createTempFile(jarFileName, ".jar");
-            // Open an OutputStream to the temporary file
-            outputStream = new FileOutputStream(jarTemp.toFile());
-            // Transfer data from InputStream to OutputStream
-            byte[] buffer = new byte[1024 * 100]; // 100Ko
-            int bytesRead;
-            int count = 0;
-            InputStream inputStream = file.getInputStream();
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                count += bytesRead;
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            outputStream.flush();
-            outputStream.close();
-            outputStream = null;
-
-            listRunnersDetected = runnerUploadFactory.saveJarFileToStorage(jarTemp.toFile(), jarFileName, true);
-
-            logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + file.getName() + "]");
-
-        } catch (Exception e) {
-            logOperation.log(OperationEntity.Operation.ERROR, "Can't load JAR [" + jarFileName + "] : " + e.getMessage());
-        } finally {
-            if (outputStream != null)
-                try {
-                    outputStream.close();
-                } catch (Exception e) {
-                    // do nothing
-                }
-        }
-        return listRunnersDetected;
-    }
-
-    /**
-     * Copy a Jar File from Storage to the ClassLoader path
-     *
-     * @param jarFileName
-     */
-    public boolean jarFileToClassLoader(String jarFileName) {
-        return runnerUploadFactory.jarFileStorageToClassLoader(jarFileName);
     }
 
     /* ******************************************************************** */
     /*                                                                      */
-    /*  getter/setter                                                       */
+    /*  Operations                                                          */
+    /*                                                                      */
+    /* ******************************************************************** */
+    public void init() {
+        runnerUploadFactory.init();
+    }
+
+
+
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  Operations                                                       */
     /*                                                                      */
     /* ******************************************************************** */
 
@@ -287,6 +199,29 @@ public class RunnerFactory {
     }
 
     /**
+     * Install the jar, and return the list of runner detected in the jar.
+     * Attention: runners are not stopped/restarted. The runnerFactory can't access the running runner (managed by jobRunnerFactory)
+     * @param jarFileName jar file name
+     * @param jarFileInputStream InputStream
+     * @return list of runners detected in the JAR
+     */
+    public List<RunnerLightDefinition> installJar(String jarFileName, ByteArrayInputStream jarFileInputStream) {
+        List<RunnerLightDefinition> runners = runnerUploadFactory.installJar(jarFileName, jarFileInputStream);
+        logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + jarFileName + "]");
+        synchronize();
+
+
+        return runners;
+    }
+
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  getter/setter                                                       */
+    /*                                                                      */
+    /* ******************************************************************** */
+
+    /**
      * Get All runners
      *
      * @param filter specify the type of runners
@@ -302,6 +237,7 @@ public class RunnerFactory {
         }
         return listRunners;
     }
+
 
     /**
      * Return the list store in the entity. This part contains different information, like the origin

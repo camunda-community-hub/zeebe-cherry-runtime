@@ -10,13 +10,9 @@ import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.rest.RestAttribute;
-import io.camunda.cherry.runner.LogOperation;
-import io.camunda.cherry.runner.RunnerCompare;
-import io.camunda.cherry.runner.RunnerFactory;
-import io.camunda.cherry.runner.StorageRunner;
+import io.camunda.cherry.runner.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,24 +30,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("cherry")
 public class StoreRestController {
-
     Logger logger = LoggerFactory.getLogger(StoreRestController.class.getName());
 
-    @Autowired
-    StoreFactory storeFactory;
-
-    @Autowired
-    RunnerFactory runnerFactory;
-
-    @Autowired
-    LogOperation logOperation;
+    private final StoreFactory storeFactory;
+    private final RunnerFactory runnerFactory;
+    private final LogOperation logOperation;
+    private final JobRunnerFactory jobRunnerFactory;
 
 
+    public StoreRestController(
+            StoreFactory storeFactory,
+            RunnerFactory runnerFactory,
+            JobRunnerFactory jobRunnerFactory,
+            LogOperation logOperation) {
+        this.storeFactory = storeFactory;
+        this.runnerFactory = runnerFactory;
+        this.logOperation = logOperation;
+        this.jobRunnerFactory = jobRunnerFactory;
+    }
     /* ******************************************************************** */
     /*                                                                      */
     /*  Store operation                                                     */
@@ -68,15 +71,34 @@ public class StoreRestController {
     }
 
 
-
     /* ******************************************************************** */
     /*                                                                      */
     /*  connectors store operation                                          */
     /*                                                                      */
     /* ******************************************************************** */
+    @GetMapping(value = "/api/store/connectors/explore", produces = "application/json")
+    public Map<String, Object> exploreConnectorInStore() {
+        if (storeFactory.isExplorationInProcess()) {
+            listConnectorInStore(null, "nameAsc");
+        } else {
+            Executors.newSingleThreadExecutor().execute(() -> storeFactory.explore());
+            try {
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return listConnectorInStore(null, "nameAsc");
+    }
 
+
+    /**
+     * @param stores  stores to filter the result
+     * @param orderBy order by
+     * @return list of connectors, stores
+     */
     @GetMapping(value = "/api/store/connectors/list", produces = "application/json")
-    public List<Map<String, Object>> listConnectorInStore(
+    public Map<String, Object> listConnectorInStore(
             @RequestParam(name = "stores", required = false) List<String> stores,
             @RequestParam(name = "orderBy", required = false, defaultValue = "nameAsc") String orderBy) {
         try {
@@ -118,36 +140,44 @@ public class StoreRestController {
                 mapConnector.put(RestAttribute.URL_MAVEN, connectorDefinition.urlMaven);
                 mapConnector.put(RestAttribute.CONNECTOR_TYPE, connectorDefinition.connectorType);
                 mapConnector.put(RestAttribute.HAS_IMPLEMENTATION, connectorDefinition.hasImplementation);
+                mapConnector.put(RestAttribute.IS_INSTALLABLE, connectorDefinition.isInstallable);
+                mapConnector.put(RestAttribute.SOURCE_URL, connectorDefinition.sourceUrl);
+                mapConnector.put(RestAttribute.CREATOR, connectorDefinition.creator);
                 listAllConnectors.add(mapConnector);
 
-                RunnerDefinitionEntity runnerEntity = mapRunnersByName.get(connectorDefinition.name);
-                if (!connectorDefinition.hasImplementation) {
-                    runnerEntity = mapRunnersByType.get(connectorDefinition.connectorType);
-                }
-
-                if (runnerEntity == null) {
-                    mapConnector.put(RestAttribute.STATUS, "NOT-INSTALLED");
-                } else if (connectorDefinition.release == null) {
-                    mapConnector.put(RestAttribute.STATUS, "NO-RELEASE");
-                } else if (runnerEntity.release == null) {
-                    mapConnector.put(RestAttribute.STATUS, "NO-RELEASE");
-                } else if (connectorDefinition.release.equals(runnerEntity.release)) {
-                    mapConnector.put(RestAttribute.STATUS, "UPDATED");
+                if (connectorDefinition.status == StoreAccess.EXPLORATION.INPROGRESS) {
+                    mapConnector.put(RestAttribute.STATUS, "IN-PROGRESS");
                 } else {
-                    RunnerCompare.COMPARISON comparison = RunnerCompare.compare(connectorDefinition, runnerEntity);
-                    switch (comparison) {
-                        case RunnerCompare.COMPARISON.ENTITY_NEW:
-                            mapConnector.put(RestAttribute.STATUS, "UPDATED");
-                            break;
-                        case RunnerCompare.COMPARISON.ENTITY_OLD:
-                            mapConnector.put(RestAttribute.STATUS, "OLD");
-                            break;
-                        case RunnerCompare.COMPARISON.EQUALS:
-                            mapConnector.put(RestAttribute.STATUS, "UPDATED");
-                            break;
+                    RunnerDefinitionEntity runnerEntity = mapRunnersByName.get(connectorDefinition.name);
+                    if (!connectorDefinition.hasImplementation) {
+                        runnerEntity = mapRunnersByType.get(connectorDefinition.connectorType);
                     }
+                    if (connectorDefinition.connectorType == null) {
+                        mapConnector.put(RestAttribute.STATUS, "NO_IMPLEMENTATION");
+                    } else if (runnerEntity == null) {
+                        mapConnector.put(RestAttribute.STATUS, connectorDefinition.hasImplementation ? "NOT-INSTALLED" : "PARENT-NOT-INSTALLED");
+                    } else if (connectorDefinition.release == null) {
+                        mapConnector.put(RestAttribute.STATUS, "NO-RELEASE");
+                    } else if (runnerEntity.release == null) {
+                        mapConnector.put(RestAttribute.STATUS, "NO-RELEASE");
+                    } else if (connectorDefinition.release.equals(runnerEntity.release)) {
+                        mapConnector.put(RestAttribute.STATUS, "UPDATED");
+                    } else {
+                        RunnerCompare.COMPARISON comparison = RunnerCompare.compare(connectorDefinition, runnerEntity);
+                        switch (comparison) {
+                            case RunnerCompare.COMPARISON.ENTITY_NEW:
+                                mapConnector.put(RestAttribute.STATUS, "UPDATED");
+                                break;
+                            case RunnerCompare.COMPARISON.ENTITY_OLD:
+                                mapConnector.put(RestAttribute.STATUS, "OLD");
+                                break;
+                            case RunnerCompare.COMPARISON.EQUALS:
+                                mapConnector.put(RestAttribute.STATUS, "UPDATED");
+                                break;
+                        }
+                    }
+                    mapConnector.put(RestAttribute.CURRENT_RELEASE, runnerEntity == null ? "" : runnerEntity.release);
                 }
-                mapConnector.put(RestAttribute.CURRENT_RELEASE, runnerEntity == null ? "" : runnerEntity.release);
             }
 
             listAllConnectors.sort((a, b) -> {
@@ -164,10 +194,14 @@ public class StoreRestController {
             });
 
             logger.info("End listConnectorInStore in {} ms", System.currentTimeMillis() - beginTime);
-            return listAllConnectors;
+            List<Map<String, String>> listStores = storeFactory.getStores().stream()
+                    .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
+                    .toList();
+            Map<String, Object> status = new HashMap<>();
+            status.put("inprogress", storeFactory.isExplorationInProcess());
+            return Map.of("connectors", listAllConnectors, "stores", listStores, "status", status);
 
-        } catch (
-                TechnicalException e) {
+        } catch (TechnicalException e) {
             logger.error("can't access store list ", e);
             logOperation.log(OperationEntity.Operation.ERROR, "Can't access Store " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
@@ -186,11 +220,19 @@ public class StoreRestController {
             StoreAccess.ConnectorDefinition connector = storeFactory.getConnectorDefinition(storeAccess, connectorName);
             if (connector == null || connector.urlElementTemplate == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Element template not available for: " + connectorName);
-            byte[] content = fetchUrl(connector.urlElementTemplate);
-            String filename = connectorName + "-" + release + ".json";
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", filename);
+            byte[] content;
+            if (connector.urlElementTemplate.size() == 1) {
+                content = fetchUrl(connector.urlElementTemplate.get(0));
+                String filename = connectorName + "-" + release + ".json";
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", filename);
+            } else {
+                content = createZipElementTemplate(connector.urlElementTemplate);
+                String filename = connectorName + "-" + release + "-templates.zip";
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", filename);
+            }
             return new ResponseEntity<>(content, headers, HttpStatus.OK);
         } catch (IOException e) {
             logger.error("Can't download element template for {}", connectorName, e);
@@ -228,14 +270,64 @@ public class StoreRestController {
         }
     }
 
-    @GetMapping(value = "/api/store/connectors/download", produces = "application/json")
-    public Map<String, Object> download(@RequestParam(name = "storename", required = false) String storeName,
-                                        @RequestParam(name = "connectorname", required = false) String connectorName,
-                                        @RequestParam(name = "release", required = false) String release) {
+    private byte[] createZipElementTemplate(List<String> urls) throws IOException {
+        try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+             java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(baos)) {
+            for (String urlString : urls) {
+                String entryName = urlString.substring(urlString.lastIndexOf('/') + 1);
+                byte[] content = fetchUrl(urlString);
+                zos.putNextEntry(new java.util.zip.ZipEntry(entryName));
+                zos.write(content);
+                zos.closeEntry();
+            }
+            zos.finish();
+            return baos.toByteArray();
+        }
+    }
+
+    @GetMapping(value = "/api/store/connectors/download")
+    public ResponseEntity<byte[]> download(@RequestParam(name = "store", required = false) String storeName,
+                                           @RequestParam(name = "connectorname", required = false) String connectorName,
+                                           @RequestParam(name = "release", required = false) String release) {
         try {
-            Map<String, Object> connectorDownloaded = new HashMap<>();
             StoreAccess.ConnectorDownload connectorDownload = storeFactory.downloadConnector(storeName, connectorName, release);
-            return connectorDownloaded;
+            if (connectorDownload.jarContent == null)
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read JAR content");
+
+            byte[] jarBytes = connectorDownload.jarContent.readAllBytes();
+            String filename = connectorName + (release != null ? "-" + release : "") + ".jar";
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType("application/java-archive"))
+                    .contentLength(jarBytes.length)
+                    .body(jarBytes);
+        } catch (TechnicalException e) {
+            logOperation.log(OperationEntity.Operation.ERROR,
+                    "Can't download connector[" + connectorName + "] " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (ResponseStatusException e) {
+            throw e;
+        }
+    }
+
+    @GetMapping(value = "/api/store/connectors/install", produces = "application/json")
+    public StoreAccess.ConnectorDownload install(@RequestParam(name = "store", required = false) String storeName,
+                                                 @RequestParam(name = "connectorname", required = false) String connectorName,
+                                                 @RequestParam(name = "release", required = false) String release) {
+        try {
+            StoreAccess.ConnectorDownload connectorDownload = storeFactory.downloadConnector(storeName, connectorName, release);
+
+            // Now install it
+            connectorDownload.runners = runnerFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent);
+            for (RunnerLightDefinition runner : connectorDownload.runners) {
+                try {
+                    jobRunnerFactory.stopRunner(runner.getType());
+                    jobRunnerFactory.startRunner(runner.getType());
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                }
+            }
+            return connectorDownload;
         } catch (TechnicalException e) {
             logOperation.log(OperationEntity.Operation.ERROR,
                     "Can't download connector[" + connectorName + "] " + e.getMessage());

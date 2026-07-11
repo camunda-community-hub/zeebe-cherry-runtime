@@ -167,9 +167,9 @@ public class RunnerDecorationTemplate {
             templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
         templateContent.put(ATTR_CATEGORY, fixMapOf(ATTR_ID, "connectors", ATTR_NAME, "Connectors"));
 
-        if (runner.getVersion()>0)
+        if (runner.getVersion() > 0)
             templateContent.put(ATTR_VERSION, runner.getVersion());
-        if (runner.getRelease()!=null && ! runner.getRelease().isEmpty())
+        if (runner.getRelease() != null && !runner.getRelease().isEmpty())
             templateContent.put(ATTR_RELEASE, runner.getRelease());
 
         // Applies to and element type

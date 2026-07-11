@@ -137,12 +137,18 @@ public class RunnerRestController {
         Comparator<Map<String, Object>> orderComparator;
 
         orderComparator = switch (orderBy) {
-            case NAMEASC -> (h1, h2) -> ((String) h1.get(RestAttribute.NAME)).compareTo((String) h2.get(RestAttribute.NAME));
-            case NAMEDES -> (h1, h2) -> ((String) h2.get(RestAttribute.NAME)).compareTo((String) h1.get(RestAttribute.NAME));
-            case EXECASC -> (h1, h2) -> ((Long) h1.get(RestAttribute.NB_EXEC)).compareTo((Long) h2.get(RestAttribute.NB_EXEC));
-            case EXECDES -> (h1, h2) -> ((Long) h2.get(RestAttribute.NB_EXEC)).compareTo((Long) h1.get(RestAttribute.NB_EXEC));
-            case FAILASC -> (h1, h2) -> ((Long) h1.get(RestAttribute.NB_FAIL)).compareTo((Long) h2.get(RestAttribute.NB_FAIL));
-            case FAILDES -> (h1, h2) -> ((Long) h2.get(RestAttribute.NB_FAIL)).compareTo((Long) h1.get(RestAttribute.NB_FAIL));
+            case NAMEASC ->
+                    (h1, h2) -> ((String) h1.get(RestAttribute.NAME)).compareTo((String) h2.get(RestAttribute.NAME));
+            case NAMEDES ->
+                    (h1, h2) -> ((String) h2.get(RestAttribute.NAME)).compareTo((String) h1.get(RestAttribute.NAME));
+            case EXECASC ->
+                    (h1, h2) -> ((Long) h1.get(RestAttribute.NB_EXEC)).compareTo((Long) h2.get(RestAttribute.NB_EXEC));
+            case EXECDES ->
+                    (h1, h2) -> ((Long) h2.get(RestAttribute.NB_EXEC)).compareTo((Long) h1.get(RestAttribute.NB_EXEC));
+            case FAILASC ->
+                    (h1, h2) -> ((Long) h1.get(RestAttribute.NB_FAIL)).compareTo((Long) h2.get(RestAttribute.NB_FAIL));
+            case FAILDES ->
+                    (h1, h2) -> ((Long) h2.get(RestAttribute.NB_FAIL)).compareTo((Long) h1.get(RestAttribute.NB_FAIL));
         };
 
         listDetails = listDetails.stream().sorted(orderComparator).toList();
