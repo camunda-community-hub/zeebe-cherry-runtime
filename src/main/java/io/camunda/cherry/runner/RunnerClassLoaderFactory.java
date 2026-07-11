@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -50,7 +51,7 @@ public class RunnerClassLoaderFactory {
      * @param jarStorageEntity jar to copy in the ClassFolder
      * @return name of jar, null in case of error
      */
-    public String copyJarEntity(JarStorageEntity jarStorageEntity) {
+    public File copyJarEntity(JarStorageEntity jarStorageEntity) {
 
         String jarFileName = classLoaderPath + File.separator + jarStorageEntity.name;
         File saveJarFile = new File(jarFileName);
@@ -62,10 +63,26 @@ public class RunnerClassLoaderFactory {
                 storageRunner.readJarBlob(jarStorageEntity, outputStream);
             }
             outputStream.flush();
-            return saveJarFile.getName();
+            return saveJarFile;
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR,
                     "Can't save jarFile[" + jarStorageEntity.name + "] to file [" + jarFileName + "] : " + e.getMessage());
+            return null;
+        }
+    }
+
+    public File copyJarFile(String jarFileName, InputStream jarFileInputStream) {
+        String fullPath = classLoaderPath + File.separator + jarFileName;
+        logger.info("Copying inputStream to jar[" + jarFileName + "] to path[" + fullPath + "]");
+        File saveJarFile = new File(fullPath);
+
+        try (FileOutputStream outputStream = new FileOutputStream(saveJarFile)) {
+            jarFileInputStream.transferTo(outputStream);
+            outputStream.flush();
+            return saveJarFile;
+        } catch (Exception e) {
+            logOperation.log(OperationEntity.Operation.ERROR,
+                    "Can't save jarFile[" + jarFileName + "] to file [" + fullPath + "] : " + e.getMessage());
             return null;
         }
     }
@@ -76,7 +93,7 @@ public class RunnerClassLoaderFactory {
      * @param jarFileName jar file to load, assuming it was already copied in the ClassLoader
      * @param className   class name to access
      * @return the class of the classname
-     * @throws ClassNotFoundException
+     * @throws ClassNotFoundException can arrive
      */
     public Class<?> loadClassInJavaMachine(String jarFileName, String className) throws Exception {
         String pathFileName = getClassLoaderPath() + File.separator + jarFileName;
@@ -124,6 +141,9 @@ public class RunnerClassLoaderFactory {
                             finalStatus = false;
                     }
                 } else {
+                    if (file.getName().equals("README.md")) {
+                        continue;
+                    }
                     // Delete files
                     if (!file.delete()) {
                         logger.error("Failed to delete file: [{}]", file.getAbsolutePath());

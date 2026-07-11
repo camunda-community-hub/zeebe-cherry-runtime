@@ -1,5 +1,7 @@
 package io.camunda.cherry.store;
 
+import io.camunda.cherry.runner.RunnerLightDefinition;
+
 import java.io.ByteArrayInputStream;
 import java.util.List;
 
@@ -15,6 +17,7 @@ public interface StoreAccess {
      * Get the lisf of connector. Each connectorDefition is "light", with name.
      * Then the exploration will continue one by one via the exploreDetails
      * status is set to INPROGRESS
+     *
      * @return
      */
     List<ConnectorDefinition> getListConnectors();
@@ -27,37 +30,45 @@ public interface StoreAccess {
      * - url to get the JAR file
      * - logo ir downloaded
      * status is moved to READY or FAILED
+     *
      * @param connectorDefinition
+     * @return true if the connector is valid, false if not and must be deleted
      */
-    void exploreDetails(ConnectorDefinition connectorDefinition);
+    boolean exploreDetails(ConnectorDefinition connectorDefinition);
 
 
     ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition);
 
 
+    enum EXPLORATION {READY, INPROGRESS, INCOMPLETE}
 
-    public enum EXPLORATION { READY, INPROGRESS, FAILED}
-    public class ConnectorDefinition {
-        StoreAccess storeAccess;
-        String name;
-        String url;
+    enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK}
+
+    class ConnectorDefinition {
         /**
          * If the connector is store in GitHub, save the Github repository something like
-
          */
         public String githubRepoName;
         public String githubRepoPath;
-
         public int version;
         public String release;
         public String icon;
+        /**
+         * The connector may not have a direct implementation, and use a other comp
+         */
+        public boolean hasImplementation = true;
+        public boolean isInstallable = true;
+        StoreAccess storeAccess;
+        String name;
+        String url;
         String description;
+        String creator;
         EXPLORATION status;
         String documentationRef;
         /*
         Url to download the element Template
          */
-        String urlElementTemplate;
+        List<String> urlElementTemplate;
         /**
          * Url to download the Jarfile - attentioon, this file maybe a Zip, and may be need to be explored
          */
@@ -66,15 +77,15 @@ public interface StoreAccess {
          * The jar file may be stored in a Maven repository
          */
         String urlMaven;
-
         /**
          * the connector type
          */
         String connectorType;
         /**
-         * The connector may not have a direct implementation, and use a other comp
+         * Source URL (marketplace page, GitHub page, etc.)
          */
-        public boolean hasImplementation = true;
+        public String sourceUrl;
+
         public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
             ConnectorDefinition connectorDefinition = new ConnectorDefinition();
             connectorDefinition.storeAccess = storeAccess;
@@ -85,13 +96,17 @@ public interface StoreAccess {
         }
     }
 
-    public class ConnectorDownload {
+    class ConnectorDownload {
+        public STATUSDOWNLOAD status;
+        public String explanation;
         public String elementTemplate;
-        ByteArrayInputStream jarContent;
-        List<ConnectorDetail> listConnectors;
+        public ByteArrayInputStream jarContent;
+        public String jarName;
+        public List<RunnerLightDefinition> runners;
+        public List<ConnectorDetail> connectorDetails;
     }
 
-    public class ConnectorDetail {
+    class ConnectorDetail {
         public String className;
         public List<String> fetchVariables;
         public String name;

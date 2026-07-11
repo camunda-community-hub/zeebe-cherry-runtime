@@ -72,46 +72,46 @@ class Dashboard extends React.Component {
                     <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
 
                         <button className={this.getButtonClass(this.state.display.showActive)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showActive")}>
                             Active
                         </button>
                         <button className={this.getButtonClass(this.state.display.showInactive)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showInactive")}>
                             Inactive
                         </button>
 
                         <button className={this.getButtonClass(this.state.display.showWorker)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showWorker")}>
                             Worker
                         </button>
                         <button className={this.getButtonClass(this.state.display.showConnector)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showConnector")}>
                             Connector
                         </button>
 
                         <button className={this.getButtonClass(this.state.display.showOnlyError)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showOnlyError")}>
                             <XCircle style={{color: "red"}}/> Only Errors
                         </button>
                         <button className={this.getButtonClass(this.state.display.showOnlyOverThreshold)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showOnlyOverThreshold")}>
                             Over Threshold
                         </button>
 
                         <button className={this.getButtonClass(this.state.display.showFrameworkRunner)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showFrameworkRunner")}>
                             <img src="/img/cherries.png" width="20" height="20" alt="cherry"/>Framework Runner

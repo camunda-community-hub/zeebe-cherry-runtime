@@ -5,43 +5,44 @@ import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationException;
-import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.runner.RunnerAdminOperation;
-import io.camunda.cherry.runner.RunnerFactory;
-import io.camunda.cherry.runner.RunnerLightDefinition;
+import io.camunda.cherry.runner.*;
 import io.camunda.cherry.util.DateOperation;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("cherry")
 public class ContentRestController {
+    Logger logger = LoggerFactory.getLogger(ContentRestController.class.getName());
 
-    JarStorageEntityRepository jarStorageEntityRepository;
-    RunnerDefinitionRepository runnerDefinitionRepository;
-    RunnerAdminOperation runnerAdminOperation;
-    RunnerFactory runnerFactory;
-    JobRunnerFactory jobRunnerFactory;
-    @Autowired
-    JobRunnerFactory cherryJobRunnerFactory;
+    private final JarStorageEntityRepository jarStorageEntityRepository;
+    private final RunnerDefinitionRepository runnerDefinitionRepository;
+    private final RunnerAdminOperation runnerAdminOperation;
+    private final RunnerFactory runnerFactory;
+    private final JobRunnerFactory jobRunnerFactory;
+    private final RunnerUploadFactory runnerUploadFactory;
 
     public ContentRestController(JarStorageEntityRepository jarStorageEntityRepository,
                                  RunnerDefinitionRepository runnerDefinitionRepository,
                                  RunnerAdminOperation runnerAdminOperation,
                                  RunnerFactory runnerFactory,
-                                 JobRunnerFactory jobRunnerFactory) {
+                                 JobRunnerFactory jobRunnerFactory,
+                                 RunnerUploadFactory runnerUploadFactory) {
         this.jarStorageEntityRepository = jarStorageEntityRepository;
         this.runnerDefinitionRepository = runnerDefinitionRepository;
         this.runnerAdminOperation = runnerAdminOperation;
         this.runnerFactory = runnerFactory;
         this.jobRunnerFactory = jobRunnerFactory;
+        this.runnerUploadFactory = runnerUploadFactory;
     }
 
     @GetMapping(value = "/api/content/list", produces = "application/json")
@@ -61,7 +62,7 @@ public class ContentRestController {
                 Map<String, Object> recordRunner = new HashMap<>();
                 recordRunner.put(RestAttribute.NAME, t.name);
                 recordRunner.put(RestAttribute.COLLECTION_NAME, t.collectionName);
-                recordRunner.put(RestAttribute.ACTIVE_RUNNER, cherryJobRunnerFactory.isActiveRunner(t.type));
+                recordRunner.put(RestAttribute.ACTIVE_RUNNER, jobRunnerFactory.isActiveRunner(t.type));
                 return recordRunner;
             }).toList();
             recordStorage.put(RestAttribute.USED_BY, listUsedBy);
@@ -102,7 +103,7 @@ public class ContentRestController {
             String resultFile = "Load [" + file.getName() + "]";
 
             String jarFileName = file.getOriginalFilename();
-            List<RunnerLightDefinition> listRunnerLightDefinitions = runnerFactory.saveFromMultiPartFile(file, jarFileName);
+            List<RunnerLightDefinition> listRunnerLightDefinitions = saveFromMultiPartFile(file, jarFileName);
 
             Map<String, Boolean> runnerIsRunningBefore = new HashMap<>();
             for (RunnerLightDefinition runner : listRunnerLightDefinitions) {
@@ -123,7 +124,6 @@ public class ContentRestController {
                 }
                 analysisPerRunner.put(runner.getType(), analysis);
             }
-            runnerFactory.jarFileToClassLoader(jarFileName);
 
             for (RunnerLightDefinition runner : listRunnerLightDefinitions) {
                 {
@@ -160,4 +160,50 @@ public class ContentRestController {
   }
   */
 
+    /**
+     * Save a new Jar file. A Jar file contains multiple runners. This method does not stop/restart runners.
+     * The method save in the storage and in the classloader path. The load in the JavaClassLoader is not under
+     * the responsability of the method, just to place the jar in the storage and the classloader.
+     *
+     * @param file multipart file
+     * @return list of runners detected in the jar file
+     */
+    public List<RunnerLightDefinition> saveFromMultiPartFile(MultipartFile file, String jarFileName) {
+
+        List<RunnerLightDefinition> runners = new ArrayList<>();
+        try {
+            ByteArrayInputStream jarFileInputStream = new ByteArrayInputStream(file.getBytes());
+            runners = runnerFactory.installJar(jarFileName, jarFileInputStream);
+            for (RunnerLightDefinition runner : runners) {
+                try {
+                    jobRunnerFactory.stopRunner(runner.getType());
+                    jobRunnerFactory.startRunner(runner.getType());
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                }
+            }
+/*
+   jarTemp = Files.createTempFile(jarFileName, ".jar");
+            // Open an OutputStream to the temporary file
+            outputStream = new FileOutputStream(jarTemp.toFile());
+            // Transfer data from InputStream to OutputStream
+            byte[] buffer = new byte[1024 * 100]; // 100Ko
+            int bytesRead;
+            int count = 0;
+            InputStream inputStream = file.getInputStream();
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                count += bytesRead;
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            outputStream.flush();
+            outputStream.close();
+            outputStream = null;
+ */
+
+
+        } catch (Exception e) {
+            logger.error("saveFromMultiPartFile: error processing [{}]: {}", jarFileName, e.getMessage());
+        }
+        return runners;
+    }
 }

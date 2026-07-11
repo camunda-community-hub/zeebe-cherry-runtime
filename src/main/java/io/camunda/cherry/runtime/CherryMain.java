@@ -26,8 +26,19 @@ public class CherryMain {
     @Autowired
     JobRunnerFactory jobRunnerFactory;
 
-    @Autowired
+    RunnerUploadFactory runnerUploadFactory;
     DatabasePurgeService databasePurgeService;
+
+    public CherryMain(RunnerFactory runnerFactory,
+                      JobRunnerFactory jobRunnerFactory,
+                      RunnerUploadFactory runnerUploadFactory,
+                      DatabasePurgeService databasePurgeService
+    ) {
+        this.runnerFactory = runnerFactory;
+        this.jobRunnerFactory = this.jobRunnerFactory;
+        this.runnerUploadFactory = runnerUploadFactory;
+        this.databasePurgeService = databasePurgeService;
+    }
 
     @PostConstruct
     public void init() {

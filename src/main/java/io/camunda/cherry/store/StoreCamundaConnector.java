@@ -7,7 +7,6 @@
 package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.connector.api.annotation.OutboundConnector;
@@ -42,7 +41,7 @@ import java.util.zip.ZipFile;
 public class StoreCamundaConnector implements StoreAccess {
     public static final String REPO = "camunda/connectors";
     public static final String CONTENTS_URL = "https://api.github.com/repos/" + REPO + "/contents/connectors";
-    public static final List<String> IGNORE = List.of("README.md");
+    public static final List<String> IGNORE = List.of("README.md", "src", "test", "docs", ".github");
     private final List<ConnectorDefinition> connectors = new ArrayList<>();
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
@@ -124,6 +123,8 @@ public class StoreCamundaConnector implements StoreAccess {
             ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, name, htmlUrl, release);
             connectorDefinition.githubRepoName = REPO;
             connectorDefinition.githubRepoPath = repoPath + "/" + name;
+            connectorDefinition.sourceUrl = htmlUrl;
+            connectorDefinition.creator = "Camunda";
             result.add(connectorDefinition);
             return result;
         }
@@ -175,11 +176,14 @@ public class StoreCamundaConnector implements StoreAccess {
         try {
             connectorDefinition.urlElementTemplate = exploreElementTemplate(connectorDefinition);
 
-            if (connectorDefinition.urlElementTemplate != null) {
-                JsonNode jsonNode = gitHubAccess.getJsonNode(connectorDefinition.urlElementTemplate);
+            for (String urlTemplate : connectorDefinition.urlElementTemplate) {
+                JsonNode jsonNode = gitHubAccess.getJsonNode(urlTemplate);
                 connectorDefinition.description = jsonNode.path("description").asText(connectorDefinition.description);
                 connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
-                connectorDefinition.connectorType = extractTaskDefinitionType(jsonNode);
+                // An inbound connector does not have type, so explore all json to get the list of
+                if (connectorDefinition.connectorType == null) {
+                    connectorDefinition.connectorType = gitHubAccess.extractTaskDefinitionType(jsonNode);
+                }
                 JsonNode iconNode = jsonNode.path("icon");
                 if (!iconNode.isMissingNode() && !iconNode.isNull()) {
                     connectorDefinition.icon = iconNode.path("contents").asText(iconNode.asText(""));
@@ -187,6 +191,8 @@ public class StoreCamundaConnector implements StoreAccess {
 
             }
             return connectorDefinition;
+        } catch(TechnicalException te) {
+            throw te;
         } catch (Exception e) {
             logger.error("During fill ElementTemplate Store[{}] connector[{}] Url[{}] : {}",
                     getName(),
@@ -216,15 +222,23 @@ public class StoreCamundaConnector implements StoreAccess {
         return gitHubAccess.extractTaskDefinitionType(elementTemplate);
     }
 
-    private String exploreElementTemplate(ConnectorDefinition connectorDefinition) throws TechnicalException {
+    private List<String> exploreElementTemplate(ConnectorDefinition connectorDefinition) throws TechnicalException {
         try {
-            String rawUrl = gitHubAccess.exploreElementTemplate(
+            List<String> rawUrl = gitHubAccess.exploreElementTemplate(
                     connectorDefinition.githubRepoName,
                     connectorDefinition.githubRepoPath,
                     connectorDefinition.release);
-            if (rawUrl == null) {
+            if (rawUrl.isEmpty()) {
+                logger.error("Stpre[{}] No .json element-template found for connector [{}] github repo[{}] repoPath[{}] release[{}] ",
+                        getName(),
+                        connectorDefinition.name,
+                        connectorDefinition.githubRepoName,
+                        connectorDefinition.githubRepoPath,
+                        connectorDefinition.release);
                 throw new TechnicalException("No .json element-template found for connector ["
-                        + connectorDefinition.name + "] release [" + connectorDefinition.release + "]");
+                        + connectorDefinition.name + "] github repo["+connectorDefinition.githubRepoName
+                        +"] repoPath[" +connectorDefinition.githubRepoPath
+                        + "] release [" + connectorDefinition.release + "]");
             }
             return rawUrl;
         } catch (TechnicalException e) {
@@ -297,9 +311,6 @@ public class StoreCamundaConnector implements StoreAccess {
             IOUtils.copy(connectorDownload.jarContent, tempOut);
             connectorDownload.connectorDetails = fetchDetails(tempFile);
             tempFile.delete();
-            // get the element Template now
-            JsonNode jsonNode = getElementTemplate(connectorDefinition);
-            connectorDefinition.urlElementTemplate = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
 
             return connectorDownload;
         } catch (Exception e) {

@@ -240,7 +240,7 @@ public class JobRunnerFactory {
         closeJobWorker(running.containerJobWorker.getJobWorker());
         running.containerJobWorker.setJobWorker(null);
         mapRunning.remove(runnerType);
-        logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
+        logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, ""  );
 
         return true;
     }

@@ -60,6 +60,8 @@ public class RestAttribute {
     public static final String URL_JAR_FILE = "urlJarFile";
     public static final String URL_MAVEN = "urlMaven";
     public static final String HAS_IMPLEMENTATION = "hasImplementation";
+    public static final String IS_INSTALLABLE = "isInstallable";
+    public static final String SOURCE_URL = "sourceUrl";
     public static final String CREATOR = "creator";
     // --- Secret / Env ---
     public static final String VALUE = "value";

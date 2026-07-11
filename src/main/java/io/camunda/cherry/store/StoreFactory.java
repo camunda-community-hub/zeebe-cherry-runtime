@@ -1,6 +1,5 @@
 package io.camunda.cherry.store;
 
-import io.camunda.cherry.exception.TechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -16,6 +15,7 @@ public class StoreFactory {
     Logger logger = LoggerFactory.getLogger(StoreFactory.class.getName());
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
 
+    private boolean explorationInProcess=false;
     StoreFactory(GitHubAccess gitHubAccess, CherryProperties cherryProperties) {
 
         listStoreAccess.add(new StoreCamundaConnector(gitHubAccess));
@@ -37,7 +37,7 @@ public class StoreFactory {
     }
 
 
-
+public boolean isExplorationInProcess() {return explorationInProcess;}
 
 
 
@@ -56,8 +56,13 @@ public class StoreFactory {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        explore();
-        // Now, check if some runner must be downloaded and started
+        java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                explore();
+            } catch (Exception e) {
+                logger.error("StoreFactory exploration failed on startup", e);
+            }
+        });
     }
 
 
@@ -135,27 +140,33 @@ public class StoreFactory {
     /**
      * Explore all connectors
      */
-    public void explore() {
+    public synchronized void explore() {
         logger.info("---- Start exploration of connectors");
+        explorationInProcess=true;
         long beginTime = System.currentTimeMillis();
         mapConnectors.clear();
         int nbConnectors = 0;
+        int countStore=0;
         for (StoreAccess storeAccess : listStoreAccess) {
-            logger.info("Pass 1. Explore store[{}]", storeAccess.getName());
+            countStore++;
+            logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore,listStoreAccess.size(), storeAccess.getName());
             List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.getListConnectors();
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
                 connectorDefinition.status = StoreAccess.EXPLORATION.INPROGRESS;
+                logger.debug("Store[{}] connector[{}] in url[{}] Implementation[{}]", storeAccess.getName(), connectorDefinition.name, connectorDefinition.url, connectorDefinition.hasImplementation );
             }
             nbConnectors += listConnectors.size();
             mapConnectors.put(storeAccess, listConnectors);
         }
-        logger.info("All connectors {} discovered in {} ms", nbConnectors, System.currentTimeMillis() - beginTime);
+        logger.info("~~~~~ END Pass 1. {} connectors identified in {} ms", nbConnectors, System.currentTimeMillis() - beginTime);
 
 
         // Ok, now replay all connectors and explore them
+        countStore=0;
         for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
+            countStore++;
             StoreAccess storeAccess = entry.getKey();
-            logger.info("Pass 2 - Deep exploration store[{}]", storeAccess.getName());
+            logger.info("~~~~~ Pass 2.({}/{}) - Deep exploration store[{}]",countStore,listStoreAccess.size(), storeAccess.getName());
             long startTimeDeep = System.currentTimeMillis();
             int nbFullyCorrects = 0;
             int nbIncorrect = 0;
@@ -169,14 +180,14 @@ public class StoreFactory {
                         continue;
                     }
                     connectorDefinition.status = connectorDefinition.urlElementTemplate != null ?
-                            StoreAccess.EXPLORATION.READY : StoreAccess.EXPLORATION.FAILED;
-                    logger.info("Store[{}] connector [{}] type:[{}] release[{}] Status[{}] HasImplementation?{} url[{}] Description[{}] Gitname name[{}] path[{}] urlJarFile[{}] urlElementTemplate[{}]",
+                            StoreAccess.EXPLORATION.READY : StoreAccess.EXPLORATION.INCOMPLETE;
+                    logger.info("Store[{}] connector[{}] type:[{}] release[{}] Status[{}] HasImplementation? {} url[{}] Description[{}] Gitname name[{}] path[{}] urlJarFile[{}] urlElementTemplate[{}]",
                             storeAccess.getName(),
                             connectorDefinition.name,
                             connectorDefinition.connectorType,
                             connectorDefinition.release,
-                            connectorDefinition.hasImplementation,
                             connectorDefinition.status,
+                            connectorDefinition.hasImplementation,
                             connectorDefinition.url,
                             connectorDefinition.description,
                             connectorDefinition.githubRepoName,
@@ -185,9 +196,9 @@ public class StoreFactory {
                             connectorDefinition.urlElementTemplate
                     );
 
-                } catch (TechnicalException e) {
+                } catch (Exception e) {
                     logger.error("StoreFactory Store[{}] connector [{}] failed ", storeAccess.getName(), connectorDefinition.name, e);
-                    connectorDefinition.status = StoreAccess.EXPLORATION.FAILED;
+                    connectorDefinition.status = StoreAccess.EXPLORATION.INCOMPLETE;
                 }
 
                 if (connectorDefinition.status == StoreAccess.EXPLORATION.READY)
@@ -195,25 +206,51 @@ public class StoreFactory {
                 else
                     nbIncorrect++;
             }
-            mapConnectors.entrySet().removeAll(connectorsToRemove);
+            entry.getValue().removeAll(connectorsToRemove);
 
-            logger.info("Deep exploration finish on Store[{}] in {} ms on {} connectors, correct:{} Incorrect:{}",
+            logger.info("~~~~~ END Pass 2.{} - Deep exploration finish on Store[{}] in {} ms on {} connectors, correct:{} Incorrect:{} connectorsToRemove:{} (referenced in CamundaStore or CamundaHub)",
+                    countStore,
                     storeAccess.getName(),
                     System.currentTimeMillis() - startTimeDeep,
                     nbFullyCorrects,
-                    nbIncorrect);
+                    nbIncorrect,
+                    connectorsToRemove.size());
 
         }
 
-        logger.info("---- End exploration of all stores/connectors in {} ms", System.currentTimeMillis() - beginTime);
+        // Update the isInstallable
+        // Build all connectorType
+        logger.info("~~~~~ Pass 3. Update isInstallable");
+        int isInstallable = 0;
+        int totalConnectors=0;
+        Set <String> allConnectorTypes = new HashSet<>();
 
+        for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
+            for (StoreAccess.ConnectorDefinition connectorDefinition : entry.getValue()) {
+                if (connectorDefinition.connectorType != null && connectorDefinition.hasImplementation) {
+                    allConnectorTypes.add(connectorDefinition.connectorType);
+                }
+            }
+        }
+        for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
+            for (StoreAccess.ConnectorDefinition connectorDefinition : entry.getValue()) {
+                totalConnectors++;
+                connectorDefinition.isInstallable = connectorDefinition.hasImplementation || allConnectorTypes.contains(connectorDefinition.connectorType);
+                if (connectorDefinition.isInstallable) {
+                    isInstallable++;
+                }
+            }
+        }
+        logger.info("~~~~~ END Pass 3. isInstallable : connectorImplementation {} connectorInstallable {} on {}", allConnectorTypes.size(), isInstallable, totalConnectors);
+        logger.info("---- End exploration of all stores/connectors in {} ms", System.currentTimeMillis() - beginTime);
+        explorationInProcess=false;
 
     }
 
     /**
      * Download the connector
      *
-     * @param storeName     store where the connector must be download
+     * @param storeName     store where the connector must be downloaded
      * @param connectorName name of the connector
      * @param release       release (maybe null)
      * @return a connectorDownload status

@@ -4,6 +4,11 @@
 /*                                                                      */
 /* This factory are in charge to upload jar in the storage (database)   */
 /* and in the ClassLoader                                               */
+/* Different usages:                                                    */
+/*  - from a path "upload" at startup                                   */
+/*  - from a upload in the UI                                           */
+/*  - from a Marketplace store installation                             */
+/*  - from a list of jar to upload at begining                          */
 /*                                                                      */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
@@ -20,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -31,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -43,6 +50,7 @@ public class RunnerUploadFactory {
     private final SessionFactory sessionFactory;
     private final RunnerClassLoaderFactory runnerClassLoaderFactory;
     private final List<RunnerLightDefinition> listLightRunners = new ArrayList<>();
+    private final RunnerEmbeddedFactory runnerEmbeddedFactory;
 
     Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
 
@@ -55,11 +63,14 @@ public class RunnerUploadFactory {
     public RunnerUploadFactory(StorageRunner storageRunner,
                                LogOperation logOperation,
                                RunnerClassLoaderFactory runnerClassLoaderFactory,
-                               SessionFactory sessionFactory) {
+                               SessionFactory sessionFactory,
+                               RunnerEmbeddedFactory runnerEmbeddedFactory) {
         this.storageRunner = storageRunner;
         this.logOperation = logOperation;
         this.runnerClassLoaderFactory = runnerClassLoaderFactory;
         this.sessionFactory = sessionFactory;
+        this.runnerEmbeddedFactory = runnerEmbeddedFactory;
+
     }
 
     private static RunnerLightDefinition getLightFromRunnerDefinitionEntity(RunnerDefinitionEntity entityRunner) {
@@ -67,9 +78,44 @@ public class RunnerUploadFactory {
                 RunnerDefinitionEntity.Origin.JARFILE);
     }
 
-    public void loadConnectorsFromClassLoaderPath() {
+    protected void loadConnectorsFromClassLoaderPath() {
         // No special operation to do
     }
+
+
+    /**
+     * Initialise step
+     * 1: detect/load all runners in the storage:
+     * - from embedbed (thanks to runnerEmbeddedFactory),
+     * - UploadPath (runnerUploadFactory)
+     * 2; copy all Jar from the storage to the Classloaderpath (runnerUploadFactory)
+     * <p>
+     * The class does not start any runners
+     */
+    protected void init() {
+        logger.info("----- RunnerFactory.1 Load all embedded runner");
+
+        runnerEmbeddedFactory.registerInternalRunner();
+
+        // second, check all library connector
+        logger.info("----- RunnerUploadFactory.2 Load to storage all upload JAR");
+        List<RunnerLightDefinition> runnerLightDefinitions = loadStorageFromUploadPath();
+        String logInfo = runnerLightDefinitions.stream()
+                .map(RunnerLightDefinition::getName)
+                .collect(Collectors.joining(","));
+        logger.info("Load StorageFromUploadPath [{}]", logInfo);
+
+        // Upload the ClassLoaderPath, and load the class
+        logger.info("----- RunnerUploadFactory.3 Load JavaClassLoaderPath from storage");
+        List<String> lisJars = loadClassLoaderJarsFromStorage(true);
+        logInfo = String.join(",", lisJars);
+        logger.info("Load JarUploadPath [{}]", logInfo);
+
+        logger.info("----- RunnerUploadFactory.4 Load configuration Jar (todo)");
+
+
+    }
+
 
     /**
      * get the list from the storage (database), and compare what we have in the class loader.
@@ -78,7 +124,7 @@ public class RunnerUploadFactory {
      * @param clearAllBefore clear the path before
      * @return listJarLoaded loaded
      */
-    public List<String> loadClassLoaderJarsFromStorage(boolean clearAllBefore) {
+    protected List<String> loadClassLoaderJarsFromStorage(boolean clearAllBefore) {
         List<String> listJarLoaded = new ArrayList<>();
 
         if (clearAllBefore) {
@@ -86,7 +132,7 @@ public class RunnerUploadFactory {
         }
         // All JAR file in the database must be load in the JavaMachine
         for (JarStorageEntity jarStorageEntity : storageRunner.getAll()) {
-            listJarLoaded.add(runnerClassLoaderFactory.copyJarEntity(jarStorageEntity));
+            listJarLoaded.add(runnerClassLoaderFactory.copyJarEntity(jarStorageEntity).getName());
         }
         return listJarLoaded;
     }
@@ -97,13 +143,27 @@ public class RunnerUploadFactory {
      * @param jarFileName jar file name to load
      * @return true if the jar can be loaded in the storage path, else false
      */
-    public boolean jarFileStorageToClassLoader(String jarFileName) {
+    protected boolean jarFileStorageToClassLoader(String jarFileName) {
         JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
         if (jarStorageEntity == null)
             return false;
-        String jarSaved = runnerClassLoaderFactory.copyJarEntity(jarStorageEntity);
+        File jarSaved = runnerClassLoaderFactory.copyJarEntity(jarStorageEntity);
         return jarSaved != null;
 
+    }
+
+    /**
+     * installJar
+     *
+     * @param jarFileName jarfilename
+     * @param jarFileInputStream inputstream with the content
+     * @return list of runners detected
+     */
+    protected List<RunnerLightDefinition> installJar(String jarFileName, ByteArrayInputStream jarFileInputStream) {
+        File jarFile = runnerClassLoaderFactory.copyJarFile(jarFileName, jarFileInputStream);
+        List<RunnerLightDefinition> runners = saveJarFileToStorage(jarFile, jarFileName, true);
+        logger.info("RunnerUploadFactory jar[{}] installed, found {} runners", jarFileName, runners.size());
+        return runners;
     }
 
     /**
@@ -111,7 +171,7 @@ public class RunnerUploadFactory {
      *
      * @return the list of all Runners detected in the uploadPath
      */
-    public List<RunnerLightDefinition> loadStorageFromUploadPath() {
+    protected List<RunnerLightDefinition> loadStorageFromUploadPath() {
 
         logger.info("Load from directory[{}]", uploadPath);
         List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
@@ -140,17 +200,19 @@ public class RunnerUploadFactory {
         return listRunnersDetected;
     }
 
+
     /**
-     * Load a Jar file in the storage and in the factory
+     * Load a Jar file in the storage and in the factory. All classes are loaded in memory and investigated to find runners.
+     * Runners are not started, just loaded in the ClassLoader, and in the Storage
      *
      * @param jarFile            file to load
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
      * @return list of runnerLight Definition
      */
-    public List<RunnerLightDefinition> saveJarFileToStorage(File jarFile,
-                                                            String originalFileName,
-                                                            boolean forceReloadThisJar) {
+    protected List<RunnerLightDefinition> saveJarFileToStorage(File jarFile,
+                                                               String originalFileName,
+                                                               boolean forceReloadThisJar) {
         List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
         JarStorageEntity jarStorageEntity;
         String analysis = "";
@@ -225,7 +287,7 @@ public class RunnerUploadFactory {
      *
      * @return list of all runners knows byt the factory
      */
-    public List<RunnerLightDefinition> getAllRunners() {
+    protected List<RunnerLightDefinition> getAllRunners() {
         return listLightRunners;
     }
 
