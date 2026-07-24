@@ -32,6 +32,7 @@ public class RunnerParameter {
     public String label;
     public Class<?> clazz;
     public Object defaultValue;
+    public String bindingName;
     public Level level;
     public String explanation;
     public String gsonTemplate;
@@ -270,10 +271,20 @@ public class RunnerParameter {
      * Set the default value in the parameter
      *
      * @param defaultValue use to set the default value
-     * @return a runnerParameter where the attribute is set to true
+     * @return a runnerParameter where the attribute is set
      */
     public RunnerParameter setDefaultValue(Object defaultValue) {
         this.defaultValue = defaultValue;
+        return this;
+    }
+
+    /**
+     * By default the bindingname is the field name, but it's possible to change it to create multiple field leading to the same binding name, to propose diffent UI
+     * @param bindingName the binding name
+     * @return  a runnerParameter where the attribute is set
+     */
+    public RunnerParameter setBindingName(String bindingName) {
+        this.bindingName = bindingName;
         return this;
     }
 
@@ -373,6 +384,9 @@ public class RunnerParameter {
         }
         if (defaultValue != null)
             oneParameter.put(CherryInput.PARAMETER_MAP_DEFAULT_VALUE, defaultValue.toString());
+
+        if (bindingName!=null)
+        oneParameter.put(CherryInput.PARAMETER_MAP_BINDINGNAME, bindingName);
 
         oneParameter.put(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE, visibleInTemplate);
 

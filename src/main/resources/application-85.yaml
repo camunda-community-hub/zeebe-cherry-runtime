@@ -11,6 +11,16 @@ cherry:
     # the runtime load ping runners
     pingrunner: false
 
+  store:
+    startup:
+      explore: false
+      connectorRuntime:
+        download: true
+        tag: 8.7.0
+      communityConnector:
+        download: true
+        filter: connector-8-*
+
 
 # Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe
 

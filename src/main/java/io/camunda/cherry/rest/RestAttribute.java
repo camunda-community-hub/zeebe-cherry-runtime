@@ -61,7 +61,6 @@ public class RestAttribute {
     public static final String URL_MAVEN = "urlMaven";
     public static final String HAS_IMPLEMENTATION = "hasImplementation";
     public static final String IS_INSTALLABLE = "isInstallable";
-    public static final String SOURCE_URL = "sourceUrl";
     public static final String CREATOR = "creator";
     // --- Secret / Env ---
     public static final String VALUE = "value";
@@ -93,6 +92,11 @@ public class RestAttribute {
     // --- Tenant ---
     public static final String TENANTS = "tenants";
     public static final String DELAY_REFRESH = "delayRefresh";
+
+    public static final String INPROGRESS = "inProgress";
+    public static final String PERCENTEXPLORATION = "percentExploration";
+
+
     private RestAttribute() {
     }
 }

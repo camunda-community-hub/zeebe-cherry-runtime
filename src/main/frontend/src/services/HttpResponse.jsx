@@ -26,6 +26,9 @@ class HttpResponse {
     getError() {
         if (this.err.response && this.err.response.data && this.err.response.data.message)
             return this.err.response.data.message;
+        // No response received — server unreachable or proxy refused connection
+        if (!this.err.response)
+            return "Cannot connect to the server";
         if (this.err.message)
             return this.err.message;
         return this.err.code;

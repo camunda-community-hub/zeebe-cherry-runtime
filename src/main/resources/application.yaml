@@ -23,6 +23,10 @@ cherry:
     download:
       - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
       - pdf-function
+    startup:
+      startConnectorRuntime: true
+      startCommunityConnector: true
+
 
   runners:
     # the runtime load all embedded runners

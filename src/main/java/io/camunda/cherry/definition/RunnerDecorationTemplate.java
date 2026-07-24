@@ -174,14 +174,14 @@ public class RunnerDecorationTemplate {
 
         // Applies to and element type
         if (runner.getAppliesTo() == null) {
-            templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_TASK));
+            templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_TASK, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
         } else if (runner.getAppliesTo().size() == 1) {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
-            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
         } else {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
-            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
         }
         // no groups at this moment
 
@@ -396,7 +396,9 @@ public class RunnerDecorationTemplate {
 
         if (isInput) {
             propertyParameter.put(ATTR_BINDING,
-                    fixMapOf(ATTR_NAME, runnerParameter.name, ATTR_TYPE, "zeebe:input"));
+                    fixMapOf(ATTR_NAME,
+                            (runnerParameter.bindingName != null) ? runnerParameter.bindingName : runnerParameter.name,
+                            ATTR_TYPE, "zeebe:input"));
         } else {
             propertyParameter.put(ATTR_BINDING,
                     fixMapOf("source", "= " + prefixName + runnerParameter.name, ATTR_TYPE, "zeebe:output"));

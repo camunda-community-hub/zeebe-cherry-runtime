@@ -16,6 +16,7 @@ import com.google.gson.Gson;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -778,7 +779,11 @@ public abstract class AbstractRunner {
     }
 
     public List<String> getAppliesTo() {
-        return List.of("bpmn:Task");
+        return List.of(CherryInput.PARAMETER_APPLIES_V_TASK);
+    }
+
+    public String getElementType() {
+        return CherryInput.PARAMETER_APPLIES_V_SERVICETASK;
     }
 
     public int getVersion() {

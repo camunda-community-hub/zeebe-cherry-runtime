@@ -20,10 +20,10 @@ public interface StoreAccess {
      *
      * @return
      */
-    List<ConnectorDefinition> getListConnectors();
+    List<ConnectorDefinition> exploreListConnectors();
 
     /**
-     * Explore details. At the end, the connectorDefition is complete
+     * Explore details. At the end, the connectorDefinition is complete
      * - name
      * - release
      * - url to get the element template
@@ -42,14 +42,19 @@ public interface StoreAccess {
 
     enum EXPLORATION {READY, INPROGRESS, INCOMPLETE}
 
-    enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK}
+    enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK, FAILED}
+    enum CONNECTORSOURCE {NONE, CAMUNDAHUB, CAMUNDACONNECTOR}
 
     class ConnectorDefinition {
         /**
          * If the connector is store in GitHub, save the Github repository something like
+         * the repoName is something like "pierre-yves.monnet/myconnector"
          */
         public String githubRepoName;
-        public String githubRepoPath;
+        /**
+         * The repopath is the path INSIDE the repoName. A repo name may contains multiple connector, like we have in the connectorStore
+         */
+        public String githubRepoPath="";
         public int version;
         public String release;
         public String icon;
@@ -81,11 +86,11 @@ public interface StoreAccess {
          * the connector type
          */
         String connectorType;
-        /**
-         * Source URL (marketplace page, GitHub page, etc.)
-         */
-        public String sourceUrl;
 
+        /**
+         * Set only if the connector come from marketplace, and reference a Hub or Connector source
+         */
+        public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
         public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
             ConnectorDefinition connectorDefinition = new ConnectorDefinition();
             connectorDefinition.storeAccess = storeAccess;
@@ -104,6 +109,7 @@ public interface StoreAccess {
         public String jarName;
         public List<RunnerLightDefinition> runners;
         public List<ConnectorDetail> connectorDetails;
+        String release;
     }
 
     class ConnectorDetail {

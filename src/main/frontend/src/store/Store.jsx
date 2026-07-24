@@ -17,14 +17,17 @@ class Store extends React.Component {
 
     constructor(_props) {
         super();
+        const savedDisplay = (() => {
+            try { return JSON.parse(localStorage.getItem("store_display") || "{}"); } catch { return {}; }
+        })();
         this.state = {
             connectors: [],
             stores: [],
             display: {
                 loading: false,
-                orderBy: "nameAsc",
-                statusFilter: "ALL",
-                filterSearch: ""
+                orderBy: savedDisplay.orderBy || "nameAsc",
+                statusFilter: savedDisplay.statusFilter || "ALL",
+                filterSearch: savedDisplay.filterSearch || ""
             },
             expandedRows: {}
         };
@@ -266,11 +269,6 @@ class Store extends React.Component {
                                                         )}
                                                         {connectorDefinition.status === "IN-PROGRESS" &&
                                                             <div><Tag type="cyan" title="In progress">In progress</Tag></div>}
-                                                        {connectorDefinition.sourceUrl && (
-                                                            <div><strong>Source:</strong>&nbsp;
-                                                                <a href={connectorDefinition.sourceUrl} target="_blank" rel="noreferrer">{connectorDefinition.sourceUrl}</a>
-                                                            </div>
-                                                        )}
                                                         <div><strong>Connector Type:</strong> {connectorDefinition.connectorType}</div>
                                                         <div><strong>Description:</strong> {connectorDefinition.description}</div>
                                                         {connectorDefinition.creator && <div><strong>Creator:</strong> {connectorDefinition.creator}</div>}
@@ -325,7 +323,7 @@ class Store extends React.Component {
             {this.state.explorationInProgress && (
                 <div className="row" style={{width: "100%", marginTop: "8px"}}>
                     <div className="col-md-12" style={{fontStyle: "italic", color: "#666"}}>
-                        Exploration in progress...
+                        Exploration in progress... ({this.state.percentExploration || 0}%)
                     </div>
                 </div>
             )}
@@ -380,7 +378,7 @@ class Store extends React.Component {
             const mergedStores = incomingStores.map(s =>
                 existingByName[s.name] ? existingByName[s.name] : {...s, selected: true}
             ).filter(s => incomingNames.has(s.name));
-            this.setState({connectors: data.connectors || [], stores: mergedStores, explorationInProgress: !!(data.status && data.status.inprogress)});
+            this.setState({connectors: data.connectors || [], stores: mergedStores, explorationInProgress: !!(data.status && data.status.inProgress), percentExploration: data.status ? data.status.percentExploration : 0});
         }
     }
 
@@ -390,16 +388,19 @@ class Store extends React.Component {
         this.setDisplayProperty("loading", true);
         this.setState({status: ""});
         let restCallService = RestCallService.getInstance();
-        restCallService.getJson(uri, this, this.downloadConnectorsCallback);
+        restCallService.getJson(uri, this, (httpPayload) => this.downloadConnectorsCallback(httpPayload, connector));
     }
 
-    downloadConnectorsCallback(httpPayload) {
+    downloadConnectorsCallback(httpPayload, connector) {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Store.downloadConnectorsCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
-            this.setState({connectors: httpPayload.getData()});
+            const data = httpPayload.getData();
+            connector.status = "INSTALLED";
+            connector.release = data.release;
+            this.setState({connectors: [...this.state.connectors]});
         }
     }
 
@@ -457,6 +458,7 @@ class Store extends React.Component {
     setDisplayProperty(propertyName, propertyValue) {
         let displayObject = this.state.display;
         displayObject[propertyName] = propertyValue;
+        try { localStorage.setItem("store_display", JSON.stringify(displayObject)); } catch {}
         this.setState({display: displayObject});
     }
 }

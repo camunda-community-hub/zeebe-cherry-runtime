@@ -150,7 +150,7 @@ public class LogOperation {
         try {
             operationRepository.save(operationEntity);
         } catch (Exception e) {
-            logger.error("Can't save OperationEntity [{}]", operationEntity);
+            logger.error("Can't save OperationEntity [{}] ", operationEntity,e);
         }
     }
 }
