@@ -77,7 +77,7 @@ public class StorePrivateGithub implements StoreAccess {
     /* ******************************************************************** */
 
     @Override
-    public List<ConnectorDefinition> getListConnectors() {
+    public List<ConnectorDefinition> exploreListConnectors() {
         long startTime = System.currentTimeMillis();
         logger.info("Store[{}] startListDetector ", getName());
         List<ConnectorDefinition> result = new ArrayList<>();
@@ -99,7 +99,6 @@ public class StorePrivateGithub implements StoreAccess {
                     ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
                     connectorDefinition.githubRepoName = fullName;
                     connectorDefinition.githubRepoPath = "";
-                    connectorDefinition.sourceUrl = htmlUrl;
                     connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
                     logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl,connectorDefinition.hasImplementation );
 
@@ -185,7 +184,7 @@ public class StorePrivateGithub implements StoreAccess {
 
     @Override
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
-        logger.info("Store[{}] Download connector[{}] from url[{}]", getName(), connectorDefinition.name, connectorDefinition.urlJarFile);
+        logger.info("Store[{}] Start downloading connector[{}] from url[{}]...", getName(), connectorDefinition.name, connectorDefinition.urlJarFile);
         ConnectorDownload connectorDownload = new ConnectorDownload();
         if (connectorDefinition.urlJarFile == null || connectorDefinition.urlJarFile.isEmpty()) {
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
@@ -204,6 +203,7 @@ public class StorePrivateGithub implements StoreAccess {
             }
             connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);
             connectorDownload.status = STATUSDOWNLOAD.OK;
+            connectorDownload.release = connectorDefinition.release;
             connectorDownload.explanation = "Downloaded " + jarBytes.length + " bytes from [" + connectorDefinition.urlJarFile + "]";
             logger.info("Store[{}] Download connector[{}] from url[{}] length {} in ms", getName(), connectorDefinition.name, connectorDefinition.urlJarFile,
                     jarBytes.length,

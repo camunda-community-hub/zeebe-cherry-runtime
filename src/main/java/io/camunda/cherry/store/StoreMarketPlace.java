@@ -53,7 +53,7 @@ public class StoreMarketPlace implements StoreAccess {
 
 
     @Override
-    public List<ConnectorDefinition> getListConnectors() {
+    public List<ConnectorDefinition> exploreListConnectors() {
         List<ConnectorDefinition> result = new ArrayList<>();
         int page = 1;
         while (true) {
@@ -73,7 +73,6 @@ public class StoreMarketPlace implements StoreAccess {
                     connectorDefinition.icon = fetchIconAsDataUri(item.path("iconUrl").asText(""));
                     connectorDefinition.description = item.path("overview").asText("");
                     connectorDefinition.creator = item.path("vendorName").asText("");
-                    connectorDefinition.sourceUrl= itemUrl;
                     logger.info("Store[{}] Detect connector[{}] in url[{}]", getName(), name, itemUrl);
                     result.add(connectorDefinition);
                 }
@@ -95,22 +94,29 @@ public class StoreMarketPlace implements StoreAccess {
             if (connectorDefinition.url != null && !connectorDefinition.url.isEmpty()) {
                 String repoUrl = searchGithubRepository(connectorDefinition.url);
                 if (repoUrl != null) {
-                    if (repoUrl.contains("https://github.com/orgs/camunda-community-hub")) {
+                    // get the element template: we need more information on the connector, even it is part of community.
+                    // This information will be need to merge the connector to propose the one on the other source
+                    // repoUrl is a complete URL (https://github.com/camunda-community-hub/camunda-8-connector-pdf) where the gitHubRepoName contains only the reponame: remove github?com
+                    if (repoUrl.startsWith("https://github.com/")) {
+                        connectorDefinition.githubRepoName = repoUrl.substring("https://github.com/".length());
+                        connectorDefinition = gitHubAccess.fillElementTemplate(getName(), connectorDefinition);
+                    }
+                    // extract "owner/repo" from the full GitHub URL
+                    // connectorDefinition.githubRepoName = repoUrl.replaceFirst("https://github\\.com/", "");
+                    // Search jar and element-template in the repository
+                    connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
+
+                    if (repoUrl.contains("https://github.com/camunda-community-hub")) {
+                        connectorDefinition.connectorSource = CONNECTORSOURCE.CAMUNDAHUB;
                         logger.info("Store[{}] Connector[{}] : it's a CommunityHub connector: [{}], remove it", getName(), connectorDefinition.name, repoUrl);
                         return false;
                     }
 
                     if (repoUrl.contains("https://github.com/camunda/connectors")) {
+                        connectorDefinition.connectorSource = CONNECTORSOURCE.CAMUNDAHUB;
                         logger.info("Store[{}] Connector[{}] : it's a Camunda connector[{}], remove it", getName(), connectorDefinition.name, repoUrl);
                         return false;
                     }
-
-                    // extract "owner/repo" from the full GitHub URL
-                    connectorDefinition.githubRepoName = repoUrl;
-                    // connectorDefinition.githubRepoName = repoUrl.replaceFirst("https://github\\.com/", "");
-                    // Search jar and element-template in the repository
-                    connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
-                    connectorDefinition = gitHubAccess.fillElementTemplate(getName(), connectorDefinition);
                     logger.debug("Store[{}] Connector[{}] Repo GithubRepository found [{}] creator[{}]", getName(), connectorDefinition.name, repoUrl, connectorDefinition.creator);
 
                 }
@@ -118,8 +124,8 @@ public class StoreMarketPlace implements StoreAccess {
                 logger.debug("Store[{}] No Github repository found [{}]", getName(), connectorDefinition.name);
             }
             return true;
-        }catch(Exception e) {
-            logger.error("Store[{}] connector[{}] url[{}] exception ",getName(), connectorDefinition.name,connectorDefinition.url, e);
+        } catch (Exception e) {
+            logger.error("Store[{}] connector[{}] url[{}] exception ", getName(), connectorDefinition.name, connectorDefinition.url, e);
             return true;
         }
     }

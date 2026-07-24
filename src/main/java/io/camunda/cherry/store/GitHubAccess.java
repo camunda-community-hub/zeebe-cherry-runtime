@@ -83,7 +83,7 @@ public class GitHubAccess {
                     .map(r -> r.path("tag_name").asText())
                     .orElse(null);
             // if no official release is find, then we keep the first release, according it is order by the inverse order of the date
-            if (release == null || release.isBlank() && !releaseList.isEmpty()) {
+            if ((release == null || release.isBlank() ) && !releaseList.isEmpty()) {
                 release = releaseList.get(0).path("tag_name").asText();
             }
             return release;

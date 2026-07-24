@@ -15,7 +15,14 @@ public class StoreFactory {
     Logger logger = LoggerFactory.getLogger(StoreFactory.class.getName());
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
 
-    private boolean explorationInProcess=false;
+    private boolean explorationInProcess = false;
+    private int percentageExploration = 0;
+
+
+    private int BASE_ADVANCE_PHASE1=40;
+    private int BASE_ADVANCE_PHASE2=40;
+    private int BASE_ADVANCE_PHASE3=20;
+
     StoreFactory(GitHubAccess gitHubAccess, CherryProperties cherryProperties) {
 
         listStoreAccess.add(new StoreCamundaConnector(gitHubAccess));
@@ -37,9 +44,13 @@ public class StoreFactory {
     }
 
 
-public boolean isExplorationInProcess() {return explorationInProcess;}
+    public boolean isExplorationInProcess() {
+        return explorationInProcess;
+    }
 
-
+    public int getPercentageExploration() {
+        return percentageExploration;
+    }
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -121,13 +132,16 @@ public boolean isExplorationInProcess() {return explorationInProcess;}
             listStoreOrdered.retainAll(filterStoreAccess);
         }
 
-        // Merge: first occurrence of a connectorType wins
+        // Merge: first occurrence of a connectorType wins, based on type
         Map<String, StoreAccess.ConnectorDefinition> merged = new java.util.LinkedHashMap<>();
         for (StoreAccess storeAccess : listStoreOrdered) {
             List<StoreAccess.ConnectorDefinition> connectors = mapConnectors.get(storeAccess);
             if (connectors == null)
                 continue;
             for (StoreAccess.ConnectorDefinition connector : connectors) {
+                // The connector is identified to be on marketplace and have a origin from Hub or Camunda Connector: ignore it.
+                if (connector.connectorSource != StoreAccess.CONNECTORSOURCE.NONE)
+                    continue;
                 String key = connector.connectorType != null ? connector.connectorType : connector.name;
                 merged.putIfAbsent(key, connector);
             }
@@ -142,37 +156,48 @@ public boolean isExplorationInProcess() {return explorationInProcess;}
      */
     public synchronized void explore() {
         logger.info("---- Start exploration of connectors");
-        explorationInProcess=true;
+        explorationInProcess = true;
+        percentageExploration=0;
         long beginTime = System.currentTimeMillis();
         mapConnectors.clear();
         int nbConnectors = 0;
-        int countStore=0;
+        int countStore = 0;
         for (StoreAccess storeAccess : listStoreAccess) {
+            percentageExploration =  (int) ( ((double) countStore)/listStoreAccess.size())*BASE_ADVANCE_PHASE1;
             countStore++;
-            logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore,listStoreAccess.size(), storeAccess.getName());
-            List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.getListConnectors();
+            // first 40% on pass 1
+            logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
+            List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.exploreListConnectors();
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
                 connectorDefinition.status = StoreAccess.EXPLORATION.INPROGRESS;
-                logger.debug("Store[{}] connector[{}] in url[{}] Implementation[{}]", storeAccess.getName(), connectorDefinition.name, connectorDefinition.url, connectorDefinition.hasImplementation );
+                logger.debug("Store[{}] connector[{}] in url[{}] Implementation[{}]", storeAccess.getName(), connectorDefinition.name, connectorDefinition.url, connectorDefinition.hasImplementation);
             }
             nbConnectors += listConnectors.size();
             mapConnectors.put(storeAccess, listConnectors);
         }
         logger.info("~~~~~ END Pass 1. {} connectors identified in {} ms", nbConnectors, System.currentTimeMillis() - beginTime);
-
+        percentageExploration= BASE_ADVANCE_PHASE1;
 
         // Ok, now replay all connectors and explore them
-        countStore=0;
+        countStore = 0;
+        int totalStores = mapConnectors.entrySet().size();
         for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
             countStore++;
             StoreAccess storeAccess = entry.getKey();
-            logger.info("~~~~~ Pass 2.({}/{}) - Deep exploration store[{}]",countStore,listStoreAccess.size(), storeAccess.getName());
+            logger.info("~~~~~ Pass 2.({}/{}) - Deep exploration store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
             long startTimeDeep = System.currentTimeMillis();
             int nbFullyCorrects = 0;
             int nbIncorrect = 0;
+            int countConnectors=0;
+            int totalConnectors = entry.getValue().size();
+            double storeSlice = (double) BASE_ADVANCE_PHASE2 / totalStores;
             List<StoreAccess.ConnectorDefinition> connectorsToRemove = new ArrayList<>();
             for (StoreAccess.ConnectorDefinition connectorDefinition : entry.getValue()) {
+                countConnectors++;
                 // Explore this connection
+                double completedStores = (countStore - 1); // current store not yet finished
+                double connectorProgress = totalConnectors > 0 ? (double) countConnectors / totalConnectors : 0;
+                percentageExploration = (int) (BASE_ADVANCE_PHASE1 + completedStores * storeSlice + connectorProgress * storeSlice);
                 try {
                     boolean isValid = storeAccess.exploreDetails(connectorDefinition);
                     if (!isValid) {
@@ -222,8 +247,8 @@ public boolean isExplorationInProcess() {return explorationInProcess;}
         // Build all connectorType
         logger.info("~~~~~ Pass 3. Update isInstallable");
         int isInstallable = 0;
-        int totalConnectors=0;
-        Set <String> allConnectorTypes = new HashSet<>();
+        int totalConnectors = 0;
+        Set<String> allConnectorTypes = new HashSet<>();
 
         for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
             for (StoreAccess.ConnectorDefinition connectorDefinition : entry.getValue()) {
@@ -243,7 +268,7 @@ public boolean isExplorationInProcess() {return explorationInProcess;}
         }
         logger.info("~~~~~ END Pass 3. isInstallable : connectorImplementation {} connectorInstallable {} on {}", allConnectorTypes.size(), isInstallable, totalConnectors);
         logger.info("---- End exploration of all stores/connectors in {} ms", System.currentTimeMillis() - beginTime);
-        explorationInProcess=false;
+        explorationInProcess = false;
 
     }
 

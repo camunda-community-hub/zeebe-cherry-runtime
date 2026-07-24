@@ -44,7 +44,7 @@ public class SetVariableWorker extends AbstractWorker implements IntFrameworkRun
     public SetVariableWorker() {
         super(WORKERTYPE_SET_VARIABLES, Arrays.asList(
                         RunnerParameter.getInstance(INPUT_OPERATIONS, "Operation", String.class, RunnerParameter.Level.REQUIRED,
-                                "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi colonne."),
+                                "Operations, example color=\"blue\";age=12;source=AnotherVariable. Each operation is separate by a semi column."),
                         RunnerParameter.getInstance(INPUT_ANYTHING, "Input Anything", Object.class, RunnerParameter.Level.OPTIONAL,
                                 "Any variables can be accessed")), Collections.singletonList(
                         RunnerParameter.getInstance(OUTPUT_RESULT, "Result", Object.class, RunnerParameter.Level.REQUIRED,

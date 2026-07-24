@@ -79,6 +79,8 @@ public interface CherryConnector {
      */
     List<String> getAppliesTo();
 
+    String getElementType();
+
     int getVersion();
 
     String getRelease();

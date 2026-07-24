@@ -162,6 +162,7 @@ public class RunnerUploadFactory {
     protected List<RunnerLightDefinition> installJar(String jarFileName, ByteArrayInputStream jarFileInputStream) {
         File jarFile = runnerClassLoaderFactory.copyJarFile(jarFileName, jarFileInputStream);
         List<RunnerLightDefinition> runners = saveJarFileToStorage(jarFile, jarFileName, true);
+        listLightRunners.addAll(runners);
         logger.info("RunnerUploadFactory jar[{}] installed, found {} runners", jarFileName, runners.size());
         return runners;
     }

@@ -24,6 +24,7 @@ public interface CherryInput {
     String PARAMETER_MAP_LEVEL_OPTIONAL = "OPTIONAL";
     String PARAMETER_MAP_EXPLANATION = "explanation";
     String PARAMETER_MAP_DEFAULT_VALUE = "defaultValue";
+    String PARAMETER_MAP_BINDINGNAME = "bindingName";
     String PARAMETER_MAP_GSON_TEMPLATE = "gsonTemplate";
 
     String PARAMETER_MAP_CONDITION = "condition";
@@ -38,8 +39,8 @@ public interface CherryInput {
     String PARAMETER_MAP_GROUP_ID = "groupId";
     String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
 
-    String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
-    String PARAMETER_APPLIES_V_TASK = "bpmn:Task";
+    public String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
+    public String PARAMETER_APPLIES_V_TASK = "bpmn:Task";
     String PARAMETER_APPLIES_V_STARTEVENT = "bpmn:StartEvent";
     String PARAMETER_APPLIES_V_INTERMEDIATE_CATCH_EVENT = "bpmn:IntermediateCatchEvent";
     String PARAMETER_APPLIES_V_INTERMEDIATE_THROW_EVENT = "bpmn:IntermediateThrowEvent";

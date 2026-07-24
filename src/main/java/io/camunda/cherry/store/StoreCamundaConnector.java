@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.connector.api.annotation.OutboundConnector;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestTemplate;
@@ -25,12 +24,11 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -82,7 +80,7 @@ public class StoreCamundaConnector implements StoreAccess {
     /**
      * @return list of connector
      */
-    public List<ConnectorDefinition> getListConnectors() {
+    public List<ConnectorDefinition> exploreListConnectors() {
         long startTime = System.currentTimeMillis();
         String release = gitHubAccess.getLatestRelease(REPO);
         logger.info("{}: last official release is [{}]", getName(), release);
@@ -123,7 +121,6 @@ public class StoreCamundaConnector implements StoreAccess {
             ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, name, htmlUrl, release);
             connectorDefinition.githubRepoName = REPO;
             connectorDefinition.githubRepoPath = repoPath + "/" + name;
-            connectorDefinition.sourceUrl = htmlUrl;
             connectorDefinition.creator = "Camunda";
             result.add(connectorDefinition);
             return result;
@@ -297,20 +294,16 @@ public class StoreCamundaConnector implements StoreAccess {
         try {
             String jarName = connectorDefinition.urlMaven.substring(connectorDefinition.urlMaven.lastIndexOf("/") + 1);
             ConnectorDownload connectorDownload = new ConnectorDownload();
-            URL url = new URL(connectorDefinition.urlMaven);
-            URLConnection connection = url.openConnection();
-            InputStream is = connection.getInputStream();
 
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            IOUtils.copy(is, byteArrayOutputStream);
-            connectorDownload.jarContent = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-
-            Path tempPath = Files.createTempFile(connectorDefinition.name + "-" + connectorDefinition.release, ".jar");
-            File tempFile = new File(tempPath.toString());
-            FileOutputStream tempOut = new FileOutputStream(tempFile);
-            IOUtils.copy(connectorDownload.jarContent, tempOut);
-            connectorDownload.connectorDetails = fetchDetails(tempFile);
-            tempFile.delete();
+            byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlMaven, byte[].class);
+            if (jarBytes == null) {
+                connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
+                connectorDownload.explanation = "Empty response from [" + connectorDefinition.urlJarFile + "]";
+                return connectorDownload;
+            }
+            connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);
+            connectorDownload.status = STATUSDOWNLOAD.OK;
+            connectorDownload.release = connectorDefinition.release;
 
             return connectorDownload;
         } catch (Exception e) {

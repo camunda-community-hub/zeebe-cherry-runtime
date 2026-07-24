@@ -8,6 +8,7 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
+import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runner.*;
@@ -141,7 +142,6 @@ public class StoreRestController {
                 mapConnector.put(RestAttribute.CONNECTOR_TYPE, connectorDefinition.connectorType);
                 mapConnector.put(RestAttribute.HAS_IMPLEMENTATION, connectorDefinition.hasImplementation);
                 mapConnector.put(RestAttribute.IS_INSTALLABLE, connectorDefinition.isInstallable);
-                mapConnector.put(RestAttribute.SOURCE_URL, connectorDefinition.sourceUrl);
                 mapConnector.put(RestAttribute.CREATOR, connectorDefinition.creator);
                 listAllConnectors.add(mapConnector);
 
@@ -198,7 +198,8 @@ public class StoreRestController {
                     .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                     .toList();
             Map<String, Object> status = new HashMap<>();
-            status.put("inprogress", storeFactory.isExplorationInProcess());
+            status.put(RestAttribute.INPROGRESS, storeFactory.isExplorationInProcess());
+            status.put(RestAttribute.PERCENTEXPLORATION, storeFactory.getPercentageExploration());
             return Map.of("connectors", listAllConnectors, "stores", listStores, "status", status);
 
         } catch (TechnicalException e) {
@@ -315,6 +316,7 @@ public class StoreRestController {
                                                  @RequestParam(name = "connectorname", required = false) String connectorName,
                                                  @RequestParam(name = "release", required = false) String release) {
         try {
+            logger.info("Start install jar [{}] from store[{}] release[{}]", connectorName, storeName, release);
             StoreAccess.ConnectorDownload connectorDownload = storeFactory.downloadConnector(storeName, connectorName, release);
 
             // Now install it
@@ -322,12 +324,25 @@ public class StoreRestController {
             for (RunnerLightDefinition runner : connectorDownload.runners) {
                 try {
                     jobRunnerFactory.stopRunner(runner.getType());
+                } catch (OperationException e) {
+                    // do nothing: for a first installation, this is expected
+                }
+
+                try {
                     jobRunnerFactory.startRunner(runner.getType());
+                    logger.info("start runner[{}] from connector [{}] installed and started  install jar [{}] from store[{}] release[{}]", runner.getName(), connectorName, storeName, release);
                 } catch (Exception e) {
-                    logger.error(e.getMessage());
+                    logger.error("install : exception ", e);
+                    connectorDownload.status = StoreAccess.STATUSDOWNLOAD.FAILED;
+                    connectorDownload.explanation= e.getMessage();
+                    logOperation.log(OperationEntity.Operation.ERROR,
+                            "Can't start connector[" + runner.getName() + "] from DownloadConnector["+connectorName+"] : " + e.getMessage());
                 }
             }
+            // do not return the JAR file
+            connectorDownload.jarContent = null;
             return connectorDownload;
+
         } catch (TechnicalException e) {
             logOperation.log(OperationEntity.Operation.ERROR,
                     "Can't download connector[" + connectorName + "] " + e.getMessage());
