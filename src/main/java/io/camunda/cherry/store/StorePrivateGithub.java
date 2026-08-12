@@ -24,7 +24,8 @@ public class StorePrivateGithub implements StoreAccess {
     Logger logger = LoggerFactory.getLogger(StorePrivateGithub.class.getName());
 
 
-    private String REPOS_PER_PAGE = "50";
+    private final String REPOS_PER_PAGE = "50";
+
     public StorePrivateGithub(String name, String url, GitHubAccess gitHubAccess) {
         this.name = name;
         this.url = url;
@@ -100,7 +101,7 @@ public class StorePrivateGithub implements StoreAccess {
                     connectorDefinition.githubRepoName = fullName;
                     connectorDefinition.githubRepoPath = "";
                     connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
-                    logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl,connectorDefinition.hasImplementation );
+                    logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl, connectorDefinition.hasImplementation);
 
                     result.add(connectorDefinition);
                 }
@@ -171,7 +172,7 @@ public class StorePrivateGithub implements StoreAccess {
         if (connectorDefinition.hasImplementation) {
             connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
         }
-        connectorDefinition = gitHubAccess.fillElementTemplate(getName(), connectorDefinition);
+        connectorDefinition = gitHubAccess.fillAllElementTemplates(getName(), connectorDefinition);
         return true;
     }
 
@@ -245,7 +246,7 @@ public class StorePrivateGithub implements StoreAccess {
                 .compile("github\\.com/orgs/([^/]+)$")
                 .matcher(trimmed);
         if (orgMatcher.find()) {
-            return "https://api.github.com/orgs/" + orgMatcher.group(1) + "/repos?per_page=" + REPOS_PER_PAGE + "&type="+type+"&sort=full_name";
+            return "https://api.github.com/orgs/" + orgMatcher.group(1) + "/repos?per_page=" + REPOS_PER_PAGE + "&type=" + type + "&sort=full_name";
         }
 
         // user URL: github.com/{user}
@@ -253,7 +254,7 @@ public class StorePrivateGithub implements StoreAccess {
                 .compile("github\\.com/([^/]+)$")
                 .matcher(trimmed);
         if (userMatcher.find()) {
-            return "https://api.github.com/users/" + userMatcher.group(1) + "/repos?per_page="+REPOS_PER_PAGE+"&type=owner&sort=full_name";
+            return "https://api.github.com/users/" + userMatcher.group(1) + "/repos?per_page=" + REPOS_PER_PAGE + "&type=owner&sort=full_name";
         }
 
         return null;

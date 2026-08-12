@@ -99,7 +99,7 @@ public class StoreMarketPlace implements StoreAccess {
                     // repoUrl is a complete URL (https://github.com/camunda-community-hub/camunda-8-connector-pdf) where the gitHubRepoName contains only the reponame: remove github?com
                     if (repoUrl.startsWith("https://github.com/")) {
                         connectorDefinition.githubRepoName = repoUrl.substring("https://github.com/".length());
-                        connectorDefinition = gitHubAccess.fillElementTemplate(getName(), connectorDefinition);
+                        connectorDefinition = gitHubAccess.fillAllElementTemplates(getName(), connectorDefinition);
                     }
                     // extract "owner/repo" from the full GitHub URL
                     // connectorDefinition.githubRepoName = repoUrl.replaceFirst("https://github\\.com/", "");

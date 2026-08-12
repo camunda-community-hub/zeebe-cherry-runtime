@@ -56,12 +56,15 @@ public class RestAttribute {
     public static final String GITHUB_REPO_PATH = "githubRepoPath";
     public static final String EXPLORATION_STATUS = "explorationStatus";
     public static final String DOCUMENTATION_REF = "documentationRef";
-    public static final String URL_ELEMENT_TEMPLATE = "urlElementTemplate";
+    // public static final String URL_ELEMENT_TEMPLATE = "urlElementTemplate";
     public static final String URL_JAR_FILE = "urlJarFile";
     public static final String URL_MAVEN = "urlMaven";
     public static final String HAS_IMPLEMENTATION = "hasImplementation";
     public static final String IS_INSTALLABLE = "isInstallable";
     public static final String CREATOR = "creator";
+    public static final String ANNOTATIONS = "annotations";
+    public static final String ELEMENT_TEMPLATES = "elementTemplates";
+
     // --- Secret / Env ---
     public static final String VALUE = "value";
     public static final String IS_SECRET = "issecret";
@@ -93,8 +96,15 @@ public class RestAttribute {
     public static final String TENANTS = "tenants";
     public static final String DELAY_REFRESH = "delayRefresh";
 
-    public static final String INPROGRESS = "inProgress";
+    public static final String EXPLORATION = "exploration";
     public static final String PERCENTEXPLORATION = "percentExploration";
+
+    public static final String DOWNLOAD_STARTUP = "downloadStartup";
+    public static final String DOWNLOAD_STARTUP_NAME = "name";
+    public static final String DOWNLOAD_STARTUP_PERCENTAGE = "percentage";
+    public static final String DOWNLOAD_STARTUP_TOTAL = "total";
+    public static final String DOWNLOAD_STARTUP_COUNT = "count";
+    public static final String DOWNLOAD_STARTUP_CURRENT_NAME = "currentDownloadName";
 
 
     private RestAttribute() {

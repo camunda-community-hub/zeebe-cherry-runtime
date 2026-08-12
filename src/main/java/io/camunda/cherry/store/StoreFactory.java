@@ -1,38 +1,63 @@
 package io.camunda.cherry.store;
 
+import io.camunda.cherry.exception.TechnicalException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class StoreFactory {
 
+    private final CherryProperties cherryProperties;
+    private final GitHubAccess gitHubAccess;
+    private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
+    private final int BASE_ADVANCE_PHASE1 = 40;
+    private final int BASE_ADVANCE_PHASE2 = 40;
+    private final int BASE_ADVANCE_PHASE3 = 20;
     public List<StoreAccess> listStoreAccess = new ArrayList<>();
     Logger logger = LoggerFactory.getLogger(StoreFactory.class.getName());
-    private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
-
-    private boolean explorationInProcess = false;
+    private EXPLORATIONCONNECTOR exploration = EXPLORATIONCONNECTOR.NONE;
     private int percentageExploration = 0;
-
-
-    private int BASE_ADVANCE_PHASE1=40;
-    private int BASE_ADVANCE_PHASE2=40;
-    private int BASE_ADVANCE_PHASE3=20;
-
     StoreFactory(GitHubAccess gitHubAccess, CherryProperties cherryProperties) {
 
-        listStoreAccess.add(new StoreCamundaConnector(gitHubAccess));
-        listStoreAccess.add(new StoreCamundaCommunity(gitHubAccess));
-        listStoreAccess.add(new StoreMarketPlace(gitHubAccess));
+        if (cherryProperties.getStore().getCamundaConnector().isAccess())
+            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess));
 
-        for (String repoUrl : cherryProperties.getStores()) {
-            String name = extractName(repoUrl);
-            listStoreAccess.add(new StorePrivateGithub(name, repoUrl, gitHubAccess));
+        if (cherryProperties.getStore().getCommunityConnector().isAccess())
+            listStoreAccess.add(new StoreCamundaCommunity(gitHubAccess));
+
+        if (cherryProperties.getStore().getMarketplaceConnector().isAccess())
+            listStoreAccess.add(new StoreMarketPlace(gitHubAccess));
+
+        if (cherryProperties.getStore().getPrivateStore().isAccess()) {
+            for (String repoUrl : cherryProperties.getStore().getPrivateStore().getListStore()) {
+                String name = extractName(repoUrl);
+                listStoreAccess.add(new StorePrivateGithub(name, repoUrl, gitHubAccess));
+            }
         }
+        this.cherryProperties = cherryProperties;
+        this.gitHubAccess = gitHubAccess;
+    }
+
+    public StoreCamundaConnector getStoreCamundaConnector() {
+        for (StoreAccess storeAccess : listStoreAccess) {
+            if (storeAccess instanceof StoreCamundaConnector storeAccessConnector) {
+                return storeAccessConnector;
+            }
+        }
+        return null;
+    }
+
+    public StoreCamundaCommunity getStoreCommunity() {
+        for (StoreAccess storeAccess : listStoreAccess) {
+            if (storeAccess instanceof StoreCamundaCommunity storeAccessCommunity) {
+                return storeAccessCommunity;
+            }
+        }
+        return null;
     }
 
     public List<String> getStoreNames() {
@@ -43,20 +68,13 @@ public class StoreFactory {
         return listStoreAccess;
     }
 
-
-    public boolean isExplorationInProcess() {
-        return explorationInProcess;
+    public EXPLORATIONCONNECTOR getExploration() {
+        return exploration;
     }
 
     public int getPercentageExploration() {
         return percentageExploration;
     }
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Explore the connector world                                         */
-    /*                                                                      */
-    /* ******************************************************************** */
 
     public StoreAccess getStoreByName(String name) {
         return listStoreAccess.stream()
@@ -65,17 +83,11 @@ public class StoreFactory {
                 .orElse(null);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
-        java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                explore();
-            } catch (Exception e) {
-                logger.error("StoreFactory exploration failed on startup", e);
-            }
-        });
-    }
-
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  Explore the connector world                                         */
+    /*                                                                      */
+    /* ******************************************************************** */
 
     public StoreAccess.ConnectorDefinition getConnectorDefinition(StoreAccess storeAccess, String connectorName) {
         List<StoreAccess.ConnectorDefinition> connectors = mapConnectors.get(storeAccess);
@@ -91,7 +103,6 @@ public class StoreFactory {
         return mapConnectors.get(storeAccess);
     }
 
-
     /**
      * A connector may have multiple store.
      * For example, connector from ConnectorStore are referenced in the marketplace. or connector in CamundaHub the same
@@ -103,7 +114,7 @@ public class StoreFactory {
      * - Private GitHub
      * - Marketplace
      *
-     * @return
+     * @return the connector definition
      */
     public List<StoreAccess.ConnectorDefinition> getListConnectorsMergeSource(List<StoreAccess> filterStoreAccess) {
         List<StoreAccess> listStoreOrdered = new ArrayList<>();
@@ -132,7 +143,7 @@ public class StoreFactory {
             listStoreOrdered.retainAll(filterStoreAccess);
         }
 
-        // Merge: first occurrence of a connectorType wins, based on type
+        // Merge: first occurrence of a connectorType wins, based on name : multiple connectors may have different name but same type (like restCall)
         Map<String, StoreAccess.ConnectorDefinition> merged = new java.util.LinkedHashMap<>();
         for (StoreAccess storeAccess : listStoreOrdered) {
             List<StoreAccess.ConnectorDefinition> connectors = mapConnectors.get(storeAccess);
@@ -142,7 +153,8 @@ public class StoreFactory {
                 // The connector is identified to be on marketplace and have a origin from Hub or Camunda Connector: ignore it.
                 if (connector.connectorSource != StoreAccess.CONNECTORSOURCE.NONE)
                     continue;
-                String key = connector.connectorType != null ? connector.connectorType : connector.name;
+
+                String key = connector.name;
                 merged.putIfAbsent(key, connector);
             }
         }
@@ -156,14 +168,14 @@ public class StoreFactory {
      */
     public synchronized void explore() {
         logger.info("---- Start exploration of connectors");
-        explorationInProcess = true;
-        percentageExploration=0;
+        exploration = EXPLORATIONCONNECTOR.INPROGRESS;
+        percentageExploration = 0;
         long beginTime = System.currentTimeMillis();
         mapConnectors.clear();
         int nbConnectors = 0;
         int countStore = 0;
         for (StoreAccess storeAccess : listStoreAccess) {
-            percentageExploration =  (int) ( ((double) countStore)/listStoreAccess.size())*BASE_ADVANCE_PHASE1;
+            percentageExploration = (int) ((((double) countStore) / listStoreAccess.size()) * BASE_ADVANCE_PHASE1);
             countStore++;
             // first 40% on pass 1
             logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
@@ -176,11 +188,11 @@ public class StoreFactory {
             mapConnectors.put(storeAccess, listConnectors);
         }
         logger.info("~~~~~ END Pass 1. {} connectors identified in {} ms", nbConnectors, System.currentTimeMillis() - beginTime);
-        percentageExploration= BASE_ADVANCE_PHASE1;
+        percentageExploration = BASE_ADVANCE_PHASE1;
 
         // Ok, now replay all connectors and explore them
         countStore = 0;
-        int totalStores = mapConnectors.entrySet().size();
+        int totalStores = mapConnectors.size();
         for (Map.Entry<StoreAccess, List<StoreAccess.ConnectorDefinition>> entry : mapConnectors.entrySet()) {
             countStore++;
             StoreAccess storeAccess = entry.getKey();
@@ -188,7 +200,7 @@ public class StoreFactory {
             long startTimeDeep = System.currentTimeMillis();
             int nbFullyCorrects = 0;
             int nbIncorrect = 0;
-            int countConnectors=0;
+            int countConnectors = 0;
             int totalConnectors = entry.getValue().size();
             double storeSlice = (double) BASE_ADVANCE_PHASE2 / totalStores;
             List<StoreAccess.ConnectorDefinition> connectorsToRemove = new ArrayList<>();
@@ -201,10 +213,11 @@ public class StoreFactory {
                 try {
                     boolean isValid = storeAccess.exploreDetails(connectorDefinition);
                     if (!isValid) {
+                        logger.info("StoreFactory: connector[{}] Store [{}] is not valid", connectorDefinition.name, connectorDefinition.storeAccess.getName());
                         connectorsToRemove.add(connectorDefinition);
                         continue;
                     }
-                    connectorDefinition.status = connectorDefinition.urlElementTemplate != null ?
+                    connectorDefinition.status = !connectorDefinition.listEltTemplate.isEmpty() ?
                             StoreAccess.EXPLORATION.READY : StoreAccess.EXPLORATION.INCOMPLETE;
                     logger.info("Store[{}] connector[{}] type:[{}] release[{}] Status[{}] HasImplementation? {} url[{}] Description[{}] Gitname name[{}] path[{}] urlJarFile[{}] urlElementTemplate[{}]",
                             storeAccess.getName(),
@@ -218,7 +231,7 @@ public class StoreFactory {
                             connectorDefinition.githubRepoName,
                             connectorDefinition.githubRepoPath,
                             connectorDefinition.urlJarFile,
-                            connectorDefinition.urlElementTemplate
+                            connectorDefinition.listAnnotations.stream().map(c -> c.name).collect(Collectors.joining(","))
                     );
 
                 } catch (Exception e) {
@@ -268,41 +281,85 @@ public class StoreFactory {
         }
         logger.info("~~~~~ END Pass 3. isInstallable : connectorImplementation {} connectorInstallable {} on {}", allConnectorTypes.size(), isInstallable, totalConnectors);
         logger.info("---- End exploration of all stores/connectors in {} ms", System.currentTimeMillis() - beginTime);
-        explorationInProcess = false;
+        exploration = EXPLORATIONCONNECTOR.COMPLETED;
 
     }
 
-    /**
-     * Download the connector
-     *
-     * @param storeName     store where the connector must be downloaded
-     * @param connectorName name of the connector
-     * @param release       release (maybe null)
-     * @return a connectorDownload status
-     */
-    public StoreAccess.ConnectorDownload downloadConnector(String storeName, String connectorName, String release) {
+    public StoreAccess.ConnectorDefinition getConnectorDefinition(String storeName, String connectorName, String release) throws TechnicalException {
         StoreAccess.ConnectorDownload connectorDownload = new StoreAccess.ConnectorDownload();
         StoreAccess storeAccess = getFromName(storeName);
         if (storeAccess == null) {
-            connectorDownload.status = StoreAccess.STATUSDOWNLOAD.UNKNOWNSTORE;
-            connectorDownload.explanation = "Store[" + storeName + "] unknown";
-            return connectorDownload;
+            throw new TechnicalException("Store[" + storeName + "] not found");
         }
+        // Soon: get the connectorDefinition for the asking release
         StoreAccess.ConnectorDefinition connectorDefinition = getConnectorDefinition(storeAccess, connectorName);
-        if (connectorDefinition == null) {
-            connectorDownload.status = StoreAccess.STATUSDOWNLOAD.UNKNOWCONNECTOR;
-            return connectorDownload;
-        }
-
-        // check if the asked release is the correct one
-        if (release != null && connectorDefinition.release != null && !connectorDefinition.release.equals(release)) {
-            connectorDownload.status = StoreAccess.STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "Release asked[" + release + "] Release in store [" + connectorDefinition.release + "]";
-            return connectorDownload;
-
-        }
-        return storeAccess.downloadConnector(connectorDefinition);
+        return connectorDefinition;
     }
+
+    /**
+     * The connectorDefintion may not have an implementation, and rely on one another connector.
+     * For example, a lot of connector rely on the connector HTTP
+     *
+     * @param connectorDefinition definition
+     * @return any parent definition, if the connector has a parent
+     * @throws TechnicalException any error
+     */
+    public StoreAccess.ConnectorDefinition getParentConnectorDefinition(StoreAccess.ConnectorDefinition connectorDefinition) throws TechnicalException {
+        if (connectorDefinition.hasImplementation)
+            return connectorDefinition;
+
+        // Search if a connector with an implementation exist
+        StoreAccess.ConnectorDefinition parentConnectorDefinition = searchConnector(new Filter().type(connectorDefinition.connectorType).hasImplementation(Boolean.TRUE));
+        logger.info("StoreFactory: connector [{} type[{}] has a parent connector:[{}]", connectorDefinition.name, connectorDefinition.connectorType,
+                parentConnectorDefinition == null ? "No parent" : parentConnectorDefinition.name);
+        return parentConnectorDefinition;
+    }
+
+    public StoreAccess.ConnectorDownload downloadConnector(StoreAccess.ConnectorDefinition connectorDefinition) {
+        return connectorDefinition.storeAccess.downloadConnector(connectorDefinition);
+
+    }
+
+    public StoreAccess getFromName(String storeName) {
+        return listStoreAccess.stream().filter(s -> s.getName().equals(storeName)).findFirst().orElse(null);
+    }
+
+    public StoreAccess.ConnectorDefinition searchConnector(Filter filter) {
+        for (List<StoreAccess.ConnectorDefinition> listConnectorDefinitions : mapConnectors.values()) {
+            for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectorDefinitions) {
+                // do not keep a definition with no implementation if we filter on it
+                if (filter.hasImplementation != null && !connectorDefinition.hasImplementation)
+                    continue;
+                if (connectorDefinition.name.equals(filter.name)) {
+                    logger.info("searchConnector: connectorDefinition Filter[{}} found {}", filter.name, connectorDefinition);
+                    return connectorDefinition;
+                }
+                if (connectorDefinition.connectorType.equals(filter.type)) {
+                    logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition);
+                    return connectorDefinition;
+                }
+            }
+        }
+        logger.info("searchConnector: connectorDefinition FilterName[{}] FilterType[{}] HasImplementation [{}]not found",
+                filter.name,
+                filter.type,
+                filter.hasImplementation);
+        return null;
+    }
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  searchConnectorDefinition                                           */
+    /*                                                                      */
+    /* ******************************************************************** */
+
+    private String extractName(String url) {
+        String trimmed = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        return trimmed.substring(trimmed.lastIndexOf('/') + 1);
+    }
+
+    public enum EXPLORATIONCONNECTOR {NONE, INPROGRESS, COMPLETED}
+
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -310,14 +367,40 @@ public class StoreFactory {
     /*                                                                      */
     /* ******************************************************************** */
 
+    public static class Filter {
+        public String name;
+        public String type;
+        public Boolean hasImplementation;
 
-    private StoreAccess getFromName(String storeName) {
-        return listStoreAccess.stream().filter(s -> s.getName().equals(storeName)).findFirst().orElse(null);
+        public Filter name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Filter type(String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Filter hasImplementation(Boolean hasImplementation) {
+            this.hasImplementation = hasImplementation;
+            return this;
+        }
+
     }
-
-
-    private String extractName(String url) {
-        String trimmed = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-        return trimmed.substring(trimmed.lastIndexOf('/') + 1);
-    }
+/** TO REMOVE
+ private boolean matchesFilter(String connectorName) {
+ List<String> filter = cherryProperties.getStore().getStartup().getCommunityConnector().getFilter();
+ if (filter == null || filter.isEmpty()) {
+ return true;
+ }
+ for (String oneFilter : filter) {
+ String regex = oneFilter.replace(".", "\\.").replace("*", ".*");
+ if (connectorName.matches(regex)) {
+ return true;
+ }
+ }
+ return false;
+ }
+ */
 }

@@ -39,8 +39,8 @@ public interface CherryInput {
     String PARAMETER_MAP_GROUP_ID = "groupId";
     String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
 
-    public String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
-    public String PARAMETER_APPLIES_V_TASK = "bpmn:Task";
+    String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
+    String PARAMETER_APPLIES_V_TASK = "bpmn:Task";
     String PARAMETER_APPLIES_V_STARTEVENT = "bpmn:StartEvent";
     String PARAMETER_APPLIES_V_INTERMEDIATE_CATCH_EVENT = "bpmn:IntermediateCatchEvent";
     String PARAMETER_APPLIES_V_INTERMEDIATE_THROW_EVENT = "bpmn:IntermediateThrowEvent";

@@ -59,7 +59,7 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
     }
 
     @Override
-    public OutboundConnectorFunction getTransportedConnector() {
+    public OutboundConnectorFunction getTransportedConnectorFunction() {
         return outboundConnectorFunction;
     }
 

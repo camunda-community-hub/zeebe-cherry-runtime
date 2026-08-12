@@ -1,8 +1,10 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  StoreCamundaConnector                                                        */
+/*  StoreCamundaConnector                                               */
 /*                                                                      */
-/*  Access the Store Service - download new connector                   */
+/* Access the Store Service - download new connectors                   */
+/* a store does not save any cache                                      */
+/* repo is  https://github.com/camunda/connectors                       */
 /* ******************************************************************** */
 package io.camunda.cherry.store;
 
@@ -34,7 +36,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
 
 public class StoreCamundaConnector implements StoreAccess {
     public static final String REPO = "camunda/connectors";
@@ -164,31 +165,20 @@ public class StoreCamundaConnector implements StoreAccess {
             connectorDefinition = fillJarDownload(connectorDefinition);
         }
         // Search the element template
-        connectorDefinition = fillElementTemplate(connectorDefinition);
+        connectorDefinition = fillAllElementTemplates(connectorDefinition);
         return true;
     }
 
 
-    private ConnectorDefinition fillElementTemplate(ConnectorDefinition connectorDefinition) {
+    private ConnectorDefinition fillAllElementTemplates(ConnectorDefinition connectorDefinition) {
         try {
-            connectorDefinition.urlElementTemplate = exploreElementTemplate(connectorDefinition);
+            List<String> urlTemplates = getListOfUrlElementTemplate(connectorDefinition);
 
-            for (String urlTemplate : connectorDefinition.urlElementTemplate) {
-                JsonNode jsonNode = gitHubAccess.getJsonNode(urlTemplate);
-                connectorDefinition.description = jsonNode.path("description").asText(connectorDefinition.description);
-                connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
-                // An inbound connector does not have type, so explore all json to get the list of
-                if (connectorDefinition.connectorType == null) {
-                    connectorDefinition.connectorType = gitHubAccess.extractTaskDefinitionType(jsonNode);
-                }
-                JsonNode iconNode = jsonNode.path("icon");
-                if (!iconNode.isMissingNode() && !iconNode.isNull()) {
-                    connectorDefinition.icon = iconNode.path("contents").asText(iconNode.asText(""));
-                }
-
+            for (String urlTemplate : urlTemplates) {
+                connectorDefinition = gitHubAccess.fillOneElementTemplate(urlTemplate, connectorDefinition);
             }
             return connectorDefinition;
-        } catch(TechnicalException te) {
+        } catch (TechnicalException te) {
             throw te;
         } catch (Exception e) {
             logger.error("During fill ElementTemplate Store[{}] connector[{}] Url[{}] : {}",
@@ -219,9 +209,9 @@ public class StoreCamundaConnector implements StoreAccess {
         return gitHubAccess.extractTaskDefinitionType(elementTemplate);
     }
 
-    private List<String> exploreElementTemplate(ConnectorDefinition connectorDefinition) throws TechnicalException {
+    private List<String> getListOfUrlElementTemplate(ConnectorDefinition connectorDefinition) throws TechnicalException {
         try {
-            List<String> rawUrl = gitHubAccess.exploreElementTemplate(
+            List<String> rawUrl = gitHubAccess.fillOneElementTemplate(
                     connectorDefinition.githubRepoName,
                     connectorDefinition.githubRepoPath,
                     connectorDefinition.release);
@@ -233,8 +223,8 @@ public class StoreCamundaConnector implements StoreAccess {
                         connectorDefinition.githubRepoPath,
                         connectorDefinition.release);
                 throw new TechnicalException("No .json element-template found for connector ["
-                        + connectorDefinition.name + "] github repo["+connectorDefinition.githubRepoName
-                        +"] repoPath[" +connectorDefinition.githubRepoPath
+                        + connectorDefinition.name + "] github repo[" + connectorDefinition.githubRepoName
+                        + "] repoPath[" + connectorDefinition.githubRepoPath
                         + "] release [" + connectorDefinition.release + "]");
             }
             return rawUrl;
@@ -265,15 +255,25 @@ public class StoreCamundaConnector implements StoreAccess {
             groupId = getXmlValue("/project/parent/groupId", doc);
             artifactId = getXmlValue("/project/artifactId", doc);
             version = getXmlValue("/project/parent/version", doc);
-            connectorDefinition.release = version;
-            connectorDefinition.urlMaven = "https://repo.maven.apache.org/maven2/" + groupId.replaceAll("\\.", "/") + "/" + artifactId + "/" + version;
-            String mavenBase = connectorDefinition.urlMaven + "/" + artifactId + "-" + version;
-            String urlWithDeps = mavenBase + "-with-dependencies.jar";
-            String urlPlain = mavenBase + ".jar";
-            if (jarExists(urlWithDeps))
-                connectorDefinition.urlJarFile = urlWithDeps;
-            else if (jarExists(urlPlain))
-                connectorDefinition.urlJarFile = urlPlain;
+
+            if (!exploreJarUrl(connectorDefinition, groupId, artifactId, version)) {
+                // the release is not published !!! So come back to the version
+                int lastRelease = Integer.parseInt(version.substring(version.lastIndexOf('.') + 1));
+                boolean foundJar = false;
+                while (lastRelease >= 0 && !foundJar) {
+                    lastRelease--;
+                    int lastDot = version.lastIndexOf('.');
+                    String newVersion = version.substring(0, lastDot + 1) + (lastRelease);
+                    foundJar = exploreJarUrl(connectorDefinition, groupId, artifactId, newVersion);
+                    if (foundJar) {
+                        logger.info("Store[{}] connector[{}] last release[{}] not found, but found [{}]", getName(), connectorDefinition.name, version, newVersion);
+                        break;
+                    }
+                }
+                if (!foundJar) {
+                    logger.info("Store[{}] connector[{}] jarForRelease[{}] not found", getName(), connectorDefinition.name, version);
+                }
+            }
             return connectorDefinition;
 
         } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
@@ -283,6 +283,19 @@ public class StoreCamundaConnector implements StoreAccess {
         }
     }
 
+    private boolean exploreJarUrl(ConnectorDefinition connectorDefinition, String groupId, String artifactId, String version) {
+        connectorDefinition.release = version;
+        connectorDefinition.urlMaven = "https://repo.maven.apache.org/maven2/" + groupId.replaceAll("\\.", "/") + "/" + artifactId + "/" + version;
+        String jarMavenBase = connectorDefinition.urlMaven + "/" + artifactId + "-" + version;
+        String jarUrlWithDeps = jarMavenBase + "-with-dependencies.jar";
+        String jarUrlPlain = jarMavenBase + ".jar";
+        if (jarExists(jarUrlWithDeps))
+            connectorDefinition.urlJarFile = jarUrlWithDeps;
+        else if (jarExists(jarUrlPlain))
+            connectorDefinition.urlJarFile = jarUrlPlain;
+        else return false;
+        return true;
+    }
     /* ******************************************************************** */
     /*                                                                      */
     /*  Download                                                            */
@@ -292,10 +305,10 @@ public class StoreCamundaConnector implements StoreAccess {
     @Override
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
         try {
-            String jarName = connectorDefinition.urlMaven.substring(connectorDefinition.urlMaven.lastIndexOf("/") + 1);
             ConnectorDownload connectorDownload = new ConnectorDownload();
+            connectorDownload.jarName = connectorDefinition.urlJarFile.substring(connectorDefinition.urlJarFile.lastIndexOf("/") + 1);
 
-            byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlMaven, byte[].class);
+            byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
                 connectorDownload.explanation = "Empty response from [" + connectorDefinition.urlJarFile + "]";
@@ -307,7 +320,7 @@ public class StoreCamundaConnector implements StoreAccess {
 
             return connectorDownload;
         } catch (Exception e) {
-            throw new TechnicalException("ControllerPage downloading " + connectorDefinition.urlMaven, e);
+            throw new TechnicalException("ControllerPage downloading " + connectorDefinition.urlJarFile, e);
         }
     }
 

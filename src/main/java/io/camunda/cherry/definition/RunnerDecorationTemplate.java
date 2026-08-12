@@ -239,6 +239,10 @@ public class RunnerDecorationTemplate {
         if (!listOutputs.isEmpty() || pleaseAddOutputGroup)
             listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
 
+        // Add Error Management group if there are BPMN errors
+        if (!runner.getListBpmnErrors().isEmpty())
+            listGroups.add(new RunnerParameter.Group("errorManagement", "Error Management"));
+
         // ---- Add groups
         if (!listGroups.isEmpty()) {
             templateContent.put(ATTR_GROUPS,
@@ -266,22 +270,14 @@ public class RunnerDecorationTemplate {
 
         // check if the runner generates error
         if (!runner.getListBpmnErrors().isEmpty()) {
-            //
-            //            "label": "ControllerPage Expression",
-            //            "description": "Expression to define BPMN Errors to throw",
-            //            "group": "errors",
-            //            "type": "Hidden",
-            //            "value": "bpmnError(error.code, error.message)",
-            //            "binding": {
-            //            "type": "zeebe:taskHeader",
-            //                "key": "errorExpression"
-            //
             Map<String, Object> errorParameters = new LinkedHashMap<>();
-            errorParameters.put(ATTR_LABEL, "ControllerPage Expression");
-            errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
-            errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
-            errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
+            errorParameters.put(ATTR_LABEL, "Error Expression");
+            errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw with error context");
+            errorParameters.put(ATTR_TYPE, TYPE_FIELD_STRING);
+            errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message, {connectorError: {error: error.code, message: error.message}}) else null");
+            errorParameters.put(ATTR_FEEL, ATTR_FEEL_OPTIONAL);
             errorParameters.put(ATTR_BINDING, fixMapOf(ATTR_KEY, ATTR_KEY_ERROR_EXPRESSION, ATTR_TYPE, ZEEBE_TASK_HEADER));
+            errorParameters.put(ATTR_GROUP, "errorManagement");
 
             listProperties.add(errorParameters);
         }

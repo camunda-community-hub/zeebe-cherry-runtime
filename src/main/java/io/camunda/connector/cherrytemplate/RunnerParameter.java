@@ -280,8 +280,9 @@ public class RunnerParameter {
 
     /**
      * By default the bindingname is the field name, but it's possible to change it to create multiple field leading to the same binding name, to propose diffent UI
+     *
      * @param bindingName the binding name
-     * @return  a runnerParameter where the attribute is set
+     * @return a runnerParameter where the attribute is set
      */
     public RunnerParameter setBindingName(String bindingName) {
         this.bindingName = bindingName;
@@ -385,8 +386,8 @@ public class RunnerParameter {
         if (defaultValue != null)
             oneParameter.put(CherryInput.PARAMETER_MAP_DEFAULT_VALUE, defaultValue.toString());
 
-        if (bindingName!=null)
-        oneParameter.put(CherryInput.PARAMETER_MAP_BINDINGNAME, bindingName);
+        if (bindingName != null)
+            oneParameter.put(CherryInput.PARAMETER_MAP_BINDINGNAME, bindingName);
 
         oneParameter.put(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE, visibleInTemplate);
 

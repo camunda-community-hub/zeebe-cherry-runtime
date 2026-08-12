@@ -29,6 +29,7 @@ public class RunnerDefinitionEntity {
     @Enumerated(EnumType.STRING)
     public Origin origin;
 
+
     /**
      * If the Runner come from a JAR loaded (Upload, GitHub, directory) then the source is referenced here
      */

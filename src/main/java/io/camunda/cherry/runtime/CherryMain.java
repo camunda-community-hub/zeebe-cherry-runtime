@@ -13,7 +13,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,10 +20,8 @@ public class CherryMain {
 
     Logger logger = LoggerFactory.getLogger(CherryMain.class.getName());
 
-    @Autowired
     RunnerFactory runnerFactory;
 
-    @Autowired
     JobRunnerFactory jobRunnerFactory;
 
     RunnerUploadFactory runnerUploadFactory;
@@ -34,12 +31,13 @@ public class CherryMain {
                       RunnerUploadFactory runnerUploadFactory
     ) {
         this.runnerFactory = runnerFactory;
-        this.jobRunnerFactory = this.jobRunnerFactory;
+        this.jobRunnerFactory = jobRunnerFactory;
         this.runnerUploadFactory = runnerUploadFactory;
     }
 
     @PostConstruct
     public void init() {
+        /*
         // first, check all internal runner
         logger.info("----- CherryMain.1 Load all embedded runners");
         runnerFactory.init();
@@ -51,6 +49,7 @@ public class CherryMain {
         logger.info("----- CherryMain.3 Start all runners");
         jobRunnerFactory.startAll();
         logger.info("----- CherryMain.4 Up and running!");
+        */
     }
 
     @PreDestroy

@@ -17,11 +17,14 @@ public class RunnerLightDefinition {
     private final RunnerDefinitionEntity.Origin origin;
     private final String classname;
 
-    RunnerLightDefinition(String name, String type, String className, RunnerDefinitionEntity.Origin origin) {
+    String release;
+
+    public RunnerLightDefinition(String name, String type, String className, RunnerDefinitionEntity.Origin origin, String release) {
         this.name = name;
         this.type = type;
         this.classname = className;
         this.origin = origin;
+        this.release = release;
     }
 
     public String getType() {

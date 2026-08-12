@@ -15,22 +15,31 @@ cherry:
     token: ""
 
   store:
-    stores:
+    privateStores:
       - https://github.com/pierre-yves-monnet
-    download:
-      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
-      - pdf-function
+
+    communityStore:
+      access: true
+      filterProject: connector-8*
+
+    connectorRuntime:
+      access: true
+
+    marketplace:
+      access: true
+
     startup:
-      startConnectorRuntime: true
-      startCommunityConnector: true
+      explore: false
+      download:
+        - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
 
+      connectorRuntime:
+        download: false
+        tag: 8.7.0
+      communityConnector:
+        download: false
+        filter: connector-8-cha*
 
-  runners:
-    # the runtime load all embedded runners
-    embeddedrunner: true
-
-    # the runtime load ping runners
-    pingrunner: false
 
 
   tenants:

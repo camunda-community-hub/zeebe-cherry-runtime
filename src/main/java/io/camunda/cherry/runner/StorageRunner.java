@@ -14,6 +14,7 @@ import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.exception.TechnicalException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -173,7 +174,8 @@ public class StorageRunner {
     public RunnerDefinitionEntity saveUploadRunner(String name,
                                                    String type,
                                                    Class clazz,
-                                                   JarStorageEntity jarDefinition) {
+                                                   JarStorageEntity jarDefinition,
+                                                   String release) {
         RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByName(name);
         if (runnerDefinition == null) {
             runnerDefinition = new RunnerDefinitionEntity();
@@ -183,7 +185,7 @@ public class StorageRunner {
         runnerDefinition.classname = clazz.getCanonicalName();
         runnerDefinition.type = type;
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
-
+        runnerDefinition.release = release;
         runnerDefinition.jar = jarDefinition;
         // start it by default
         runnerDefinition.activeRunner = true;
@@ -200,18 +202,23 @@ public class StorageRunner {
      * @param jarDefinition Entity which contain the Jar File
      * @return a RunnerDefinitionEntity, saved.
      */
-    public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition) {
+    public RunnerDefinitionEntity saveUploadRunner(AbstractRunner runner, JarStorageEntity jarDefinition, String defaultRelease) {
         RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
         if (runnerDefinition == null) {
             runnerDefinition = new RunnerDefinitionEntity();
         }
         runnerDefinition.name = runner.getName();
-        runnerDefinition.classname = runner.getClass().getCanonicalName();
+        if (runner instanceof SdkRunnerConnector runnerSkkConnector) {
+            // we want to save the transported class name
+            runnerDefinition.classname = runnerSkkConnector.getTransportedClassName();
+        } else {
+            runnerDefinition.classname = runner.getName();
+        }
         runnerDefinition.jar = jarDefinition;
         runnerDefinition.type = runner.getType();
         runnerDefinition.collectionName = runner.getCollectionName();
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
-
+        runnerDefinition.release = runner.getRelease() == null || runner.getRelease().trim().isEmpty() ? defaultRelease : runner.getRelease();
         // start it by default
         runnerDefinition.activeRunner = true;
         logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",

@@ -25,33 +25,27 @@ import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
-import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
-import io.camunda.cherry.definition.connector.SdkRunnerConnector;
-import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.exception.OperationException;
-import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.support.GenericWebApplicationContext;
 
-import java.io.ByteArrayInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class RunnerFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
-    private final RunnerEmbeddedFactory runnerEmbeddedFactory;
-    private final RunnerClassLoaderFactory runnerClassLoaderFactory;
+    private final JarManagementClassLoader jarManagementClassLoader;
     private final StorageRunner storageRunner;
     private final RunnerExecutionRepository runnerExecutionRepository;
     private final LogOperation logOperation;
@@ -68,80 +62,31 @@ public class RunnerFactory {
      */
     private final Map<String, Object> runnerCache = new HashMap<>();
     @Autowired
-    private ApplicationContext context;
+    private final ApplicationContext context;
+    private final ConfigurableApplicationContext parentContext;
+    private final Map<ClassLoader, ConfigurableApplicationContext> pluginContexts = new ConcurrentHashMap<>();
 
-    RunnerFactory(RunnerEmbeddedFactory runnerEmbeddedFactory,
-                  RunnerClassLoaderFactory runnerClassLoaderFactory,
+
+    RunnerFactory(JarManagementClassLoader jarManagementClassLoader,
                   StorageRunner storageRunner,
                   RunnerExecutionRepository runnerExecutionRepository,
                   RunnerUploadFactory runnerUploadFactory,
                   LogOperation logOperation,
-                  SessionFactory sessionFactory) {
-        this.runnerEmbeddedFactory = runnerEmbeddedFactory;
-        this.runnerClassLoaderFactory = runnerClassLoaderFactory;
+                  SessionFactory sessionFactory,
+                  ApplicationContext context) {
+        this.jarManagementClassLoader = jarManagementClassLoader;
         this.storageRunner = storageRunner;
         this.runnerExecutionRepository = runnerExecutionRepository;
         this.logOperation = logOperation;
         this.sessionFactory = sessionFactory;
         this.runnerUploadFactory = runnerUploadFactory;
+        this.context = context;
+        this.parentContext = (ConfigurableApplicationContext) context;
+
     }
 
-    /**
-     * Detect classical runner in an object
-     *
-     * @param candidateRunner object to search inside
-     * @return list of runners detected
-     */
-    public static List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
 
-        List<AbstractRunner> listDetectedRunners = new ArrayList<>();
 
-        if (AbstractRunner.class.isAssignableFrom(candidateRunner.getClass())) {
-            // if (objectRunner instanceof AbstractRunner runner) {
-            logger.info(
-                    "Candidate Runner is AbstractRunner [{}] CherryConnector[{}] type [{}] inputSize [{}] outputSize [{}]",
-                    candidateRunner.getClass().getName(),
-                    (candidateRunner instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"),
-                    ((AbstractRunner) candidateRunner).getType(), ((AbstractRunner) candidateRunner).getListOutput().size(),
-                    ((AbstractRunner) candidateRunner).getListOutput().size());
-            listDetectedRunners.add((AbstractRunner) candidateRunner);
-            return listDetectedRunners;
-        }
-        if (candidateRunner instanceof OutboundConnectorFunction outboundConnector) {
-
-            // we have two kind of SDK runner :
-            // the classical connector
-            // the Cherry Enrichment Connector
-            if (SdkRunnerCherryConnector.isRunnerCherryConnector(candidateRunner.getClass())) {
-                listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector));
-            } else {
-                listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
-            }
-
-            // temp for debug
-            AbstractRunner last = listDetectedRunners.getLast();
-            logger.info("Detect Runner in Object [{}] class [{}] [{}] type [{}] ", candidateRunner.getClass().getName(),
-                    (last instanceof SdkRunnerCherryConnector ? "Cherry" : "Classic"), last.getName(), last.getType());
-
-            return listDetectedRunners;
-        }
-
-        for (Method method : candidateRunner.getClass().getMethods()) {
-            io.camunda.client.annotation.JobWorker annotation = method.getAnnotation(io.camunda.client.annotation.JobWorker.class);
-            if (annotation != null)
-                listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
-        }
-        return listDetectedRunners;
-    }
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Operations                                                          */
-    /*                                                                      */
-    /* ******************************************************************** */
-    public void init() {
-        runnerUploadFactory.init();
-    }
 
 
 
@@ -160,12 +105,6 @@ public class RunnerFactory {
     public void synchronize() {
         // not possible to use a Stream: external worker may upgrade embedded worker
         Map<String, RunnerLightDefinition> mapExistingRunners = new HashMap<>();
-        for (RunnerLightDefinition runner : runnerEmbeddedFactory.getAllRunners()) {
-            if (mapExistingRunners.containsKey(runner.getType()))
-                logger.warn("RunnerEmbedded[{}] Already loaded", runner.getType());
-            // last one is the winner
-            mapExistingRunners.put(runner.getType(), runner);
-        }
 
         for (RunnerLightDefinition runner : runnerUploadFactory.getAllRunners()) {
             if (mapExistingRunners.containsKey(runner.getType()))
@@ -197,23 +136,6 @@ public class RunnerFactory {
         }
 
     }
-
-    /**
-     * Install the jar, and return the list of runner detected in the jar.
-     * Attention: runners are not stopped/restarted. The runnerFactory can't access the running runner (managed by jobRunnerFactory)
-     * @param jarFileName jar file name
-     * @param jarFileInputStream InputStream
-     * @return list of runners detected in the JAR
-     */
-    public List<RunnerLightDefinition> installJar(String jarFileName, ByteArrayInputStream jarFileInputStream) {
-        List<RunnerLightDefinition> runners = runnerUploadFactory.installJar(jarFileName, jarFileInputStream);
-        logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + jarFileName + "]");
-        synchronize();
-
-
-        return runners;
-    }
-
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -266,23 +188,14 @@ public class RunnerFactory {
                 return List.of(runner);
             }
 
-            // if this class is embedded?
-            AbstractRunner embeddedRunner = runnerEmbeddedFactory.getByType(runnerDefinitionEntity.type);
-            if (embeddedRunner != null) {
-                cacheRunner.put(embeddedRunner.getType(), embeddedRunner);
-                return List.of(embeddedRunner);
-            }
-
             if (runnerDefinitionEntity.jar == null) {
                 logOperation.logError("No Jar file, not an embedded runner for [{}" + runnerDefinitionEntity.name + "]");
                 return Collections.emptyList();
             }
-            Class clazz = runnerClassLoaderFactory.loadClassInJavaMachine(runnerDefinitionEntity.jar.name,
-                    runnerDefinitionEntity.classname);
 
-            Object objectRunner = getRunnerObjectFromClass(clazz);
+            Object objectRunner = jarManagementClassLoader.getInstance(runnerDefinitionEntity.classname, runnerDefinitionEntity.jar.name);
 
-            List<AbstractRunner> listRunners = detectRunnersInObject(objectRunner);
+            List<AbstractRunner> listRunners = objectRunner == null ? Collections.emptyList() : JarManagementClassLoader.detectRunnersInObject(objectRunner);
             if (listRunners.isEmpty()) {
                 /* we must have a runner detected in an entity */
                 logger.error("No method to get a runner from [{}]", runnerDefinitionEntity.name);
@@ -312,28 +225,9 @@ public class RunnerFactory {
         return true;
     }
 
-    private Object getRunnerObjectFromClass(Class clazz)
-            throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        // There is two uses case:
-        // 1. the object is complex, and need injection. Then, it may be a @Bean
 
-        // 2. the class is very straightforward, and then we just need to create a new instance
-        try {
-            // First, ask Spring to load the class.
-            GenericWebApplicationContext genericContext = (GenericWebApplicationContext) context;
-            BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(clazz);
-            genericContext.registerBeanDefinition(clazz.getSimpleName(), builder.getBeanDefinition());
-
-            Object beanObject = context.getBean(clazz);
-            logOperation.log(OperationEntity.Operation.STARTRUNNER, "Runner is a bean [" + clazz.getName() + "]");
-            return beanObject;
-        } catch (Exception e) {
-            // Don't need to log, this is not a bean
-            logger.info("Error " + e);
-        }
-
-        return clazz.getDeclaredConstructor().newInstance();
-
+    @SpringBootConfiguration
+    @EnableAutoConfiguration
+    static class PluginBootstrap {
     }
-
 }
