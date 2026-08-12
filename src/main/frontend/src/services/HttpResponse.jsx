@@ -18,12 +18,17 @@ class HttpResponse {
         if (this.err)
             return true;
         // console.log("HttpResponse.isError httpStatus: "+this.axiosHttpPayload.status);
+        if (!this.axiosHttpPayload || !this.axiosHttpPayload.status) {
+            return false; // Assume success if status is missing
+        }
         if (this.axiosHttpPayload.status < 200 || this.axiosHttpPayload.status > 204)
             return true;
         return false;
     }
 
     getError() {
+        if (!this.err)
+            return "Unknown error";
         if (this.err.response && this.err.response.data && this.err.response.data.message)
             return this.err.response.data.message;
         // No response received — server unreachable or proxy refused connection
@@ -31,7 +36,7 @@ class HttpResponse {
             return "Cannot connect to the server";
         if (this.err.message)
             return this.err.message;
-        return this.err.code;
+        return this.err.code || "Unknown error";
     }
 
     getData() {

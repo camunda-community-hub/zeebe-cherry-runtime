@@ -37,7 +37,6 @@ class Dashboard extends React.Component {
                 showConnector: true,
                 showOnlyError: false,
                 showOnlyOverThreshold: false,
-                showFrameworkRunner: true,
                 filterSearch: ""
 
             },
@@ -108,13 +107,6 @@ class Dashboard extends React.Component {
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showOnlyOverThreshold")}>
                             Over Threshold
-                        </button>
-
-                        <button className={this.getButtonClass(this.state.display.showFrameworkRunner)}
-                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
-                                disabled={this.state.display.loading}
-                                onClick={() => this.setToggleFilter("showFrameworkRunner")}>
-                            <img src="/img/cherries.png" width="20" height="20" alt="cherry"/>Framework Runner
                         </button>
 
                     </div>
@@ -189,8 +181,6 @@ class Dashboard extends React.Component {
             return {display: "none"};
         if (this.state.display.showOnlyOverThreshold && runner.nboverthreshold === 0)
             return {display: "none"};
-        if (!this.state.display.showFrameworkRunner && runner.frameworkrunner === "true")
-            return {display: "none"};
 
         if (this.state.display.filterSearch
             && !runner.name.toLowerCase().includes(this.state.display.filterSearch.toLowerCase())) {
@@ -245,10 +235,14 @@ class Dashboard extends React.Component {
             console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
-            let firstRunner = httpPayload.getData().details[0];
-            console.log("dashboard: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");
-            this.setState({dashboard: httpPayload.getData()});
-
+            const data = httpPayload.getData();
+            if (data && data.details && data.details.length > 0) {
+                let firstRunner = data.details[0];
+                console.log("dashboard: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");
+            } else {
+                console.log("dashboard: No runners loaded (count: 0)");
+            }
+            this.setState({dashboard: data});
         }
     }
 

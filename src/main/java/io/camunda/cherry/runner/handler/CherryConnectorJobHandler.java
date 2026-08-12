@@ -28,9 +28,12 @@ import io.camunda.client.api.worker.JobClient;
 import io.camunda.client.api.worker.JobHandler;
 import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
 import io.camunda.client.metrics.DefaultNoopMetricsRecorder;
+import io.camunda.connector.api.annotation.Operation;
+import io.camunda.connector.api.annotation.Variable;
 import io.camunda.connector.api.document.DocumentFactory;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
+import io.camunda.connector.api.outbound.OutboundConnectorProvider;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.connector.runtime.core.document.DocumentFactoryImpl;
 import io.camunda.connector.runtime.core.document.store.CamundaDocumentStore;
@@ -40,7 +43,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.Map;
 
 /**
  * This job handler intercept the execution to the result
@@ -99,49 +105,87 @@ public class CherryConnectorJobHandler implements JobHandler {
     }
 
     @Override
-    public void handle(JobClient client, ActivatedJob job) {
+    public void handle(JobClient client, ActivatedJob job) throws Exception {
         Instant executionInstant = Instant.now();
         // abstractConnector or sdkRunnerConnector is not null
         String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
-        logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]", job.getKey(), job.getTenantId(),
+        logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]",
+                job.getKey(),
+                job.getTenantId(),
                 type);
         long beginExecution = System.currentTimeMillis();
         StatusContainer status;
         ConnectorException connectorException = null;
+        Exception exception = null;
 
         try {
             // JobHandlerContext context = new JobHandlerContext(job, secretProvider, validationProvider, objectMapper);
             // Execute the connector now
             OutboundConnectorFunction connectorFunction = null;
+            OutboundConnectorProvider connectorProvider = null;
             if (abstractConnector != null)
                 connectorFunction = abstractConnector;
             else if (sdkRunnerConnector != null) {
-                connectorFunction = sdkRunnerConnector.getTransportedConnector();
+                connectorFunction = sdkRunnerConnector.getTransportedConnectorFunction();
+                connectorProvider = sdkRunnerConnector.getTransportedConnectorProvider();
             } else
                 throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
-            DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
-            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-            ConnectorsOutboundMetrics outboundMetrics = new ConnectorsOutboundMetrics(meterRegistry);
+            if (connectorFunction != null) {
+                DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
+                SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-            SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
-                    outboundMetrics,
-                    jobWorkerMetrics,
-                    cherrySecretProvider,
-                    validationProvider,
-                    commandExceptionHandlingStrategy,
-                    documentFactory,
-                    objectMapper);
-            connectorJobHandler.handle(client, job);
-            status = new StatusContainer(connectorJobHandler.getExecutionStatus());
-            status.exception = connectorJobHandler.getLogException();
+                ConnectorsOutboundMetrics outboundMetrics = new ConnectorsOutboundMetrics(meterRegistry);
+
+                SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
+                        outboundMetrics,
+                        jobWorkerMetrics,
+                        cherrySecretProvider,
+                        validationProvider,
+                        commandExceptionHandlingStrategy,
+                        documentFactory,
+                        objectMapper);
+
+                // --------------- call the handle method
+                connectorJobHandler.handle(client, job);
+
+
+                status = new StatusContainer(connectorJobHandler.getExecutionStatus());
+                status.exception = connectorJobHandler.getLogException();
+            } else if (connectorProvider != null) {
+                // Handle OutboundConnectorProvider by discovering and invoking the operation method
+                String operationType = job.getCustomHeaders().get("operation");
+                if (operationType == null) {
+                    throw new ConnectorException("No operationType header found for OutboundConnectorProvider");
+                }
+
+                // Find the @Operation method matching this type
+                Method operationMethod = findOperationMethod(connectorProvider, operationType);
+                if (operationMethod == null) {
+                    throw new ConnectorException("No @Operation method found for type: " + operationType + " in provider: " + connectorProvider.getClass().getName());
+                }
+
+                // --------------- call the handle method
+                // Execute the provider operation directly with job variables
+                // OutboundConnectorProvider requires direct invocation since its @Operation methods
+                // expect @Variable-annotated parameters that are populated by the provider framework
+                Object providerResult = invokeProviderOperation(connectorProvider, operationMethod, job);
+
+                status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.SUCCESS);
+
+            } else {
+                throw new ConnectorException("No connector function or provider available to execute");
+            }
 
         } catch (ConnectorException ce) {
+            logger.error("ConnectorJobHandler : catch ConnectorException", ce);
             status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.BPMNERROR, ce);
             connectorException = ce;
         } catch (Exception e) {
+            logger.error("ConnectorJobHandler : catch Exception", e);
             status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.FAIL, e);
+            exception = e;
         }
         long endExecution = System.currentTimeMillis();
 
@@ -163,9 +207,91 @@ public class CherryConnectorJobHandler implements JobHandler {
                 status.status, // status of execution
                 errorCode, errorMessage, // error
                 endExecution - beginExecution);
+        // ------------ if an exception is catch, time to throw it
+        if (connectorException != null) {
+            throw connectorException;
+        }
+        if (exception != null) {
+            throw exception;
+        }
     }
 
-    private class StatusContainer {
+    /**
+     * Find the @Operation method on the provider that matches the operation type
+     */
+    private Method findOperationMethod(OutboundConnectorProvider provider, String operationType) {
+        for (Method method : provider.getClass().getMethods()) {
+            Operation operation = method.getAnnotation(Operation.class);
+            if (operation != null && operation.id().equals(operationType)) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Invoke an OutboundConnectorProvider's @Operation method directly with job variables.
+     * This extracts variables from the job and populates the method parameters.
+     */
+    private Object invokeProviderOperation(OutboundConnectorProvider provider, Method operationMethod, ActivatedJob job) throws ConnectorException {
+        try {
+            // Get method parameters and types
+            Class<?>[] paramTypes = operationMethod.getParameterTypes();
+            java.lang.reflect.Parameter[] methodParams = operationMethod.getParameters();
+            Object[] params = new Object[paramTypes.length];
+
+            // Get all job variables
+            Map<String, Object> jobVariables = job.getVariablesAsMap();
+            logger.info("Job variables available: {}", jobVariables.keySet());
+
+            // Populate method parameters from job variables or context
+            for (int i = 0; i < paramTypes.length; i++) {
+                String paramName = methodParams[i].getName();
+
+                // Check for @Variable annotation which might specify a custom variable name
+                Variable varAnnotation = methodParams[i].getAnnotation(Variable.class);
+
+                if (varAnnotation != null && !varAnnotation.value().isEmpty()) {
+                    paramName = varAnnotation.value();
+                }
+
+                // Get the variable value from job variables
+                Object varValue = jobVariables.get(paramName);
+
+                logger.info("Parameter[{}] name='{}' type='{}' varValue={}",
+                        i, paramName, paramTypes[i].getSimpleName(), varValue != null ? "found" : "null");
+
+                if (varValue == null) {
+                    logger.debug("Variable '{}' not found in job for method parameter '{}'", paramName, methodParams[i].getName());
+                    params[i] = null;
+                } else {
+                    // Deserialize the variable to the expected type
+                    try {
+                        params[i] = objectMapper.convertValue(varValue, paramTypes[i]);
+                        logger.info("Successfully deserialized variable '{}' to type {}", paramName, paramTypes[i].getSimpleName());
+                    } catch (Exception deserializeError) {
+                        logger.warn("Failed to deserialize variable '{}' to type {}: {}",
+                                paramName, paramTypes[i].getName(), deserializeError.getMessage());
+                        throw new ConnectorException("Failed to deserialize variable '" + paramName + "': " + deserializeError.getMessage());
+                    }
+                }
+            }
+
+            // Invoke the operation method
+            return operationMethod.invoke(provider, params);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() instanceof ConnectorException) {
+                throw (ConnectorException) e.getCause();
+            }
+            throw new ConnectorException("Failed to invoke operation: " + operationMethod.getName(), e.getCause());
+        } catch (ConnectorException ce) {
+            throw ce;
+        } catch (Exception e) {
+            throw new ConnectorException("Failed to invoke operation: " + operationMethod.getName(), e);
+        }
+    }
+
+    private static class StatusContainer {
         AbstractRunner.ExecutionStatusEnum status;
         BpmnError bpmnError;
         Exception exception;

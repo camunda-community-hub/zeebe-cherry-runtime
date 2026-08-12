@@ -24,11 +24,6 @@ public class GitHubAccess {
     /**
      * Explores the element-templates directory of a GitHub repo and returns the raw URL
      * of the first *.json file found.
-     *
-     * @param repo     "owner/repo"
-     * @param repoPath path inside the repo to the connector root (may be empty/null)
-     * @param ref      release tag (e.g. "8.6.1") or "HEAD" for the default branch
-     * @return raw URL of the first .json element-template, or null if none found
      */
     private static final List<String> ELEMENT_TEMPLATE_DIRS = List.of(
             "element-templates", "connector-template", "connector-templates");
@@ -58,7 +53,7 @@ public class GitHubAccess {
     }
 
     public String getLatestRelease(String repo) {
-        String url=null;
+        String url = null;
         try {
             if (repo == null || repo.isEmpty())
                 return null;
@@ -66,7 +61,7 @@ public class GitHubAccess {
             if (repo.contains("github.com")) {
                 // e.g. "https://github.com/owner/repo" → "https://api.github.com/repos/owner/repo/releases?per_page=1000"
                 url = repo.replaceFirst("https?://github\\.com/", "https://api.github.com/repos/")
-                          + "/releases?per_page=1000";
+                        + "/releases?per_page=1000";
             } else {
                 url = "https://api.github.com/repos/" + repo + "/releases?per_page=1000";
             }
@@ -83,11 +78,11 @@ public class GitHubAccess {
                     .map(r -> r.path("tag_name").asText())
                     .orElse(null);
             // if no official release is find, then we keep the first release, according it is order by the inverse order of the date
-            if ((release == null || release.isBlank() ) && !releaseList.isEmpty()) {
+            if ((release == null || release.isBlank()) && !releaseList.isEmpty()) {
                 release = releaseList.get(0).path("tag_name").asText();
             }
             return release;
-        } catch(Exception e) {
+        } catch (Exception e) {
             // this acceptable: the repo does not contains any target, or the link point to a path INSIDE a repo
             if (e.getMessage().contains("404 Not Found"))
                 return null;
@@ -102,9 +97,9 @@ public class GitHubAccess {
      * * a pom.xml (option)
      * * the JAR file present as a release (option
      *
-     * @param repoPath
-     * @param release
-     * @return
+     * @param repoPath path to explore
+     * @param release  release for the path
+     * @return status
      */
     public GithubConnectorStatus isGithubConnector(String repoPath, String release, boolean checkPomxml, boolean checkGitRelease) {
         GithubConnectorStatus githubConnectorStatus = new GithubConnectorStatus();
@@ -127,7 +122,7 @@ public class GitHubAccess {
                 String releasesUrl = repoPath.replaceAll("(https://api\\.github\\.com/repos/[^/]+/[^/]+)/.*", "$1") + "/releases?per_page=1";
                 try {
                     JsonNode releases = getJsonNode(releasesUrl);
-                    githubConnectorStatus.gitReleases = releases.isArray() && releases.size() > 0;
+                    githubConnectorStatus.gitReleases = releases.isArray() && !releases.isEmpty();
                 } catch (Exception ex) {
                     githubConnectorStatus.gitReleases = false;
                 }
@@ -140,13 +135,14 @@ public class GitHubAccess {
 
     /**
      * Explore a path and return all *.json file, considering they are element-templates
-     * @param repo repo to explore
+     *
+     * @param repo     repo to explore
      * @param repoPath path in the repo
-     * @param ref to add in the URL
+     * @param ref      to add in the URL
      * @return list of file founds
-     * @throws Exception
+     * @throws Exception any error
      */
-    public List<String> exploreElementTemplate(String repo, String repoPath, String ref)  {
+    public List<String> fillOneElementTemplate(String repo, String repoPath, String ref) {
         List<String> listElementsTemplate = new ArrayList<>();
         String base = (repoPath != null && !repoPath.isBlank()) ? repoPath + "/" : "";
         for (String dir : ELEMENT_TEMPLATE_DIRS) {
@@ -161,7 +157,7 @@ public class GitHubAccess {
                 for (JsonNode item : items) {
                     String fileName = item.path("name").asText("");
                     if (fileName.endsWith(".json")) {
-                        listElementsTemplate.add( "https://raw.githubusercontent.com/" + repo + "/" + ref
+                        listElementsTemplate.add("https://raw.githubusercontent.com/" + repo + "/" + ref
                                 + "/" + subPath + "/" + fileName);
                     }
                 }
@@ -217,7 +213,7 @@ public class GitHubAccess {
      */
     public StoreAccess.ConnectorDefinition fillJarDownload(String storeName, StoreAccess.ConnectorDefinition connectorDefinition) {
         // Impossible to check the JAR if there are no repo
-        if (connectorDefinition.githubRepoName==null || connectorDefinition.githubRepoName.isBlank())
+        if (connectorDefinition.githubRepoName == null || connectorDefinition.githubRepoName.isBlank())
             return connectorDefinition;
         String repo = connectorDefinition.githubRepoName;
         String release = getLatestRelease(repo);
@@ -257,30 +253,18 @@ public class GitHubAccess {
      * Searches the repo's element-templates directory for the first *.json file
      * and reads description, documentationRef, icon and connectorType from it.
      */
-    public StoreAccess.ConnectorDefinition fillElementTemplate(String storeName, StoreAccess.ConnectorDefinition connectorDefinition) {
+    public StoreAccess.ConnectorDefinition fillAllElementTemplates(String storeName, StoreAccess.ConnectorDefinition connectorDefinition) {
         try {
-            List<String> rawUrl = exploreElementTemplate(
+            List<String> urlTemplates = fillOneElementTemplate(
                     connectorDefinition.githubRepoName,
                     connectorDefinition.githubRepoPath,
                     "HEAD");
-            if (rawUrl.isEmpty()) {
+            if (urlTemplates.isEmpty()) {
                 logger.warn("Store[{}] connector[{}] no .json found in element-templates", storeName, connectorDefinition.name);
                 return connectorDefinition;
             }
-            connectorDefinition.urlElementTemplate = rawUrl;
-            for (String url : rawUrl) {
-                JsonNode jsonNode = getJsonNode(url);
-                connectorDefinition.description = jsonNode.path("description").asText(connectorDefinition.description);
-                connectorDefinition.name = jsonNode.path("name").asText(connectorDefinition.name);
-                connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
-                // Inbound connector does not have a type, so if the connector act as Inbound and Outbound, some element-template has a type
-                if (connectorDefinition.connectorType == null) {
-                    connectorDefinition.connectorType = extractTaskDefinitionType(jsonNode);
-                }
-                JsonNode iconNode = jsonNode.path("icon");
-                if (!iconNode.isMissingNode() && !iconNode.isNull()) {
-                    connectorDefinition.icon = iconNode.path("contents").asText(iconNode.asText(""));
-                }
+            for (String url : urlTemplates) {
+                connectorDefinition = fillOneElementTemplate(url, connectorDefinition);
             }
         } catch (Exception e) {
             logger.error("Store[{}] connector[{}] error in fillElementTemplate: {}",
@@ -288,6 +272,32 @@ public class GitHubAccess {
         }
         return connectorDefinition;
     }
+
+
+    public StoreAccess.ConnectorDefinition fillOneElementTemplate(String urlTemplate, StoreAccess.ConnectorDefinition connectorDefinition) throws Exception {
+        StoreAccess.ElementTemplateDescription elementTemplateDescription = new StoreAccess.ElementTemplateDescription(urlTemplate);
+        connectorDefinition.listEltTemplate.add(elementTemplateDescription);
+        JsonNode jsonNode = getJsonNode(urlTemplate);
+        elementTemplateDescription.name = jsonNode.path("name").asText(connectorDefinition.name);
+        elementTemplateDescription.description = jsonNode.path("description").asText(connectorDefinition.name);
+        elementTemplateDescription.connectorType = extractTaskDefinitionType(jsonNode);
+        elementTemplateDescription.version = jsonNode.path("version").asText(connectorDefinition.description);
+
+        // Put at the top level this element-templae information
+        connectorDefinition.name = elementTemplateDescription.name;
+        connectorDefinition.description = elementTemplateDescription.description;
+        connectorDefinition.documentationRef = jsonNode.path("documentationRef").asText(connectorDefinition.documentationRef);
+        // Inbound connector does not have a type, so if the connector act as Inbound and Outbound, some element-template has a type
+        if (connectorDefinition.connectorType == null) {
+            connectorDefinition.connectorType = elementTemplateDescription.connectorType;
+        }
+        JsonNode iconNode = jsonNode.path("icon");
+        if (!iconNode.isMissingNode() && !iconNode.isNull()) {
+            connectorDefinition.icon = iconNode.path("contents").asText(iconNode.asText(""));
+        }
+        return connectorDefinition;
+    }
+
 
     private HttpHeaders authHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -305,7 +315,7 @@ public class GitHubAccess {
         return x * 10_000_000L + y * 10_000L + z;
     }
 
-    public class GithubConnectorStatus {
+    public static class GithubConnectorStatus {
         public boolean elementTemplates = false;
         public boolean pomXml = false;
         public boolean gitReleases = false;

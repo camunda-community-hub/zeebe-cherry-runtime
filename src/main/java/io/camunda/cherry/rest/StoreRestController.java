@@ -4,14 +4,15 @@
 /*                                                                      */
 /*  Rest controller to access the Store Service                         */
 /* ******************************************************************** */
-package io.camunda.cherry.store;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
-import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runner.*;
+import io.camunda.cherry.store.StoreAccess;
+import io.camunda.cherry.store.StoreFactory;
+import io.camunda.cherry.supervisor.Supervisor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -38,20 +39,22 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("cherry")
 public class StoreRestController {
-    Logger logger = LoggerFactory.getLogger(StoreRestController.class.getName());
-
     private final StoreFactory storeFactory;
     private final RunnerFactory runnerFactory;
     private final LogOperation logOperation;
     private final JobRunnerFactory jobRunnerFactory;
+    private final Supervisor supervisor;
+    Logger logger = LoggerFactory.getLogger(StoreRestController.class.getName());
 
 
     public StoreRestController(
             StoreFactory storeFactory,
+            Supervisor supervisor,
             RunnerFactory runnerFactory,
             JobRunnerFactory jobRunnerFactory,
             LogOperation logOperation) {
         this.storeFactory = storeFactory;
+        this.supervisor = supervisor;
         this.runnerFactory = runnerFactory;
         this.logOperation = logOperation;
         this.jobRunnerFactory = jobRunnerFactory;
@@ -67,7 +70,7 @@ public class StoreRestController {
         List<Map<String, String>> listStores = storeFactory.getStores().stream()
                 .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                 .toList();
-        logger.info("list stores: return {} stores", listStores.size());
+        logger.info("list stores: return {} stores: [{}]", listStores.size(), listStores.stream().map(c -> c.get(RestAttribute.NAME)).collect(Collectors.joining(",")));
         return listStores;
     }
 
@@ -79,9 +82,7 @@ public class StoreRestController {
     /* ******************************************************************** */
     @GetMapping(value = "/api/store/connectors/explore", produces = "application/json")
     public Map<String, Object> exploreConnectorInStore() {
-        if (storeFactory.isExplorationInProcess()) {
-            listConnectorInStore(null, "nameAsc");
-        } else {
+        if (storeFactory.getExploration() == StoreFactory.EXPLORATIONCONNECTOR.NONE) {
             Executors.newSingleThreadExecutor().execute(() -> storeFactory.explore());
             try {
                 TimeUnit.SECONDS.sleep(5);
@@ -92,6 +93,10 @@ public class StoreRestController {
         return listConnectorInStore(null, "nameAsc");
     }
 
+    @GetMapping(value = "/api/store/startup", produces = "application/json")
+    public Map<String, Object> getStartupStatus() {
+        return populateAdvancement();
+    }
 
     /**
      * @param stores  stores to filter the result
@@ -103,7 +108,7 @@ public class StoreRestController {
             @RequestParam(name = "stores", required = false) List<String> stores,
             @RequestParam(name = "orderBy", required = false, defaultValue = "nameAsc") String orderBy) {
         try {
-            logger.info("Start listConnectorInStore {}", stores);
+            logger.debug("Start listConnectorInStore {}", stores);
             List<Map<String, Object>> listAllConnectors = new ArrayList<>();
 
             long beginTime = System.currentTimeMillis();
@@ -136,19 +141,23 @@ public class StoreRestController {
                 mapConnector.put(RestAttribute.DESCRIPTION, connectorDefinition.description);
                 mapConnector.put(RestAttribute.EXPLORATION_STATUS, connectorDefinition.status);
                 mapConnector.put(RestAttribute.DOCUMENTATION_REF, connectorDefinition.documentationRef);
-                mapConnector.put(RestAttribute.URL_ELEMENT_TEMPLATE, connectorDefinition.urlElementTemplate);
                 mapConnector.put(RestAttribute.URL_JAR_FILE, connectorDefinition.urlJarFile);
                 mapConnector.put(RestAttribute.URL_MAVEN, connectorDefinition.urlMaven);
                 mapConnector.put(RestAttribute.CONNECTOR_TYPE, connectorDefinition.connectorType);
                 mapConnector.put(RestAttribute.HAS_IMPLEMENTATION, connectorDefinition.hasImplementation);
                 mapConnector.put(RestAttribute.IS_INSTALLABLE, connectorDefinition.isInstallable);
                 mapConnector.put(RestAttribute.CREATOR, connectorDefinition.creator);
+                mapConnector.put(RestAttribute.ANNOTATIONS, connectorDefinition.listAnnotations);
+                mapConnector.put(RestAttribute.ELEMENT_TEMPLATES, connectorDefinition.listEltTemplate);
                 listAllConnectors.add(mapConnector);
 
                 if (connectorDefinition.status == StoreAccess.EXPLORATION.INPROGRESS) {
                     mapConnector.put(RestAttribute.STATUS, "IN-PROGRESS");
                 } else {
-                    RunnerDefinitionEntity runnerEntity = mapRunnersByName.get(connectorDefinition.name);
+                    /** Let's find a runner for the connection. THe connectorDefinition as a name, but the code is maybe different */
+
+                    RunnerDefinitionEntity runnerEntity = searchRunnerForConnector(connectorDefinition, mapRunnersByName);
+
                     if (!connectorDefinition.hasImplementation) {
                         runnerEntity = mapRunnersByType.get(connectorDefinition.connectorType);
                     }
@@ -193,13 +202,16 @@ public class StoreRestController {
                 }
             });
 
-            logger.info("End listConnectorInStore in {} ms", System.currentTimeMillis() - beginTime);
+            logger.info("StoreRestController[/api/store/connectors/list}: End listConnectorInStore found {} connectors ({}) in {} ms",
+                    listConnectors.size(),
+                    listConnectors.stream().map(c -> c.name).collect(Collectors.joining(",")),
+                    System.currentTimeMillis() - beginTime);
             List<Map<String, String>> listStores = storeFactory.getStores().stream()
                     .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                     .toList();
-            Map<String, Object> status = new HashMap<>();
-            status.put(RestAttribute.INPROGRESS, storeFactory.isExplorationInProcess());
-            status.put(RestAttribute.PERCENTEXPLORATION, storeFactory.getPercentageExploration());
+            Map<String, Object> status = populateAdvancement();
+
+
             return Map.of("connectors", listAllConnectors, "stores", listStores, "status", status);
 
         } catch (TechnicalException e) {
@@ -219,17 +231,19 @@ public class StoreRestController {
             if (storeAccess == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Store not found: " + storeName);
             StoreAccess.ConnectorDefinition connector = storeFactory.getConnectorDefinition(storeAccess, connectorName);
-            if (connector == null || connector.urlElementTemplate == null)
+            if (connector == null || connector.listEltTemplate.isEmpty())
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Element template not available for: " + connectorName);
             HttpHeaders headers = new HttpHeaders();
             byte[] content;
-            if (connector.urlElementTemplate.size() == 1) {
-                content = fetchUrl(connector.urlElementTemplate.get(0));
+            if (connector.listEltTemplate.size() == 1) {
+                content = fetchUrl(connector.listEltTemplate.get(0).url);
                 String filename = connectorName + "-" + release + ".json";
                 headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
                 headers.setContentDispositionFormData("attachment", filename);
             } else {
-                content = createZipElementTemplate(connector.urlElementTemplate);
+                content = createZipElementTemplate(connector.listEltTemplate.stream()
+                        .map(c -> c.url)
+                        .collect(Collectors.toList()));
                 String filename = connectorName + "-" + release + "-templates.zip";
                 headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
                 headers.setContentDispositionFormData("attachment", filename);
@@ -286,12 +300,20 @@ public class StoreRestController {
         }
     }
 
+    /**
+     * Download the Jar file,
+     *
+     * @param storeName     store where the connector is
+     * @param connectorName connector name
+     * @param release       release
+     * @return the jar file
+     */
     @GetMapping(value = "/api/store/connectors/download")
     public ResponseEntity<byte[]> download(@RequestParam(name = "store", required = false) String storeName,
                                            @RequestParam(name = "connectorname", required = false) String connectorName,
                                            @RequestParam(name = "release", required = false) String release) {
         try {
-            StoreAccess.ConnectorDownload connectorDownload = storeFactory.downloadConnector(storeName, connectorName, release);
+            StoreAccess.ConnectorDownload connectorDownload = supervisor.download(storeName, connectorName, release);
             if (connectorDownload.jarContent == null)
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read JAR content");
 
@@ -311,42 +333,61 @@ public class StoreRestController {
         }
     }
 
+    /**
+     * download the Jar file, install it and start all connectors in the JAR
+     *
+     * @param storeName     store where the connector is
+     * @param connectorName connector name
+     * @param release       release
+     * @return
+     */
     @GetMapping(value = "/api/store/connectors/install", produces = "application/json")
     public StoreAccess.ConnectorDownload install(@RequestParam(name = "store", required = false) String storeName,
                                                  @RequestParam(name = "connectorname", required = false) String connectorName,
                                                  @RequestParam(name = "release", required = false) String release) {
         try {
             logger.info("Start install jar [{}] from store[{}] release[{}]", connectorName, storeName, release);
-            StoreAccess.ConnectorDownload connectorDownload = storeFactory.downloadConnector(storeName, connectorName, release);
-
-            // Now install it
-            connectorDownload.runners = runnerFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent);
-            for (RunnerLightDefinition runner : connectorDownload.runners) {
-                try {
-                    jobRunnerFactory.stopRunner(runner.getType());
-                } catch (OperationException e) {
-                    // do nothing: for a first installation, this is expected
-                }
-
-                try {
-                    jobRunnerFactory.startRunner(runner.getType());
-                    logger.info("start runner[{}] from connector [{}] installed and started  install jar [{}] from store[{}] release[{}]", runner.getName(), connectorName, storeName, release);
-                } catch (Exception e) {
-                    logger.error("install : exception ", e);
-                    connectorDownload.status = StoreAccess.STATUSDOWNLOAD.FAILED;
-                    connectorDownload.explanation= e.getMessage();
-                    logOperation.log(OperationEntity.Operation.ERROR,
-                            "Can't start connector[" + runner.getName() + "] from DownloadConnector["+connectorName+"] : " + e.getMessage());
-                }
-            }
-            // do not return the JAR file
+            StoreAccess.ConnectorDownload connectorDownload = supervisor.downloadAndInstall(storeName, connectorName, release);
+            // do not return the content
             connectorDownload.jarContent = null;
             return connectorDownload;
 
         } catch (TechnicalException e) {
-            logOperation.log(OperationEntity.Operation.ERROR,
-                    "Can't download connector[" + connectorName + "] " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
+    }
+
+    private Map<String, Object> populateAdvancement() {
+        Map<String, Object> status = new HashMap<>();
+        Map<Supervisor.STARTUPDOWNLOAD, Supervisor.DownloadInProgress> downloadStatus = supervisor.getDownloadStatus();
+        List<Map<String, Object>> listDownloadStartup = downloadStatus.values().stream()
+                .map(t -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put(RestAttribute.DOWNLOAD_STARTUP_NAME, t.name);
+                    map.put(RestAttribute.DOWNLOAD_STARTUP_TOTAL, t.total);
+                    map.put(RestAttribute.DOWNLOAD_STARTUP_COUNT, t.count);
+                    map.put(RestAttribute.DOWNLOAD_STARTUP_PERCENTAGE, t.total > 0 ? 100 * t.count / t.total : 0);
+                    map.put(RestAttribute.DOWNLOAD_STARTUP_CURRENT_NAME, t.currentDownloadName);
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        status.put(RestAttribute.DOWNLOAD_STARTUP, listDownloadStartup);
+
+        StoreFactory.EXPLORATIONCONNECTOR explorationStatus = storeFactory.getExploration();
+        status.put("exploration", Map.of("percent", storeFactory.getPercentageExploration(),
+                "status", explorationStatus.name()));
+        return status;
+    }
+
+
+    private RunnerDefinitionEntity searchRunnerForConnector(StoreAccess.ConnectorDefinition connectorDefinition, Map<String, RunnerDefinitionEntity> mapRunnersByName) {
+        if (mapRunnersByName.containsKey(connectorDefinition.name))
+            return mapRunnersByName.get(connectorDefinition.name);
+        for (StoreAccess.AnnotationDescription annotationDescription : connectorDefinition.listAnnotations) {
+            if (mapRunnersByName.containsKey(annotationDescription.name))
+                return mapRunnersByName.get(annotationDescription.name);
+        }
+        return null;
+
     }
 }

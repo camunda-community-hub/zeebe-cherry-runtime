@@ -20,33 +20,45 @@ public class CherryProperties {
         this.store = store;
     }
 
-    /**
-     * Kept for backward compatibility — delegates to cherry.store.stores.
-     */
-    public List<String> getStores() {
-        return store.getStores();
-    }
 
     public static class Store {
 
-        private List<String> stores = new ArrayList<>();
-        private List<String> download = new ArrayList<>();
+        private PrivateStore privateStore = new PrivateStore();
+        private CamundaConnector camundaConnector = new CamundaConnector();
+        private CommunityConnector communityConnector = new CommunityConnector();
+        private MarketplaceConnector marketplaceConnector = new MarketplaceConnector();
         private Startup startup = new Startup();
 
-        public List<String> getStores() {
-            return stores;
+        public PrivateStore getPrivateStore() {
+            return privateStore;
         }
 
-        public void setStores(List<String> stores) {
-            this.stores = stores;
+        public void setPrivateStore(PrivateStore privateStore) {
+            this.privateStore = privateStore;
         }
 
-        public List<String> getDownload() {
-            return download;
+        public CamundaConnector getCamundaConnector() {
+            return camundaConnector;
         }
 
-        public void setDownload(List<String> download) {
-            this.download = download;
+        public void setCamundaConnector(CamundaConnector camundaConnector) {
+            this.camundaConnector = camundaConnector;
+        }
+
+        public CommunityConnector getCommunityConnector() {
+            return communityConnector;
+        }
+
+        public void setCommunityConnector(CommunityConnector communityConnector) {
+            this.communityConnector = communityConnector;
+        }
+
+        public MarketplaceConnector getMarketplaceConnector() {
+            return marketplaceConnector;
+        }
+
+        public void setMarketplaceConnector(MarketplaceConnector marketplaceConnector) {
+            this.marketplaceConnector = marketplaceConnector;
         }
 
         public Startup getStartup() {
@@ -57,11 +69,90 @@ public class CherryProperties {
             this.startup = startup;
         }
 
+        public static class PrivateStore {
+
+            private boolean access = false;
+            private List<String> listStore = new ArrayList<>();
+
+            public boolean isAccess() {
+                return access;
+            }
+
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
+
+            public List<String> getListStore() {
+                return listStore;
+            }
+
+            public void setListStore(List<String> listStore) {
+                this.listStore = listStore;
+            }
+        }
+
+        public static class CamundaConnector {
+
+            private boolean access = true;
+
+            public boolean isAccess() {
+                return access;
+            }
+
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
+        }
+
+        public static class CommunityConnector {
+
+            private boolean access = false;
+            private String filterProject = "connector-8-*";
+
+            public boolean isAccess() {
+                return access;
+            }
+
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
+
+            public String getFilterProject() {
+                return filterProject;
+            }
+
+            public void setFilterProject(String filterProject) {
+                this.filterProject = filterProject;
+            }
+        }
+
+        public static class MarketplaceConnector {
+
+            private boolean access = true;
+
+            public boolean isAccess() {
+                return access;
+            }
+
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
+        }
+
         public static class Startup {
 
+            private List<String> download = new ArrayList<>();
             private boolean explore = false;
-            private ConnectorRuntime connectorRuntime = new ConnectorRuntime();
+            private CamundaConnector camundaConnector = new CamundaConnector();
             private CommunityConnector communityConnector = new CommunityConnector();
+
+            public List<String> getDownload() {
+                return download;
+            }
+
+            public void setDownload(List<String> download) {
+                this.download = download;
+            }
 
             public boolean isExplore() {
                 return explore;
@@ -71,12 +162,12 @@ public class CherryProperties {
                 this.explore = explore;
             }
 
-            public ConnectorRuntime getConnectorRuntime() {
-                return connectorRuntime;
+            public CamundaConnector getCamundaConnector() {
+                return camundaConnector;
             }
 
-            public void setConnectorRuntime(ConnectorRuntime connectorRuntime) {
-                this.connectorRuntime = connectorRuntime;
+            public void setCamundaConnector(CamundaConnector camundaConnector) {
+                this.camundaConnector = camundaConnector;
             }
 
             public CommunityConnector getCommunityConnector() {
@@ -87,10 +178,12 @@ public class CherryProperties {
                 this.communityConnector = communityConnector;
             }
 
-            public static class ConnectorRuntime {
+            public static class CamundaConnector {
 
                 private boolean download = false;
                 private String tag;
+
+                private final List<String> filter = new ArrayList<>();
 
                 public boolean isDownload() {
                     return download;
@@ -107,12 +200,16 @@ public class CherryProperties {
                 public void setTag(String tag) {
                     this.tag = tag;
                 }
+
+                public List<String> getFilter() {
+                    return filter;
+                }
             }
 
             public static class CommunityConnector {
 
                 private boolean download = false;
-                private String filter;
+                private List<String> filter;
 
                 public boolean isDownload() {
                     return download;
@@ -122,11 +219,11 @@ public class CherryProperties {
                     this.download = download;
                 }
 
-                public String getFilter() {
+                public List<String> getFilter() {
                     return filter;
                 }
 
-                public void setFilter(String filter) {
+                public void setFilter(List<String> filter) {
                     this.filter = filter;
                 }
             }

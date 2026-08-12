@@ -4,12 +4,6 @@
 /*                                                                      */
 /*  Detect and start workers                                            */
 /* ******************************************************************** */
-/* ******************************************************************** */
-/*                                                                      */
-/*  JobRunnerFactory                                                 */
-/*                                                                      */
-/*  Detect and start workers                                            */
-/* ******************************************************************** */
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,11 +11,9 @@ import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
-import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.cherry.exception.*;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
@@ -38,7 +30,6 @@ import io.camunda.connector.api.validation.ValidationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -77,10 +68,6 @@ public class JobRunnerFactory {
      */
     Map<String, Running> mapRunning = new HashMap<>();
     List<OrchestrationAPI.TenantInformation> listTenants = null;
-    @Value("${cherry.runners.embeddedrunner:true}")
-    private Boolean executeEmbeddedRunner = Boolean.TRUE;
-    @Value("${cherry.runners.pingrunner:true}")
-    private Boolean executePingRunner = Boolean.FALSE;
     private boolean isStarted = false;
 
     public JobRunnerFactory(ValidationProvider validationProvider) {
@@ -132,22 +119,7 @@ public class JobRunnerFactory {
         }
         // get the list from the storage
         List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
-        logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
-        if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
-            logger.info("Don't start the EmbeddedWorker");
 
-            // remove from the list the embeddedRunner
-            listRunners = listRunners.stream()
-                    .filter(java.util.function.Predicate.not(this::isEmbeddedWorker))
-                    .toList();
-        }
-        if (Boolean.FALSE.equals(executePingRunner)) {
-            logger.info("Don't start the PingWorker");
-            // remove from the list the embeddedRunner
-            listRunners = listRunners.stream()
-                    .filter(java.util.function.Predicate.not(this::isPingWorker))
-                    .toList();
-        }
 
         List<AbstractRunner> listSdkRunners = listRunners.stream()
                 .filter(t -> t instanceof SdkRunnerConnector)
@@ -240,7 +212,7 @@ public class JobRunnerFactory {
         closeJobWorker(running.containerJobWorker.getJobWorker());
         running.containerJobWorker.setJobWorker(null);
         mapRunning.remove(runnerType);
-        logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, ""  );
+        logOperation.log(OperationEntity.Operation.STOPRUNNER, running.runner, "");
 
         return true;
     }
@@ -422,15 +394,6 @@ public class JobRunnerFactory {
 
     }
 
-    private boolean isEmbeddedWorker(AbstractRunner runner) {
-        return runner instanceof IntFrameworkRunner && !(runner instanceof PingIntRunner);
-    }
-
-    private boolean isPingWorker(AbstractRunner runner) {
-        if (runner instanceof SdkRunnerWorker skdRunner)
-            return skdRunner.getWorker() instanceof PingIntRunner;
-        return runner instanceof PingIntRunner;
-    }
 
     /**
      * Start a list of runners

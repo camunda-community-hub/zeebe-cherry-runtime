@@ -7,8 +7,16 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button, Select, TextInput, Tag} from "carbon-components-react";
-import {ArrowRepeat, ChevronDown, ChevronRight, CloudDownloadFill, ConeStriped, FileEarmarkText, FileEarmarkCode, FileEarmarkZip} from "react-bootstrap-icons";
+import {Button, Select, Tag, TextInput} from "carbon-components-react";
+import {
+    ArrowRepeat,
+    ChevronDown,
+    ChevronRight,
+    CloudDownloadFill,
+    FileEarmarkCode,
+    FileEarmarkText,
+    FileEarmarkZip
+} from "react-bootstrap-icons";
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
@@ -18,7 +26,11 @@ class Store extends React.Component {
     constructor(_props) {
         super();
         const savedDisplay = (() => {
-            try { return JSON.parse(localStorage.getItem("store_display") || "{}"); } catch { return {}; }
+            try {
+                return JSON.parse(localStorage.getItem("store_display") || "{}");
+            } catch {
+                return {};
+            }
         })();
         this.state = {
             connectors: [],
@@ -29,13 +41,54 @@ class Store extends React.Component {
                 statusFilter: savedDisplay.statusFilter || "ALL",
                 filterSearch: savedDisplay.filterSearch || ""
             },
-            expandedRows: {}
+            expandedRows: {},
+            refreshInterval: null
         };
         this.setOrderBy = this.setOrderBy.bind(this);
     }
 
     componentDidMount(prevProps) {
         this.loadStores();
+        this.refreshListConnectors();
+    }
+
+    componentWillUnmount() {
+        this.clearAutoRefresh();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        const prevInProgress = prevState.explorationStatus === "INPROGRESS" ||
+            (prevState.downloadStartup && prevState.downloadStartup.some(d => d.count < d.total));
+        const currentInProgress = this.state.explorationStatus === "INPROGRESS" ||
+            (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
+
+        if (prevInProgress !== currentInProgress) {
+            this.clearAutoRefresh();
+            if (currentInProgress) {
+                this.setupAutoRefresh();
+            }
+        }
+    }
+
+    setupAutoRefresh() {
+        if (this.state.refreshInterval) {
+            return;
+        }
+        this.scheduleNextRefresh();
+    }
+
+    scheduleNextRefresh() {
+        const timeout = setTimeout(() => {
+            this.refreshListConnectors();
+        }, 30000);
+        this.setState({refreshInterval: timeout});
+    }
+
+    clearAutoRefresh() {
+        if (this.state.refreshInterval) {
+            clearTimeout(this.state.refreshInterval);
+            this.setState({refreshInterval: null});
+        }
     }
 
     loadStores() {
@@ -87,7 +140,7 @@ class Store extends React.Component {
                             {this.state.stores.map((store) =>
                                 <button key={store.name}
                                         className={this.getButtonClass(store.selected)}
-                                        style={{ fontSize: "10px", height: "40px"}}
+                                        style={{fontSize: "10px", height: "40px"}}
                                         disabled={this.state.display.loading}
                                         onClick={() => this.setStoreFilter(store.name)}>
                                     {store.name}
@@ -192,7 +245,8 @@ class Store extends React.Component {
                                         <td>
                                             {connectorDefinition.name}
                                             {connectorDefinition.documentationRef && (
-                                                <a href={connectorDefinition.documentationRef} target="_blank" rel="noreferrer" title="Documentation" style={{marginLeft: "6px"}}>
+                                                <a href={connectorDefinition.documentationRef} target="_blank"
+                                                   rel="noreferrer" title="Documentation" style={{marginLeft: "6px"}}>
                                                     <FileEarmarkText/>
                                                 </a>
                                             )}
@@ -224,21 +278,24 @@ class Store extends React.Component {
                                                 <Tag type="purple" title="No implementation">No implementation</Tag>}
                                             {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "PARENT-NOT-INSTALLED" &&
                                                 <div>
-                                                    <Tag type="purple" title="Parent Not installed">Parent Not installed</Tag>
-                                                    <div style={{fontSize: "10px"}}>Parent connector type: {connectorDefinition.connectorType}</div>
+                                                    <Tag type="purple" title="Parent Not installed">Parent Not
+                                                        installed</Tag>
+                                                    <div style={{fontSize: "10px"}}>Parent connector
+                                                        type: {connectorDefinition.connectorType}</div>
                                                 </div>}
                                             {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "UPDATED" &&
                                                 <Tag type="blue" title="Up to date">Up to date</Tag>}
                                             {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "OLD" &&
-                                                <Tag type="warm-gray" title="Old">New version {connectorDefinition.storerelease}</Tag>}
+                                                <Tag type="warm-gray" title="Old">New
+                                                    version {connectorDefinition.storerelease}</Tag>}
                                             {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "NO-RELEASE" &&
-                                                <Tag type="gray" title="No release">No release</Tag>}
+                                                <Tag type="blue" title="No release">No release</Tag>}
                                             {connectorDefinition.status === "IN-PROGRESS" &&
                                                 <Tag type="cyan" title="In progress">In progress</Tag>}
                                         </td>
                                         <td>
                                             {connectorDefinition.explorationStatus !== "FAILED" &&
-                                             (connectorDefinition.status === "NOT-INSTALLED" || connectorDefinition.status === "OLD" || connectorDefinition.status === "NO-RELEASE") &&
+                                                (connectorDefinition.status === "NOT-INSTALLED" || connectorDefinition.status === "OLD" || connectorDefinition.status === "NO-RELEASE") &&
                                                 <Button className="btn btn-primary btn-sm"
                                                         onClick={() => this.installConnector(connectorDefinition)}>
                                                     <CloudDownloadFill/> Install
@@ -246,7 +303,8 @@ class Store extends React.Component {
                                             }
                                             {connectorDefinition.download &&
                                                 <div style={{marginTop: "4px", fontSize: "10px"}}>
-                                                    <Tag type={connectorDefinition.download.status === "OK" ? "green" : "red"}>
+                                                    <Tag
+                                                        type={connectorDefinition.download.status === "OK" ? "green" : "red"}>
                                                         {connectorDefinition.download.status}
                                                     </Tag>
                                                     <div>{connectorDefinition.download.explanation}</div>
@@ -261,72 +319,183 @@ class Store extends React.Component {
                                                     <div className="card-header"><strong>Information</strong></div>
                                                     <div className="card-body" style={{fontSize: "12px"}}>
                                                         {connectorDefinition.icon && (
-                                                            <div style={{display: "flex", alignItems: "center", marginBottom: "6px"}}>
+                                                            <div style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                marginBottom: "6px"
+                                                            }}>
                                                                 <img src={connectorDefinition.icon} alt=""
-                                                                     style={{width: "48px", height: "48px", marginRight: "12px"}}/>
-                                                                <strong style={{fontSize: "14px"}}>{connectorDefinition.name}</strong>
+                                                                     style={{
+                                                                         width: "48px",
+                                                                         height: "48px",
+                                                                         marginRight: "12px"
+                                                                     }}/>
+                                                                <strong
+                                                                    style={{fontSize: "14px"}}>{connectorDefinition.name}</strong>
                                                             </div>
                                                         )}
                                                         {connectorDefinition.status === "IN-PROGRESS" &&
-                                                            <div><Tag type="cyan" title="In progress">In progress</Tag></div>}
-                                                        <div><strong>Connector Type:</strong> {connectorDefinition.connectorType}</div>
-                                                        <div><strong>Description:</strong> {connectorDefinition.description}</div>
-                                                        {connectorDefinition.creator && <div><strong>Creator:</strong> {connectorDefinition.creator}</div>}
+                                                            <div><Tag type="cyan" title="In progress">In progress</Tag>
+                                                            </div>}
+                                                        <div><strong>Main Connector Type:</strong> {connectorDefinition.connectorType}
+                                                        </div>
+                                                        <div><strong>Annotations:</strong>&nbsp;
+                                                            {!connectorDefinition.listAnnotations ||
+                                                            connectorDefinition.listAnnotations.length === 0 ? (
+                                                                "-"
+                                                            ) : (
+                                                                <table style={{marginTop: "4px",marginLeft:"20px", borderCollapse: "collapse",width: "100%", border: "1px solid #000"}}>
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Name</th>
+                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Type</th>
+                                                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    {connectorDefinition.listAnnotations.map((item, i) => (
+                                                                        <tr key={i}>
+                                                                            <td style={{padding: "4px"}}>{item.name}</td>
+                                                                            <td style={{padding: "4px"}}>{item.type}</td>
+                                                                        </tr>
+                                                                    ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            )}
+                                                        </div>
+
+
+
+                                                        <div>
+                                                            <strong>Description:</strong> {connectorDefinition.description}
+                                                        </div>
+                                                        {connectorDefinition.creator &&
+                                                            <div><strong>Creator:</strong> {connectorDefinition.creator}
+                                                            </div>}
                                                         <div><strong>Store:</strong> {connectorDefinition.store}</div>
-                                                        <div><strong>Store Release:</strong> {connectorDefinition.storerelease}</div>
+                                                        <div><strong>Store
+                                                            Release:</strong> {connectorDefinition.storerelease}</div>
                                                         <div><strong>Documentation:</strong>&nbsp;
                                                             {connectorDefinition.documentationRef
-                                                                ? <a href={connectorDefinition.documentationRef} target="_blank" rel="noreferrer">{connectorDefinition.documentationRef}</a>
+                                                                ? <a href={connectorDefinition.documentationRef}
+                                                                     target="_blank"
+                                                                     rel="noreferrer">{connectorDefinition.documentationRef}</a>
                                                                 : "-"}
                                                         </div>
                                                         <div><strong>GitHub Repo:</strong>&nbsp;
                                                             {connectorDefinition.githubRepoName
-                                                                ? <a href={"https://github.com/" + connectorDefinition.githubRepoName} target="_blank" rel="noreferrer">{connectorDefinition.githubRepoName}</a>
+                                                                ?
+                                                                <a href={"https://github.com/" + connectorDefinition.githubRepoName}
+                                                                   target="_blank"
+                                                                   rel="noreferrer">{connectorDefinition.githubRepoName}</a>
                                                                 : "-"}
                                                         </div>
-                                                        <div><strong>GitHub Path:</strong> {connectorDefinition.githubRepoPath}</div>
-                                                        <div><strong>Exploration Status:</strong> {connectorDefinition.explorationStatus}</div>
+                                                        <div><strong>GitHub
+                                                            Path:</strong> {connectorDefinition.githubRepoPath}</div>
+                                                        <div><strong>Exploration
+                                                            Status:</strong> {connectorDefinition.explorationStatus}
+                                                        </div>
                                                         <div><strong>Element Template URL:</strong>&nbsp;
-                                                            {!connectorDefinition.urlElementTemplate || connectorDefinition.urlElementTemplate.length === 0
-                                                                ? "-"
-                                                                : connectorDefinition.urlElementTemplate.length === 1
-                                                                    ? <a href={connectorDefinition.urlElementTemplate[0]} target="_blank" rel="noreferrer">{connectorDefinition.urlElementTemplate[0]}</a>
-                                                                    : <ul style={{margin: "2px 0 0 0", paddingLeft: "18px"}}>
-                                                                        {connectorDefinition.urlElementTemplate.map((u, i) => (
-                                                                            <li key={i}><a href={u} target="_blank" rel="noreferrer">{u}</a></li>
-                                                                        ))}
-                                                                      </ul>
-                                                            }
+                                                            {!connectorDefinition.elementTemplates ||
+                                                            connectorDefinition.elementTemplates.length === 0 ? (
+                                                                "-"
+                                                            ) : (
+                                                                <table style={{marginTop: "4px",marginLeft:"20px", borderCollapse: "collapse",width: "100%", border: "1px solid #000"}}>
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Name</th>
+                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Description</th>
+                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>URL</th>
+                                                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    {connectorDefinition.elementTemplates.map((item, i) => (
+                                                                        <tr key={i}>
+                                                                            <td style={{padding: "4px"}}>{item.name}</td>
+                                                                            <td style={{padding: "4px"}}>{item.description}</td>
+                                                                            <td style={{padding: "4px"}}>
+                                                                                <a href={item.url} target="_blank" rel="noreferrer">
+                                                                                    {item.url}
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            )}
                                                         </div>
                                                         <div><strong>Jar File URL:</strong>&nbsp;
                                                             {connectorDefinition.urlJarFile
-                                                                ? <a href={connectorDefinition.urlJarFile} target="_blank" rel="noreferrer">{connectorDefinition.urlJarFile}</a>
+                                                                ?
+                                                                <a href={connectorDefinition.urlJarFile} target="_blank"
+                                                                   rel="noreferrer">{connectorDefinition.urlJarFile}</a>
                                                                 : "-"}
                                                         </div>
                                                         <div><strong>Maven URL:</strong>&nbsp;
                                                             {connectorDefinition.urlMaven
-                                                                ? <a href={connectorDefinition.urlMaven} target="_blank" rel="noreferrer">{connectorDefinition.urlMaven}</a>
+                                                                ? <a href={connectorDefinition.urlMaven} target="_blank"
+                                                                     rel="noreferrer">{connectorDefinition.urlMaven}</a>
                                                                 : "-"}
                                                         </div>
-                                                        <div><strong>Has Implementation:</strong> {String(connectorDefinition.hasImplementation)}</div>
+                                                        <div><strong>Has
+                                                            Implementation:</strong> {String(connectorDefinition.hasImplementation)}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
                                         </tr>
                                     )}
                                 </React.Fragment>
-                            )) : <tr><td colSpan="9"/></tr>}
+                            )) : <tr>
+                                <td colSpan="9"/>
+                            </tr>}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            {this.state.explorationInProgress && (
-                <div className="row" style={{width: "100%", marginTop: "8px"}}>
-                    <div className="col-md-12" style={{fontStyle: "italic", color: "#666"}}>
-                        Exploration in progress... ({this.state.percentExploration || 0}%)
+                {this.state.explorationStatus === "NONE" && (
+                    <div className="row" style={{width: "100%", marginTop: "8px"}}>
+                        <div className="col-md-12" style={{fontStyle: "italic", color: "#999"}}>
+                            Start manually the exploration
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+                {(this.state.explorationStatus === "INPROGRESS" ||
+                    (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count >= 1 && d.count < d.total))) && (
+                    <div className="row" style={{width: "100%", marginTop: "16px"}}>
+                        <div className="col-md-12">
+                            <div className="card" style={{borderLeft: "4px solid #0043CE"}}>
+                                <div className="card-header cherry-header">Operation in progress</div>
+                                <div className="card-body" style={{fontSize: "12px"}}>
+                                    {this.state.explorationStatus === "INPROGRESS" && (
+                                        <div style={{
+                                            marginBottom: "12px",
+                                            fontStyle: "italic",
+                                            color: "#0043CE",
+                                            fontWeight: "bold"
+                                        }}>
+                                            Exploration in progress... ({this.state.percentExploration || 0}%)
+                                        </div>
+                                    )}
+                                    {this.state.downloadStartup && this.state.downloadStartup.length > 0 && (
+                                        <div>
+                                            <div style={{marginBottom: "12px", color: "#0043CE", fontWeight: "bold"}}>
+                                                Download in progress
+                                            </div>
+                                            {this.state.downloadStartup.map((download, idx) => (
+                                                <div key={idx} style={{marginBottom: "4px"}}>
+                                                    {download.name}: {download.count} / {download.total} ({download.percentage}%)
+                                                    {download.currentDownloadName && ` : ${download.currentDownloadName}`}
+                                                    {download.count >= 1 && download.count < download.total && " In progress"}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
         );
     }
@@ -350,6 +519,7 @@ class Store extends React.Component {
     }
 
     refreshListConnectors() {
+
         const selectedRepos = this.state.stores
             .filter(r => r.selected)
             .map(r => r.name);
@@ -365,6 +535,7 @@ class Store extends React.Component {
     }
 
     refreshListConnectorsCallback(httpPayload) {
+        console.log("refreshListConnectorsCallback");
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Store.refreshListConnectorsCallback: error " + httpPayload.getError());
@@ -378,7 +549,27 @@ class Store extends React.Component {
             const mergedStores = incomingStores.map(s =>
                 existingByName[s.name] ? existingByName[s.name] : {...s, selected: true}
             ).filter(s => incomingNames.has(s.name));
-            this.setState({connectors: data.connectors || [], stores: mergedStores, explorationInProgress: !!(data.status && data.status.inProgress), percentExploration: data.status ? data.status.percentExploration : 0});
+            const explorationStatus = data.status && data.status.exploration ? data.status.exploration.status : "NONE";
+            const percentExploration = data.status && data.status.exploration ? data.status.exploration.percent : 0;
+            const downloadStartup = data.status ? data.status.downloadStartup : [];
+
+            this.setDisplayProperty("loading", false);
+
+            this.setState({
+                connectors: data.connectors || [],
+                stores: mergedStores,
+                explorationStatus: explorationStatus,
+                downloadStartup: downloadStartup,
+                percentExploration: percentExploration
+            }, () => {
+                const inProgress = this.state.explorationStatus === "INPROGRESS" ||
+                    (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
+                if (inProgress) {
+                    this.scheduleNextRefresh();
+                } else {
+                    this.clearAutoRefresh();
+                }
+            });
         }
     }
 
@@ -407,7 +598,7 @@ class Store extends React.Component {
     installConnector(connector) {
         connector.download = null;
         this.setState({connectors: [...this.state.connectors]});
-        let uri = 'cherry/api/store/connectors/install?store='+connector.store+'&connectorname=' + connector.name+'&release='+connector.storerelease;
+        let uri = 'cherry/api/store/connectors/install?store=' + connector.store + '&connectorname=' + connector.name + '&release=' + connector.storerelease;
 
         this.setDisplayProperty("loading", true);
         this.setState({status: ""});
@@ -458,7 +649,10 @@ class Store extends React.Component {
     setDisplayProperty(propertyName, propertyValue) {
         let displayObject = this.state.display;
         displayObject[propertyName] = propertyValue;
-        try { localStorage.setItem("store_display", JSON.stringify(displayObject)); } catch {}
+        try {
+            localStorage.setItem("store_display", JSON.stringify(displayObject));
+        } catch {
+        }
         this.setState({display: displayObject});
     }
 }

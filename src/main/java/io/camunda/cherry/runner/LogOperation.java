@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
 import java.time.Instant;
@@ -34,7 +35,10 @@ public class LogOperation {
      * @param message   message
      */
     public void log(OperationEntity.Operation operation, String message) {
-        logger.info("Operation {} message[{}]", operation.toString(), message);
+        if (OperationEntity.Operation.ERROR == operation)
+            logger.error("Operation {} message[{}]", operation, message);
+        else
+            logger.info("Operation {} message[{}]", operation.toString(), message);
         OperationEntity operationEntity = new OperationEntity();
         operationEntity.operation = operation;
         operationEntity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -146,11 +150,12 @@ public class LogOperation {
         }
     }
 
-    private void saveOperationEntity(OperationEntity operationEntity) {
+    @Transactional
+    public void saveOperationEntity(OperationEntity operationEntity) {
         try {
             operationRepository.save(operationEntity);
         } catch (Exception e) {
-            logger.error("Can't save OperationEntity [{}] ", operationEntity,e);
+            logger.error("Can't save OperationEntity [{}] ", operationEntity, e);
         }
     }
 }

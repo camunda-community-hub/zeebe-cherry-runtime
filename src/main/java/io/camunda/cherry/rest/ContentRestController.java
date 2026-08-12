@@ -6,6 +6,7 @@ import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.*;
+import io.camunda.cherry.supervisor.Installer;
 import io.camunda.cherry.util.DateOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,26 +23,28 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("cherry")
 public class ContentRestController {
-    Logger logger = LoggerFactory.getLogger(ContentRestController.class.getName());
-
     private final JarStorageEntityRepository jarStorageEntityRepository;
     private final RunnerDefinitionRepository runnerDefinitionRepository;
     private final RunnerAdminOperation runnerAdminOperation;
     private final RunnerFactory runnerFactory;
     private final JobRunnerFactory jobRunnerFactory;
     private final RunnerUploadFactory runnerUploadFactory;
+    private final Installer installer;
+    Logger logger = LoggerFactory.getLogger(ContentRestController.class.getName());
 
     public ContentRestController(JarStorageEntityRepository jarStorageEntityRepository,
                                  RunnerDefinitionRepository runnerDefinitionRepository,
                                  RunnerAdminOperation runnerAdminOperation,
                                  RunnerFactory runnerFactory,
                                  JobRunnerFactory jobRunnerFactory,
+                                 Installer installer,
                                  RunnerUploadFactory runnerUploadFactory) {
         this.jarStorageEntityRepository = jarStorageEntityRepository;
         this.runnerDefinitionRepository = runnerDefinitionRepository;
         this.runnerAdminOperation = runnerAdminOperation;
         this.runnerFactory = runnerFactory;
         this.jobRunnerFactory = jobRunnerFactory;
+        this.installer = installer;
         this.runnerUploadFactory = runnerUploadFactory;
     }
 
@@ -173,7 +176,7 @@ public class ContentRestController {
         List<RunnerLightDefinition> runners = new ArrayList<>();
         try {
             ByteArrayInputStream jarFileInputStream = new ByteArrayInputStream(file.getBytes());
-            runners = runnerFactory.installJar(jarFileName, jarFileInputStream);
+            runners = installer.installStartJar(jarFileName, jarFileInputStream, null);
             for (RunnerLightDefinition runner : runners) {
                 try {
                     jobRunnerFactory.stopRunner(runner.getType());

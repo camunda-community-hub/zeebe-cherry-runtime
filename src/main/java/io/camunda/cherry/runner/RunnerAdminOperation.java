@@ -15,7 +15,6 @@ import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,14 +25,26 @@ import java.util.Optional;
 @Service
 public class RunnerAdminOperation {
 
-    @Autowired
-    JarStorageEntityRepository jarStorageEntityRepository;
 
-    @Autowired
-    RunnerDefinitionRepository runnerDefinitionRepository;
+    private final JarStorageEntityRepository jarStorageEntityRepository;
 
-    @Autowired
-    JobRunnerFactory jobRunnerFactory;
+
+    private final RunnerDefinitionRepository runnerDefinitionRepository;
+
+
+    private final JobRunnerFactory jobRunnerFactory;
+
+    private final JarManagementClassLoader jarManagementClassLoader;
+
+    public RunnerAdminOperation(JarStorageEntityRepository jarStorageEntityRepository,
+                                RunnerDefinitionRepository runnerDefinitionRepository,
+                                JobRunnerFactory jobRunnerFactory,
+                                JarManagementClassLoader jarManagementClassLoader) {
+        this.jarStorageEntityRepository = jarStorageEntityRepository;
+        this.runnerDefinitionRepository = runnerDefinitionRepository;
+        this.jobRunnerFactory = jobRunnerFactory;
+        this.jarManagementClassLoader = jarManagementClassLoader;
+    }
 
     public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
@@ -71,6 +82,8 @@ public class RunnerAdminOperation {
         // remove Jar
         jarStorageEntityRepository.delete(storageEntity.get());
 
+        // remove from ClassLoader
+        jarManagementClassLoader.removeJarFile(storageEntity.get().name);
         return true;
 
     }

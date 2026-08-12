@@ -8,6 +8,7 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
+import io.camunda.cherry.runner.RunnerUploadFactory;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -27,7 +28,6 @@ public class CherryMain {
     JobRunnerFactory jobRunnerFactory;
 
     RunnerUploadFactory runnerUploadFactory;
-    DatabasePurgeService databasePurgeService;
 
     public CherryMain(RunnerFactory runnerFactory,
                       JobRunnerFactory jobRunnerFactory,
@@ -35,7 +35,7 @@ public class CherryMain {
                       DatabasePurgeService databasePurgeService
     ) {
         this.runnerFactory = runnerFactory;
-        this.jobRunnerFactory = this.jobRunnerFactory;
+        this.jobRunnerFactory = jobRunnerFactory;
         this.runnerUploadFactory = runnerUploadFactory;
         this.databasePurgeService = databasePurgeService;
     }
