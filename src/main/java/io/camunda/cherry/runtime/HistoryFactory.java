@@ -30,14 +30,19 @@ public class HistoryFactory {
 
     Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
 
-    @Autowired
-    TopicCountRepository topicCountRepository;
+    private final RunnerExecutionRepository runnerExecutionRepository;
 
-    @Autowired
-    HistoryPerformance historyPerformance;
+
+    private final TopicCountRepository topicCountRepository;
+
+
+    private final HistoryPerformance historyPerformance;
+    public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
+                         HistoryPerformance historyPerformance) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+        this.historyPerformance = historyPerformance;
+    }
 
     /**
      * get main statistics for the runner type in the last <delayStatInHour> period

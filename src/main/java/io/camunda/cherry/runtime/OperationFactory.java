@@ -16,8 +16,11 @@ import java.util.List;
 
 @Service
 public class OperationFactory {
-    @Autowired
-    OperationRepository operationRepository;
+    private final OperationRepository operationRepository;
+
+    public OperationFactory(OperationRepository operationRepository) {
+        this.operationRepository = operationRepository;
+    }
 
     /**
      * Select for a runner type all operations registered

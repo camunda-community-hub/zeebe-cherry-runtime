@@ -23,11 +23,13 @@ import java.util.Optional;
 @Service
 public class SecretEnvService {
 
-    @Autowired
-    KeyValueRepository keyValueRepository;
+    private final KeyValueRepository keyValueRepository;
+    private final Environment envSpring;
 
-    @Autowired
-    private Environment envSpring;
+    public SecretEnvService(KeyValueRepository keyValueRepository, Environment envSpring) {
+        this.keyValueRepository = keyValueRepository;
+        this.envSpring = envSpring;
+    }
 
     public List<KeyValueEntity> getListKeyValue(KeyValueEntity.KeyValueType origin) {
         return keyValueRepository.getAllByOrigin(origin);

@@ -23,10 +23,12 @@ import java.util.Map;
 @RequestMapping("cherry")
 public class OperationLogRestController {
 
+    private final OperationFactory operationFactory;
     Logger logger = LoggerFactory.getLogger(OperationLogRestController.class.getName());
 
-    @Autowired
-    OperationFactory operationFactory;
+    public OperationLogRestController(OperationFactory operationFactory) {
+        this.operationFactory = operationFactory;
+    }
 
     @GetMapping(value = "/api/operationlog/list", produces = "application/json")
     public Map<String, Object> listOperations(@RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring,

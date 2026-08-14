@@ -345,7 +345,7 @@ public class RunnerUploadFactory {
                         logger.error("Can't load class [{}] for connector [{}]", className, jarFile.getName());
                         continue;
                     }
-                    List<AbstractRunner> listRunners = JarManagementClassLoader.detectRunnersInObject(instanceClass);
+                    List<AbstractRunner> listRunners = jarManagementClassLoader.detectRunnersInObject(instanceClass);
 
                     for (AbstractRunner runner : listRunners) {
                         // update the release

@@ -14,6 +14,7 @@ import GeneralDashboard from "./GeneralDashboard";
 import RunnerDashboard from "./RunnerDashboard";
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 import RunnerChart from "./RunnerChart";
 
@@ -55,6 +56,7 @@ class Dashboard extends React.Component {
     render() {
         // console.log("dashboard.render display="+JSON.stringify(this.state.display));
         return (<div className={"container"}>
+            <DownloadMessage/>
             <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
                               timestamp={this.state.dashboard.timestamp}/>
             <div className="row">

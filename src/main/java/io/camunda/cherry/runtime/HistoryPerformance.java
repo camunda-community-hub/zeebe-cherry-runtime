@@ -28,13 +28,17 @@ public class HistoryPerformance {
 
     public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
     public static final String HUMAN_DATE_FORMATER = "yyyy-MM-dd HH:mm";
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
 
-    @Autowired
-    TopicCountRepository topicCountRepository;
+    private final RunnerExecutionRepository runnerExecutionRepository;
 
+    private final TopicCountRepository topicCountRepository;
+
+    private final RunnerExecutionRepository runnerExecutionRepository;
     Logger logger = LoggerFactory.getLogger(HistoryPerformance.class.getName());
+
+    public HistoryPerformance(RunnerExecutionRepository runnerExecutionRepository) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+    }
 
     public LocalDateTime getInstantThresholdFromPeriod(LocalDateTime dateNow,
                                                        HistoryPerformance.PeriodStatistic periodStatistic) {
@@ -70,6 +74,7 @@ public class HistoryPerformance {
         // - the rule to round a time, to find the intervalle
 
         // We want to keep at the end 24*4 interval
+
         for (int index = 0; index <= intervalRule.numberOfIntervals; index++) {
             String slotString = intervalRule.getSlotFromDate(indexTime);
             mapInterval.put(slotString, new Interval(slotString, indexTime));

@@ -1,12 +1,14 @@
 package io.camunda.cherry.runtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.camunda.connector.feel.FeelEngineWrapper;
+import io.camunda.connector.feel.FeelExpressionEvaluator;
+import io.camunda.connector.feel.LocalFeelExpressionEvaluator;
+import io.camunda.connector.jackson.ConnectorsObjectMapperSupplier;
+import io.camunda.connector.runtime.annotation.ConnectorsObjectMapper;
 import io.camunda.connector.runtime.annotation.OutboundConnectorObjectMapper;
 import io.camunda.connector.runtime.core.secret.SecretProviderAggregator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,12 +19,15 @@ import java.util.List;
  */
 @Configuration
 public class CherryEngineWrapper {
-    @Autowired
-    CherrySecretProvider secretProvider;
+    private final CherrySecretProvider secretProvider;
+
+    public CherryEngineWrapper(CherrySecretProvider secretProvider) {
+        this.secretProvider = secretProvider;
+    }
 
     @Bean
-    public FeelEngineWrapper cherryFeelEngineWrapper() {
-        return new FeelEngineWrapper();
+    public FeelExpressionEvaluator cherryFeelEngineWrapper() {
+        return new LocalFeelExpressionEvaluator();
     }
 
     @Bean
@@ -38,8 +43,12 @@ public class CherryEngineWrapper {
 
     @Bean
     @OutboundConnectorObjectMapper
+    @ConnectorsObjectMapper
     public ObjectMapper cherryOutboundConnectorObjectMapper() {
-        return new ObjectMapper();
+        // Same ObjectMapper any connector gets under the real Connector Runtime (Jdk8Module + JavaTimeModule,
+        // lenient unknown-property/enum handling, etc.) - see ConnectorsObjectMapperSupplier in connector-object-mapper.
+        // A bare `new ObjectMapper()` here has none of that, e.g. it can't serialize java.time.* output values.
+        return ConnectorsObjectMapperSupplier.getCopy();
     }
 
 }

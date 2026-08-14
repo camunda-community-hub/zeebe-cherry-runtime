@@ -24,10 +24,13 @@ import java.util.Map;
 @RequestMapping("cherry")
 public class SecretEnvRestController {
 
-    @Autowired
-    SecretEnvService secretEnvService;
-    @Autowired
-    LogOperation logOperation;
+    private final SecretEnvService secretEnvService;
+    private final LogOperation logOperation;
+
+    public SecretEnvRestController(SecretEnvService secretEnvService, LogOperation logOperation) {
+        this.secretEnvService = secretEnvService;
+        this.logOperation = logOperation;
+    }
 
     @GetMapping(value = "/api/secretenv/list", produces = "application/json")
     public List<Map<String, Object>> listKeyValue(@RequestParam(name = "type", required = true) String type) {

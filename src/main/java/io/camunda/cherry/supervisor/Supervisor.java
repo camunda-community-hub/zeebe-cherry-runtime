@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class Supervisor {
@@ -92,22 +93,22 @@ public class Supervisor {
                 logger.info("Supervisor.2: Load JarUploadPath [{}]", logInfo);
 
 
-                boolean exploreStores = cherryProperties.getStore().getStartup().isExplore();
-
+                boolean exploreStores = false;
+                boolean downloadStartupNeedExploration = !cherryProperties.getStore().getDownloadStartup().isEmpty();
+                if (downloadStartupNeedExploration)
+                    exploreStores = true;
                 // some other mechanism may force the exploration
-                if (isDownloadStartupNeedExploration())
+                if (cherryProperties.getStore().getCamundaConnector().isAccess())
                     exploreStores = true;
-                if (cherryProperties.getStore().getStartup().getCamundaConnector().isDownload())
-                    exploreStores = true;
-                if (cherryProperties.getStore().getStartup().getCommunityConnector().isDownload())
+                if (cherryProperties.getStore().getCommunityConnector().isAccess())
                     exploreStores = true;
 
                 // Now do the job
                 logger.info("----- Supervisor.3: Exploration at startup? {} (details: required? {} InitialDownloadByName? {} AskConnectorRuntime? {} askCommunityConnector? {}",
-                        cherryProperties.getStore().getStartup().isExplore(),
-                        isDownloadStartupNeedExploration(),
-                        cherryProperties.getStore().getStartup().getCamundaConnector().isDownload(),
-                        cherryProperties.getStore().getStartup().getCommunityConnector().isDownload());
+                        exploreStores,
+                        downloadStartupNeedExploration,
+                        cherryProperties.getStore().getCamundaConnector().isAccess(),
+                        cherryProperties.getStore().getCommunityConnector().isAccess());
 
                 // Explore all stores
                 if (exploreStores)
@@ -125,18 +126,6 @@ public class Supervisor {
         });
     }
 
-    /**
-     * If in the list ONE item does not start by the URL marker => We need the exploration at startup
-     *
-     * @return true if the exploration is needed
-     */
-    private boolean isDownloadStartupNeedExploration() {
-        for (String download : cherryProperties.getStore().getStartup().getDownload()) {
-            if (download != null && !download.startsWith(MARKER_NAME_IS_A_DIRECT_URL))
-                return true;
-        }
-        return false;
-    }
 
     public Map<STARTUPDOWNLOAD, DownloadInProgress> getDownloadStatus() {
         return downloadStatus;
@@ -147,24 +136,24 @@ public class Supervisor {
      */
     private void initialDownload() {
         downloadStatus.clear();
-        if (cherryProperties.getStore().getStartup().getDownload().size() > 0) {
+        if (!cherryProperties.getStore().getDownloadStartup().isEmpty()) {
             downloadStatus.put(STARTUPDOWNLOAD.INITIAL,
                     new DownloadInProgress(STARTUPDOWNLOAD.INITIAL));
         }
-        if (cherryProperties.getStore().getStartup().getCamundaConnector().isDownload()) {
+        if (cherryProperties.getStore().getCamundaConnector().getStartup().isDownload()) {
             downloadStatus.put(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR,
                     new DownloadInProgress(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR));
         }
-        if (cherryProperties.getStore().getStartup().getCommunityConnector().isDownload()) {
+        if (cherryProperties.getStore().getCommunityConnector().getStartup().isDownload()) {
             downloadStatus.put(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR, new DownloadInProgress(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR));
         }
 
         // Now do the job
-        if (cherryProperties.getStore().getStartup().getDownload().size() > 0) {
+        if (!cherryProperties.getStore().getDownloadStartup().isEmpty()) {
             DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.INITIAL);
-            downloadInProgress.total = cherryProperties.getStore().getStartup().getDownload().size();
+            downloadInProgress.total = cherryProperties.getStore().getDownloadStartup().size();
             StoreUrl storeUrl = new StoreUrl(storeFactory, gitHubAccess);
-            for (String item : cherryProperties.getStore().getStartup().getDownload()) {
+            for (String item : cherryProperties.getStore().getDownloadStartup()) {
                 if (item == null)
                     continue;
                 StoreAccess.ConnectorDownload connectorDownload = null;
@@ -174,11 +163,8 @@ public class Supervisor {
                     // Not possible to call the storeFactory. Call directly the storeUrl to get the connector
                     connectorDownload = storeUrl.downloadConnectorFromUrl(item);
                 } else {
-                    // search the connector in the list
-                    StoreAccess.ConnectorDefinition connectorDefinition = storeFactory.searchConnector(new StoreFactory.Filter().name(item));
-                    if (connectorDefinition == null) {
-                        connectorDefinition = storeFactory.searchConnector(new StoreFactory.Filter().type(item));
-                    }
+                    // search the connector in the list based on name or type, no matter the implementation
+                    StoreAccess.ConnectorDefinition connectorDefinition = storeFactory.searchConnector(new StoreFactory.Filter().name(item).type(item));
                     if (connectorDefinition != null) {
                         connectorDownload = installer.downloadInstallStart(connectorDefinition);
                     } else {
@@ -188,50 +174,55 @@ public class Supervisor {
                 downloadInProgress.count++;
             }
         }
-        if (cherryProperties.getStore().getStartup().getCamundaConnector().isDownload()) {
+        if (cherryProperties.getStore().getCamundaConnector().getStartup().isDownload()) {
             logger.info("Supervisor: start download Camunda Connectors release[{}]",
-                    cherryProperties.getStore().getStartup().getCamundaConnector().getTag());
+                    cherryProperties.getStore().getCamundaConnector().getStartup().getTag());
             DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR);
             StoreAccess storeAccess = storeFactory.getStoreCamundaConnector();
-            List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
-            downloadInProgress.total = listConnectors.size();
-            downloadInProgress.count = 0;
-            List<String> filter = cherryProperties.getStore().getStartup().getCamundaConnector().getFilter();
-            if (filter != null && !filter.isEmpty()) {
-                logger.info("Supervisor: Camunda Connector Filter[{}]", filter);
-            }
-            for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                if (matchListFilter(connectorDefinition.name, filter)) {
-                    downloadInProgress.currentDownloadName = connectorDefinition.name;
-                    installer.downloadInstallStart(connectorDefinition);
-                } else {
-                    logger.info("Supervisor: ignore connector [{}] due to filter on download", connectorDefinition.name);
+            if (storeAccess != null) {
+                List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
+                downloadInProgress.total = listConnectors.size();
+                downloadInProgress.count = 0;
+                List<String> filter = cherryProperties.getStore().getCamundaConnector().getStartup().getFilter();
+                if (filter != null && !filter.isEmpty()) {
+                    logger.info("Supervisor: Camunda Connector Filter[{}]", filter);
                 }
-                downloadInProgress.count++;
-
+                for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
+                    if (matchListFilter(connectorDefinition.name, filter)) {
+                        downloadInProgress.currentDownloadName = connectorDefinition.name;
+                        installer.downloadInstallStart(connectorDefinition);
+                    } else {
+                        logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
+                    }
+                    downloadInProgress.count++;
+                }
             }
         }
 
 
-        if (cherryProperties.getStore().getStartup().getCommunityConnector().isDownload()) {
+        if (cherryProperties.getStore().getCommunityConnector().getStartup().isDownload()) {
             logger.info("StoreFactory: start download Community Connector filter[{}]",
-                    cherryProperties.getStore().getStartup().getCommunityConnector().getFilter());
+                    cherryProperties.getStore().getCommunityConnector().getStartup().getFilter());
             DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR);
 
 
-            List<String> filter = cherryProperties.getStore().getStartup().getCommunityConnector().getFilter();
+            List<String> filter = cherryProperties.getStore().getCommunityConnector().getStartup().getFilter();
             StoreAccess storeAccess = storeFactory.getStoreCommunity();
-            List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
-            downloadInProgress.total = listConnectors.size();
-            downloadInProgress.count = 0;
-            for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                // download this connector
-                if (matchListFilter(connectorDefinition.name, filter)) {
-                    downloadInProgress.currentDownloadName = connectorDefinition.name;
-                    installer.downloadInstallStart(connectorDefinition);
+            if (storeAccess != null) {
+                List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
+                downloadInProgress.total = listConnectors.size();
+                downloadInProgress.count = 0;
+                for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
+                    // download this connector
+                    if (matchListFilter(connectorDefinition.name, filter)) {
+                        downloadInProgress.currentDownloadName = connectorDefinition.name;
+                        installer.downloadInstallStart(connectorDefinition);
+                    } else {
+                        logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
+                    }
+                    // we count +1 here
+                    downloadInProgress.count++;
                 }
-                // we count +1 here
-                downloadInProgress.count++;
             }
         }
 

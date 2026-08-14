@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
@@ -77,9 +78,22 @@ public class RunnerDecorationTemplate {
      * Keep it easy for a CherryConnector
      *
      * @param cherryConnector cherry connector to generate the template from
+     * @param zeebeContainer zeebe container
      */
+    public RunnerDecorationTemplate(OutboundConnectorFunction cherryConnector, ZeebeContainer zeebeContainer) {
+        this.runner = new SdkRunnerCherryConnector(cherryConnector, zeebeContainer);
+    }
+
+    /**
+     * Keep it easy for a CherryConnector (for backward compatibility with null ZeebeContainer)
+     * This constructor should only be used in contexts where ZeebeContainer is not available
+     *
+     * @param cherryConnector cherry connector to generate the template from
+     * @deprecated Use {@link #RunnerDecorationTemplate(OutboundConnectorFunction, ZeebeContainer)} instead
+     */
+    @Deprecated
     public RunnerDecorationTemplate(OutboundConnectorFunction cherryConnector) {
-        this.runner = new SdkRunnerCherryConnector(cherryConnector);
+        this.runner = new SdkRunnerCherryConnector(cherryConnector, null);
     }
 
     public static String getJsonFromList(List<Map<String, Object>> listTemplates) {

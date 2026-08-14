@@ -16,10 +16,12 @@ import java.util.Map;
 @RequestMapping("cherry")
 @RestController
 public class TenantRestController {
+    private final TenantsManager tenantsManager;
     Logger logger = LoggerFactory.getLogger(TenantRestController.class.getName());
 
-    @Autowired
-    private TenantsManager tenantsManager;
+    public TenantRestController(TenantsManager tenantsManager) {
+        this.tenantsManager = tenantsManager;
+    }
 
     @GetMapping(value = "/api/tenants/list", produces = "application/json")
     public Map<String, Object> getOperation() {

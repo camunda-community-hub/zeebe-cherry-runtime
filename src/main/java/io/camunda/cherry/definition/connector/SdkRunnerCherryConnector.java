@@ -1,6 +1,7 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.BpmnError;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
@@ -35,9 +36,9 @@ public class SdkRunnerCherryConnector extends SdkRunnerConnector {
 
     Logger logger = LoggerFactory.getLogger(SdkRunnerCherryConnector.class.getName());
 
-    public SdkRunnerCherryConnector(OutboundConnectorFunction outboundConnectorFunction) {
+    public SdkRunnerCherryConnector(OutboundConnectorFunction outboundConnectorFunction, ZeebeContainer zeebeContainer) {
 
-        super(outboundConnectorFunction);
+        super(outboundConnectorFunction, zeebeContainer);
         this.outboundConnectorFunction = outboundConnectorFunction;
     }
 

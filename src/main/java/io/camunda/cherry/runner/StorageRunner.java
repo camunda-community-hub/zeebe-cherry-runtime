@@ -37,20 +37,23 @@ public class StorageRunner {
 
     Logger logger = LoggerFactory.getLogger(StorageRunner.class.getName());
 
-    @Autowired
-    RunnerDefinitionRepository runnerDefinitionRepository;
+    private final RunnerDefinitionRepository runnerDefinitionRepository;
+    private final JarStorageEntityRepository jarStorageEntityRepository;
+    private final SessionFactory sessionFactory;
+    private final DataSource dataSource;
+    private final LogOperation logOperation;
 
-    @Autowired
-    JarStorageEntityRepository jarStorageEntityRepository;
-
-    @Autowired
-    SessionFactory sessionFactory;
-
-    @Autowired
-    DataSource dataSource;
-
-    @Autowired
-    LogOperation logOperation;
+    public StorageRunner(RunnerDefinitionRepository runnerDefinitionRepository,
+                        JarStorageEntityRepository jarStorageEntityRepository,
+                        SessionFactory sessionFactory,
+                        DataSource dataSource,
+                        LogOperation logOperation) {
+        this.runnerDefinitionRepository = runnerDefinitionRepository;
+        this.jarStorageEntityRepository = jarStorageEntityRepository;
+        this.sessionFactory = sessionFactory;
+        this.dataSource = dataSource;
+        this.logOperation = logOperation;
+    }
 
     /* ******************************************************************** */
     /*                                                                      */

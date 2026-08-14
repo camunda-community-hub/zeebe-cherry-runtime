@@ -26,7 +26,6 @@ import io.camunda.cherry.util.DateOperation;
 import io.camunda.cherry.util.ZipOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -43,22 +42,24 @@ import java.util.*;
 @RequestMapping("cherry")
 public class RunnerRestController {
 
-
+    private final JobRunnerFactory cherryJobRunnerFactory;
+    private final HistoryFactory historyFactory;
+    private final HistoryPerformance cherryHistoricPerformance;
+    private final RunnerFactory runnerFactory;
+    private final OperationFactory operationFactory;
     Logger logger = LoggerFactory.getLogger(RunnerRestController.class.getName());
-    @Autowired
-    JobRunnerFactory cherryJobRunnerFactory;
 
-    @Autowired
-    HistoryFactory historyFactory;
-
-    @Autowired
-    HistoryPerformance cherryHistoricPerformance;
-
-    @Autowired
-    RunnerFactory runnerFactory;
-
-    @Autowired
-    OperationFactory operationFactory;
+    public RunnerRestController(JobRunnerFactory cherryJobRunnerFactory,
+                                HistoryFactory historyFactory,
+                                HistoryPerformance cherryHistoricPerformance,
+                                RunnerFactory runnerFactory,
+                                OperationFactory operationFactory) {
+        this.cherryJobRunnerFactory = cherryJobRunnerFactory;
+        this.historyFactory = historyFactory;
+        this.cherryHistoricPerformance = cherryHistoricPerformance;
+        this.runnerFactory = runnerFactory;
+        this.operationFactory = operationFactory;
+    }
 
     /**
      * Get list of worker. Multiple result is possibles
@@ -163,6 +164,7 @@ public class RunnerRestController {
         info.put(RestAttribute.TOTAL_EXECUTIONS, totalSucceeded + totalFailed + totalBpmnError);
         info.put(RestAttribute.NB_RUNNERS, listRunners.size());
         info.put(RestAttribute.TIMESTAMP, String.valueOf(System.currentTimeMillis()));
+        logger.info("RunnerRestController./api/runner/dashboard: runners: {}", listRunners.size());
         return info;
     }
 

@@ -1,6 +1,7 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.api.outbound.OutboundConnectorProvider;
@@ -15,21 +16,23 @@ public class SdkRunnerConnector extends AbstractRunner {
     private final OutboundConnectorProvider outboundConnectorProvider;
     private String nameInCache;
 
-    public SdkRunnerConnector(OutboundConnectorFunction outboundConnectorFunction) {
+    public SdkRunnerConnector(OutboundConnectorFunction outboundConnectorFunction, ZeebeContainer zeebeContainer) {
         super("", // String type
                 Collections.emptyList(), //  listInput
                 Collections.emptyList(), //  listOutput
-                Collections.emptyList()); // listBpmnErrors
+                Collections.emptyList(), // listBpmnErrors
+                zeebeContainer);
         this.outboundConnectorFunction = outboundConnectorFunction;
         this.outboundConnectorProvider = null;
         this.setType(getType());
     }
 
-    public SdkRunnerConnector(OutboundConnectorProvider outboundConnectorProvider) {
+    public SdkRunnerConnector(OutboundConnectorProvider outboundConnectorProvider, ZeebeContainer zeebeContainer) {
         super("", // String type
                 Collections.emptyList(), //  listInput
                 Collections.emptyList(), //  listOutput
-                Collections.emptyList()); // listBpmnErrors
+                Collections.emptyList(), // listBpmnErrors
+                zeebeContainer);
         this.outboundConnectorFunction = null;
         this.outboundConnectorProvider = outboundConnectorProvider;
         this.setType(getType());

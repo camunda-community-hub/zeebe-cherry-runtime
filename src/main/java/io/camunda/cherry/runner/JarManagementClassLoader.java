@@ -25,11 +25,11 @@ import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.api.outbound.OutboundConnectorProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -57,6 +58,7 @@ public class JarManagementClassLoader {
 
     private final StorageRunner storageRunner;
     private final LogOperation logOperation;
+    private final ZeebeContainer zeebeContainer;
     private final ConcurrentHashMap<String, URLClassLoader> jarClassLoaders = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ConfigurableApplicationContext> jarContexts = new ConcurrentHashMap<>();
     Logger logger = LoggerFactory.getLogger(JarManagementClassLoader.class.getName());
@@ -65,12 +67,13 @@ public class JarManagementClassLoader {
      */
     @Value("${cherry.connectorslib.classloaderpath:@null}")
     private String classLoaderPath;
-    @Autowired(required = false)
-    private ApplicationContext parentContext;
+    private final ApplicationContext parentContext;
 
-    public JarManagementClassLoader(StorageRunner storageRunner, LogOperation logOperation) {
+    public JarManagementClassLoader(StorageRunner storageRunner, LogOperation logOperation, ApplicationContext parentContext, ZeebeContainer zeebeContainer) {
         this.storageRunner = storageRunner;
         this.logOperation = logOperation;
+        this.parentContext = parentContext;
+        this.zeebeContainer = zeebeContainer;
     }
 
     /**
@@ -79,7 +82,7 @@ public class JarManagementClassLoader {
      * @param candidateRunner object to search inside
      * @return list of runners detected
      */
-    public static List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
+    public List<AbstractRunner> detectRunnersInObject(Object candidateRunner) {
 
         List<AbstractRunner> listDetectedRunners = new ArrayList<>();
 
@@ -93,23 +96,23 @@ public class JarManagementClassLoader {
             // the classical connector
             // the Cherry Enrichment Connector
             if (SdkRunnerCherryConnector.isRunnerCherryConnector(candidateRunner.getClass())) {
-                listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector));
+                listDetectedRunners.add(new SdkRunnerCherryConnector(outboundConnector, zeebeContainer));
             } else {
-                listDetectedRunners.add(new SdkRunnerConnector(outboundConnector));
+                listDetectedRunners.add(new SdkRunnerConnector(outboundConnector, zeebeContainer));
             }
 
             return listDetectedRunners;
         }
 
         if (candidateRunner instanceof OutboundConnectorProvider outboundConnectorProvider) {
-            listDetectedRunners.add(new SdkRunnerConnector(outboundConnectorProvider));
+            listDetectedRunners.add(new SdkRunnerConnector(outboundConnectorProvider, zeebeContainer));
             return listDetectedRunners;
         }
 
 
         for (Method method : candidateRunner.getClass().getMethods()) {
             io.camunda.client.annotation.JobWorker annotation = method.getAnnotation(io.camunda.client.annotation.JobWorker.class);
-            if (annotation != null) listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method));
+            if (annotation != null) listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method, zeebeContainer));
         }
         return listDetectedRunners;
     }
@@ -316,7 +319,15 @@ public class JarManagementClassLoader {
             }
 
             // Direct instantiation via reflection
-            return clazz.getDeclaredConstructor().newInstance();
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+            if (parentContext != null) {
+                // The jar's own child context has no AutowiredAnnotationBeanPostProcessor
+                // registered, so its autowireBean() is a no-op on @Autowired fields.
+                // Use parentContext's bean factory instead: it's the real Spring Boot
+                // context, already wired for annotation processing and holding CamundaClient.
+                parentContext.getAutowireCapableBeanFactory().autowireBean(instance);
+            }
+            return instance;
 
         } catch (Exception e) {
             logger.error("Failed to create instance of [{}] from JAR [{}]: {}", className, jarFileName, e.getMessage(), e);
@@ -364,7 +375,15 @@ public class JarManagementClassLoader {
             }
 
             Class<?> clazz = classLoader.loadClass(className);
-            return clazz.getDeclaredConstructor().newInstance();
+            Object instance = clazz.getDeclaredConstructor().newInstance();
+            if (parentContext != null) {
+                // The jar's own child context has no AutowiredAnnotationBeanPostProcessor
+                // registered, so context.autowireBean() would be a no-op on @Autowired fields.
+                // Use parentContext's bean factory instead: it's the real Spring Boot
+                // context, already wired for annotation processing and holding CamundaClient.
+                parentContext.getAutowireCapableBeanFactory().autowireBean(instance);
+            }
+            return instance;
 
         } catch (Exception e) {
             logger.error("Failed to get runner [{}] from JAR [{}]: {}", className, jarFileName, e.getMessage(), e);
@@ -451,8 +470,14 @@ public class JarManagementClassLoader {
 
             // Try to get the class name now
             Class runnerClass;
-            if (context != null) runnerClass = context.getClassLoader().loadClass(runnerClassName);
-            else runnerClass = Class.forName(runnerClassName);
+            if (context != null)
+                runnerClass = context.getClassLoader().loadClass(runnerClassName);
+            else
+                runnerClass = Class.forName(runnerClassName);
+
+            boolean isConcreteClass = !runnerClass.isInterface() && !Modifier.isAbstract(runnerClass.getModifiers());
+            if (!isConcreteClass)
+                return false;
 
             // Check if it's an AbstractRunner
             if (AbstractRunner.class.isAssignableFrom(runnerClass)) {
