@@ -324,6 +324,14 @@ public class StoreFactory {
         return listStoreAccess.stream().filter(s -> s.getName().equals(storeName)).findFirst().orElse(null);
     }
 
+    /**
+     * Search by the filter.
+     * Note: filter works in a mix of AND/OR.
+     * - hasImplementation : if set, this is mandatory.
+     * - name / type : any of this criteria when they are trye, it matches the connector
+     * @param filter
+     * @return
+     */
     public StoreAccess.ConnectorDefinition searchConnector(Filter filter) {
         for (List<StoreAccess.ConnectorDefinition> listConnectorDefinitions : mapConnectors.values()) {
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectorDefinitions) {
@@ -335,7 +343,7 @@ public class StoreFactory {
                     return connectorDefinition;
                 }
                 if (connectorDefinition.connectorType.equals(filter.type)) {
-                    logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition);
+                    logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition.toString());
                     return connectorDefinition;
                 }
             }

@@ -23,8 +23,11 @@ import java.util.Optional;
 @Configuration
 public class CherrySecretProvider implements io.camunda.connector.api.secret.SecretProvider {
 
-    @Autowired
-    SecretEnvService secretEnvService;
+    private final SecretEnvService secretEnvService;
+
+    public CherrySecretProvider(SecretEnvService secretEnvService) {
+        this.secretEnvService = secretEnvService;
+    }
 
     @Override
     public String getSecret(String name, SecretContext context) {

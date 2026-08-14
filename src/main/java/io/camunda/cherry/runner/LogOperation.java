@@ -11,7 +11,6 @@ import io.camunda.cherry.db.repository.OperationRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +24,11 @@ public class LogOperation {
 
     Logger logger = LoggerFactory.getLogger(LogOperation.class.getName());
 
-    @Autowired
-    OperationRepository operationRepository;
+    private final OperationRepository operationRepository;
+
+    public LogOperation(OperationRepository operationRepository) {
+        this.operationRepository = operationRepository;
+    }
 
     /**
      * log an operation

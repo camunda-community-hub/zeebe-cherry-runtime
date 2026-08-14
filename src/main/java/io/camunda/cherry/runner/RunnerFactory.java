@@ -31,7 +31,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -61,7 +60,6 @@ public class RunnerFactory {
      * There is only one object per runner, so it's possible to cache them
      */
     private final Map<String, Object> runnerCache = new HashMap<>();
-    @Autowired
     private final ApplicationContext context;
     private final ConfigurableApplicationContext parentContext;
     private final Map<ClassLoader, ConfigurableApplicationContext> pluginContexts = new ConcurrentHashMap<>();
@@ -195,7 +193,7 @@ public class RunnerFactory {
 
             Object objectRunner = jarManagementClassLoader.getInstance(runnerDefinitionEntity.classname, runnerDefinitionEntity.jar.name);
 
-            List<AbstractRunner> listRunners = objectRunner == null ? Collections.emptyList() : JarManagementClassLoader.detectRunnersInObject(objectRunner);
+            List<AbstractRunner> listRunners = objectRunner == null ? Collections.emptyList() : jarManagementClassLoader.detectRunnersInObject(objectRunner);
             if (listRunners.isEmpty()) {
                 /* we must have a runner detected in an entity */
                 logger.error("No method to get a runner from [{}]", runnerDefinitionEntity.name);

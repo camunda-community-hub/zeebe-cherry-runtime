@@ -23,10 +23,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractWorker extends AbstractRunner implements JobHandler {
+    private final HistoryFactory historyFactory;
     Logger loggerAbstractWorker = LoggerFactory.getLogger(AbstractWorker.class.getName());
-
-    @Autowired
-    HistoryFactory historyFactory;
 
     /* -------------------------------------------------------- */
     /*                                                          */
@@ -37,16 +35,21 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
     /**
      * Constructor
      *
-     * @param type           type of the worker
-     * @param listInput      list of Input parameters for the worker
-     * @param listOutput     list of Output parameters for the worker
-     * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
+     * @param type            type of the worker
+     * @param listInput       list of Input parameters for the worker
+     * @param listOutput      list of Output parameters for the worker
+     * @param listBpmnErrors  list of potential BPMN ControllerPage the worker can generate
+     * @param zeebeContainer  zeebe container
+     * @param historyFactory  history factory
      */
     protected AbstractWorker(String type,
                              List<RunnerParameter> listInput,
                              List<RunnerParameter> listOutput,
-                             List<BpmnError> listBpmnErrors) {
-        super(type, listInput, listOutput, listBpmnErrors);
+                             List<BpmnError> listBpmnErrors,
+                             io.camunda.cherry.zeebe.ZeebeContainer zeebeContainer,
+                             HistoryFactory historyFactory) {
+        super(type, listInput, listOutput, listBpmnErrors, zeebeContainer);
+        this.historyFactory = historyFactory;
     }
 
     /**

@@ -12,6 +12,7 @@ import {Button, Modal} from "react-bootstrap";
 import RestCallService from "../services/RestCallService";
 import RunnerDefinition from "./RunnerDefinition";
 import ControllerPage from "../component/ControllerPage";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 class Definition extends React.Component {
 
@@ -46,6 +47,7 @@ class Definition extends React.Component {
                                 <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
                             </div>
                         </div>
+                        <DownloadMessage/>
                         <div className="block">
                             <table id="runnersTable" className="table is-hoverable is-fullwidth">
                                 <thead>

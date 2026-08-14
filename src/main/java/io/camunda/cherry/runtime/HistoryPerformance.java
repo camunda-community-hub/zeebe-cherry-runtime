@@ -26,10 +26,12 @@ public class HistoryPerformance {
 
     public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
     public static final String HUMAN_DATE_FORMATER = "yyyy-MM-dd HH:mm";
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
-
+    private final RunnerExecutionRepository runnerExecutionRepository;
     Logger logger = LoggerFactory.getLogger(HistoryPerformance.class.getName());
+
+    public HistoryPerformance(RunnerExecutionRepository runnerExecutionRepository) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+    }
 
     public LocalDateTime getInstantThresholdFromPeriod(LocalDateTime dateNow,
                                                        HistoryPerformance.PeriodStatistic periodStatistic) {

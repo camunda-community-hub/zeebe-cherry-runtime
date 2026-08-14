@@ -20,6 +20,7 @@ import {
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 class Store extends React.Component {
 
@@ -41,8 +42,7 @@ class Store extends React.Component {
                 statusFilter: savedDisplay.statusFilter || "ALL",
                 filterSearch: savedDisplay.filterSearch || ""
             },
-            expandedRows: {},
-            refreshInterval: null
+            expandedRows: {}
         };
         this.setOrderBy = this.setOrderBy.bind(this);
     }
@@ -50,45 +50,6 @@ class Store extends React.Component {
     componentDidMount(prevProps) {
         this.loadStores();
         this.refreshListConnectors();
-    }
-
-    componentWillUnmount() {
-        this.clearAutoRefresh();
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        const prevInProgress = prevState.explorationStatus === "INPROGRESS" ||
-            (prevState.downloadStartup && prevState.downloadStartup.some(d => d.count < d.total));
-        const currentInProgress = this.state.explorationStatus === "INPROGRESS" ||
-            (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
-
-        if (prevInProgress !== currentInProgress) {
-            this.clearAutoRefresh();
-            if (currentInProgress) {
-                this.setupAutoRefresh();
-            }
-        }
-    }
-
-    setupAutoRefresh() {
-        if (this.state.refreshInterval) {
-            return;
-        }
-        this.scheduleNextRefresh();
-    }
-
-    scheduleNextRefresh() {
-        const timeout = setTimeout(() => {
-            this.refreshListConnectors();
-        }, 30000);
-        this.setState({refreshInterval: timeout});
-    }
-
-    clearAutoRefresh() {
-        if (this.state.refreshInterval) {
-            clearTimeout(this.state.refreshInterval);
-            this.setState({refreshInterval: null});
-        }
     }
 
     loadStores() {
@@ -452,49 +413,7 @@ class Store extends React.Component {
                         </table>
                     </div>
                 </div>
-                {this.state.explorationStatus === "NONE" && (
-                    <div className="row" style={{width: "100%", marginTop: "8px"}}>
-                        <div className="col-md-12" style={{fontStyle: "italic", color: "#999"}}>
-                            Start manually the exploration
-                        </div>
-                    </div>
-                )}
-                {(this.state.explorationStatus === "INPROGRESS" ||
-                    (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count >= 1 && d.count < d.total))) && (
-                    <div className="row" style={{width: "100%", marginTop: "16px"}}>
-                        <div className="col-md-12">
-                            <div className="card" style={{borderLeft: "4px solid #0043CE"}}>
-                                <div className="card-header cherry-header">Operation in progress</div>
-                                <div className="card-body" style={{fontSize: "12px"}}>
-                                    {this.state.explorationStatus === "INPROGRESS" && (
-                                        <div style={{
-                                            marginBottom: "12px",
-                                            fontStyle: "italic",
-                                            color: "#0043CE",
-                                            fontWeight: "bold"
-                                        }}>
-                                            Exploration in progress... ({this.state.percentExploration || 0}%)
-                                        </div>
-                                    )}
-                                    {this.state.downloadStartup && this.state.downloadStartup.length > 0 && (
-                                        <div>
-                                            <div style={{marginBottom: "12px", color: "#0043CE", fontWeight: "bold"}}>
-                                                Download in progress
-                                            </div>
-                                            {this.state.downloadStartup.map((download, idx) => (
-                                                <div key={idx} style={{marginBottom: "4px"}}>
-                                                    {download.name}: {download.count} / {download.total} ({download.percentage}%)
-                                                    {download.currentDownloadName && ` : ${download.currentDownloadName}`}
-                                                    {download.count >= 1 && download.count < download.total && " In progress"}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <DownloadMessage/>
 
             </div>
         );
@@ -549,26 +468,12 @@ class Store extends React.Component {
             const mergedStores = incomingStores.map(s =>
                 existingByName[s.name] ? existingByName[s.name] : {...s, selected: true}
             ).filter(s => incomingNames.has(s.name));
-            const explorationStatus = data.status && data.status.exploration ? data.status.exploration.status : "NONE";
-            const percentExploration = data.status && data.status.exploration ? data.status.exploration.percent : 0;
-            const downloadStartup = data.status ? data.status.downloadStartup : [];
 
             this.setDisplayProperty("loading", false);
 
             this.setState({
                 connectors: data.connectors || [],
-                stores: mergedStores,
-                explorationStatus: explorationStatus,
-                downloadStartup: downloadStartup,
-                percentExploration: percentExploration
-            }, () => {
-                const inProgress = this.state.explorationStatus === "INPROGRESS" ||
-                    (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
-                if (inProgress) {
-                    this.scheduleNextRefresh();
-                } else {
-                    this.clearAutoRefresh();
-                }
+                stores: mergedStores
             });
         }
     }

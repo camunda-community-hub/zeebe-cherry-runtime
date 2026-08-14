@@ -140,6 +140,9 @@ public interface StoreAccess {
             connectorDefinition.release = release;
             return connectorDefinition;
         }
+        public String toString() {
+            return "ConnectorDefinition["+name+"] release:["+release+"] Store["+storeAccess.getName()+"] Implemen.["+hasImplementation+"]";
+        }
     }
 
     class ConnectorDownload {

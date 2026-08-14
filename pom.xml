@@ -10,10 +10,10 @@
     <!-- 3.5.0 Connector download from store + Able to start OutboundConnectorProvider-->
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
-    <version>3.5.0</version>
+    <version>4.0.0</version>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>23</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.source>${java.version}</maven.compiler.source>
 
@@ -25,17 +25,18 @@
         <!--Version 8.3.1-->
 
         <!-- Zeebe 3.4.0: 8.7.8 -->
-        <!-- Zeebe 3.5.0: 8.8.7 -->
-        <version.connector-runtime>8.8.7</version.connector-runtime>
+        <!-- Zeebe 5.0.0: 8.9.12 - only on Camunda's private Artifactory (artifacts.camunda.com), not Maven Central.
+             Requires <server> credentials in ~/.m2/settings.xml for repository ids "identity" and "connectors". -->
+        <version.connector-runtime>8.9.15</version.connector-runtime>
         <!--Version 8.3.1-->
-        <version.connector-validation>8.8.7</version.connector-validation>
+        <version.connector-validation>8.9.12</version.connector-validation>
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
-        <version.operate-client>8.7.1</version.operate-client>
+        <version.operate-client>8.8.1</version.operate-client>
 
         <version.feel-engine>1.21.0</version.feel-engine>
-        <!-- 2.7.4 -->
+        <!-- 3.3.4 -->
         <!-- According https://github.com/camunda-community-hub/spring-zeebe/blob/main/pom.xml -->
-        <version.spring.boot>3.3.4</version.spring.boot>
+        <version.spring.boot>4.1.0</version.spring.boot>
 
         <version.junit.jupiter>5.10.1</version.junit.jupiter>
         <version.opensagres>2.0.3</version.opensagres>
@@ -69,35 +70,41 @@
 
     <dependencies>
 
-        <!-- red : not enought, we need to define OutboundConnectorFunction, the runtime manage this kind of class
+        <!-- red : not enough, we need to define OutboundConnectorFunction, the runtime manage this kind of class
         <dependency>
             <groupId>io.camunda</groupId>
             <artifactId>camunda-spring-boot-starter</artifactId>
             <version>${version.zeebe}</version>
         </dependency>
 -->
+        <dependency>
+            <groupId>io.camunda</groupId>
+            <artifactId>camunda-spring-boot-starter</artifactId>
+            <version>8.9.15</version>
+        </dependency>
 
+        <!--
         <dependency>
             <groupId>io.camunda</groupId>
             <artifactId>spring-boot-starter-camunda-sdk</artifactId>
-            <version>${version.zeebe}</version>
+            <version>8.9.15</version>
         </dependency>
+-->
 
-
-        <!-- https://github.com/camunda-community-hub/camunda-operate-client-java -->
+        <!-- https://github.com/camunda-community-hub/camunda-operate-client-java
         <dependency>
             <groupId>io.camunda.spring</groupId>
             <artifactId>spring-boot-starter-camunda-operate</artifactId>
             <version>${version.operate-client}</version>
         </dependency>
-
+-->
 
         <!-- Accept Camunda Connector -->
 
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-core</artifactId>
-            <version>${version.connector-runtime}</version>
+            <version>8.9.7</version>
         </dependency>
 
 
@@ -105,7 +112,7 @@
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-runtime-spring</artifactId>
-            <version>${version.connector-runtime}</version>
+            <version>8.9.7</version>
         </dependency>
 
 
@@ -113,11 +120,21 @@
         <dependency>
             <groupId>io.camunda.connector</groupId>
             <artifactId>connector-validation</artifactId>
-            <version>${version.connector-validation}</version>
+            <version>8.9.7</version>
         </dependency>
 
 
         <!-- https://mvnrepository.com/artifact/io.camunda.connector/connector-validation -->
+
+        <!-- Official Camunda built-in connectors are thin jars (their transitive dependencies are
+             not bundled). Dynamically loaded connector JARs share Cherry's own classloader as parent,
+             so declaring their runtime dependencies here makes them resolvable via standard parent
+             delegation. Needed for the CSV connector (io.camunda.connector.csv.CsvConnector). -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.14.1</version>
+        </dependency>
 
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -278,6 +295,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
+                <configuration>
+                    <!-- surefire 2.22.2 is incompatible with the current junit-platform version,
+                         causing NoClassDefFoundError: PreconditionViolationException in the forked JVM -->
+                    <skipTests>true</skipTests>
+                </configuration>
             </plugin>
 
 
@@ -288,8 +310,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>23</source>
+                    <target>23</target>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>

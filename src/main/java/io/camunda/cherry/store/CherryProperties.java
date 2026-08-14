@@ -23,11 +23,19 @@ public class CherryProperties {
 
     public static class Store {
 
+        private List<String> downloadStartup = new ArrayList<>();
         private PrivateStore privateStore = new PrivateStore();
         private CamundaConnector camundaConnector = new CamundaConnector();
         private CommunityConnector communityConnector = new CommunityConnector();
         private MarketplaceConnector marketplaceConnector = new MarketplaceConnector();
-        private Startup startup = new Startup();
+
+        public List<String> getDownloadStartup() {
+            return downloadStartup;
+        }
+
+        public void setDownloadStartup(List<String> downloadStartup) {
+            this.downloadStartup = downloadStartup;
+        }
 
         public PrivateStore getPrivateStore() {
             return privateStore;
@@ -61,13 +69,6 @@ public class CherryProperties {
             this.marketplaceConnector = marketplaceConnector;
         }
 
-        public Startup getStartup() {
-            return startup;
-        }
-
-        public void setStartup(Startup startup) {
-            this.startup = startup;
-        }
 
         public static class PrivateStore {
 
@@ -93,21 +94,8 @@ public class CherryProperties {
 
         public static class CamundaConnector {
 
-            private boolean access = true;
-
-            public boolean isAccess() {
-                return access;
-            }
-
-            public void setAccess(boolean access) {
-                this.access = access;
-            }
-        }
-
-        public static class CommunityConnector {
-
             private boolean access = false;
-            private String filterProject = "connector-8-*";
+            private Startup startup = new Startup();
 
             public boolean isAccess() {
                 return access;
@@ -117,73 +105,18 @@ public class CherryProperties {
                 this.access = access;
             }
 
-            public String getFilterProject() {
-                return filterProject;
+            public Startup getStartup() {
+                return startup;
             }
 
-            public void setFilterProject(String filterProject) {
-                this.filterProject = filterProject;
-            }
-        }
-
-        public static class MarketplaceConnector {
-
-            private boolean access = true;
-
-            public boolean isAccess() {
-                return access;
+            public void setStartup(Startup startup) {
+                this.startup = startup;
             }
 
-            public void setAccess(boolean access) {
-                this.access = access;
-            }
-        }
-
-        public static class Startup {
-
-            private List<String> download = new ArrayList<>();
-            private boolean explore = false;
-            private CamundaConnector camundaConnector = new CamundaConnector();
-            private CommunityConnector communityConnector = new CommunityConnector();
-
-            public List<String> getDownload() {
-                return download;
-            }
-
-            public void setDownload(List<String> download) {
-                this.download = download;
-            }
-
-            public boolean isExplore() {
-                return explore;
-            }
-
-            public void setExplore(boolean explore) {
-                this.explore = explore;
-            }
-
-            public CamundaConnector getCamundaConnector() {
-                return camundaConnector;
-            }
-
-            public void setCamundaConnector(CamundaConnector camundaConnector) {
-                this.camundaConnector = camundaConnector;
-            }
-
-            public CommunityConnector getCommunityConnector() {
-                return communityConnector;
-            }
-
-            public void setCommunityConnector(CommunityConnector communityConnector) {
-                this.communityConnector = communityConnector;
-            }
-
-            public static class CamundaConnector {
-
+            public static class Startup {
                 private boolean download = false;
                 private String tag;
-
-                private final List<String> filter = new ArrayList<>();
+                private List<String> filter = new ArrayList<>();
 
                 public boolean isDownload() {
                     return download;
@@ -204,12 +137,46 @@ public class CherryProperties {
                 public List<String> getFilter() {
                     return filter;
                 }
+
+                public void setFilter(List<String> filter) {
+                    this.filter = filter;
+                }
+            }
+        }
+
+        public static class CommunityConnector {
+
+            private boolean access = false;
+            private String filterProject = "connector-8-*";
+            private Startup startup = new Startup();
+
+            public boolean isAccess() {
+                return access;
             }
 
-            public static class CommunityConnector {
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
 
+            public String getFilterProject() {
+                return filterProject;
+            }
+
+            public void setFilterProject(String filterProject) {
+                this.filterProject = filterProject;
+            }
+
+            public Startup getStartup() {
+                return startup;
+            }
+
+            public void setStartup(Startup startup) {
+                this.startup = startup;
+            }
+
+            public static class Startup {
                 private boolean download = false;
-                private List<String> filter;
+                private List<String> filter = new ArrayList<>();
 
                 public boolean isDownload() {
                     return download;
@@ -228,5 +195,50 @@ public class CherryProperties {
                 }
             }
         }
+
+        public static class MarketplaceConnector {
+
+            private boolean access = true;
+            private Startup startup = new Startup();
+
+            public boolean isAccess() {
+                return access;
+            }
+
+            public void setAccess(boolean access) {
+                this.access = access;
+            }
+
+            public Startup getStartup() {
+                return startup;
+            }
+
+            public void setStartup(Startup startup) {
+                this.startup = startup;
+            }
+
+            public static class Startup {
+                private boolean download = false;
+                private List<String> filter = new ArrayList<>();
+
+                public boolean isDownload() {
+                    return download;
+                }
+
+                public void setDownload(boolean download) {
+                    this.download = download;
+                }
+
+                public List<String> getFilter() {
+                    return filter;
+                }
+
+                public void setFilter(List<String> filter) {
+                    this.filter = filter;
+                }
+            }
+        }
+
+
     }
 }

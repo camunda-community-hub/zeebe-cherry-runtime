@@ -67,8 +67,7 @@ public abstract class AbstractRunner {
     /* method to get variable value                             */
     /* -------------------------------------------------------- */
     private final Pattern WORD_FINDER = Pattern.compile("(([A-Z]?[a-z]+)|([A-Z]))");
-    @Autowired
-    ZeebeContainer zeebeContainer;
+    private final ZeebeContainer zeebeContainer;
     Logger loggerAbstract = LoggerFactory.getLogger(AbstractRunner.class.getName());
     /**
      * this information is the minimal information, need to catch something on Zebee
@@ -102,16 +101,19 @@ public abstract class AbstractRunner {
      * @param listInput      list of Input parameters for the worker
      * @param listOutput     list of Output parameters for the worker
      * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
+     * @param zeebeContainer zeebe container
      */
     protected AbstractRunner(String type,
                              List<RunnerParameter> listInput,
                              List<RunnerParameter> listOutput,
-                             List<BpmnError> listBpmnErrors) {
+                             List<BpmnError> listBpmnErrors,
+                             ZeebeContainer zeebeContainer) {
 
         this.type = type;
         this.listInput = listInput;
         this.listOutput = listOutput;
         this.listBpmnErrors = listBpmnErrors;
+        this.zeebeContainer = zeebeContainer;
     }
 
     /* -------------------------------------------------------- */

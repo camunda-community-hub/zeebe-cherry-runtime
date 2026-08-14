@@ -11,6 +11,7 @@ import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
 import RestCallService from "../services/RestCallService";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 class Content extends React.Component {
 
@@ -23,56 +24,12 @@ class Content extends React.Component {
             content: [],
             files: [],
             display: {loading: false},
-            status: "",
-            downloadStartup: [],
-            explorationStatus: "NONE",
-            percentExploration: 0,
-            refreshInterval: null
+            status: ""
         };
     }
 
     componentDidMount() {
         this.refreshListContent();
-        this.refreshStartupStatus();
-    }
-
-    componentWillUnmount() {
-        this.clearAutoRefresh();
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        const prevInProgress = prevState.explorationStatus === "INPROGRESS" ||
-                              (prevState.downloadStartup && prevState.downloadStartup.some(d => d.count < d.total));
-        const currentInProgress = this.state.explorationStatus === "INPROGRESS" ||
-                                (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
-
-        if (prevInProgress !== currentInProgress) {
-            this.clearAutoRefresh();
-            if (currentInProgress) {
-                this.setupAutoRefresh();
-            }
-        }
-    }
-
-    setupAutoRefresh() {
-        if (this.state.refreshInterval) {
-            return;
-        }
-        this.scheduleNextRefresh();
-    }
-
-    scheduleNextRefresh() {
-        const timeout = setTimeout(() => {
-            this.refreshStartupStatus();
-        }, 30000);
-        this.setState({ refreshInterval: timeout });
-    }
-
-    clearAutoRefresh() {
-        if (this.state.refreshInterval) {
-            clearTimeout(this.state.refreshInterval);
-            this.setState({ refreshInterval: null });
-        }
     }
 
     /*           {JSON.stringify(this.state.runners, null, 2) } */
@@ -202,37 +159,7 @@ class Content extends React.Component {
                         </div>
                     </div>
                 </div>
-                {(this.state.explorationStatus === "INPROGRESS" ||
-                  (this.state.downloadStartup && this.state.downloadStartup.length > 0)) && (
-                    <div className="row" style={{width: "100%", marginTop: "16px"}}>
-                        <div className="col-md-12">
-                            <div className="card" style={{borderLeft: "4px solid #0043CE"}}>
-                                <div className="card-header cherry-header">Operation in progress</div>
-                                <div className="card-body" style={{fontSize: "12px"}}>
-                                    {this.state.explorationStatus === "INPROGRESS" && (
-                                        <div style={{marginBottom: "12px", fontStyle: "italic", color: "#0043CE", fontWeight: "bold"}}>
-                                            Exploration in progress... ({this.state.percentExploration || 0}%)
-                                        </div>
-                                    )}
-                                    {this.state.downloadStartup && this.state.downloadStartup.length > 0 && (
-                                        <div>
-                                            <div style={{marginBottom: "12px", color: "#0043CE", fontWeight: "bold"}}>
-                                                Download in progress
-                                            </div>
-                                            {this.state.downloadStartup.map((download, idx) => (
-                                                <div key={idx} style={{marginBottom: "4px"}}>
-                                                    {download.name}: {download.count} / {download.total} ({download.percentage}%)
-                                                    {download.currentDownloadName && ` : ${download.currentDownloadName}`}
-                                                    {download.count >= 1 && download.count < download.total && " In progress"}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <DownloadMessage/>
             </div>
         )
     }
@@ -340,36 +267,6 @@ class Content extends React.Component {
 
     refreshStatusOnPage() {
         this.setState({statusUploadFailed: '', statusUploadSuccess: '', status: ''});
-    }
-
-    refreshStartupStatus() {
-        let uri = 'cherry/api/store/startup?';
-        console.log("Content.refreshStartupStatus http[" + uri + "]");
-        let restCallService = RestCallService.getInstance();
-        restCallService.getJson(uri, this, this.refreshStartupStatusCallback);
-    }
-
-    refreshStartupStatusCallback(httpPayload) {
-        if (httpPayload.isError()) {
-            console.log("Content.refreshStartupStatusCallback: error " + httpPayload.getError());
-        } else {
-            const data = httpPayload.getData();
-            const explorationStatus = data.exploration ? data.exploration.status : "NONE";
-            const percentExploration = data.exploration ? data.exploration.percent : 0;
-            this.setState({
-                explorationStatus: explorationStatus,
-                downloadStartup: data.downloadStartup || [],
-                percentExploration: percentExploration
-            }, () => {
-                const inProgress = this.state.explorationStatus === "INPROGRESS" ||
-                                  (this.state.downloadStartup && this.state.downloadStartup.some(d => d.count < d.total));
-                if (inProgress) {
-                    this.scheduleNextRefresh();
-                } else {
-                    this.clearAutoRefresh();
-                }
-            });
-        }
     }
 }
 

@@ -7,6 +7,7 @@
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.connector.jackson.ConnectorsObjectMapperSupplier;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
@@ -46,21 +47,19 @@ public class JobRunnerFactory {
     public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
     public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    // Same ObjectMapper any connector gets under the real Connector Runtime (Jdk8Module + JavaTimeModule,
+    // lenient unknown-property/enum handling, etc.) - see ConnectorsObjectMapperSupplier in connector-object-mapper.
+    // This is the mapper SuperConnectorJobHandler uses to serialize a connector's output into job variables;
+    // a bare `new ObjectMapper()` here fails on any java.time.* output value.
+    private static final ObjectMapper objectMapper = ConnectorsObjectMapperSupplier.getCopy();
     private final ValidationProvider validationProvider;
+    private final HistoryFactory historyFactory;
+    private final RunnerFactory runnerFactory;
+    private final ZeebeContainer zeebeContainer;
+    private final LogOperation logOperation;
+    private final CherrySecretProvider cherrySecretProvider;
+    private final CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
     Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
-    @Autowired
-    HistoryFactory historyFactory;
-    @Autowired
-    RunnerFactory runnerFactory;
-    @Autowired
-    ZeebeContainer zeebeContainer;
-    @Autowired
-    LogOperation logOperation;
-    @Autowired
-    CherrySecretProvider cherrySecretProvider;
-    @Autowired
-    CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
     CamundaClient camundaClient;
     /**
@@ -70,8 +69,20 @@ public class JobRunnerFactory {
     List<OrchestrationAPI.TenantInformation> listTenants = null;
     private boolean isStarted = false;
 
-    public JobRunnerFactory(ValidationProvider validationProvider) {
+    public JobRunnerFactory(ValidationProvider validationProvider,
+                            HistoryFactory historyFactory,
+                            RunnerFactory runnerFactory,
+                            ZeebeContainer zeebeContainer,
+                            LogOperation logOperation,
+                            CherrySecretProvider cherrySecretProvider,
+                            CommandExceptionHandlingStrategy commandExceptionHandlingStrategy) {
         this.validationProvider = validationProvider;
+        this.historyFactory = historyFactory;
+        this.runnerFactory = runnerFactory;
+        this.zeebeContainer = zeebeContainer;
+        this.logOperation = logOperation;
+        this.cherrySecretProvider = cherrySecretProvider;
+        this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
     }
 
     public void startAll() {

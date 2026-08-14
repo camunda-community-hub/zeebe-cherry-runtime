@@ -26,13 +26,15 @@ import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
 @Service
 public class HistoryFactory {
 
+    private final RunnerExecutionRepository runnerExecutionRepository;
+    private final HistoryPerformance historyPerformance;
     Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
-
-    @Autowired
-    HistoryPerformance historyPerformance;
+    public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
+                         HistoryPerformance historyPerformance) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+        this.historyPerformance = historyPerformance;
+    }
 
     /**
      * get main statistics for the runner type in the last <delayStatInHour> period
