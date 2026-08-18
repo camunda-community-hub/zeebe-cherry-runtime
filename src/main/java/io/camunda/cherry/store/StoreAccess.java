@@ -6,13 +6,27 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public interface StoreAccess {
+public abstract class StoreAccess {
 
-    String getName();
+    private CherryProperties.Startup startup;
 
-    String getUrl();
+    protected StoreAccess(CherryProperties.Startup startup) {
+        this.startup = startup;
+    }
 
-    String getType();
+    public CherryProperties.Startup getStartup() {
+        return startup;
+    }
+
+    public void setStartup(CherryProperties.Startup startup) {
+        this.startup = startup;
+    }
+
+    public abstract String getName();
+
+    public abstract String getUrl();
+
+    public abstract String getType();
 
     /**
      * Get the lisf of connector. Each connectorDefition is "light", with name.
@@ -21,7 +35,7 @@ public interface StoreAccess {
      *
      * @return list of connectors discovered
      */
-    List<ConnectorDefinition> exploreListConnectors();
+    public abstract List<ConnectorDefinition> exploreListConnectors();
 
     /**
      * Explore details. At the end, the connectorDefinition is complete
@@ -35,19 +49,26 @@ public interface StoreAccess {
      * @param connectorDefinition connector definition to explore
      * @return true if the connector is valid, false if not and must be deleted
      */
-    boolean exploreDetails(ConnectorDefinition connectorDefinition);
+    public abstract boolean exploreDetails(ConnectorDefinition connectorDefinition);
 
 
-    ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition);
+    public abstract ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition);
 
 
-    enum EXPLORATION {READY, INPROGRESS, INCOMPLETE}
+    /**
+     * READY: fully operational
+     * INPROGRESS: still exploring
+     * INCOMPLETE: the connector / worker is incomplete, can't execute
+     * NOELTTEMPLATE : the connector does not have a template - maybe a worker? Need to explore JAR
+     *
+     */
+    public enum EXPLORATION {READY, INPROGRESS, INCOMPLETE, NOELTTEMPLATE}
 
-    enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK, FAILED, NOURLJARFILE, NOIMPLEMENTATION}
+    public enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK, FAILED, NOURLJARFILE, NOIMPLEMENTATION}
 
-    enum CONNECTORSOURCE {NONE, CAMUNDAHUB, CAMUNDACONNECTOR}
+    public enum CONNECTORSOURCE {NONE, CAMUNDAHUB, CAMUNDACONNECTOR}
 
-    class ElementTemplateDescription {
+    public static class ElementTemplateDescription {
         public String name;
         public String description;
         public String url;
@@ -59,7 +80,7 @@ public interface StoreAccess {
         }
     }
 
-    class AnnotationDescription {
+    public static class AnnotationDescription {
         public String name;
         public String type;
 
@@ -69,7 +90,7 @@ public interface StoreAccess {
         }
     }
 
-    class ConnectorDefinition {
+    public static class ConnectorDefinition {
         /**
          * Name of the connector. can be the folder name
          * There are multiple name in a connector:
@@ -112,7 +133,7 @@ public interface StoreAccess {
         public String url;
         public String description;
         public String creator;
-        public EXPLORATION status;
+        private EXPLORATION status;
         public String documentationRef;
         /**
          * Url to download the Jarfile - attentioon, this file maybe a Zip, and may be need to be explored
@@ -140,12 +161,21 @@ public interface StoreAccess {
             connectorDefinition.release = release;
             return connectorDefinition;
         }
+
+        public EXPLORATION getStatus() {
+            return status;
+        }
+
+        public void setStatus(EXPLORATION status) {
+            this.status = status;
+        }
+
         public String toString() {
             return "ConnectorDefinition["+name+"] release:["+release+"] Store["+storeAccess.getName()+"] Implemen.["+hasImplementation+"]";
         }
     }
 
-    class ConnectorDownload {
+    public static class ConnectorDownload {
         public STATUSDOWNLOAD status;
         public String explanation;
         public ByteArrayInputStream jarContent;
@@ -155,7 +185,7 @@ public interface StoreAccess {
         String release;
     }
 
-    class ConnectorDetail {
+    public static class ConnectorDetail {
         public String className;
         public List<String> fetchVariables;
         public String name;

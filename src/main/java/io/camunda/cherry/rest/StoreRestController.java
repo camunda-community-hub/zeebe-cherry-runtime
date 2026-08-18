@@ -67,7 +67,7 @@ public class StoreRestController {
 
     @GetMapping(value = "/api/store/list", produces = "application/json")
     public List<Map<String, String>> getStores() {
-        List<Map<String, String>> listStores = storeFactory.getStores().stream()
+        List<Map<String, String>> listStores = storeFactory.getListStores().stream()
                 .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                 .toList();
         logger.info("list stores: return {} stores: [{}]", listStores.size(), listStores.stream().map(c -> c.get(RestAttribute.NAME)).collect(Collectors.joining(",")));
@@ -83,7 +83,13 @@ public class StoreRestController {
     @GetMapping(value = "/api/store/connectors/explore", produces = "application/json")
     public Map<String, Object> exploreConnectorInStore() {
         if (storeFactory.getExploration() == StoreFactory.EXPLORATIONCONNECTOR.NONE) {
-            Executors.newSingleThreadExecutor().execute(() -> storeFactory.explore());
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    storeFactory.explore();
+                } catch (Exception e) {
+                    logger.error("Store exploration failed", e);
+                }
+            });
             try {
                 TimeUnit.SECONDS.sleep(5);
             } catch (InterruptedException e) {
@@ -139,7 +145,7 @@ public class StoreRestController {
                 mapConnector.put(RestAttribute.GITHUB_REPO_PATH, connectorDefinition.githubRepoPath);
                 mapConnector.put(RestAttribute.ICON, connectorDefinition.icon);
                 mapConnector.put(RestAttribute.DESCRIPTION, connectorDefinition.description);
-                mapConnector.put(RestAttribute.EXPLORATION_STATUS, connectorDefinition.status);
+                mapConnector.put(RestAttribute.EXPLORATION_STATUS, connectorDefinition.getStatus());
                 mapConnector.put(RestAttribute.DOCUMENTATION_REF, connectorDefinition.documentationRef);
                 mapConnector.put(RestAttribute.URL_JAR_FILE, connectorDefinition.urlJarFile);
                 mapConnector.put(RestAttribute.URL_MAVEN, connectorDefinition.urlMaven);
@@ -151,7 +157,7 @@ public class StoreRestController {
                 mapConnector.put(RestAttribute.ELEMENT_TEMPLATES, connectorDefinition.listEltTemplate);
                 listAllConnectors.add(mapConnector);
 
-                if (connectorDefinition.status == StoreAccess.EXPLORATION.INPROGRESS) {
+                if (connectorDefinition.getStatus() == StoreAccess.EXPLORATION.INPROGRESS) {
                     mapConnector.put(RestAttribute.STATUS, "IN-PROGRESS");
                 } else {
                     /** Let's find a runner for the connection. THe connectorDefinition as a name, but the code is maybe different */
@@ -206,7 +212,7 @@ public class StoreRestController {
                     listConnectors.size(),
                     listConnectors.stream().map(c -> c.name).collect(Collectors.joining(",")),
                     System.currentTimeMillis() - beginTime);
-            List<Map<String, String>> listStores = storeFactory.getStores().stream()
+            List<Map<String, String>> listStores = storeFactory.getListStores().stream()
                     .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                     .toList();
             Map<String, Object> status = populateAdvancement();
@@ -359,7 +365,7 @@ public class StoreRestController {
 
     private Map<String, Object> populateAdvancement() {
         Map<String, Object> status = new HashMap<>();
-        Map<Supervisor.STARTUPDOWNLOAD, Supervisor.DownloadInProgress> downloadStatus = supervisor.getDownloadStatus();
+        Map<String, Supervisor.DownloadInProgress> downloadStatus = supervisor.getDownloadStatus();
         List<Map<String, Object>> listDownloadStartup = downloadStatus.values().stream()
                 .map(t -> {
                     Map<String, Object> map = new HashMap<>();

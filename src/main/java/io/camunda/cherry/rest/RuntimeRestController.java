@@ -104,7 +104,7 @@ public class RuntimeRestController {
         parameters.put(RestAttribute.VERSION, getVersion());
 
         parameters.put(RestAttribute.STORES,
-                storeFactory.getStores().stream()
+                storeFactory.getListStores().stream()
                         .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                         .toList());
 

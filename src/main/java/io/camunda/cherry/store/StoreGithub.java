@@ -14,34 +14,32 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StorePrivateGithub implements StoreAccess {
+public abstract class StoreGithub extends StoreAccess {
     private static final List<String> IGNORE = List.of("README.md", ".github", "docs");
     private final String name;
     private final String url;
     private final String filterProjectName;
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
-    Logger logger = LoggerFactory.getLogger(StorePrivateGithub.class.getName());
+
+    Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
 
 
     private final String REPOS_PER_PAGE = "50";
 
-    public StorePrivateGithub(String name, String url, GitHubAccess gitHubAccess) {
-        this.name = name;
-        this.url = url;
-        this.filterProjectName = null;
-        this.gitHubAccess = gitHubAccess;
-        restTemplate = new RestTemplate();
-        if (gitHubAccess.isToken()) {
-            ClientHttpRequestInterceptor authInterceptor = (request, body, execution) -> {
-                request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + gitHubAccess.getGithubToken());
-                return execution.execute(request, body);
-            };
-            restTemplate.setInterceptors(List.of(authInterceptor));
-        }
+    public StoreGithub(String name, String url, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+        this(name, url, null, gitHubAccess, startup);
     }
 
-    public StorePrivateGithub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess) {
+    /**
+     * @param name              store name
+     * @param url               GitHub profile/org URL
+     * @param filterProjectName optional filter applied to repository names when listing (e.g. "camunda-8-connector")
+     * @param gitHubAccess      GitHub access
+     * @param startup           startup-download configuration for this store
+     */
+    public StoreGithub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+        super(startup);
         this.name = name;
         this.url = url;
         this.filterProjectName = filterProjectName;
@@ -56,6 +54,7 @@ public class StorePrivateGithub implements StoreAccess {
         }
     }
 
+
     @Override
     public String getName() {
         return name;
@@ -66,10 +65,6 @@ public class StorePrivateGithub implements StoreAccess {
         return url;
     }
 
-    @Override
-    public String getType() {
-        return "GitHub";
-    }
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -80,7 +75,7 @@ public class StorePrivateGithub implements StoreAccess {
     @Override
     public List<ConnectorDefinition> exploreListConnectors() {
         long startTime = System.currentTimeMillis();
-        logger.info("Store[{}] startListDetector ", getName());
+        logger.info("Store[{}] startExploreListConnectors ", getName());
         List<ConnectorDefinition> result = new ArrayList<>();
         try {
             String apiReposUrl = buildReposApiUrl(url, getTypeRepo());
@@ -104,7 +99,22 @@ public class StorePrivateGithub implements StoreAccess {
                     logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl, connectorDefinition.hasImplementation);
 
                     result.add(connectorDefinition);
+                } else {
+                    status = gitHubAccess.isGithubWorker(apiContentsUrl, null, true, true);
+                    if (status.pomXml) {
+                        // this is a PomXml worker
+                        ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
+                        connectorDefinition.githubRepoName = fullName;
+                        connectorDefinition.githubRepoPath = "";
+                        connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
+                        connectorDefinition.release = status.release;
+                        logger.info("Store[{}] Detect worker[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl, connectorDefinition.hasImplementation);
+
+                        result.add(connectorDefinition);
+                    }
                 }
+
+
             }
             logger.info("Store[{}] found {} connectors in {} ms", getName(), result.size(), System.currentTimeMillis() - startTime);
             return result;
@@ -260,7 +270,5 @@ public class StorePrivateGithub implements StoreAccess {
         return null;
     }
 
-    private String getTypeRepo() {
-        return "owner";
-    }
+    protected abstract String getTypeRepo();
 }

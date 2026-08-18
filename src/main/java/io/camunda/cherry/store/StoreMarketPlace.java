@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StoreMarketPlace implements StoreAccess {
+public class StoreMarketPlace extends StoreAccess {
 
     private static final String MARKETPLACE_BASE_URL = "https://marketplace.camunda.com";
     private static final String LISTING_API = MARKETPLACE_BASE_URL + "/api/internal/storefront/v1/listingPage?page=";
@@ -32,7 +32,8 @@ public class StoreMarketPlace implements StoreAccess {
     private final GitHubAccess gitHubAccess;
     Logger logger = LoggerFactory.getLogger(StoreMarketPlace.class.getName());
 
-    public StoreMarketPlace(GitHubAccess gitHubAccess) {
+    public StoreMarketPlace(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+        super(startup);
         this.gitHubAccess = gitHubAccess;
     }
 

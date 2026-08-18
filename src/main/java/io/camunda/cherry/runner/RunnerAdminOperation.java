@@ -10,6 +10,7 @@
 package io.camunda.cherry.runner;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
@@ -35,15 +36,17 @@ public class RunnerAdminOperation {
     private final JobRunnerFactory jobRunnerFactory;
 
     private final JarManagementClassLoader jarManagementClassLoader;
+    private final LogOperation logOperation;
 
     public RunnerAdminOperation(JarStorageEntityRepository jarStorageEntityRepository,
                                 RunnerDefinitionRepository runnerDefinitionRepository,
                                 JobRunnerFactory jobRunnerFactory,
-                                JarManagementClassLoader jarManagementClassLoader) {
+                                JarManagementClassLoader jarManagementClassLoader, LogOperation logOperation) {
         this.jarStorageEntityRepository = jarStorageEntityRepository;
         this.runnerDefinitionRepository = runnerDefinitionRepository;
         this.jobRunnerFactory = jobRunnerFactory;
         this.jarManagementClassLoader = jarManagementClassLoader;
+        this.logOperation = logOperation;
     }
 
     public boolean deleteJarFile(Long storageEntityId) throws OperationException {
@@ -55,6 +58,7 @@ public class RunnerAdminOperation {
 
         // Need that variable for the stream
         // Identify all worker behind the JarEntity
+        logOperation.log(OperationEntity.Operation.REMOVEJAR, "Remove Jar [" + storageEntity.get().name + "]");
         List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
         List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
                 .filter(t -> {
@@ -77,6 +81,7 @@ public class RunnerAdminOperation {
 
         // remove worker from database
         for (RunnerDefinitionEntity runnerEntity : listRunners) {
+            logOperation.log(OperationEntity.Operation.REMOVERUNNER, "Remove Runner (remove Jar) [" + runnerEntity.name + "]");
             runnerDefinitionRepository.delete(runnerEntity);
         }
         // remove Jar

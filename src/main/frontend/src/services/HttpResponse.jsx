@@ -34,9 +34,9 @@ class HttpResponse {
         // No response received — server unreachable or proxy refused connection
         if (!this.err.response)
             return "Cannot connect to the server";
-        if (this.err.message)
-            return this.err.message;
-        return this.err.code || "Unknown error";
+        // Server responded but without a usable message body — axios's generic
+        // "Request failed with status code X" is not helpful to the user
+        return "Server is not accessible (error " + this.err.response.status + ")";
     }
 
     getData() {

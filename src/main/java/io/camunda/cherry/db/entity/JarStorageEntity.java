@@ -27,6 +27,9 @@ public class JarStorageEntity {
     @Column(name = "name", length = 1000, unique = true)
     public String name;
 
+    @Column(name = "release", length = 100)
+    public String release;
+
     /**
      * Database H2, save the JAR
      * in H2, the byte[] have an issue, and large file can't be saved by this way.

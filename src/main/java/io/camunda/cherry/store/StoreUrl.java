@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-public class StoreUrl implements StoreAccess {
+public class StoreUrl extends StoreAccess {
 
     private final StoreFactory storeFactory;
     private final RestTemplate restTemplate;
@@ -16,6 +16,9 @@ public class StoreUrl implements StoreAccess {
     Logger logger = LoggerFactory.getLogger(StoreUrl.class.getName());
 
     public StoreUrl(StoreFactory storeFactory, GitHubAccess gitHubAccess) {
+        // No per-store startup config exists for this store: it only serves ad-hoc direct-URL
+        // downloads triggered from cherry.store.downloadStartup, not a filtered/scheduled download.
+        super(new CherryProperties.Startup());
         this.storeFactory = storeFactory;
         this.gitHubAccess = gitHubAccess;
         restTemplate = new RestTemplate();

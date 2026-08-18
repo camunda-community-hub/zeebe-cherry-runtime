@@ -7,7 +7,9 @@
 /* ******************************************************************** */
 package io.camunda.cherry.supervisor;
 
+import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
@@ -18,10 +20,14 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,12 +46,13 @@ public class Supervisor {
     private final Installer installer;
     private final JarManagementClassLoader jarManagementClassLoader;
     private final RunnerUploadFactory runnerUploadFactory;
+    private final JarStorageEntityRepository jarStorageEntityRepository;
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
     private final String MARKER_NAME_IS_A_DIRECT_URL = "http";
     Logger logger = LoggerFactory.getLogger(Supervisor.class.getName());
     private final StoreFactory.EXPLORATIONCONNECTOR exploration = StoreFactory.EXPLORATIONCONNECTOR.NONE;
     private final int percentageExploration = 0;
-    private final Map<STARTUPDOWNLOAD, DownloadInProgress> downloadStatus = new HashMap<>();
+    private final Map<String, DownloadInProgress> downloadStatus = new HashMap<>();
 
 
     Supervisor(GitHubAccess gitHubAccess,
@@ -54,7 +61,8 @@ public class Supervisor {
                RunnerFactory runnerFactory,
                JobRunnerFactory jobRunnerFactory,
                Installer installer,
-               LogOperation logOperation, JarManagementClassLoader jarManagementClassLoader, RunnerUploadFactory runnerUploadFactory) {
+               LogOperation logOperation, JarManagementClassLoader jarManagementClassLoader, RunnerUploadFactory runnerUploadFactory,
+               JarStorageEntityRepository jarStorageEntityRepository) {
         this.gitHubAccess = gitHubAccess;
         this.cherryProperties = cherryProperties;
         this.storeFactory = storeFactory;
@@ -64,6 +72,7 @@ public class Supervisor {
         this.logOperation = logOperation;
         this.jarManagementClassLoader = jarManagementClassLoader;
         this.runnerUploadFactory = runnerUploadFactory;
+        this.jarStorageEntityRepository = jarStorageEntityRepository;
     }
 
     /* ******************************************************************** */
@@ -80,31 +89,39 @@ public class Supervisor {
                 // Clear the class Loader for a fresh restart
                 jarManagementClassLoader.clearClassLoaderFolder();
 
-                // second, check all library connector
-                logger.info("----- Supervisor.1 Load from UploadPath ");
+                // -------------check all library connector
+                logger.info("----- Supervisor.1-begin: JarUploadPath");
                 List<File> listJarFile = runnerUploadFactory.detectJarFromUploadPath();
                 String logInfo = "";
                 for (File jarFile : listJarFile) {
                     logInfo += jarFile.getName() + ";";
-                    installer.installStartJar(jarFile, null);
+                    String release = detectReleaseFromName(jarFile.getName());
+                    installer.installStartJar(jarFile, release);
                 }
+                logger.info("----- Supervisor.1-end: Loaded JarUploadPath [{}]", logInfo);
 
+                // ------------- load all from the database
+                logger.info("----- Supervisor.2-begin: Loaded from database");
+                List<JarStorageEntity> listJarStorage = jarStorageEntityRepository.getAll();
+                String logInfoDb = "";
+                for (JarStorageEntity jarStorageEntity : listJarStorage) {
+                    logInfoDb += jarStorageEntity.name + ";";
+                    InputStream jarFileInputStream = readJarContent(jarStorageEntity);
+                    installer.installStartJar(jarStorageEntity.name, jarFileInputStream, jarStorageEntity.release);
+                }
+                logger.info("----- Supervisor.2-end: Loaded from database [{}]", logInfoDb);
 
-                logger.info("Supervisor.2: Load JarUploadPath [{}]", logInfo);
-
-
+                // Explore store
                 boolean exploreStores = false;
                 boolean downloadStartupNeedExploration = !cherryProperties.getStore().getDownloadStartup().isEmpty();
                 if (downloadStartupNeedExploration)
                     exploreStores = true;
-                // some other mechanism may force the exploration
-                if (cherryProperties.getStore().getCamundaConnector().isAccess())
-                    exploreStores = true;
-                if (cherryProperties.getStore().getCommunityConnector().isAccess())
+                if (! storeFactory.getListStores().isEmpty())
                     exploreStores = true;
 
+
                 // Now do the job
-                logger.info("----- Supervisor.3: Exploration at startup? {} (details: required? {} InitialDownloadByName? {} AskConnectorRuntime? {} askCommunityConnector? {}",
+                logger.info("----- Supervisor.3-begin: Exploration at startup? {} (details: required? {} InitialDownloadByName? {} AskConnectorRuntime? {} askCommunityConnector? {}",
                         exploreStores,
                         downloadStartupNeedExploration,
                         cherryProperties.getStore().getCamundaConnector().isAccess(),
@@ -113,10 +130,17 @@ public class Supervisor {
                 // Explore all stores
                 if (exploreStores)
                     storeFactory.explore();
+                logger.info("----- Supervisor.3-end: Exploration at startup? {} (details: required? {} InitialDownloadByName? {} AskConnectorRuntime? {} askCommunityConnector? {}",
+                        exploreStores,
+                        downloadStartupNeedExploration,
+                        cherryProperties.getStore().getCamundaConnector().isAccess(),
+                        cherryProperties.getStore().getCommunityConnector().isAccess());
 
                 // Initial all download
-                logger.info("----- Supervisor.4: Download");
+                logger.info("----- Supervisor.4-begin: Initial download");
                 initialDownload();
+
+                logger.info("----- Supervisor.4-end: Downloaded");
 
                 jobRunnerFactory.startAll();
 
@@ -126,31 +150,49 @@ public class Supervisor {
         });
     }
 
+    /**
+     * JarStorageEntity may hold its content either as a byte[] (jarfileByte, used on Postgres)
+     * or as a Blob (jarfileBlob, used on H2) — see the entity's own documentation.
+     */
+    private InputStream readJarContent(JarStorageEntity jarStorageEntity) throws TechnicalException {
+        try {
+            if (jarStorageEntity.jarfileByte != null)
+                return new ByteArrayInputStream(jarStorageEntity.jarfileByte);
+            if (jarStorageEntity.jarfileBlob != null)
+                return jarStorageEntity.jarfileBlob.getBinaryStream();
+            throw new TechnicalException("JarStorageEntity[" + jarStorageEntity.name + "] has no content (neither jarfileByte nor jarfileBlob)");
+        } catch (java.sql.SQLException e) {
+            throw new TechnicalException("Cannot read JAR content for [" + jarStorageEntity.name + "]", e);
+        }
+    }
 
-    public Map<STARTUPDOWNLOAD, DownloadInProgress> getDownloadStatus() {
+
+    public Map<String, DownloadInProgress> getDownloadStatus() {
         return downloadStatus;
     }
+
+    private static final String STARTUP_INITIAL_KEY = "INITIAL";
 
     /**
      * Manage the initialConnector download
      */
     private void initialDownload() {
         downloadStatus.clear();
+        List<StoreAccess> listStoreAccess = storeFactory.getListStores();
+
+        for (StoreAccess storeAccess : listStoreAccess) {
+            if (storeAccess.getStartup().isDownload()) {
+                String key = storeAccess.getType() + "-" + storeAccess.getName();
+                downloadStatus.put(key, new DownloadInProgress(key));
+            }
+        }
         if (!cherryProperties.getStore().getDownloadStartup().isEmpty()) {
-            downloadStatus.put(STARTUPDOWNLOAD.INITIAL,
-                    new DownloadInProgress(STARTUPDOWNLOAD.INITIAL));
-        }
-        if (cherryProperties.getStore().getCamundaConnector().getStartup().isDownload()) {
-            downloadStatus.put(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR,
-                    new DownloadInProgress(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR));
-        }
-        if (cherryProperties.getStore().getCommunityConnector().getStartup().isDownload()) {
-            downloadStatus.put(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR, new DownloadInProgress(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR));
+            downloadStatus.put(STARTUP_INITIAL_KEY, new DownloadInProgress(STARTUP_INITIAL_KEY));
         }
 
-        // Now do the job
+        // Now do the job: the ad-hoc "downloadStartup" list of direct URLs / connector names
         if (!cherryProperties.getStore().getDownloadStartup().isEmpty()) {
-            DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.INITIAL);
+            DownloadInProgress downloadInProgress = downloadStatus.get(STARTUP_INITIAL_KEY);
             downloadInProgress.total = cherryProperties.getStore().getDownloadStartup().size();
             StoreUrl storeUrl = new StoreUrl(storeFactory, gitHubAccess);
             for (String item : cherryProperties.getStore().getDownloadStartup()) {
@@ -174,55 +216,29 @@ public class Supervisor {
                 downloadInProgress.count++;
             }
         }
-        if (cherryProperties.getStore().getCamundaConnector().getStartup().isDownload()) {
-            logger.info("Supervisor: start download Camunda Connectors release[{}]",
-                    cherryProperties.getStore().getCamundaConnector().getStartup().getTag());
-            DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.CAMUNDA_CONNECTOR);
-            StoreAccess storeAccess = storeFactory.getStoreCamundaConnector();
-            if (storeAccess != null) {
-                List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
-                downloadInProgress.total = listConnectors.size();
-                downloadInProgress.count = 0;
-                List<String> filter = cherryProperties.getStore().getCamundaConnector().getStartup().getFilter();
-                if (filter != null && !filter.isEmpty()) {
-                    logger.info("Supervisor: Camunda Connector Filter[{}]", filter);
+
+        // Generic per-store startup download, driven entirely by each store's own Startup config
+        for (StoreAccess storeAccess : listStoreAccess) {
+            if (!storeAccess.getStartup().isDownload())
+                continue;
+
+            String key = storeAccess.getType() + "-" + storeAccess.getName();
+            DownloadInProgress downloadInProgress = downloadStatus.get(key);
+            List<String> filter = storeAccess.getStartup().getFilter();
+            List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
+            logger.info("Supervisor: start download Store[{}] filter[{}] tag[{}] ConnectorsInTheStore[{}]",
+                    storeAccess.getName(), filter, storeAccess.getStartup().getTag(), listConnectors.size());
+
+            downloadInProgress.total = listConnectors.size();
+            downloadInProgress.count = 0;
+            for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
+                if (matchListFilter(connectorDefinition.name, filter)) {
+                    downloadInProgress.currentDownloadName = connectorDefinition.name;
+                    installer.downloadInstallStart(connectorDefinition);
+                } else {
+                    logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
                 }
-                for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                    if (matchListFilter(connectorDefinition.name, filter)) {
-                        downloadInProgress.currentDownloadName = connectorDefinition.name;
-                        installer.downloadInstallStart(connectorDefinition);
-                    } else {
-                        logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
-                    }
-                    downloadInProgress.count++;
-                }
-            }
-        }
-
-
-        if (cherryProperties.getStore().getCommunityConnector().getStartup().isDownload()) {
-            logger.info("StoreFactory: start download Community Connector filter[{}]",
-                    cherryProperties.getStore().getCommunityConnector().getStartup().getFilter());
-            DownloadInProgress downloadInProgress = downloadStatus.get(STARTUPDOWNLOAD.COMMUNITY_CONNECTOR);
-
-
-            List<String> filter = cherryProperties.getStore().getCommunityConnector().getStartup().getFilter();
-            StoreAccess storeAccess = storeFactory.getStoreCommunity();
-            if (storeAccess != null) {
-                List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
-                downloadInProgress.total = listConnectors.size();
-                downloadInProgress.count = 0;
-                for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                    // download this connector
-                    if (matchListFilter(connectorDefinition.name, filter)) {
-                        downloadInProgress.currentDownloadName = connectorDefinition.name;
-                        installer.downloadInstallStart(connectorDefinition);
-                    } else {
-                        logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
-                    }
-                    // we count +1 here
-                    downloadInProgress.count++;
-                }
+                downloadInProgress.count++;
             }
         }
 
@@ -242,6 +258,14 @@ public class Supervisor {
         }
         return false;
     }
+
+
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  Operations                                                          */
+    /*                                                                      */
+    /* ******************************************************************** */
 
     /**
      * Download (do not install)
@@ -357,18 +381,28 @@ public class Supervisor {
                 .toList();
     }
 
+    private String detectReleaseFromName(String fileName) {
+        Pattern pattern = Pattern.compile("\\b(\\d+)\\.(\\d+)\\.(\\d+)\\b");
+        Matcher matcher = pattern.matcher(fileName);
+
+        if (matcher.find()) {
+            return matcher.group(0);
+        }
+        return null;
+    }
+
+
     public enum EXPLORATIONCONNECTOR {NONE, INPROGRESS, COMPLETED}
 
-    public enum STARTUPDOWNLOAD {INITIAL, CAMUNDA_CONNECTOR, COMMUNITY_CONNECTOR}
 
     public static class DownloadInProgress {
-        public STARTUPDOWNLOAD name;
+        public String name;
         public int count;
         public int total;
         public String currentDownloadName;
         public String tag;
 
-        protected DownloadInProgress(STARTUPDOWNLOAD name) {
+        protected DownloadInProgress(String name) {
             this.name = name;
         }
 

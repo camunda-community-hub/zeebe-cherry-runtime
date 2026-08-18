@@ -138,6 +138,7 @@ logging:
         boot:
           context:
             properties=TRACE:
+    io.camunda.cherry.runner.RunnerUploadFactory: DEBUG
 
 
 # return message with BAD_REQUEST to the client

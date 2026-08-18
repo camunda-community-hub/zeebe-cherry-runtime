@@ -43,8 +43,8 @@ public class CherryWorkerJobHandler implements JobHandler {
     @Override
     public void handle(JobClient client, ActivatedJob job) {
         Instant executionInstant = Instant.now();
-        logger.info("WorkerJobHandler: Handle JobId[{}] TenantId[{}] type[{}]", job.getKey(), job.getTenantId(),
-                sdkRunnerWorker.getType());
+        logger.info("WorkerJobHandler: Handle JobId[{}] TenantId[{}] type[{}] ProcessInstance[{}]", job.getKey(), job.getTenantId(),
+                sdkRunnerWorker.getType(), job.getProcessInstanceKey());
         long beginExecution = System.currentTimeMillis();
 
         ConnectorException connectorException = null;
@@ -54,7 +54,7 @@ public class CherryWorkerJobHandler implements JobHandler {
 
             // the worker complete fail or throw a BPMN error: there is no way to knows what's happenned
         } catch (Exception e) {
-            logger.error("Worker[{}] failed {}" + sdkRunnerWorker.getName(), e.toString());
+            logger.error("Worker[{}] failed" + sdkRunnerWorker.getName(), e);
         }
 
         long endExecution = System.currentTimeMillis();

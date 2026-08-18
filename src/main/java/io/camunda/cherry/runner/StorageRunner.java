@@ -15,12 +15,12 @@ import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.exception.TechnicalException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -70,7 +70,7 @@ public class StorageRunner {
      * @return the jarStorageEntity
      * @throws TechnicalException for any error
      */
-    public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, String jarName, File jarFile)
+    public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, String jarName, File jarFile, String release)
             throws TechnicalException {
         try (FileInputStream fis = new FileInputStream(jarFile);
              Session session = sessionFactory.openSession();
@@ -79,6 +79,7 @@ public class StorageRunner {
             if (jarStorageEntity == null)
                 jarStorageEntity = new JarStorageEntity();
             jarStorageEntity.name = jarName;
+            jarStorageEntity.release = release;
             jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
             jarStorageEntity.loadLog = "Loaded correctly from file [" + jarFile.getPath() + "]";
 
@@ -105,15 +106,15 @@ public class StorageRunner {
      * @param jarFile jarfile to save
      * @throws IOException error during saving
      */
-    public JarStorageEntity saveJarRunner(String jarName, File jarFile) throws TechnicalException {
+    public JarStorageEntity saveJarRunner(String jarName, File jarFile, String release) throws TechnicalException {
         String connectorName = jarFile.getName();
-        logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}]", jarFile.getPath(), connectorName);
+        logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}] release[{}]", jarFile.getPath(), connectorName, release);
 
         JarStorageEntity jarStorageEntity = jarStorageEntityRepository.findByName(connectorName);
         if (jarStorageEntity != null)
             return jarStorageEntity;
 
-        return updateJarRunner(jarStorageEntity, jarName, jarFile);
+        return updateJarRunner(jarStorageEntity, jarName, jarFile, release);
     }
 
     /**
@@ -214,8 +215,10 @@ public class StorageRunner {
         if (runner instanceof SdkRunnerConnector runnerSkkConnector) {
             // we want to save the transported class name
             runnerDefinition.classname = runnerSkkConnector.getTransportedClassName();
+        } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
+            runnerDefinition.classname = sdkRunnerWorker.getTransportedObject().getClass().getCanonicalName();
         } else {
-            runnerDefinition.classname = runner.getName();
+            runnerDefinition.classname = runner.getClass().getCanonicalName();
         }
         runnerDefinition.jar = jarDefinition;
         runnerDefinition.type = runner.getType();

@@ -21,21 +21,24 @@ public class StoreFactory {
     Logger logger = LoggerFactory.getLogger(StoreFactory.class.getName());
     private EXPLORATIONCONNECTOR exploration = EXPLORATIONCONNECTOR.NONE;
     private int percentageExploration = 0;
+
     StoreFactory(GitHubAccess gitHubAccess, CherryProperties cherryProperties) {
 
         if (cherryProperties.getStore().getCamundaConnector().isAccess())
-            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess));
+            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup()));
 
         if (cherryProperties.getStore().getCommunityConnector().isAccess())
-            listStoreAccess.add(new StoreCamundaCommunity(gitHubAccess));
+            listStoreAccess.add(new StoreCamundaCommunity(gitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup()));
 
         if (cherryProperties.getStore().getMarketplaceConnector().isAccess())
-            listStoreAccess.add(new StoreMarketPlace(gitHubAccess));
+            listStoreAccess.add(new StoreMarketPlace(gitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup()));
 
         if (cherryProperties.getStore().getPrivateStore().isAccess()) {
-            for (String repoUrl : cherryProperties.getStore().getPrivateStore().getListStore()) {
-                String name = extractName(repoUrl);
-                listStoreAccess.add(new StorePrivateGithub(name, repoUrl, gitHubAccess));
+            for (CherryProperties.Store.PrivateStore.PrivateStoreEntry privateStore : cherryProperties.getStore().getPrivateStore().getListStores()) {
+                String name = privateStore.getName() != null && !privateStore.getName().isEmpty()
+                        ? privateStore.getName()
+                        : extractName(privateStore.getUrl());
+                listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), gitHubAccess, privateStore.getStartup()));
             }
         }
         this.cherryProperties = cherryProperties;
@@ -60,11 +63,20 @@ public class StoreFactory {
         return null;
     }
 
+    public StoreAccess getPrivateStore(String storeName) {
+        for (StoreAccess storeAccess : listStoreAccess) {
+            if (storeAccess instanceof StorePrivateGitHub && storeAccess.getName().equals(storeName)) {
+                return storeAccess;
+            }
+        }
+        return null;
+    }
+
     public List<String> getStoreNames() {
         return listStoreAccess.stream().map(StoreAccess::getName).toList();
     }
 
-    public List<StoreAccess> getStores() {
+    public List<StoreAccess> getListStores() {
         return listStoreAccess;
     }
 
@@ -100,7 +112,7 @@ public class StoreFactory {
     }
 
     public List<StoreAccess.ConnectorDefinition> getListConnectors(StoreAccess storeAccess) {
-        return mapConnectors.get(storeAccess);
+        return mapConnectors.get(storeAccess)==null? Collections.emptyList(): mapConnectors.get(storeAccess);
     }
 
     /**
@@ -126,7 +138,7 @@ public class StoreFactory {
 
         // 2. StorePrivateGithub instances
         listStoreAccess.stream()
-                .filter(s -> s instanceof StorePrivateGithub)
+                .filter(s -> s instanceof StorePrivateGitHub)
                 .forEach(listStoreOrdered::add);
 
         // 3. Any other store type not yet added and not StoreMarketPlace
@@ -181,7 +193,7 @@ public class StoreFactory {
             logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
             List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.exploreListConnectors();
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                connectorDefinition.status = StoreAccess.EXPLORATION.INPROGRESS;
+                connectorDefinition.setStatus( StoreAccess.EXPLORATION.INPROGRESS);
                 logger.debug("Store[{}] connector[{}] in url[{}] Implementation[{}]", storeAccess.getName(), connectorDefinition.name, connectorDefinition.url, connectorDefinition.hasImplementation);
             }
             nbConnectors += listConnectors.size();
@@ -217,14 +229,14 @@ public class StoreFactory {
                         connectorsToRemove.add(connectorDefinition);
                         continue;
                     }
-                    connectorDefinition.status = !connectorDefinition.listEltTemplate.isEmpty() ?
-                            StoreAccess.EXPLORATION.READY : StoreAccess.EXPLORATION.INCOMPLETE;
+                    connectorDefinition.setStatus(!connectorDefinition.listEltTemplate.isEmpty() ?
+                            StoreAccess.EXPLORATION.READY : StoreAccess.EXPLORATION.NOELTTEMPLATE);
                     logger.info("Store[{}] connector[{}] type:[{}] release[{}] Status[{}] HasImplementation? {} url[{}] Description[{}] Gitname name[{}] path[{}] urlJarFile[{}] urlElementTemplate[{}]",
                             storeAccess.getName(),
                             connectorDefinition.name,
                             connectorDefinition.connectorType,
                             connectorDefinition.release,
-                            connectorDefinition.status,
+                            connectorDefinition.getStatus(),
                             connectorDefinition.hasImplementation,
                             connectorDefinition.url,
                             connectorDefinition.description,
@@ -236,10 +248,10 @@ public class StoreFactory {
 
                 } catch (Exception e) {
                     logger.error("StoreFactory Store[{}] connector [{}] failed ", storeAccess.getName(), connectorDefinition.name, e);
-                    connectorDefinition.status = StoreAccess.EXPLORATION.INCOMPLETE;
+                    connectorDefinition.setStatus( StoreAccess.EXPLORATION.INCOMPLETE);
                 }
 
-                if (connectorDefinition.status == StoreAccess.EXPLORATION.READY)
+                if (connectorDefinition.getStatus() == StoreAccess.EXPLORATION.READY || connectorDefinition.getStatus() == StoreAccess.EXPLORATION.NOELTTEMPLATE)
                     nbFullyCorrects++;
                 else
                     nbIncorrect++;
@@ -329,6 +341,7 @@ public class StoreFactory {
      * Note: filter works in a mix of AND/OR.
      * - hasImplementation : if set, this is mandatory.
      * - name / type : any of this criteria when they are trye, it matches the connector
+     *
      * @param filter
      * @return
      */

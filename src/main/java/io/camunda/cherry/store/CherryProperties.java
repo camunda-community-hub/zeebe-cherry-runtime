@@ -20,6 +20,39 @@ public class CherryProperties {
         this.store = store;
     }
 
+    /**
+     * Shared startup-download configuration, used by every store (Camunda connector store,
+     * community connector store, marketplace, private GitHub stores).
+     */
+    public static class Startup {
+        private boolean download = false;
+        private String tag;
+        private List<String> filter = new ArrayList<>();
+
+        public boolean isDownload() {
+            return download;
+        }
+
+        public void setDownload(boolean download) {
+            this.download = download;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
+
+        public List<String> getFilter() {
+            return filter;
+        }
+
+        public void setFilter(List<String> filter) {
+            this.filter = filter;
+        }
+    }
 
     public static class Store {
 
@@ -73,7 +106,7 @@ public class CherryProperties {
         public static class PrivateStore {
 
             private boolean access = false;
-            private List<String> listStore = new ArrayList<>();
+            private List<PrivateStoreEntry> listStores = new ArrayList<>();
 
             public boolean isAccess() {
                 return access;
@@ -83,12 +116,43 @@ public class CherryProperties {
                 this.access = access;
             }
 
-            public List<String> getListStore() {
-                return listStore;
+            public List<PrivateStoreEntry> getListStores() {
+                return listStores;
             }
 
-            public void setListStore(List<String> listStore) {
-                this.listStore = listStore;
+            public void setListStores(List<PrivateStoreEntry> listStore) {
+                this.listStores = listStore;
+            }
+
+            public static class PrivateStoreEntry {
+                private String name;
+                private String url;
+                private Startup startup = new Startup();
+
+
+                public String getName() {
+                    return name;
+                }
+
+                public void setName(String name) {
+                    this.name = name;
+                }
+
+                public String getUrl() {
+                    return url;
+                }
+
+                public void setUrl(String url) {
+                    this.url = url;
+                }
+
+                public Startup getStartup() {
+                    return startup;
+                }
+
+                public void setStartup(Startup startup) {
+                    this.startup = startup;
+                }
             }
         }
 
@@ -111,36 +175,6 @@ public class CherryProperties {
 
             public void setStartup(Startup startup) {
                 this.startup = startup;
-            }
-
-            public static class Startup {
-                private boolean download = false;
-                private String tag;
-                private List<String> filter = new ArrayList<>();
-
-                public boolean isDownload() {
-                    return download;
-                }
-
-                public void setDownload(boolean download) {
-                    this.download = download;
-                }
-
-                public String getTag() {
-                    return tag;
-                }
-
-                public void setTag(String tag) {
-                    this.tag = tag;
-                }
-
-                public List<String> getFilter() {
-                    return filter;
-                }
-
-                public void setFilter(List<String> filter) {
-                    this.filter = filter;
-                }
             }
         }
 
@@ -173,27 +207,6 @@ public class CherryProperties {
             public void setStartup(Startup startup) {
                 this.startup = startup;
             }
-
-            public static class Startup {
-                private boolean download = false;
-                private List<String> filter = new ArrayList<>();
-
-                public boolean isDownload() {
-                    return download;
-                }
-
-                public void setDownload(boolean download) {
-                    this.download = download;
-                }
-
-                public List<String> getFilter() {
-                    return filter;
-                }
-
-                public void setFilter(List<String> filter) {
-                    this.filter = filter;
-                }
-            }
         }
 
         public static class MarketplaceConnector {
@@ -215,27 +228,6 @@ public class CherryProperties {
 
             public void setStartup(Startup startup) {
                 this.startup = startup;
-            }
-
-            public static class Startup {
-                private boolean download = false;
-                private List<String> filter = new ArrayList<>();
-
-                public boolean isDownload() {
-                    return download;
-                }
-
-                public void setDownload(boolean download) {
-                    this.download = download;
-                }
-
-                public List<String> getFilter() {
-                    return filter;
-                }
-
-                public void setFilter(List<String> filter) {
-                    this.filter = filter;
-                }
             }
         }
 

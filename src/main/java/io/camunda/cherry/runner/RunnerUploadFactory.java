@@ -184,13 +184,13 @@ public class RunnerUploadFactory {
      *
      * @param jarFile            file to load
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
-     * @param defautRelease      the default release know from where the jar was uploaded
+     * @param defaultRelease      the default release know from where the jar was uploaded
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
      * @return list of runnerLight Definition
      */
     private JarStorageEntity saveJarFileToStorage(File jarFile,
                                                   String originalFileName,
-                                                  String defautRelease,
+                                                  String defaultRelease,
                                                   boolean forceReloadThisJar) {
         List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
         JarStorageEntity jarStorageEntity = null;
@@ -239,9 +239,9 @@ public class RunnerUploadFactory {
             logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
             if (jarStorageEntity == null) {
                 // save it
-                jarStorageEntity = storageRunner.saveJarRunner(jarName, jarFile);
+                jarStorageEntity = storageRunner.saveJarRunner(jarName, jarFile, defaultRelease);
             } else {
-                jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarName, jarFile);
+                jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease);
             }
 
         } catch (Exception e) {
@@ -325,9 +325,13 @@ public class RunnerUploadFactory {
                     continue;
                 }
                 String className = entryName.replace(".class", "").replace('/', '.');
+                if (className.startsWith("BOOT-INF.classes."))
+                    className = className.replaceFirst("BOOT-INF.classes.", "");
+                logger.debug("Jar[{}] ClassName[{}]", jarFile.getName(), className);
                 // save time
                 if (className.startsWith("org.apache")
                         || className.startsWith("com.google")
+                        || className.startsWith("org.spring")
                         || className.startsWith("scala")
                         || className.startsWith("com.fasterxml"))
                     continue;

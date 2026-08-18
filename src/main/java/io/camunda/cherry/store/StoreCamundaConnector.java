@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class StoreCamundaConnector implements StoreAccess {
+public class StoreCamundaConnector extends StoreAccess {
     public static final String REPO = "camunda/connectors";
     public static final String CONTENTS_URL = "https://api.github.com/repos/" + REPO + "/contents/connectors";
     public static final List<String> IGNORE = List.of("README.md", "src", "test", "docs", ".github");
@@ -46,7 +46,8 @@ public class StoreCamundaConnector implements StoreAccess {
     private final GitHubAccess gitHubAccess;
     Logger logger = LoggerFactory.getLogger(StoreCamundaConnector.class.getName());
 
-    public StoreCamundaConnector(GitHubAccess gitHubAccess) {
+    public StoreCamundaConnector(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+        super(startup);
         // No auth token — camunda/connectors is a public repo and SAML enforcement
         // causes 401 when a token is sent without org SSO authorization.
         this.gitHubAccess = gitHubAccess;

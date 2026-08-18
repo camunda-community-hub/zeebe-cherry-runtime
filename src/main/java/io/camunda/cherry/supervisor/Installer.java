@@ -8,8 +8,6 @@
 package io.camunda.cherry.supervisor;
 
 import io.camunda.cherry.db.entity.OperationEntity;
-import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
@@ -73,6 +71,9 @@ public class Installer {
 
 
     /**
+     * Download and install the jar.
+     * Note: the connector is maybe already started: so we will stop all relative runners
+     *
      * @param connectorDefinition
      * @return
      * @throws TechnicalException
@@ -91,47 +92,31 @@ public class Installer {
                 return connectorDownload;
             }
             // Maybe this connector is already loaded actually?
-            List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(parentConnector.connectorType));
-            if (!listRunners.isEmpty()) {
-                AbstractRunner runner = listRunners.get(0);
-                // Create a new RunnerLightDefinition from the connectorDefinition and the basic runner
-                RunnerLightDefinition runnerLight = new RunnerLightDefinition(connectorDefinition.name,
-                        connectorDefinition.connectorType,
-                        runner.getClass().getName(),
-                        RunnerDefinitionEntity.Origin.STORE,
-                        connectorDefinition.release);
-                // the jar is present, so just need to create the runner from the connectionDefinition
-                connectorDownload.runners = List.of(runnerLight);
-                logger.info("Installer: downloadAndInstall connector[{}] from store[{}] connectorType[{}] already has runner",
-                        connectorDefinition.name,
-                        connectorDefinition.storeAccess.getName(),
-                        connectorDefinition.hasImplementation);
 
-            } else {
-                if (connectorDefinition.urlJarFile == null) {
-                    // No way to donwload this connector - it should be referencing a non-already present connector OR no jar has provided
-                    logOperation.log(OperationEntity.Operation.ERROR,
-                            "Can't download connector[" + connectorDefinition.name + "] type[" + connectorDefinition.connectorType + "] hasImplementation? " + connectorDefinition.hasImplementation + " no urlJarFile");
-                    connectorDownload = new StoreAccess.ConnectorDownload();
-                    if (connectorDefinition.hasImplementation)
-                        connectorDownload.status = StoreAccess.STATUSDOWNLOAD.NOURLJARFILE;
-                    else
-                        connectorDownload.status = StoreAccess.STATUSDOWNLOAD.NOIMPLEMENTATION;
-                    return connectorDownload;
-                }
-                logger.info("Installer: downloadAndInstall connector[{}] from store[{}] conectorType[{}] hasImplementation[{}] Download from [{}]",
-                        connectorDefinition.name,
-                        connectorDefinition.storeAccess.getName(),
-                        parentConnector.connectorType,
-                        connectorDefinition.hasImplementation,
-                        connectorDefinition.urlJarFile);
-
-                // download and install
-                connectorDownload = storeFactory.downloadConnector(connectorDefinition);
-                connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release);
+            if (connectorDefinition.urlJarFile == null) {
+                // No way to donwload this connector - it should be referencing a non-already present connector OR no jar has provided
+                logOperation.log(OperationEntity.Operation.ERROR,
+                        "Can't download connector[" + connectorDefinition.name + "] type[" + connectorDefinition.connectorType + "] hasImplementation? " + connectorDefinition.hasImplementation + " no urlJarFile");
+                connectorDownload = new StoreAccess.ConnectorDownload();
+                if (connectorDefinition.hasImplementation)
+                    connectorDownload.status = StoreAccess.STATUSDOWNLOAD.NOURLJARFILE;
+                else
+                    connectorDownload.status = StoreAccess.STATUSDOWNLOAD.NOIMPLEMENTATION;
+                return connectorDownload;
             }
+            logger.info("Installer: downloadAndInstall connector[{}] from store[{}] conectorType[{}] hasImplementation[{}] Download from [{}]",
+                    connectorDefinition.name,
+                    connectorDefinition.storeAccess.getName(),
+                    parentConnector.connectorType,
+                    connectorDefinition.hasImplementation,
+                    connectorDefinition.urlJarFile);
 
-// Synchronize the runnerFactory now, to take into account all new runner loaded
+            // download and install
+            connectorDownload = storeFactory.downloadConnector(connectorDefinition);
+            connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release);
+
+
+            // Synchronize the runnerFactory now, to take into account all new runner loaded
             runnerFactory.synchronize();
 
             for (RunnerLightDefinition runner : connectorDownload.runners) {
@@ -176,6 +161,17 @@ public class Installer {
             return installStartJar(jarFile.getName(), jarFileInputStream, defaultRelease);
         } catch (Exception e) {
             throw new TechnicalException("Failed to install JAR [" + jarFile.getName() + "]: " + e.getMessage(), e);
+        }
+    }
+
+
+    public void stopRunner(List<RunnerLightDefinition> runners, String containerName) {
+        for (RunnerLightDefinition runner : runners) {
+            try {
+                jobRunnerFactory.stopRunner(runner.getType());
+            } catch (OperationException e) {
+                // do nothing: for a first installation, this is expected
+            }
         }
     }
 
