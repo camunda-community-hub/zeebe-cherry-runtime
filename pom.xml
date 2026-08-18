@@ -136,6 +136,147 @@
             <version>1.14.1</version>
         </dependency>
 
+        <!-- additionnal library for camunda connector -->
+        <!-- Official Camunda built-in connectors are thin jars: their own transitive dependencies
+             are not bundled in the jar. Dynamically loaded connector JARs share Cherry's own
+             classloader as parent (see JarManagementClassLoader), so declaring these runtime
+             dependencies here makes them resolvable via standard parent delegation.
+             Scope mirrors the official connector-runtime-bundle's default-bundle (all built-in
+             connectors). Versions taken from connector-parent's properties / explicit overrides
+             at 8.9.7, cross-checked against a resolved dependency:tree of connector-runtime-bundle. -->
+
+        <!-- AWS connectors (lambda, sns, sqs, dynamodb, eventbridge, bedrock, sagemaker, comprehend, textract, s3) -->
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>lambda</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sns</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sqs</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>dynamodb</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>eventbridge</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>bedrockruntime</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sagemakerruntime</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>comprehend</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>textract</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>s3</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sts</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>regions</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>auth</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>aws-core</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>sdk-core</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>apache-client</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>http-client-spi</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>http-auth</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>http-auth-spi</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>software.amazon.awssdk</groupId><artifactId>retries-spi</artifactId><version>2.49.4</version></dependency>
+        <dependency><groupId>com.amazonaws</groupId><artifactId>aws-java-sdk-core</artifactId><version>1.12.797</version></dependency>
+        <dependency><groupId>com.amazonaws</groupId><artifactId>aws-java-sdk-sns</artifactId><version>1.12.797</version></dependency>
+
+        <!-- Google connectors (drive, sheets, gcs, gemini/vertex-ai) -->
+        <dependency><groupId>com.google.api-client</groupId><artifactId>google-api-client</artifactId><version>2.8.1</version></dependency>
+        <dependency><groupId>com.google.apis</groupId><artifactId>google-api-services-drive</artifactId><version>v3-rev20250910-2.0.0</version></dependency>
+        <dependency><groupId>com.google.apis</groupId><artifactId>google-api-services-sheets</artifactId><version>v4-rev20250616-2.0.0</version></dependency>
+        <dependency><groupId>com.google.apis</groupId><artifactId>google-api-services-docs</artifactId><version>v1-rev20250325-2.0.0</version></dependency>
+        <dependency><groupId>com.google.auth</groupId><artifactId>google-auth-library-credentials</artifactId><version>1.39.0</version></dependency>
+        <dependency><groupId>com.google.auth</groupId><artifactId>google-auth-library-oauth2-http</artifactId><version>1.39.1</version></dependency>
+        <dependency><groupId>com.google.http-client</groupId><artifactId>google-http-client-gson</artifactId><version>1.47.1</version></dependency>
+        <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-storage</artifactId><version>2.57.0</version></dependency>
+        <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-core</artifactId><version>2.60.1</version></dependency>
+        <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-vertexai</artifactId><version>1.52.0</version></dependency>
+        <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-document-ai</artifactId><version>2.78.0</version></dependency>
+        <dependency><groupId>com.google.api.grpc</groupId><artifactId>proto-google-cloud-vertexai-v1</artifactId><version>1.34.0</version></dependency>
+        <dependency><groupId>com.google.api.grpc</groupId><artifactId>proto-google-cloud-document-ai-v1</artifactId><version>2.78.0</version></dependency>
+        <dependency><groupId>com.google.api</groupId><artifactId>gax</artifactId><version>2.70.1</version></dependency>
+        <dependency><groupId>com.google.protobuf</groupId><artifactId>protobuf-java-util</artifactId><version>4.32.1</version></dependency>
+
+        <!-- Microsoft connectors (teams, email, azure blobstorage) -->
+        <dependency><groupId>com.microsoft.graph</groupId><artifactId>microsoft-graph</artifactId><version>6.67.0</version></dependency>
+        <dependency><groupId>com.microsoft.graph</groupId><artifactId>microsoft-graph-core</artifactId><version>3.6.6</version></dependency>
+        <dependency><groupId>com.microsoft.kiota</groupId><artifactId>microsoft-kiota-abstractions</artifactId><version>1.9.3</version></dependency>
+        <dependency><groupId>com.azure</groupId><artifactId>azure-core</artifactId><version>1.58.1</version></dependency>
+        <dependency><groupId>com.azure</groupId><artifactId>azure-identity</artifactId><version>1.18.4</version></dependency>
+        <dependency><groupId>com.azure</groupId><artifactId>azure-storage-blob</artifactId><version>12.35.0</version></dependency>
+        <dependency><groupId>com.azure</groupId><artifactId>azure-cosmos</artifactId><version>4.81.0</version></dependency>
+
+        <!-- Slack, SendGrid, RabbitMQ, Box connectors -->
+        <dependency><groupId>com.slack.api</groupId><artifactId>slack-api-client</artifactId><version>1.49.0</version></dependency>
+        <dependency><groupId>com.slack.api</groupId><artifactId>slack-api-model</artifactId><version>1.49.0</version></dependency>
+        <dependency><groupId>com.slack.api</groupId><artifactId>slack-app-backend</artifactId><version>1.49.0</version></dependency>
+        <dependency><groupId>com.sendgrid</groupId><artifactId>sendgrid-java</artifactId><version>4.10.3</version></dependency>
+        <dependency><groupId>com.sendgrid</groupId><artifactId>java-http-client</artifactId><version>4.5.1</version></dependency>
+        <dependency><groupId>com.rabbitmq</groupId><artifactId>amqp-client</artifactId><version>5.25.0</version></dependency>
+        <dependency><groupId>com.box</groupId><artifactId>box-java-sdk</artifactId><version>4.16.4</version></dependency>
+
+        <!-- Kafka connector (+ Confluent schema registry, Avro) -->
+        <dependency><groupId>org.apache.kafka</groupId><artifactId>kafka-clients</artifactId><version>4.3.1</version></dependency>
+        <dependency><groupId>io.confluent</groupId><artifactId>kafka-avro-serializer</artifactId><version>8.0.0</version></dependency>
+        <dependency><groupId>io.confluent</groupId><artifactId>kafka-json-schema-serializer</artifactId><version>8.0.0</version></dependency>
+        <dependency><groupId>io.confluent</groupId><artifactId>kafka-json-schema-provider</artifactId><version>8.0.0</version></dependency>
+        <dependency><groupId>io.confluent</groupId><artifactId>kafka-schema-serializer</artifactId><version>8.0.0</version></dependency>
+        <dependency><groupId>org.apache.avro</groupId><artifactId>avro</artifactId><version>1.12.0</version></dependency>
+        <dependency><groupId>com.fasterxml.jackson.dataformat</groupId><artifactId>jackson-dataformat-avro</artifactId><version>2.22.1</version></dependency>
+
+        <!-- JDBC connector -->
+        <dependency><groupId>org.jdbi</groupId><artifactId>jdbi3-core</artifactId><version>3.49.5</version></dependency>
+        <dependency><groupId>org.jdbi</groupId><artifactId>jdbi3-jackson2</artifactId><version>3.49.5</version></dependency>
+        <dependency><groupId>org.jdbi</groupId><artifactId>jdbi3-json</artifactId><version>3.49.5</version></dependency>
+        <dependency><groupId>com.microsoft.sqlserver</groupId><artifactId>mssql-jdbc</artifactId><version>13.4.0.jre11</version></dependency>
+        <dependency><groupId>org.mariadb.jdbc</groupId><artifactId>mariadb-java-client</artifactId><version>3.5.9</version></dependency>
+
+        <!-- SOAP connector -->
+        <dependency><groupId>org.springframework.ws</groupId><artifactId>spring-ws-core</artifactId><version>4.1.1</version></dependency>
+        <dependency><groupId>org.springframework.ws</groupId><artifactId>spring-ws-security</artifactId><version>4.1.1</version></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-oxm</artifactId><version>6.2.11</version></dependency>
+        <dependency><groupId>org.apache.wss4j</groupId><artifactId>wss4j-ws-security-common</artifactId><version>4.0.1</version></dependency>
+        <dependency><groupId>org.bouncycastle</groupId><artifactId>bcpkix-jdk18on</artifactId><version>1.85</version></dependency>
+
+        <!-- HTTP / GraphQL / automation-anywhere connectors -->
+        <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp</artifactId><version>4.12.0</version></dependency>
+        <dependency><groupId>com.samskivert</groupId><artifactId>jmustache</artifactId><version>1.16</version></dependency>
+        <dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpasyncclient</artifactId><version>4.1.5</version></dependency>
+        <dependency><groupId>com.auth0</groupId><artifactId>jwks-rsa</artifactId><version>0.24.1</version></dependency>
+
+        <!-- IDP extraction connector (PDF/document parsing) -->
+        <dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox</artifactId><version>3.0.8</version></dependency>
+        <dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox-io</artifactId><version>3.0.8</version></dependency>
+
+        <!-- Email connector -->
+        <dependency><groupId>org.eclipse.angus</groupId><artifactId>angus-mail</artifactId><version>2.0.5</version></dependency>
+        <dependency><groupId>jakarta.mail</groupId><artifactId>jakarta.mail-api</artifactId><version>2.1.3</version></dependency>
+
+        <!-- Embeddings vector database connector -->
+        <dependency><groupId>org.opensearch.client</groupId><artifactId>opensearch-java</artifactId><version>2.26.0</version></dependency>
+        <dependency><groupId>org.elasticsearch.client</groupId><artifactId>elasticsearch-rest-client</artifactId><version>8.19.19</version></dependency>
+        <dependency><groupId>org.apache.tika</groupId><artifactId>tika-core</artifactId><version>3.3.2</version></dependency>
+        <dependency><groupId>org.apache.tika</groupId><artifactId>tika-parsers-standard-package</artifactId><version>3.3.2</version></dependency>
+
+        <!-- Agentic AI connector (LangChain4j, A2A SDK, MCP SDK) -->
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-core</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-anthropic</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-open-ai</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-azure-open-ai</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-bedrock</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-http-client</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-http-client-jdk</artifactId><version>1.18.0</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-vertex-ai</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-vertex-ai-gemini</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-azure-ai-search</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-azure-cosmos-nosql</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-elasticsearch</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>dev.langchain4j</groupId><artifactId>langchain4j-opensearch</artifactId><version>1.18.0-beta28</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-client</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-client-transport-grpc</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-client-transport-jsonrpc</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-client-transport-rest</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-client-transport-spi</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-common</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-http-client</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.github.a2asdk</groupId><artifactId>a2a-java-sdk-spec</artifactId><version>0.3.3.Final</version></dependency>
+        <dependency><groupId>io.modelcontextprotocol.sdk</groupId><artifactId>mcp</artifactId><version>2.0.0</version></dependency>
+        <dependency><groupId>io.soabase.record-builder</groupId><artifactId>record-builder-core</artifactId><version>52</version></dependency>
+        <dependency><groupId>org.apache.groovy</groupId><artifactId>groovy</artifactId><version>5.0.7</version></dependency>
+        <dependency><groupId>org.apache.groovy</groupId><artifactId>groovy-ant</artifactId><version>5.0.7</version></dependency>
+        <dependency><groupId>io.projectreactor</groupId><artifactId>reactor-core</artifactId><version>3.7.9</version></dependency>
+        <dependency><groupId>io.netty</groupId><artifactId>netty-resolver-dns-native-macos</artifactId><version>4.2.16.Final</version></dependency>
+
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
@@ -407,6 +548,20 @@
             <id>camunda-community</id>
             <name>Camunda Community</name>
             <url>https://artifacts.camunda.com/artifactory/camunda-bpm-community-extensions/</url>
+        </repository>
+
+        <!-- Confluent's Kafka schema-registry client libraries (kafka-avro-serializer etc., used by the
+             Kafka connector) are only published to Confluent's own repository, not Maven Central. -->
+        <repository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>confluent</id>
+            <name>Confluent Repository</name>
+            <url>https://packages.confluent.io/maven/</url>
         </repository>
     </repositories>
 </project>

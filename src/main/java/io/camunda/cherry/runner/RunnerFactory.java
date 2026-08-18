@@ -97,7 +97,7 @@ public class RunnerFactory {
 
     /**
      * Must be call after the initialisation
-     * all runners are loaded amd identified. The storageRunner are checked, and all runner in the database
+     * all runners are loaded amd identified. The storageRunner are checked, and all runners in the database
      * which are not loaded are purged.
      */
     public void synchronize() {
@@ -119,7 +119,7 @@ public class RunnerFactory {
                 .toList();
 
         for (RunnerDefinitionEntity entityToRemove : listEntityToRemove) {
-            logOperation.log(OperationEntity.Operation.REMOVE,
+            logOperation.log(OperationEntity.Operation.REMOVERUNNER,
                     "Entity type[" + entityToRemove.type + "] name[" + entityToRemove.name + "]");
 
             try (Session session = sessionFactory.openSession()) {

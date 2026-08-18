@@ -8,10 +8,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,13 +23,14 @@ import java.util.regex.Pattern;
 public class GitHubAccess {
 
     private static final Pattern OFFICIAL_RELEASE = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
+    private static final Duration GITHUB_TIMEOUT = Duration.ofSeconds(15);
     /**
      * Explores the element-templates directory of a GitHub repo and returns the raw URL
      * of the first *.json file found.
      */
     private static final List<String> ELEMENT_TEMPLATE_DIRS = List.of(
             "element-templates", "connector-template", "connector-templates");
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = buildRestTemplate();
     Logger logger = LoggerFactory.getLogger(GitHubAccess.class.getName());
     @Value("${cherry.github.token:}")
     private String githubToken;
@@ -38,6 +41,19 @@ public class GitHubAccess {
 
     public boolean isToken() {
         return githubToken != null && !githubToken.isBlank();
+    }
+
+    /**
+     * Every call to GitHub in this class goes through {@link #get(String)} or
+     * {@link #getJsonNode(String)}, both backed by this single RestTemplate — a bad/slow
+     * connection to GitHub (e.g. a network blip) would otherwise hang close to indefinitely
+     * instead of failing fast.
+     */
+    private static RestTemplate buildRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(GITHUB_TIMEOUT);
+        factory.setReadTimeout(GITHUB_TIMEOUT);
+        return new RestTemplate(factory);
     }
 
     public String get(String url) throws IOException {
@@ -110,11 +126,15 @@ public class GitHubAccess {
             if (!items.isArray())
                 return githubConnectorStatus;
             githubConnectorStatus.elementTemplates = true;
-            // check pom.xml
+            // check pom.xml — most repos simply don't have one; that's an expected, silent "no" answer
             if (checkPomxml) {
-                JsonNode itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
-                String type = itemsPom.path("type").asText();
-                githubConnectorStatus.pomXml = type.equals("file");
+                try {
+                    JsonNode itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
+                    String type = itemsPom.path("type").asText();
+                    githubConnectorStatus.pomXml = type.equals("file");
+                } catch (Exception ex) {
+                    githubConnectorStatus.pomXml = false;
+                }
             }
             if (checkGitRelease) {
                 // Extract repo path (owner/repo) from the API URL
@@ -130,6 +150,89 @@ public class GitHubAccess {
             return githubConnectorStatus;
         } catch (Exception e) {
             return githubConnectorStatus;
+        }
+    }
+
+    /**
+     * a Github worker repository must have a pom.xml declaring a dependency on either the
+     * Camunda Spring Boot Starter (camunda-spring-boot-starter) or the plain Camunda Java client
+     * (camunda-client-java).
+     * <p>
+     * This intentionally does not look for the {@code @JobWorker} annotation: a worker may
+     * register its handlers manually via {@code CamundaClient#newWorker()} without ever using it.
+     * <p>
+     * Mirrors {@link #isGithubConnector(String, String, boolean, boolean)}: same status type,
+     * same parameter shape. {@code checkPomxml} is accepted for signature symmetry but the
+     * pom.xml is always fetched, since it is the only signal this method has.
+     *
+     * @param repoPath        path to explore
+     * @param release         release for the path
+     * @param checkPomxml     kept for symmetry with {@link #isGithubConnector}; has no effect
+     * @param checkGitRelease when true, also checks whether the repo has at least one GitHub release
+     * @return status; {@code pomXml} is true only when a pom.xml exists AND references
+     * camunda-spring-boot-starter or camunda-client-java
+     */
+    public GithubConnectorStatus isGithubWorker(String repoPath, String release, boolean checkPomxml, boolean checkGitRelease) {
+        GithubConnectorStatus githubWorkerStatus = new GithubConnectorStatus();
+        String ref = (release != null && !release.isBlank()) ? release : "HEAD";
+        JsonNode itemsPom=null;
+        try {
+            itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
+        } catch( Exception e ) {
+            if (! e.getMessage().contains("404"))
+                logger.error("GitHubAccess : error while access repoPath[{}]", repoPath, e);
+            return githubWorkerStatus;
+        }
+        try{
+            String type = itemsPom.path("type").asText();
+            if (!type.equals("file"))
+                return githubWorkerStatus;
+
+            String pomContent = decodeGithubFileContent(itemsPom);
+            githubWorkerStatus.pomXml = pomContent != null
+                    && (pomContent.contains("camunda-spring-boot-starter")
+                    || pomContent.contains("camunda-client-java"));
+            if (!githubWorkerStatus.pomXml)
+                return githubWorkerStatus;
+
+            if (checkGitRelease) {
+                // Extract repo path (owner/repo) from the API URL
+                // repoPath is like https://api.github.com/repos/owner/repo/contents/...
+                String releasesUrl = repoPath.replaceAll("(https://api\\.github\\.com/repos/[^/]+/[^/]+)/.*", "$1") + "/releases?per_page=1";
+                try {
+                    // GitHub's releases API returns releases in reverse-chronological order,
+                    // so with per_page=1 the single entry is the most recent release.
+                    JsonNode releases = getJsonNode(releasesUrl);
+                    githubWorkerStatus.gitReleases = releases.isArray() && !releases.isEmpty();
+                    githubWorkerStatus.release = githubWorkerStatus.gitReleases
+                            ? releases.get(0).path("tag_name").asText(null)
+                            : null;
+                } catch (Exception ex) {
+                    githubWorkerStatus.gitReleases = false;
+                }
+            }
+            return githubWorkerStatus;
+        } catch (Exception e) {
+            logger.error("GitHubAccess : error while access repoPath[{}]", repoPath, e);
+            return githubWorkerStatus;
+        }
+    }
+
+    /**
+     * Decodes the base64 {@code content} field returned by the GitHub contents API for a single file.
+     */
+    private String decodeGithubFileContent(JsonNode fileNode) {
+        String content = fileNode.path("content").asText(null);
+        if (content == null)
+            return null;
+        String encoding = fileNode.path("encoding").asText("base64");
+        if (!"base64".equals(encoding))
+            return content;
+        try {
+            byte[] decoded = java.util.Base64.getMimeDecoder().decode(content);
+            return new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -319,6 +422,7 @@ public class GitHubAccess {
         public boolean elementTemplates = false;
         public boolean pomXml = false;
         public boolean gitReleases = false;
+        public String release;
 
     }
 }

@@ -421,6 +421,9 @@ class Store extends React.Component {
 
     getStyleRow(connector) {
         const {statusFilter, filterSearch} = this.state.display;
+        const selectedStoreNames = this.state.stores.filter(r => r.selected).map(r => r.name);
+        if (!selectedStoreNames.includes(connector.store))
+            return {display: "none"};
         if (statusFilter === "INSTALLABLE" && !connector.isInstallable)
             return {display: "none"};
         if (statusFilter !== "ALL" && statusFilter !== "INSTALLABLE" && connector.status !== statusFilter)
