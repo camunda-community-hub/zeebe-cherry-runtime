@@ -36,7 +36,7 @@ class RunnerChart extends React.Component {
 
     render() {
         return (
-            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "100px", boxSizing: "border-box"}}>
+            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "150px", boxSizing: "border-box"}}>
                 {this.state.type === "Executions" && this.state.runner && this.state.runner.performance &&
                     <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
                            options={{
@@ -44,7 +44,7 @@ class RunnerChart extends React.Component {
                                showXLabel: false,
                                showYLabel: true,
                                width: 400,
-                               height: 100,
+                               height: 120,
                                showGrid: false
                            }}
                            title="execution"/>
@@ -56,7 +56,9 @@ class RunnerChart extends React.Component {
                                showXLabel: true,
                                showYLabel: true,
                                showGrid: false,
-                               showLegend: false
+                               showLegend: false,
+                               width: 500,
+                               height: 120,
                            }}/>
                 }
                 {this.state.type === "DurationsAvg" && this.state.runner && this.state.runner.performance &&
@@ -66,7 +68,7 @@ class RunnerChart extends React.Component {
                                showXLabel: false,
                                showYLabel: true,
                                width: 200,
-                               height: 100,
+                               height: 120,
                                showGrid: false
                            }}
                            title="Duration ms (average)"/>
@@ -78,7 +80,7 @@ class RunnerChart extends React.Component {
                                showXLabel: false,
                                showYLabel: true,
                                width: 200,
-                               height: 100,
+                               height: 120,
                                showGrid: false
                            }}
                            title="Duration ms (pic)"/>
@@ -90,7 +92,7 @@ class RunnerChart extends React.Component {
                                showXLabel: false,
                                showYLabel: true,
                                width: 200,
-                               height: 100,
+                               height: 120,
                                showGrid: false
                            }}
                            title="Errors"/>
