@@ -107,6 +107,13 @@ class Chart extends React.Component {
         }
         // ------------------------------------------- Doughnut
 
+        // Explicit width/height means a fixed-size chart (existing behavior, e.g. width={200} height={100}).
+        // Without them, the chart fills whatever space its container gives it.
+        const hasFixedSize = this.state.options.width !== undefined || this.state.options.height !== undefined;
+        if (!hasFixedSize) {
+            mainStyles = {...mainStyles, width: "100%", height: "100%"};
+        }
+
         return (<div style={mainStyles}>
                 {htmlTitle}
                 {this.state.type === 'Doughnut' &&
@@ -114,9 +121,11 @@ class Chart extends React.Component {
                               width={this.state.options.width}
                               height={this.state.options.height}/>}
                 {(this.state.type === 'VerticalBar' || this.state.type === 'HorizontalBar') &&
-                    <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}
-                         width={this.state.options.width}
-                         height={this.state.options.height}/>}
+                    (hasFixedSize
+                        ? <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}
+                               width={this.state.options.width}
+                               height={this.state.options.height}/>
+                        : <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}/>)}
             </div>
         )
 
@@ -134,10 +143,10 @@ class Chart extends React.Component {
     getOptionsBarChart() {
         const chartOptions = {
             'maintainAspectRatio': false,
-            'responsive': false,
+            'responsive': this.state.options.width === undefined && this.state.options.height === undefined,
             'plugins': {
                 'legend': {
-                    'display': false
+                    'display': this.state.options.showLegend === true
                 },
             },
         };
@@ -203,8 +212,6 @@ class Chart extends React.Component {
         const dataChart = {};
 
         dataChart.datasets = [];
-        dataChart.datasets.label = this.state.title;
-
 
         let dataset = {};
         dataChart.datasets.push(dataset);
@@ -222,6 +229,9 @@ class Chart extends React.Component {
             dataChart.labels = resultTransformed.labels;
             dataset.data = resultTransformed.data;
         }
+
+        dataset.label = this.state.title;
+
         return dataChart;
     }
 

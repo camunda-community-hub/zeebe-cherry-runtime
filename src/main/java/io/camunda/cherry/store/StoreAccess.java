@@ -28,6 +28,7 @@ public abstract class StoreAccess {
 
     public abstract String getType();
 
+    public String getSignature() { return getType()+"-"+getName();}
     /**
      * Get the lisf of connector. Each connectorDefition is "light", with name.
      * Then the exploration will continue one by one via the exploreDetails

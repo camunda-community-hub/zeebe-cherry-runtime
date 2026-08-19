@@ -24,19 +24,20 @@ public class CherryProperties {
      * Shared startup-download configuration, used by every store (Camunda connector store,
      * community connector store, marketplace, private GitHub stores).
      */
+    /**
+     * NEVER: do not download automatically at startup
+     * ALWAYS: force the download everytime, same release or not
+     * UPDATE: download only if a new release is available
+     * FIXEDVERSION: download if you don't have it, but after that, do not download any more (no new version)
+     */
+    public enum DownloadPolicy { NEVER, ALWAYS, UPDATE,FIXEDVERSION}
     public static class Startup {
-        private boolean download = false;
+        private DownloadPolicy downloadPolicy = DownloadPolicy.NEVER;
         private String tag;
         private List<String> filter = new ArrayList<>();
 
-        public boolean isDownload() {
-            return download;
-        }
-
-        public void setDownload(boolean download) {
-            this.download = download;
-        }
-
+        public DownloadPolicy getDownloadPolicy() {return downloadPolicy;}
+        public void setDownloadPolicy(DownloadPolicy downloadPolicy) {this.downloadPolicy = downloadPolicy;}
         public String getTag() {
             return tag;
         }

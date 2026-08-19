@@ -36,7 +36,7 @@ class RunnerChart extends React.Component {
 
     render() {
         return (
-            <div style={{border: "1px solid", padding: "5px"}}>
+            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "100px", boxSizing: "border-box"}}>
                 {this.state.type === "Executions" && this.state.runner && this.state.runner.performance &&
                     <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
                            options={{
@@ -51,10 +51,12 @@ class RunnerChart extends React.Component {
                 }
                 {this.state.type === "ExecutionsShort" && this.state.runner && this.state.runner.performance &&
                     <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
+                           title="Executions"
                            options={{
-                               showXLabel: false,
-                               showYLabel: false,
-                               showGrid: false
+                               showXLabel: true,
+                               showYLabel: true,
+                               showGrid: false,
+                               showLegend: false
                            }}/>
                 }
                 {this.state.type === "DurationsAvg" && this.state.runner && this.state.runner.performance &&
@@ -109,11 +111,21 @@ class RunnerChart extends React.Component {
     getExecutions() {
         const result = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
-            let record = {label: element.slot, value: element.executions};
+            let record = {label: this.getHourLabel(element.humanTimeSlot), value: element.executions};
             result.push(record);
         });
         return result;
 
+    }
+
+    /**
+     * humanTimeSlot is formatted as "yyyy-MM-dd HH:mm" - only the "HH:mm" part is useful on the axis.
+     */
+    getHourLabel(humanTimeSlot) {
+        if (!humanTimeSlot)
+            return "";
+        const spaceIndex = humanTimeSlot.indexOf(" ");
+        return spaceIndex === -1 ? humanTimeSlot : humanTimeSlot.substring(spaceIndex + 1);
     }
 
     getDurationsAvg() {

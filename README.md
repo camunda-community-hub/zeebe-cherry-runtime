@@ -33,20 +33,14 @@ This documentation gives information:
 * For developers, which information can be added during the development, to propose more information for administrators and BPM Designer
 
 
-# For Administrator
-Any connectors OUTBOUND can be executable by the runtime. INBOUND connectors are not supported for the moment.
 
-A connector can be available:
-* As a JAR file, downloaded from a GitHub repository and upload the Jar file at startup (visit the installation guide)
-* From the Camunda Marketplace. Then, it's possible to access the JAR file or to download the connector directly from the Cherry administration page
 
-What do you need to do to start the runtime?
 
-Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
 
-Check the [Administration guide.md](doc/AdministrationGuide/README.md) for an explanation of the available functions.
 
-In a short overview, to enable a Cherry runtime in your cluster:
+
+# Installation
+
 
 ## Download the application
 
@@ -122,12 +116,43 @@ Environment:
   To connect a local engine in the same cluster.
 
 
-### Database
+## Database
 
 An H2 database is configured by default to save information. Use a SQL database for a robust database.
 Looks [docker-compose-cherry-postgres.yaml](docker/docker-compose-cherry-postgres.yaml) to see an example.
 
 Using an SQL database allows you to configure one Cherry pod and a farm of pods. Each pod accesses the same database, and statistics are shared between all pots through connectors.
+
+## Store
+
+Explain the context, that connector can be downloaded from store
+
+## Direct download
+
+Explore the configuration to explain how a connector/worker can be uploaded from an htpp url
+
+## Connector runtime
+give link to see all connectors, and show how to use "access" and "startup" to download at startup and filter at startup
+
+
+## Community hub connector
+give communityu link to see all connectors, and show how to use "access" and "startup" to download at startup and filter at startup. Explain the filter to detect a connector in the community: a folder "element-template" or the usage of a camunda client library in the pom.xml is sufficient to start the detection
+
+
+## Private store
+Explain how to access the repository
+
+### Github section
+Explain the token configuration to let goithub access all repo. 
+Connector and community does not need a token but if not provided, API is limited
+
+
+## Folder upload
+
+Explain that jar file place under configuiration "cherry.connectorslib.uoloadpath" (default is `localstorage/upload`) are uploaded at startup. So explain how, in a kubernetes, a config map can be connector to that path to upload from the config map
+
+
+
 
 ## Start the application
 
@@ -145,6 +170,23 @@ Connect to the Administration page and navigate to the `Content` page. Upload a 
 ![LoadConnector.png](doc/images/CherryPageContent.png)
 
 
+
+
+
+# For Administrator
+Any connectors OUTBOUND can be executable by the runtime. INBOUND connectors are not supported for the moment.
+
+A connector can be available:
+* As a JAR file, downloaded from a GitHub repository and upload the Jar file at startup (visit the installation guide)
+* From the Camunda Marketplace. Then, it's possible to access the JAR file or to download the connector directly from the Cherry administration page
+
+What do you need to do to start the runtime?
+
+Check the [Installation guide](doc/InstallationGuide/README.md) for more information.
+
+Check the [Administration guide.md](doc/AdministrationGuide/README.md) for an explanation of the available functions.
+
+In a short overview, to enable a Cherry runtime in your cluster:
 
 # For BPMN Designer
 Connectors can be accessible via the Cherry `Definition` page.
