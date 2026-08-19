@@ -35,12 +35,20 @@ public class OrchestrationAPI {
         List<TenantInformation> listTenants = new ArrayList<>();
 
         HttpResponse<String> stringHttpResponse = callPostHttp("/v2/tenants/search", "{}");
-
+        if (stringHttpResponse.statusCode() != 200) {
+            logger.error("url [{}] status Code[{}]", "/v2/tenants/search", stringHttpResponse.body());
+            throw new RuntimeException("Http Status "+stringHttpResponse.statusCode());
+        }
         ObjectMapper mapper = new ObjectMapper();
 
         try {
             JsonNode root = mapper.readTree(stringHttpResponse.body());
             JsonNode itemsNode = root.get("items");
+            if (itemsNode==null) {
+                logger.error("in Url [{}] not found [items] in JSON Body [{}]", "/v2/tenants/search", stringHttpResponse.body());
+                throw new RuntimeException("Incorrect content [items] not found in JSON");
+
+            }
 
             for (JsonNode item : itemsNode) {
                 TenantInformation tenantInformation = new TenantInformation();
@@ -86,9 +94,10 @@ public class OrchestrationAPI {
             return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         } catch (Exception e) {
-            logger.error("Error during post HTTP request Auth{} Url{} Log{}",
-                    camundaClientProperties.getAuth() == null ? "null" : camundaClientProperties.getAuth().toString(),
+            logger.error("Error during post HTTP request Server[{}][{}] Auth[{}] Log{}",
+                    camundaClientProperties.getRestAddress(),
                     url,
+                    camundaClientProperties.getAuth() == null ? "null" : camundaClientProperties.getAuth().toString(),
                     logBuilder,
                     e);
             throw new RuntimeException(e);

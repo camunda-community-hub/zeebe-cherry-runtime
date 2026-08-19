@@ -300,7 +300,7 @@ public class RunnerUploadFactory {
                         storageRunner.saveUploadRunner(runner, jarStorageEntity);
                         listRunnersDetected.add(getLightFromRunner(runner));
 
-                        logLoadJar.append("RunnerDectection[");
+                        logLoadJar.append("RunnerDetection[");
                         logLoadJar.append(runner.getName());
                         logLoadJar.append("], type[");
                         logLoadJar.append(runner.getType());

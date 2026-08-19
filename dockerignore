@@ -1,0 +1,27 @@
+
+# Maven
+.mvn
+.m2
+
+# Git
+.git
+.gitignore
+
+# IDEs
+.idea
+.vscode
+*.iml
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node (if any)
+node_modules
+
+# Docker itself
+Dockerfile
+docker-compose.yml

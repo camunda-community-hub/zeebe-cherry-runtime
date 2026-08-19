@@ -62,6 +62,12 @@ class Dashboard extends React.Component {
                 <div className="col-md-1">
                     <h1 className="title">Details</h1>
                 </div>
+                <div className="row" style={{width: "100%"}}>
+                    <div className="col-md-12">
+                        <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
+                    </div>
+                </div>
+
                 <div className="col-md-6">
                     <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
 
@@ -237,7 +243,7 @@ class Dashboard extends React.Component {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
-            this.setState({status: "Error"});
+            this.setState({status: httpPayload.getError()});
         } else {
             let firstRunner = httpPayload.getData().details[0];
             console.log("dashboard: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");

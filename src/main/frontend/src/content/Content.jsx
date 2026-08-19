@@ -116,37 +116,45 @@ class Content extends React.Component {
                 </div>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
-                        <FileUploader
-                            ref={this.fileUploaderRef}
-                            labelTitle="Upload JAR files"
-                            labelDescription="Only .jar file"
-                            buttonLabel="Add files"
-                            filenameStatus="edit"
-                            accept={['.jar']}
-                            onChange={(event) => this.handleFileChange(event)}
-                            multiple
-                            iconDescription="Clear file"
-                            disabled={this.state.display.loading || this.state.files.size === 0}
-                        />
-                        <Button onClick={() => this.loadJar()} disabled={this.state.display.loading}>Upload</Button>
-                        <br/>
-                        Upload a Connector Jar directly from your disk to Cherry. It will be analysed and all
-                        workers/connectors
-                        detected started.
 
-                        {this.state.statusUploadFailed && <div className="alert alert-danger" style={{
-                            margin: "10px 10px 10px" +
-                                " 10px"
-                        }}>
-                            {this.state.statusUploadFailed}
+                        <div className="card" style={{width: "25rem;"}}>
+                            <div className="card-header cherry-header">File upload</div>
+                            <div className="card-body">
+
+                                <FileUploader
+                                    ref={this.fileUploaderRef}
+                                    labelTitle="Upload JAR files"
+                                    labelDescription="Only .jar file"
+                                    buttonLabel="Add files"
+                                    filenameStatus="edit"
+                                    accept={['.jar']}
+                                    onChange={(event) => this.handleFileChange(event)}
+                                    multiple
+                                    iconDescription="Clear file"
+                                    disabled={this.state.display.loading || this.state.files.size === 0}
+                                />
+                                <Button onClick={() => this.loadJar()}
+                                        disabled={this.state.display.loading}>Upload</Button>
+                                <br/>
+                                Upload a Connector Jar directly from your disk to Cherry. It will be analysed and all
+                                workers/connectors
+                                detected started.
+
+                                {this.state.statusUploadFailed && <div className="alert alert-danger" style={{
+                                    margin: "10px 10px 10px" +
+                                        " 10px"
+                                }}>
+                                    {this.state.statusUploadFailed}
+                                </div>
+                                }
+                                {this.state.statusUploadSuccess && <div className="alert alert-success" style={{
+                                    margin: "10px 10px 10px" +
+                                        " 10px"
+                                }}>
+                                    {this.state.statusUploadSuccess}
+                                </div>}
+                            </div>
                         </div>
-                        }
-                        {this.state.statusUploadSuccess && <div className="alert alert-success" style={{
-                            margin: "10px 10px 10px" +
-                                " 10px"
-                        }}>
-                            {this.state.statusUploadSuccess}
-                        </div>}
                     </div>
                 </div>
             </div>

@@ -35,17 +35,26 @@ cherry:
 # -------------------- Self Manage
 camunda:
   client:
-    mode: selfmanaged
-    zeebe:
-      enabled: true
-      gatewayUrl: http://localhost:26500
-      preferRestOverGrpc: false
-      executionThreads: 200
+    mode: self-managed
+    auth:
+      method: basic
+      username: "demo"
+      password: "demo"
+
+    worker:
       defaults:
-        maxJobsActive: 58
+        max-jobs-active: 50
+    grpc-address: http://localhost:26500
+    rest-address: http://localhost:8080
+    execution-thread: 50
 
   tasklist:
     enabled: false
+
+  connector:
+    inbound:
+      enabled: false
+
 operate:
   client:
     profile: simple
@@ -77,14 +86,6 @@ operateOidc:
     audience: operate-api
     client-id: operate
     client-secret: FK05vxEU8D
-operate2:
-  client:
-    profile: oidc
-    client-id: operate
-    client-secret: FK05vxEU8D
-    scope: # optional
-    auth-url: http://localhost:18080/auth/realms/camunda-platform/protocol/openid-connect/token
-    audience: operate-api
 
 # -------------------- SAAS
 camundaSaas:
@@ -99,8 +100,21 @@ camundaSaas:
 
 server:
   port: 9081
-logging.level.root: INFO
-logging.level.io.camunda.cherry: INFO
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    root: INFO
+    io:
+      camunda:
+        cherry: INFO
 
 
 # return message with BAD_REQUEST to the client
@@ -110,9 +124,6 @@ server.error.include-message: always
 spring.application.name: CherryRuntime
 
 # Cherry will override the zeebeClient bean
-spring:
-  main:
-    allow-bean-definition-overriding: true
 
 # --------------------- H2 - default
 spring.datasource:

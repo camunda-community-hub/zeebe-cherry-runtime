@@ -80,7 +80,18 @@ public class RunnerClassLoaderFactory {
      */
     public Class<?> loadClassInJavaMachine(String jarFileName, String className) throws Exception {
         String pathFileName = getClassLoaderPath() + File.separator + jarFileName;
-        ClassLoader loader = new URLClassLoader(new URL[]{new File(pathFileName).toURI().toURL()});
+
+        // Load inside Docker: we need to search the parentClassloader, else the load will failed
+        ClassLoader parent = Thread.currentThread().getContextClassLoader();
+        if (parent == null) {
+            parent = getClass().getClassLoader();
+        }
+
+        logger.debug("Loading class from jar file [" + pathFileName + "] using classLoader[" + parent.getName() + "]");
+        ClassLoader loader = new URLClassLoader(
+                new URL[]{new File(pathFileName).toURI().toURL()},
+                parent);
+
         return loader.loadClass(className);
     }
 

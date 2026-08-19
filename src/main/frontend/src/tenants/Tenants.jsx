@@ -113,7 +113,7 @@ class Tenants extends React.Component {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
             console.log("Store.refreshListTenantsCallback: error " + httpPayload.getError());
-            this.setState({status: "ControllerPage " + httpPayload.getError()});
+            this.setState({status: httpPayload.getError()});
         } else {
             this.setState({tenants: httpPayload.getData().tenants, status: httpPayload.getData().status});
 

@@ -81,7 +81,7 @@ public class TenantsManager {
             jobRunnerFactory.restartRunners();
 
         } catch (Exception e) {
-            logger.error("TenantsManager: during HeartBeat ", e.getMessage());
+            logger.error("TenantsManager: during HeartBeat ", e);
         } finally {
             scheduler.schedule(this::refreshListTenants, Instant.now().plusSeconds(this.refreshTenantsInMinutes * 60));
         }

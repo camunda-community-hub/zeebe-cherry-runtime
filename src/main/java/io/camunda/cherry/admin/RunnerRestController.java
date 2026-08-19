@@ -91,7 +91,7 @@ public class RunnerRestController {
                                             @RequestParam(name = "orderBy", required = false) String orderByParam) {
         Map<String, Object> info = new HashMap<>();
 
-        DisplayOrderBy orderBy = DisplayOrderBy.NAMEACS;
+        DisplayOrderBy orderBy = DisplayOrderBy.NAMEASC;
         try {
             orderBy = DisplayOrderBy.valueOf(orderByParam.toUpperCase());
         } catch (Exception e) {
@@ -136,7 +136,7 @@ public class RunnerRestController {
         Comparator<Map<String, Object>> orderComparator;
 
         orderComparator = switch (orderBy) {
-            case NAMEACS -> (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
+            case NAMEASC -> (h1, h2) -> ((String) h1.get("name")).compareTo((String) h2.get("name"));
             case NAMEDES -> (h1, h2) -> ((String) h2.get("name")).compareTo((String) h1.get("name"));
             case EXECASC -> (h1, h2) -> ((Long) h1.get(PARAM_NBEXEC)).compareTo((Long) h2.get(PARAM_NBEXEC));
             case EXECDES -> (h1, h2) -> ((Long) h2.get(PARAM_NBEXEC)).compareTo((Long) h1.get(PARAM_NBEXEC));
@@ -500,6 +500,6 @@ public class RunnerRestController {
     }
 
     public enum DisplayOrderBy {
-        NAMEACS, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES
+        NAMEASC, NAMEDES, EXECASC, EXECDES, FAILASC, FAILDES
     }
 }

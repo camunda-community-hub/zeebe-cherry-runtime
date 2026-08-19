@@ -57,35 +57,51 @@ class CherryApp extends React.Component {
                                 Cherry Runtime
                             </Navbar.Brand>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.DASHBOARD}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.DASHBOARD)
                             }}>Dashboard</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.DEFINITION}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.DEFINITION)
                             }}>Definition</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.SECRET}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.SECRET)
                             }}>Secrets</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.CONTENT}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.CONTENT)
                             }}>Content</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.STORE}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.STORE)
                             }}>Store</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.TENANTS}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.TENANTS)
                             }}>Tenants</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.OPERATIONLOG}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.OPERATIONLOG)
                             }}>Log</Nav.Link>
 
-                            <Nav.Link onClick={() => {
+                            <Nav.Link
+                                active={this.state.frameContent  === FRAME_NAME.PARAMETERS}
+                                onClick={() => {
                                 this.clickMenu(FRAME_NAME.PARAMETERS)
                             }}>Parameters</Nav.Link>
                         </Nav>
