@@ -7,7 +7,6 @@
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.camunda.connector.jackson.ConnectorsObjectMapperSupplier;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
@@ -28,9 +27,9 @@ import io.camunda.client.api.worker.JobWorker;
 import io.camunda.client.api.worker.JobWorkerBuilderStep1;
 import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
 import io.camunda.connector.api.validation.ValidationProvider;
+import io.camunda.connector.jackson.ConnectorsObjectMapperSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -374,7 +373,11 @@ public class JobRunnerFactory {
                     zeebeContainer.getDocumentFactory(),
                     objectMapper);
         } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
-            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, cherrySecretProvider);
+            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker,
+                    historyFactory,
+                    cherrySecretProvider,
+                    commandExceptionHandlingStrategy,
+                    zeebeContainer);
         } else {
             throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
         }

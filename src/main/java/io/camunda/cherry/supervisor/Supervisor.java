@@ -181,8 +181,8 @@ public class Supervisor {
         List<StoreAccess> listStoreAccess = storeFactory.getListStores();
 
         for (StoreAccess storeAccess : listStoreAccess) {
-            if (storeAccess.getStartup().isDownload()) {
-                String key = storeAccess.getType() + "-" + storeAccess.getName();
+            if (! CherryProperties.DownloadPolicy.NEVER.equals(storeAccess.getStartup().getDownloadPolicy())) {
+                String key = storeAccess.getSignature();
                 downloadStatus.put(key, new DownloadInProgress(key));
             }
         }
@@ -219,11 +219,10 @@ public class Supervisor {
 
         // Generic per-store startup download, driven entirely by each store's own Startup config
         for (StoreAccess storeAccess : listStoreAccess) {
-            if (!storeAccess.getStartup().isDownload())
+            if (storeAccess.getStartup().getDownloadPolicy().equals(CherryProperties.DownloadPolicy.NEVER))
                 continue;
 
-            String key = storeAccess.getType() + "-" + storeAccess.getName();
-            DownloadInProgress downloadInProgress = downloadStatus.get(key);
+            DownloadInProgress downloadInProgress = downloadStatus.get(storeAccess.getSignature());
             List<String> filter = storeAccess.getStartup().getFilter();
             List<StoreAccess.ConnectorDefinition> listConnectors = sortImplementationFirst(storeFactory.getListConnectors(storeAccess));
             logger.info("Supervisor: start download Store[{}] filter[{}] tag[{}] ConnectorsInTheStore[{}]",
@@ -233,8 +232,14 @@ public class Supervisor {
             downloadInProgress.count = 0;
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
                 if (matchListFilter(connectorDefinition.name, filter)) {
-                    downloadInProgress.currentDownloadName = connectorDefinition.name;
-                    installer.downloadInstallStart(connectorDefinition);
+
+                    // We apply here the download policy
+                    // the connectorDefinition has a release, and identify a JAR. Search the jar version
+                    boolean doTheInstallation = checkDownloadPolicy(connectorDefinition, storeAccess.getStartup().getDownloadPolicy());
+                    if (doTheInstallation) {
+                        downloadInProgress.currentDownloadName = connectorDefinition.name;
+                        installer.downloadInstallStart(connectorDefinition);
+                    }
                 } else {
                     logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));
                 }
@@ -391,6 +396,13 @@ public class Supervisor {
         return null;
     }
 
+
+    private boolean checkDownloadPolicy(StoreAccess.ConnectorDefinition connectorDefinition, CherryProperties.DownloadPolicy downloadPolicy) {
+        if (downloadPolicy.equals(CherryProperties.DownloadPolicy.ALWAYS))
+            return true;
+
+        return true;
+    }
 
     public enum EXPLORATIONCONNECTOR {NONE, INPROGRESS, COMPLETED}
 

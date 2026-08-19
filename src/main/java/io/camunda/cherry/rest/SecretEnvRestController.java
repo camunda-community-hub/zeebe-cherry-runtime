@@ -4,13 +4,12 @@
 /*                                                                      */
 /*  Rest controller to access the SecretEnv Service                     */
 /* ******************************************************************** */
-package io.camunda.cherry.secretenv;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
-import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runner.LogOperation;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.camunda.cherry.secretenv.SecretEnvService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
