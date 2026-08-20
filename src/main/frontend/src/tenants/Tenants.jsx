@@ -7,12 +7,11 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Button} from "carbon-components-react";
+import {Button, Tag} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
-import {Tag} from "carbon-components-react";
 
 
 class Tenants extends React.Component {
@@ -54,7 +53,6 @@ class Tenants extends React.Component {
                     </div>
 
 
-
                     <div className="row" style={{width: "100%"}}>
                         <div className="col-md-12">
 
@@ -69,13 +67,13 @@ class Tenants extends React.Component {
                                 </thead>
                                 <tbody>
                                 {this.state.tenants ? this.state.tenants.map((content, _index) =>
-                                    <tr >
+                                    <tr>
                                         <td style={{verticalAlign: "top"}}>
                                             {content.tenantId}
                                             {content.active &&
                                                 <Tag type="green"
                                                      title="Activate">Active</Tag>
-                                                    }
+                                            }
                                         </td>
                                         <td style={{verticalAlign: "top"}}>
                                             {content.name}

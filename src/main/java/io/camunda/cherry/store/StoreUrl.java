@@ -1,5 +1,6 @@
 package io.camunda.cherry.store;
 
+import io.camunda.cherry.runtime.CherryProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -72,8 +73,7 @@ public class StoreUrl extends StoreAccess {
         }
         try {
             long startTime = System.currentTimeMillis();
-            connectorDownload.jarName = urlJarFile.substring(
-                    urlJarFile.lastIndexOf('/') + 1);
+            connectorDownload.jarName = urlJarFile.substring(urlJarFile.lastIndexOf('/') + 1);
             byte[] jarBytes = restTemplate.getForObject(urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;

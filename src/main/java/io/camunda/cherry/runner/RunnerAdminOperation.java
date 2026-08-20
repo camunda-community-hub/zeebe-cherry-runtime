@@ -9,13 +9,14 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
+import io.camunda.cherry.runtime.LogOperation;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,23 +28,18 @@ import java.util.Optional;
 public class RunnerAdminOperation {
 
 
-    private final JarStorageEntityRepository jarStorageEntityRepository;
-
-
-    private final RunnerDefinitionRepository runnerDefinitionRepository;
-
+    private final StorageService storageService;
 
     private final JobRunnerFactory jobRunnerFactory;
 
     private final JarManagementClassLoader jarManagementClassLoader;
     private final LogOperation logOperation;
 
-    public RunnerAdminOperation(JarStorageEntityRepository jarStorageEntityRepository,
+    public RunnerAdminOperation(StorageService storageService,
                                 RunnerDefinitionRepository runnerDefinitionRepository,
                                 JobRunnerFactory jobRunnerFactory,
                                 JarManagementClassLoader jarManagementClassLoader, LogOperation logOperation) {
-        this.jarStorageEntityRepository = jarStorageEntityRepository;
-        this.runnerDefinitionRepository = runnerDefinitionRepository;
+        this.storageService = storageService;
         this.jobRunnerFactory = jobRunnerFactory;
         this.jarManagementClassLoader = jarManagementClassLoader;
         this.logOperation = logOperation;
@@ -52,17 +48,17 @@ public class RunnerAdminOperation {
     public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
         // search the StorageEntity
-        Optional<JarStorageEntity> storageEntity = jarStorageEntityRepository.findById(storageEntityId);
-        if (storageEntity.isEmpty())
+        Optional<JarStorageEntity> jarStorageEntity = storageService.findJarStorageById(storageEntityId);
+        if (jarStorageEntity.isEmpty())
             throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
 
         // Need that variable for the stream
         // Identify all worker behind the JarEntity
-        logOperation.log(OperationEntity.Operation.REMOVEJAR, "Remove Jar [" + storageEntity.get().name + "]");
-        List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
+        logOperation.log(OperationEntity.Operation.REMOVEJAR, "Remove Jar [" + jarStorageEntity.get().name + "]");
+        List<RunnerDefinitionEntity> listRunnersDefinition = storageService.selectAllRunnerDefinitionByJarNotNull();
         List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
                 .filter(t -> {
-                    return storageEntity.get().id.equals(t.jar.id);
+                    return jarStorageEntity.get().id.equals(t.jar.id);
                 }).toList();
 
         // Stop all workers
@@ -82,13 +78,13 @@ public class RunnerAdminOperation {
         // remove worker from database
         for (RunnerDefinitionEntity runnerEntity : listRunners) {
             logOperation.log(OperationEntity.Operation.REMOVERUNNER, "Remove Runner (remove Jar) [" + runnerEntity.name + "]");
-            runnerDefinitionRepository.delete(runnerEntity);
+            storageService.deleteRunnerDefinition(runnerEntity);
         }
         // remove Jar
-        jarStorageEntityRepository.delete(storageEntity.get());
+        storageService.delete(jarStorageEntity.get());
 
         // remove from ClassLoader
-        jarManagementClassLoader.removeJarFile(storageEntity.get().name);
+        jarManagementClassLoader.removeJarFile(jarStorageEntity.get().name);
         return true;
 
     }

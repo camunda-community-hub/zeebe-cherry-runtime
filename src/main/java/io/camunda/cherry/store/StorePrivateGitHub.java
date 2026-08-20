@@ -1,5 +1,7 @@
 package io.camunda.cherry.store;
 
+import io.camunda.cherry.runtime.CherryProperties;
+
 public class StorePrivateGitHub extends StoreGithub {
 
     public StorePrivateGitHub(String name, String url, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
@@ -16,6 +18,7 @@ public class StorePrivateGitHub extends StoreGithub {
     public StorePrivateGitHub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
         super(name, url, filterProjectName, gitHubAccess, startup);
     }
+
     public String getType() {
         return "GitHub";
     }

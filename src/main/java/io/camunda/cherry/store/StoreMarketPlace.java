@@ -1,6 +1,7 @@
 package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

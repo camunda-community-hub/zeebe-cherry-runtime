@@ -48,7 +48,7 @@ class ControllerPage extends React.Component {
                     </table>}
 
                 {this.state.errorMessage &&
-                    <div className="alert alert-danger" >
+                    <div className="alert alert-danger">
                         Error:{this.state.errorMessage}
                     </div>}
             </div>

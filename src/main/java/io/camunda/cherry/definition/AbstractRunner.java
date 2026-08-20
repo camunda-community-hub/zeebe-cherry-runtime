@@ -20,7 +20,6 @@ import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.time.Duration;

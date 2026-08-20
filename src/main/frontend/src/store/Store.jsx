@@ -298,18 +298,35 @@ class Store extends React.Component {
                                                         {connectorDefinition.status === "IN-PROGRESS" &&
                                                             <div><Tag type="cyan" title="In progress">In progress</Tag>
                                                             </div>}
-                                                        <div><strong>Main Connector Type:</strong> {connectorDefinition.connectorType}
+                                                        <div><strong>Main Connector
+                                                            Type:</strong> {connectorDefinition.connectorType}
                                                         </div>
                                                         <div><strong>Annotations:</strong>&nbsp;
                                                             {!connectorDefinition.listAnnotations ||
                                                             connectorDefinition.listAnnotations.length === 0 ? (
                                                                 "-"
                                                             ) : (
-                                                                <table style={{marginTop: "4px",marginLeft:"20px", borderCollapse: "collapse",width: "100%", border: "1px solid #000"}}>
+                                                                <table style={{
+                                                                    marginTop: "4px",
+                                                                    marginLeft: "20px",
+                                                                    borderCollapse: "collapse",
+                                                                    width: "100%",
+                                                                    border: "1px solid #000"
+                                                                }}>
                                                                     <thead>
                                                                     <tr>
-                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Name</th>
-                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Type</th>
+                                                                        <th style={{
+                                                                            textAlign: "center",
+                                                                            borderBottom: "1px solid #ccc",
+                                                                            padding: "4px"
+                                                                        }}>Name
+                                                                        </th>
+                                                                        <th style={{
+                                                                            textAlign: "center",
+                                                                            borderBottom: "1px solid #ccc",
+                                                                            padding: "4px"
+                                                                        }}>Type
+                                                                        </th>
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -323,7 +340,6 @@ class Store extends React.Component {
                                                                 </table>
                                                             )}
                                                         </div>
-
 
 
                                                         <div>
@@ -360,12 +376,33 @@ class Store extends React.Component {
                                                             connectorDefinition.elementTemplates.length === 0 ? (
                                                                 "-"
                                                             ) : (
-                                                                <table style={{marginTop: "4px",marginLeft:"20px", borderCollapse: "collapse",width: "100%", border: "1px solid #000"}}>
+                                                                <table style={{
+                                                                    marginTop: "4px",
+                                                                    marginLeft: "20px",
+                                                                    borderCollapse: "collapse",
+                                                                    width: "100%",
+                                                                    border: "1px solid #000"
+                                                                }}>
                                                                     <thead>
                                                                     <tr>
-                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Name</th>
-                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>Description</th>
-                                                                        <th style={{textAlign: "center",borderBottom: "1px solid #ccc",padding: "4px"}}>URL</th>
+                                                                        <th style={{
+                                                                            textAlign: "center",
+                                                                            borderBottom: "1px solid #ccc",
+                                                                            padding: "4px"
+                                                                        }}>Name
+                                                                        </th>
+                                                                        <th style={{
+                                                                            textAlign: "center",
+                                                                            borderBottom: "1px solid #ccc",
+                                                                            padding: "4px"
+                                                                        }}>Description
+                                                                        </th>
+                                                                        <th style={{
+                                                                            textAlign: "center",
+                                                                            borderBottom: "1px solid #ccc",
+                                                                            padding: "4px"
+                                                                        }}>URL
+                                                                        </th>
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -374,7 +411,8 @@ class Store extends React.Component {
                                                                             <td style={{padding: "4px"}}>{item.name}</td>
                                                                             <td style={{padding: "4px"}}>{item.description}</td>
                                                                             <td style={{padding: "4px"}}>
-                                                                                <a href={item.url} target="_blank" rel="noreferrer">
+                                                                                <a href={item.url} target="_blank"
+                                                                                   rel="noreferrer">
                                                                                     {item.url}
                                                                                 </a>
                                                                             </td>

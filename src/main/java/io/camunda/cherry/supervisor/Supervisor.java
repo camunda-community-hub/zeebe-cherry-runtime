@@ -7,13 +7,19 @@
 /* ******************************************************************** */
 package io.camunda.cherry.supervisor;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
-import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
-import io.camunda.cherry.store.*;
+import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.runtime.LogOperation;
+import io.camunda.cherry.store.GitHubAccess;
+import io.camunda.cherry.store.StoreAccess;
+import io.camunda.cherry.store.StoreFactory;
+import io.camunda.cherry.store.StoreUrl;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -37,6 +43,7 @@ public class Supervisor {
     private final static int BASE_ADVANCE_PHASE1 = 40;
     private final static int BASE_ADVANCE_PHASE2 = 40;
     private final static int BASE_ADVANCE_PHASE3 = 20;
+    private static final String STARTUP_INITIAL_KEY = "INITIAL";
     private final CherryProperties cherryProperties;
     private final GitHubAccess gitHubAccess;
     private final StoreFactory storeFactory;
@@ -46,14 +53,19 @@ public class Supervisor {
     private final Installer installer;
     private final JarManagementClassLoader jarManagementClassLoader;
     private final RunnerUploadFactory runnerUploadFactory;
-    private final JarStorageEntityRepository jarStorageEntityRepository;
+    private final StorageService storageService;
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
     private final String MARKER_NAME_IS_A_DIRECT_URL = "http";
-    Logger logger = LoggerFactory.getLogger(Supervisor.class.getName());
     private final StoreFactory.EXPLORATIONCONNECTOR exploration = StoreFactory.EXPLORATIONCONNECTOR.NONE;
     private final int percentageExploration = 0;
     private final Map<String, DownloadInProgress> downloadStatus = new HashMap<>();
+    Logger logger = LoggerFactory.getLogger(Supervisor.class.getName());
 
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  Download at startup                                                 */
+    /*                                                                      */
+    /* ******************************************************************** */
 
     Supervisor(GitHubAccess gitHubAccess,
                CherryProperties cherryProperties,
@@ -62,7 +74,7 @@ public class Supervisor {
                JobRunnerFactory jobRunnerFactory,
                Installer installer,
                LogOperation logOperation, JarManagementClassLoader jarManagementClassLoader, RunnerUploadFactory runnerUploadFactory,
-               JarStorageEntityRepository jarStorageEntityRepository) {
+               StorageService storageService) {
         this.gitHubAccess = gitHubAccess;
         this.cherryProperties = cherryProperties;
         this.storeFactory = storeFactory;
@@ -72,14 +84,8 @@ public class Supervisor {
         this.logOperation = logOperation;
         this.jarManagementClassLoader = jarManagementClassLoader;
         this.runnerUploadFactory = runnerUploadFactory;
-        this.jarStorageEntityRepository = jarStorageEntityRepository;
+        this.storageService = storageService;
     }
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Download at startup                                                 */
-    /*                                                                      */
-    /* ******************************************************************** */
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
@@ -102,7 +108,7 @@ public class Supervisor {
 
                 // ------------- load all from the database
                 logger.info("----- Supervisor.2-begin: Loaded from database");
-                List<JarStorageEntity> listJarStorage = jarStorageEntityRepository.getAll();
+                List<JarStorageEntity> listJarStorage = storageService.getAll();
                 String logInfoDb = "";
                 for (JarStorageEntity jarStorageEntity : listJarStorage) {
                     logInfoDb += jarStorageEntity.name + ";";
@@ -116,7 +122,7 @@ public class Supervisor {
                 boolean downloadStartupNeedExploration = !cherryProperties.getStore().getDownloadStartup().isEmpty();
                 if (downloadStartupNeedExploration)
                     exploreStores = true;
-                if (! storeFactory.getListStores().isEmpty())
+                if (!storeFactory.getListStores().isEmpty())
                     exploreStores = true;
 
 
@@ -166,12 +172,9 @@ public class Supervisor {
         }
     }
 
-
     public Map<String, DownloadInProgress> getDownloadStatus() {
         return downloadStatus;
     }
-
-    private static final String STARTUP_INITIAL_KEY = "INITIAL";
 
     /**
      * Manage the initialConnector download
@@ -181,7 +184,7 @@ public class Supervisor {
         List<StoreAccess> listStoreAccess = storeFactory.getListStores();
 
         for (StoreAccess storeAccess : listStoreAccess) {
-            if (! CherryProperties.DownloadPolicy.NEVER.equals(storeAccess.getStartup().getDownloadPolicy())) {
+            if (!CherryProperties.DownloadPolicy.NEVER.equals(storeAccess.getStartup().getDownloadPolicy())) {
                 String key = storeAccess.getSignature();
                 downloadStatus.put(key, new DownloadInProgress(key));
             }
@@ -264,7 +267,13 @@ public class Supervisor {
         return false;
     }
 
+    @PreDestroy
+    public void end() {
+        logger.info("----- End is called");
 
+        jobRunnerFactory.stopAll();
+
+    }
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -398,10 +407,40 @@ public class Supervisor {
 
 
     private boolean checkDownloadPolicy(StoreAccess.ConnectorDefinition connectorDefinition, CherryProperties.DownloadPolicy downloadPolicy) {
-        if (downloadPolicy.equals(CherryProperties.DownloadPolicy.ALWAYS))
-            return true;
+        switch (downloadPolicy) {
+            case NEVER:
+                logger.info("NEVER policy, don't download jarName[{}]", connectorDefinition.getJarName());
+                return false;
+            case ALWAYS:
+                logger.info("ALWAYS policy, download jarName[{}]", connectorDefinition.getJarName());
+                return true;
+            case UPDATE:
+            case FIXEDVERSION:
+                JarStorageEntity jarStorageEntity = storageService.findJarStorageByName(connectorDefinition.getJarName());
+                if (jarStorageEntity == null) {
+                    logger.info("UPDATE,FIXEDVERSION: jarName[{}] does not know yet, so accept to download it", connectorDefinition.getJarName());
+                    return true;
+                }
+                if (CherryProperties.DownloadPolicy.FIXEDVERSION.equals(downloadPolicy)) {
+                    logger.info("FIXEDVERSION: jarName[{}] already present, so don't update it", connectorDefinition.getJarName());
+                    return false;
+                }
+                // compare the two versions
+                if (jarStorageEntity.release == null || connectorDefinition.release == null) {
+                    return true;
+                }
+                int compareRelease = RunnerCompare.compareSemanticVersion(connectorDefinition.release, jarStorageEntity.release);
+                logger.info("UPDATE: jarName[{}] JarRelease[{}] StorageRealase[{}] new JarRelease? {}",
+                        connectorDefinition.getJarName(),
+                        connectorDefinition.release,
+                        jarStorageEntity.release,
+                        compareRelease > 0);
+                return compareRelease > 0;
 
-        return true;
+            default:
+                return false;
+
+        }
     }
 
     public enum EXPLORATIONCONNECTOR {NONE, INPROGRESS, COMPLETED}

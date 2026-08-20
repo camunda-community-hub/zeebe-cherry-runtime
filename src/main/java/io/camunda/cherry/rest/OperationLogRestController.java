@@ -1,12 +1,10 @@
-package io.camunda.cherry.operationlog;
+package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.OperationEntity;
-import io.camunda.cherry.rest.RestAttribute;
 import io.camunda.cherry.runtime.OperationFactory;
 import io.camunda.cherry.util.DateOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

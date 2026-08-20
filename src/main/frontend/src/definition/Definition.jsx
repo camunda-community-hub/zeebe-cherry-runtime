@@ -25,7 +25,8 @@ class Definition extends React.Component {
                 loading: false
             },
             runners: [],
-            isOpen: false};
+            isOpen: false
+        };
         this.openModal = this.openModal.bind(this);
         this.closeModal = this.closeModal.bind(this);
     }

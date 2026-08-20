@@ -6,10 +6,14 @@
 /* ******************************************************************** */
 package io.camunda.cherry.rest;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.exception.TechnicalException;
-import io.camunda.cherry.runner.*;
+import io.camunda.cherry.runner.JobRunnerFactory;
+import io.camunda.cherry.runner.RunnerCompare;
+import io.camunda.cherry.runner.RunnerFactory;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.store.StoreAccess;
 import io.camunda.cherry.store.StoreFactory;
 import io.camunda.cherry.supervisor.Supervisor;
@@ -118,7 +122,7 @@ public class StoreRestController {
             List<Map<String, Object>> listAllConnectors = new ArrayList<>();
 
             long beginTime = System.currentTimeMillis();
-            List<RunnerDefinitionEntity> listRunnersEntity = runnerFactory.getAllRunnersEntity(new StorageRunner.Filter());
+            List<RunnerDefinitionEntity> listRunnersEntity = runnerFactory.getAllRunnersEntity(new StorageService.Filter());
             Map<String, RunnerDefinitionEntity> mapRunnersByName = listRunnersEntity.stream()
                     .collect(Collectors.toMap(x -> x.name, x -> x));
             Map<String, RunnerDefinitionEntity> mapRunnersByType = listRunnersEntity.stream()

@@ -2,6 +2,7 @@ package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +22,8 @@ public abstract class StoreGithub extends StoreAccess {
     private final String filterProjectName;
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
-
-    Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
-
-
     private final String REPOS_PER_PAGE = "50";
+    Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
 
     public StoreGithub(String name, String url, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
         this(name, url, null, gitHubAccess, startup);
@@ -204,8 +202,7 @@ public abstract class StoreGithub extends StoreAccess {
         }
         try {
             long startTime = System.currentTimeMillis();
-            connectorDownload.jarName = connectorDefinition.urlJarFile.substring(
-                    connectorDefinition.urlJarFile.lastIndexOf('/') + 1);
+            connectorDownload.jarName = connectorDefinition.getJarName();
             byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;

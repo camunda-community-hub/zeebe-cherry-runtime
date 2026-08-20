@@ -58,52 +58,52 @@ class CherryApp extends React.Component {
                             </Navbar.Brand>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.DASHBOARD}
+                                active={this.state.frameContent === FRAME_NAME.DASHBOARD}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.DASHBOARD)
-                            }}>Dashboard</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.DASHBOARD)
+                                }}>Dashboard</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.DEFINITION}
+                                active={this.state.frameContent === FRAME_NAME.DEFINITION}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.DEFINITION)
-                            }}>Definition</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.DEFINITION)
+                                }}>Definition</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.SECRET}
+                                active={this.state.frameContent === FRAME_NAME.SECRET}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.SECRET)
-                            }}>Secrets</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.SECRET)
+                                }}>Secrets</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.CONTENT}
+                                active={this.state.frameContent === FRAME_NAME.CONTENT}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.CONTENT)
-                            }}>Content</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.CONTENT)
+                                }}>Content</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.STORE}
+                                active={this.state.frameContent === FRAME_NAME.STORE}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.STORE)
-                            }}>Store</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.STORE)
+                                }}>Store</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.TENANTS}
+                                active={this.state.frameContent === FRAME_NAME.TENANTS}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.TENANTS)
-                            }}>Tenants</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.TENANTS)
+                                }}>Tenants</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.OPERATIONLOG}
+                                active={this.state.frameContent === FRAME_NAME.OPERATIONLOG}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.OPERATIONLOG)
-                            }}>Log</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.OPERATIONLOG)
+                                }}>Log</Nav.Link>
 
                             <Nav.Link
-                                active={this.state.frameContent  === FRAME_NAME.PARAMETERS}
+                                active={this.state.frameContent === FRAME_NAME.PARAMETERS}
                                 onClick={() => {
-                                this.clickMenu(FRAME_NAME.PARAMETERS)
-                            }}>Parameters</Nav.Link>
+                                    this.clickMenu(FRAME_NAME.PARAMETERS)
+                                }}>Parameters</Nav.Link>
                         </Nav>
                     </Container>
                 </Navbar>

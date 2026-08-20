@@ -7,10 +7,12 @@
 /* ******************************************************************** */
 package io.camunda.cherry.supervisor;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.store.StoreAccess;
 import io.camunda.cherry.store.StoreFactory;
 import org.slf4j.Logger;
@@ -32,14 +34,14 @@ public class Installer {
     private final JobRunnerFactory jobRunnerFactory;
     private final LogOperation logOperation;
     private final JarManagementClassLoader jarManagementClassLoader;
-    private final StorageRunner storeRunner;
+    private final StorageService storeRunner;
     Logger logger = LoggerFactory.getLogger(Supervisor.class.getName());
 
     Installer(StoreFactory storeFactory,
               RunnerFactory runnerFactory,
               JobRunnerFactory jobRunnerFactory,
               JarManagementClassLoader jarManagementClassLoader,
-              StorageRunner storeRunner,
+              StorageService storeRunner,
               LogOperation logOperation, RunnerUploadFactory runnerUploadFactory) {
         this.storeFactory = storeFactory;
         this.runnerFactory = runnerFactory;

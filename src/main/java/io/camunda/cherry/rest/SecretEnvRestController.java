@@ -8,8 +8,8 @@ package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
-import io.camunda.cherry.runner.LogOperation;
-import io.camunda.cherry.secretenv.SecretEnvService;
+import io.camunda.cherry.runtime.LogOperation;
+import io.camunda.cherry.runtime.SecretEnvService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
