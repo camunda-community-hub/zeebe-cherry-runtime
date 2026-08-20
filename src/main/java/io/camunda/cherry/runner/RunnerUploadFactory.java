@@ -13,11 +13,13 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -45,7 +47,7 @@ import java.util.zip.ZipFile;
 @Configuration
 public class RunnerUploadFactory {
 
-    private final StorageRunner storageRunner;
+    private final StorageService storageService;
     private final LogOperation logOperation;
     private final SessionFactory sessionFactory;
     private final JarManagementClassLoader jarManagementClassLoader;
@@ -58,11 +60,11 @@ public class RunnerUploadFactory {
     @Value("${cherry.connectorslib.forcerefresh:false}")
     private Boolean forceRefresh;
 
-    public RunnerUploadFactory(StorageRunner storageRunner,
+    public RunnerUploadFactory(StorageService storageService,
                                LogOperation logOperation,
                                JarManagementClassLoader jarManagementClassLoader,
                                SessionFactory sessionFactory) {
-        this.storageRunner = storageRunner;
+        this.storageService = storageService;
         this.logOperation = logOperation;
         this.jarManagementClassLoader = jarManagementClassLoader;
         this.sessionFactory = sessionFactory;
@@ -96,7 +98,7 @@ public class RunnerUploadFactory {
             jarManagementClassLoader.clearClassLoaderFolder();
         }
         // All JAR file in the database must be load in the JavaMachine
-        for (JarStorageEntity jarStorageEntity : storageRunner.getAll()) {
+        for (JarStorageEntity jarStorageEntity : storageService.getAll()) {
             listJarLoaded.add(jarManagementClassLoader.copyFromJarEntity(jarStorageEntity).getName());
         }
         return listJarLoaded;
@@ -109,7 +111,7 @@ public class RunnerUploadFactory {
      * @return true if the jar can be loaded in the storage path, else false
      */
     protected boolean jarFileStorageToClassLoader(String jarFileName) {
-        JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
+        JarStorageEntity jarStorageEntity = storageService.findJarStorageByName(jarFileName);
         if (jarStorageEntity == null)
             return false;
         File jarSaved = jarManagementClassLoader.copyFromJarEntity(jarStorageEntity);
@@ -184,7 +186,7 @@ public class RunnerUploadFactory {
      *
      * @param jarFile            file to load
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
-     * @param defaultRelease      the default release know from where the jar was uploaded
+     * @param defaultRelease     the default release know from where the jar was uploaded
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
      * @return list of runnerLight Definition
      */
@@ -197,7 +199,7 @@ public class RunnerUploadFactory {
         String analysis = "";
         String jarName = originalFileName;
         try {
-            jarStorageEntity = storageRunner.getJarStorageByName(originalFileName == null ? jarFile.getName() : originalFileName);
+            jarStorageEntity = storageService.findJarStorageByName(originalFileName == null ? jarFile.getName() : originalFileName);
             boolean reload = false;
             if (forceReloadThisJar) {
                 reload = true;
@@ -226,7 +228,7 @@ public class RunnerUploadFactory {
             List<RunnerDefinitionEntity> runners = null;
             if (!reload) {
                 // we don't reload the JAR file, so we believe what we have in the database
-                runners = storageRunner.getRunnersFromJarName(jarStorageEntity.name);
+                runners = storageService.getRunnersFromJarName(jarStorageEntity.name);
                 // there is something wrong here: why there is no runners behind this JAR?
                 if (runners.isEmpty())
                     reload = true;
@@ -239,9 +241,9 @@ public class RunnerUploadFactory {
             logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
             if (jarStorageEntity == null) {
                 // save it
-                jarStorageEntity = storageRunner.saveJarRunner(jarName, jarFile, defaultRelease);
+                jarStorageEntity = storageService.saveJarRunner(jarName, jarFile, defaultRelease);
             } else {
-                jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease);
+                jarStorageEntity = storageService.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease);
             }
 
         } catch (Exception e) {
@@ -355,7 +357,7 @@ public class RunnerUploadFactory {
                         // update the release
                         if (runner.getRelease() == null)
                             runner.setRelease(defaultRelease);
-                        storageRunner.saveUploadRunner(runner, jarStorageEntity, defaultRelease);
+                        storageService.saveUploadRunner(runner, jarStorageEntity, defaultRelease);
                         listRunnersDetected.add(new RunnerLightDefinition(runner.getName(),
                                 runner.getType(),
                                 runner.getClass().getName(),
@@ -397,7 +399,7 @@ public class RunnerUploadFactory {
             if (logLoadJarSt.length() > 1999)
                 logLoadJarSt = logLoadJarSt.substring(0, 1999);
 
-            storageRunner.uploadLoadLog(jarStorageEntity, logLoadJarSt);
+            storageService.uploadLoadLog(jarStorageEntity, logLoadJarSt);
             logOperation.log(OperationEntity.Operation.SERVERINFO,
                     "Load [" + jarFile.getName() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in " + (
                             endOperation - beginOperation) + " ms ");

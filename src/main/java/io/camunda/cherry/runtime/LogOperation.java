@@ -4,7 +4,7 @@
 /*                                                                      */
 /*  Every operation is logged here.                                     */
 /* ******************************************************************** */
-package io.camunda.cherry.runner;
+package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.repository.OperationRepository;
@@ -22,9 +22,8 @@ import java.time.ZoneOffset;
 @Service
 public class LogOperation {
 
-    Logger logger = LoggerFactory.getLogger(LogOperation.class.getName());
-
     private final OperationRepository operationRepository;
+    Logger logger = LoggerFactory.getLogger(LogOperation.class.getName());
 
     public LogOperation(OperationRepository operationRepository) {
         this.operationRepository = operationRepository;

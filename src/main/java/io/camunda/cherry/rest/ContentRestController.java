@@ -1,9 +1,8 @@
 package io.camunda.cherry.rest;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarStorageEntityRepository;
-import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.*;
 import io.camunda.cherry.supervisor.Installer;
@@ -23,8 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("cherry")
 public class ContentRestController {
-    private final JarStorageEntityRepository jarStorageEntityRepository;
-    private final RunnerDefinitionRepository runnerDefinitionRepository;
+    private final StorageService storageService;
     private final RunnerAdminOperation runnerAdminOperation;
     private final RunnerFactory runnerFactory;
     private final JobRunnerFactory jobRunnerFactory;
@@ -32,15 +30,13 @@ public class ContentRestController {
     private final Installer installer;
     Logger logger = LoggerFactory.getLogger(ContentRestController.class.getName());
 
-    public ContentRestController(JarStorageEntityRepository jarStorageEntityRepository,
-                                 RunnerDefinitionRepository runnerDefinitionRepository,
+    public ContentRestController(StorageService storageService,
                                  RunnerAdminOperation runnerAdminOperation,
                                  RunnerFactory runnerFactory,
                                  JobRunnerFactory jobRunnerFactory,
                                  Installer installer,
                                  RunnerUploadFactory runnerUploadFactory) {
-        this.jarStorageEntityRepository = jarStorageEntityRepository;
-        this.runnerDefinitionRepository = runnerDefinitionRepository;
+        this.storageService = storageService;
         this.runnerAdminOperation = runnerAdminOperation;
         this.runnerFactory = runnerFactory;
         this.jobRunnerFactory = jobRunnerFactory;
@@ -51,8 +47,8 @@ public class ContentRestController {
     @GetMapping(value = "/api/content/list", produces = "application/json")
     public List<Map<String, Object>> listContent(@RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         List<Map<String, Object>> listContent = new ArrayList<>();
-        List<JarStorageEntity> listJarStorageEntity = jarStorageEntityRepository.getAll();
-        List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
+        List<JarStorageEntity> listJarStorageEntity = storageService.getAll();
+        List<RunnerDefinitionEntity> listRunnersDefinition = storageService.selectAllRunnerDefinitionByJarNotNull();
 
         for (JarStorageEntity storageEntity : listJarStorageEntity) {
             Map<String, Object> recordStorage = new HashMap<>();

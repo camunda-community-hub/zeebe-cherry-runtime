@@ -11,9 +11,7 @@
 package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
-import io.camunda.cherry.secretenv.SecretEnvService;
 import io.camunda.connector.api.secret.SecretContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 

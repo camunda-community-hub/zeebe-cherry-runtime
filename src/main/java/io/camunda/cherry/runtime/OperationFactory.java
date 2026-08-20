@@ -8,7 +8,6 @@ package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.repository.OperationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

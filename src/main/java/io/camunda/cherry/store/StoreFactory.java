@@ -1,6 +1,7 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.CherryProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -112,7 +113,7 @@ public class StoreFactory {
     }
 
     public List<StoreAccess.ConnectorDefinition> getListConnectors(StoreAccess storeAccess) {
-        return mapConnectors.get(storeAccess)==null? Collections.emptyList(): mapConnectors.get(storeAccess);
+        return mapConnectors.get(storeAccess) == null ? Collections.emptyList() : mapConnectors.get(storeAccess);
     }
 
     /**
@@ -193,7 +194,7 @@ public class StoreFactory {
             logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
             List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.exploreListConnectors();
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                connectorDefinition.setStatus( StoreAccess.EXPLORATION.INPROGRESS);
+                connectorDefinition.setStatus(StoreAccess.EXPLORATION.INPROGRESS);
                 logger.debug("Store[{}] connector[{}] in url[{}] Implementation[{}]", storeAccess.getName(), connectorDefinition.name, connectorDefinition.url, connectorDefinition.hasImplementation);
             }
             nbConnectors += listConnectors.size();
@@ -248,7 +249,7 @@ public class StoreFactory {
 
                 } catch (Exception e) {
                     logger.error("StoreFactory Store[{}] connector [{}] failed ", storeAccess.getName(), connectorDefinition.name, e);
-                    connectorDefinition.setStatus( StoreAccess.EXPLORATION.INCOMPLETE);
+                    connectorDefinition.setStatus(StoreAccess.EXPLORATION.INCOMPLETE);
                 }
 
                 if (connectorDefinition.getStatus() == StoreAccess.EXPLORATION.READY || connectorDefinition.getStatus() == StoreAccess.EXPLORATION.NOELTTEMPLATE)
@@ -356,7 +357,7 @@ public class StoreFactory {
                     return connectorDefinition;
                 }
                 if (connectorDefinition.connectorType.equals(filter.type)) {
-                    logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition.toString());
+                    logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition);
                     return connectorDefinition;
                 }
             }

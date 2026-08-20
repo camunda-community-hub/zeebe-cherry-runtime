@@ -1,5 +1,7 @@
 package io.camunda.cherry.store;
 
+import io.camunda.cherry.runtime.CherryProperties;
+
 public class StoreCamundaCommunity extends StoreGithub {
 
     // - https://github.com/camunda-community-hub/

@@ -7,6 +7,7 @@
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
@@ -19,6 +20,7 @@ import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.client.CamundaClient;
@@ -128,7 +130,7 @@ public class JobRunnerFactory {
             return;
         }
         // get the list from the storage
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().isActive(true));
 
 
         List<AbstractRunner> listSdkRunners = listRunners.stream()
@@ -168,7 +170,7 @@ public class JobRunnerFactory {
             return;
         }
 
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
         for (Running running : mapRunning.values()) {
             if (running.runner != null) {
                 try {
@@ -242,7 +244,7 @@ public class JobRunnerFactory {
         if (mapRunning.containsKey(runnerType)) {
             throw new OperationAlreadyStartedException();
         }
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().type(runnerType));
         // we expect only one runner
         if (listRunners.isEmpty()) {
             throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");

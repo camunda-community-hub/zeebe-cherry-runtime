@@ -1,4 +1,4 @@
-package io.camunda.cherry.store;
+package io.camunda.cherry.runtime;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -30,14 +30,21 @@ public class CherryProperties {
      * UPDATE: download only if a new release is available
      * FIXEDVERSION: download if you don't have it, but after that, do not download any more (no new version)
      */
-    public enum DownloadPolicy { NEVER, ALWAYS, UPDATE,FIXEDVERSION}
+    public enum DownloadPolicy {NEVER, ALWAYS, UPDATE, FIXEDVERSION}
+
     public static class Startup {
         private DownloadPolicy downloadPolicy = DownloadPolicy.NEVER;
         private String tag;
         private List<String> filter = new ArrayList<>();
 
-        public DownloadPolicy getDownloadPolicy() {return downloadPolicy;}
-        public void setDownloadPolicy(DownloadPolicy downloadPolicy) {this.downloadPolicy = downloadPolicy;}
+        public DownloadPolicy getDownloadPolicy() {
+            return downloadPolicy;
+        }
+
+        public void setDownloadPolicy(DownloadPolicy downloadPolicy) {
+            this.downloadPolicy = downloadPolicy;
+        }
+
         public String getTag() {
             return tag;
         }

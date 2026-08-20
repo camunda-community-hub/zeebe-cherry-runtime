@@ -35,14 +35,6 @@ public class GitHubAccess {
     @Value("${cherry.github.token:}")
     private String githubToken;
 
-    public String getGithubToken() {
-        return githubToken;
-    }
-
-    public boolean isToken() {
-        return githubToken != null && !githubToken.isBlank();
-    }
-
     /**
      * Every call to GitHub in this class goes through {@link #get(String)} or
      * {@link #getJsonNode(String)}, both backed by this single RestTemplate — a bad/slow
@@ -54,6 +46,14 @@ public class GitHubAccess {
         factory.setConnectTimeout(GITHUB_TIMEOUT);
         factory.setReadTimeout(GITHUB_TIMEOUT);
         return new RestTemplate(factory);
+    }
+
+    public String getGithubToken() {
+        return githubToken;
+    }
+
+    public boolean isToken() {
+        return githubToken != null && !githubToken.isBlank();
     }
 
     public String get(String url) throws IOException {
@@ -175,15 +175,15 @@ public class GitHubAccess {
     public GithubConnectorStatus isGithubWorker(String repoPath, String release, boolean checkPomxml, boolean checkGitRelease) {
         GithubConnectorStatus githubWorkerStatus = new GithubConnectorStatus();
         String ref = (release != null && !release.isBlank()) ? release : "HEAD";
-        JsonNode itemsPom=null;
+        JsonNode itemsPom = null;
         try {
             itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
-        } catch( Exception e ) {
-            if (! e.getMessage().contains("404"))
+        } catch (Exception e) {
+            if (!e.getMessage().contains("404"))
                 logger.error("GitHubAccess : error while access repoPath[{}]", repoPath, e);
             return githubWorkerStatus;
         }
-        try{
+        try {
             String type = itemsPom.path("type").asText();
             if (!type.equals("file"))
                 return githubWorkerStatus;

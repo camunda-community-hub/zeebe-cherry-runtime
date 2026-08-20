@@ -1,12 +1,12 @@
 /* ******************************************************************** */
 /*                                                                      */
-/*  StorageRunner                                                       */
+/*  StorageService                                                       */
 /*                                                                      */
-/* This class manage the Storage Service                              */
+/* This class manage the Storage Service                                */
 /* A connector can be provided from the upload Path, or uploader, or    */
-/* come from the marker place. It will be saved in the Storage.         */
+/* come from the marketplace. It will be saved in the Storage.          */
 /* ******************************************************************** */
-package io.camunda.cherry.runner;
+package io.camunda.cherry.db;
 
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
@@ -17,6 +17,8 @@ import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.LogOperation;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -31,23 +33,23 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 @Service
-public class StorageRunner {
-
-    Logger logger = LoggerFactory.getLogger(StorageRunner.class.getName());
+public class StorageService {
 
     private final RunnerDefinitionRepository runnerDefinitionRepository;
     private final JarStorageEntityRepository jarStorageEntityRepository;
     private final SessionFactory sessionFactory;
     private final DataSource dataSource;
     private final LogOperation logOperation;
+    Logger logger = LoggerFactory.getLogger(StorageService.class.getName());
 
-    public StorageRunner(RunnerDefinitionRepository runnerDefinitionRepository,
-                        JarStorageEntityRepository jarStorageEntityRepository,
-                        SessionFactory sessionFactory,
-                        DataSource dataSource,
-                        LogOperation logOperation) {
+    public StorageService(RunnerDefinitionRepository runnerDefinitionRepository,
+                          JarStorageEntityRepository jarStorageEntityRepository,
+                          SessionFactory sessionFactory,
+                          DataSource dataSource,
+                          LogOperation logOperation) {
         this.runnerDefinitionRepository = runnerDefinitionRepository;
         this.jarStorageEntityRepository = jarStorageEntityRepository;
         this.sessionFactory = sessionFactory;
@@ -57,7 +59,7 @@ public class StorageRunner {
 
     /* ******************************************************************** */
     /*                                                                      */
-    /*  jarDefinition function                                              */
+    /*  JarStorageEntity function                                           */
     /*                                                                      */
     /*  Manipulate any external JAR file                                    */
     /* ******************************************************************** */
@@ -95,7 +97,7 @@ public class StorageRunner {
             return jarStorageEntity;
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR,
-                    "StorageRunner.StorageRunner: Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
+                    "StorageService.StorageService: Can't load jarFile[" + jarFile.getAbsolutePath() + "]" + e.getMessage());
             throw new TechnicalException(e);
         }
     }
@@ -108,7 +110,7 @@ public class StorageRunner {
      */
     public JarStorageEntity saveJarRunner(String jarName, File jarFile, String release) throws TechnicalException {
         String connectorName = jarFile.getName();
-        logger.info("StorageRunner.saveJarRunner: file[{}] connectorName[{}] release[{}]", jarFile.getPath(), connectorName, release);
+        logger.info("StorageService.saveJarRunner: file[{}] connectorName[{}] release[{}]", jarFile.getPath(), connectorName, release);
 
         JarStorageEntity jarStorageEntity = jarStorageEntityRepository.findByName(connectorName);
         if (jarStorageEntity != null)
@@ -125,6 +127,11 @@ public class StorageRunner {
     public void updateJarStorage(JarStorageEntity jarStorageEntity) {
         jarStorageEntityRepository.save(jarStorageEntity);
     }
+
+    public void delete(JarStorageEntity jarStorageEntity) {
+        jarStorageEntityRepository.delete(jarStorageEntity);
+    }
+
 
     /**
      * Upload just the loadLog
@@ -143,8 +150,12 @@ public class StorageRunner {
      * @param jarFileName jar file
      * @return JarStorageEntity, null if not exist
      */
-    public JarStorageEntity getJarStorageByName(String jarFileName) {
+    public JarStorageEntity findJarStorageByName(String jarFileName) {
         return jarStorageEntityRepository.findByName(jarFileName);
+    }
+
+    public Optional<JarStorageEntity> findJarStorageById(Long storageEntityId) {
+        return jarStorageEntityRepository.findById(storageEntityId);
     }
 
     /**
@@ -165,6 +176,44 @@ public class StorageRunner {
     public boolean existJarDefinition(String jarFileName) {
         return jarStorageEntityRepository.findByName(jarFileName) != null;
     }
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  Operation to manipulate jarFile Blob                                */
+    /*                                                                      */
+    /*  Manipulate any embedded runner, when the Cherry Library is used     */
+    /* ******************************************************************** */
+
+    /**
+     * @param jarStorageEntity jarEntity to read from
+     * @param outputStream     the Stream to produce the content
+     * @throws SQLException the SQL Exception
+     * @throws IOException  the IO Exception
+     */
+    public void readJarBlob(JarStorageEntity jarStorageEntity, OutputStream outputStream)
+            throws SQLException, IOException {
+        InputStream inputBlobStream = jarStorageEntity.jarfileBlob.getBinaryStream();
+        inputBlobStream.transferTo(outputStream);
+        outputStream.flush();
+    }
+
+    /**
+     * Attention, an openSession must be done before
+     *
+     * @param jarStorageEntity jarEntity to write to
+     * @param inputStream      the inputStream where the content is
+     * @param length           the length of the data
+     */
+    public void writeJarBlob(Session session, JarStorageEntity jarStorageEntity, InputStream inputStream, long length) {
+        jarStorageEntity.jarfileBlob = Hibernate.getLobHelper().createBlob(inputStream, length);
+    }
+
+    /* ******************************************************************** */
+    /*                                                                      */
+    /*  RunnerDefinitionEntity function                                     */
+    /*                                                                      */
+    /*  Manipulate runner definition                                        */
+    /* ******************************************************************** */
 
     /**
      * Save a runner for the class. For example when the JAR contains multiple class.
@@ -193,7 +242,7 @@ public class StorageRunner {
         runnerDefinition.jar = jarDefinition;
         // start it by default
         runnerDefinition.activeRunner = true;
-        logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
+        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
                 runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
 
         return runnerDefinitionRepository.save(runnerDefinition);
@@ -227,50 +276,12 @@ public class StorageRunner {
         runnerDefinition.release = runner.getRelease() == null || runner.getRelease().trim().isEmpty() ? defaultRelease : runner.getRelease();
         // start it by default
         runnerDefinition.activeRunner = true;
-        logger.info("StorageRunner.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
+        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
                 runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
 
         return runnerDefinitionRepository.save(runnerDefinition);
     }
 
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Operation to manipulate jarFile Blob                                */
-    /*                                                                      */
-    /*  Manipulate any embedded runner, when the Cherry Library is used     */
-    /* ******************************************************************** */
-
-    /**
-     * @param jarStorageEntity jarEntity to read from
-     * @param outputStream     the Stream to produce the content
-     * @throws SQLException the SQL Exception
-     * @throws IOException  the IO Exception
-     */
-    public void readJarBlob(JarStorageEntity jarStorageEntity, OutputStream outputStream)
-            throws SQLException, IOException {
-        InputStream inputBlobStream = jarStorageEntity.jarfileBlob.getBinaryStream();
-        inputBlobStream.transferTo(outputStream);
-        outputStream.flush();
-    }
-
-    /**
-     * Attention, an openSession must be done before
-     *
-     * @param jarStorageEntity jarEntity to write to
-     * @param inputStream      the inputStream where the content is
-     * @param length           the length of the data
-     */
-    public void writeJarBlob(Session session, JarStorageEntity jarStorageEntity, InputStream inputStream, long length) {
-        jarStorageEntity.jarfileBlob = session.getLobHelper().createBlob(inputStream, length);
-
-    }
-
-    /* ******************************************************************** */
-    /*                                                                      */
-    /*  Embedded Runners                                                    */
-    /*                                                                      */
-    /*  Manipulate any embedded runner, when the Cherry Library is used     */
-    /* ******************************************************************** */
 
     /**
      * Save a Internal connector: this connector is detected by Spring, because it is a component
@@ -290,10 +301,16 @@ public class StorageRunner {
         runnerDefinition.type = runner.getType();
         runnerDefinition.collectionName = runner.getCollectionName();
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
-        logger.info("StorageRunner.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]",
+        logger.info("StorageService.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]",
                 runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
         return runnerDefinitionRepository.save(runnerDefinition);
     }
+
+
+    public List<RunnerDefinitionEntity> selectAllRunnerDefinitionByJarNotNull() {
+        return runnerDefinitionRepository.selectAllByJarNotNull();
+    }
+
 
     /* ******************************************************************** */
     /*                                                                      */
@@ -302,7 +319,7 @@ public class StorageRunner {
     /* ******************************************************************** */
 
     public List<RunnerDefinitionEntity> getRunnersFromJarName(String jarName) {
-        return getRunners(new StorageRunner.Filter().jarFileName(jarName));
+        return getRunners(new StorageService.Filter().jarFileName(jarName));
     }
 
     /**
@@ -359,8 +376,8 @@ public class StorageRunner {
      * @param runnerDefinition entity to remove
      */
 
-    public void removeRunner(RunnerDefinitionEntity runnerDefinition) {
-        logger.info("StorageRunner.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,
+    public void deleteRunnerDefinition(RunnerDefinitionEntity runnerDefinition) {
+        logger.info("StorageService.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,
                 runnerDefinition.type, runnerDefinition.activeRunner);
         runnerDefinitionRepository.delete(runnerDefinition);
     }

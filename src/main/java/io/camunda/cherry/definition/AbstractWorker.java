@@ -16,7 +16,6 @@ import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.util.List;
@@ -35,12 +34,12 @@ public abstract class AbstractWorker extends AbstractRunner implements JobHandle
     /**
      * Constructor
      *
-     * @param type            type of the worker
-     * @param listInput       list of Input parameters for the worker
-     * @param listOutput      list of Output parameters for the worker
-     * @param listBpmnErrors  list of potential BPMN ControllerPage the worker can generate
-     * @param zeebeContainer  zeebe container
-     * @param historyFactory  history factory
+     * @param type           type of the worker
+     * @param listInput      list of Input parameters for the worker
+     * @param listOutput     list of Output parameters for the worker
+     * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
+     * @param zeebeContainer zeebe container
+     * @param historyFactory history factory
      */
     protected AbstractWorker(String type,
                              List<RunnerParameter> listInput,

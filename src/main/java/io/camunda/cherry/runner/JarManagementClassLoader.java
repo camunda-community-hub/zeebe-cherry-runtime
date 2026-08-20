@@ -19,12 +19,14 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.api.outbound.OutboundConnectorProvider;
@@ -56,21 +58,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class JarManagementClassLoader {
 
-    private final StorageRunner storageRunner;
+    private final StorageService storageService;
     private final LogOperation logOperation;
     private final ZeebeContainer zeebeContainer;
     private final ConcurrentHashMap<String, URLClassLoader> jarClassLoaders = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, ConfigurableApplicationContext> jarContexts = new ConcurrentHashMap<>();
+    private final ApplicationContext parentContext;
     Logger logger = LoggerFactory.getLogger(JarManagementClassLoader.class.getName());
     /**
      * To be loaded in the Java Machine, the file must be saved on the filesyztem, in this path
      */
     @Value("${cherry.connectorslib.classloaderpath:@null}")
     private String classLoaderPath;
-    private final ApplicationContext parentContext;
 
-    public JarManagementClassLoader(StorageRunner storageRunner, LogOperation logOperation, ApplicationContext parentContext, ZeebeContainer zeebeContainer) {
-        this.storageRunner = storageRunner;
+    public JarManagementClassLoader(StorageService storageService, LogOperation logOperation, ApplicationContext parentContext, ZeebeContainer zeebeContainer) {
+        this.storageService = storageService;
         this.logOperation = logOperation;
         this.parentContext = parentContext;
         this.zeebeContainer = zeebeContainer;
@@ -112,7 +114,8 @@ public class JarManagementClassLoader {
 
         for (Method method : candidateRunner.getClass().getMethods()) {
             io.camunda.client.annotation.JobWorker annotation = method.getAnnotation(io.camunda.client.annotation.JobWorker.class);
-            if (annotation != null) listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method, zeebeContainer));
+            if (annotation != null)
+                listDetectedRunners.add(new SdkRunnerWorker(candidateRunner, annotation, method, zeebeContainer));
         }
         return listDetectedRunners;
     }
@@ -136,7 +139,7 @@ public class JarManagementClassLoader {
             if (jarStorageEntity.jarfileByte != null) {
                 outputStream.write(jarStorageEntity.jarfileByte);
             } else {
-                storageRunner.readJarBlob(jarStorageEntity, outputStream);
+                storageService.readJarBlob(jarStorageEntity, outputStream);
             }
             outputStream.flush();
             return saveJarFile;

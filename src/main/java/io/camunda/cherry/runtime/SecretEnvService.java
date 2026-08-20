@@ -9,11 +9,10 @@
 /*      Example: database="valid@testPlatorm"                           */
 /*              Administrator give the value "production@server         */
 /* ******************************************************************** */
-package io.camunda.cherry.secretenv;
+package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
 import io.camunda.cherry.db.repository.KeyValueRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 

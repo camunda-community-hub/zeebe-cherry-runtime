@@ -2,12 +2,11 @@ package io.camunda.cherry.tenants;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.runner.LogOperation;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -34,9 +33,9 @@ public class TenantsManager {
     private List<OrchestrationAPI.TenantInformation> currentTenants = new ArrayList<>();
 
     public TenantsManager(JobRunnerFactory jobRunnerFactory,
-                         OrchestrationAPI orchestrationAPI,
-                         LogOperation logOperation,
-                         TaskScheduler scheduler) {
+                          OrchestrationAPI orchestrationAPI,
+                          LogOperation logOperation,
+                          TaskScheduler scheduler) {
         this.jobRunnerFactory = jobRunnerFactory;
         this.orchestrationAPI = orchestrationAPI;
         this.logOperation = logOperation;

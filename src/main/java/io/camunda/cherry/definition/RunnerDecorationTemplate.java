@@ -78,7 +78,7 @@ public class RunnerDecorationTemplate {
      * Keep it easy for a CherryConnector
      *
      * @param cherryConnector cherry connector to generate the template from
-     * @param zeebeContainer zeebe container
+     * @param zeebeContainer  zeebe container
      */
     public RunnerDecorationTemplate(OutboundConnectorFunction cherryConnector, ZeebeContainer zeebeContainer) {
         this.runner = new SdkRunnerCherryConnector(cherryConnector, zeebeContainer);

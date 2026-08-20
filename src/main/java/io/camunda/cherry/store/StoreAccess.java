@@ -1,6 +1,7 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runner.RunnerLightDefinition;
+import io.camunda.cherry.runtime.CherryProperties;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -28,7 +29,10 @@ public abstract class StoreAccess {
 
     public abstract String getType();
 
-    public String getSignature() { return getType()+"-"+getName();}
+    public String getSignature() {
+        return getType() + "-" + getName();
+    }
+
     /**
      * Get the lisf of connector. Each connectorDefition is "light", with name.
      * Then the exploration will continue one by one via the exploreDetails
@@ -61,7 +65,6 @@ public abstract class StoreAccess {
      * INPROGRESS: still exploring
      * INCOMPLETE: the connector / worker is incomplete, can't execute
      * NOELTTEMPLATE : the connector does not have a template - maybe a worker? Need to explore JAR
-     *
      */
     public enum EXPLORATION {READY, INPROGRESS, INCOMPLETE, NOELTTEMPLATE}
 
@@ -134,7 +137,6 @@ public abstract class StoreAccess {
         public String url;
         public String description;
         public String creator;
-        private EXPLORATION status;
         public String documentationRef;
         /**
          * Url to download the Jarfile - attentioon, this file maybe a Zip, and may be need to be explored
@@ -148,11 +150,11 @@ public abstract class StoreAccess {
          * the connector type
          */
         public String connectorType;
-
         /**
          * Set only if the connector come from marketplace, and reference a Hub or Connector source
          */
         public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
+        private EXPLORATION status;
 
         public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
             ConnectorDefinition connectorDefinition = new ConnectorDefinition();
@@ -172,7 +174,13 @@ public abstract class StoreAccess {
         }
 
         public String toString() {
-            return "ConnectorDefinition["+name+"] release:["+release+"] Store["+storeAccess.getName()+"] Implemen.["+hasImplementation+"]";
+            return "ConnectorDefinition[" + name + "] release:[" + release + "] Store[" + storeAccess.getName() + "] Implemen.[" + hasImplementation + "]";
+        }
+
+        public String getJarName() {
+            if (urlJarFile == null)
+                return null;
+            return urlJarFile.substring(urlJarFile.lastIndexOf('/') + 1);
         }
     }
 

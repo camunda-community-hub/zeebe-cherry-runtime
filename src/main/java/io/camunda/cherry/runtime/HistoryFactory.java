@@ -11,7 +11,6 @@ import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,7 @@ public class HistoryFactory {
     Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
     public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
-                         HistoryPerformance historyPerformance) {
+                          HistoryPerformance historyPerformance) {
         this.runnerExecutionRepository = runnerExecutionRepository;
         this.historyPerformance = historyPerformance;
     }
@@ -82,8 +81,9 @@ public class HistoryFactory {
 
     public HistoryPerformance.Performance getPerformance(String runnerType,
                                                          LocalDateTime dateNow,
-                                                         HistoryPerformance.PeriodStatistic periodStatistic) {
-        return historyPerformance.getPerformance(runnerType, dateNow, periodStatistic);
+                                                         HistoryPerformance.PeriodStatistic periodStatistic,
+                                                         long timezoneOffset) {
+        return historyPerformance.getPerformance(runnerType, dateNow, periodStatistic, timezoneOffset);
     }
 
     /* -------------------------------------------------------- */

@@ -21,11 +21,13 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.OperationException;
+import io.camunda.cherry.runtime.LogOperation;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -45,7 +47,7 @@ public class RunnerFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(RunnerFactory.class.getName());
     private final JarManagementClassLoader jarManagementClassLoader;
-    private final StorageRunner storageRunner;
+    private final StorageService storageService;
     private final RunnerExecutionRepository runnerExecutionRepository;
     private final LogOperation logOperation;
     private final SessionFactory sessionFactory;
@@ -66,14 +68,14 @@ public class RunnerFactory {
 
 
     RunnerFactory(JarManagementClassLoader jarManagementClassLoader,
-                  StorageRunner storageRunner,
+                  StorageService storageService,
                   RunnerExecutionRepository runnerExecutionRepository,
                   RunnerUploadFactory runnerUploadFactory,
                   LogOperation logOperation,
                   SessionFactory sessionFactory,
                   ApplicationContext context) {
         this.jarManagementClassLoader = jarManagementClassLoader;
-        this.storageRunner = storageRunner;
+        this.storageService = storageService;
         this.runnerExecutionRepository = runnerExecutionRepository;
         this.logOperation = logOperation;
         this.sessionFactory = sessionFactory;
@@ -112,7 +114,7 @@ public class RunnerFactory {
         }
 
         // get the list of entities
-        List<RunnerDefinitionEntity> listRunnersEntity = storageRunner.getRunners(new StorageRunner.Filter());
+        List<RunnerDefinitionEntity> listRunnersEntity = storageService.getRunners(new StorageService.Filter());
         // identify entity which does not exist
         List<RunnerDefinitionEntity> listEntityToRemove = listRunnersEntity.stream()
                 .filter(t -> !mapExistingRunners.containsKey(t.type))
@@ -126,7 +128,7 @@ public class RunnerFactory {
                 Transaction txn = session.beginTransaction();
                 runnerExecutionRepository.deleteFromEntityType(entityToRemove.type);
 
-                storageRunner.removeRunner(entityToRemove);
+                storageService.deleteRunnerDefinition(entityToRemove);
                 txn.commit();
             } catch (Exception e) {
                 logOperation.logError("Can't delete [" + entityToRemove.type + "]", e);
@@ -147,10 +149,10 @@ public class RunnerFactory {
      * @param filter specify the type of runners
      * @return list of runner
      */
-    public List<AbstractRunner> getAllRunners(StorageRunner.Filter filter) {
+    public List<AbstractRunner> getAllRunners(StorageService.Filter filter) {
         List<AbstractRunner> listRunners = new ArrayList<>();
 
-        List<RunnerDefinitionEntity> listDefinitionRunners = storageRunner.getRunners(filter);
+        List<RunnerDefinitionEntity> listDefinitionRunners = storageService.getRunners(filter);
 
         for (RunnerDefinitionEntity runnerDefinitionEntity : listDefinitionRunners) {
             listRunners.addAll(getRunnersFromEntity(runnerDefinitionEntity));
@@ -166,8 +168,8 @@ public class RunnerFactory {
      * @param filter to select part of the runner
      * @return the list of entity
      */
-    public List<RunnerDefinitionEntity> getAllRunnersEntity(StorageRunner.Filter filter) {
-        return storageRunner.getRunners(filter);
+    public List<RunnerDefinitionEntity> getAllRunnersEntity(StorageService.Filter filter) {
+        return storageService.getRunners(filter);
     }
 
     /**

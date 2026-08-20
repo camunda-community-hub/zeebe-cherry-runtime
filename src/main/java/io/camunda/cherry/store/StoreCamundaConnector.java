@@ -11,6 +11,7 @@ package io.camunda.cherry.store;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,7 +308,7 @@ public class StoreCamundaConnector extends StoreAccess {
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
         try {
             ConnectorDownload connectorDownload = new ConnectorDownload();
-            connectorDownload.jarName = connectorDefinition.urlJarFile.substring(connectorDefinition.urlJarFile.lastIndexOf("/") + 1);
+            connectorDownload.jarName = connectorDefinition.getJarName();
 
             byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
             if (jarBytes == null) {

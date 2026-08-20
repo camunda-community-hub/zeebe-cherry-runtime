@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.rest;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
@@ -18,7 +19,6 @@ import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
-import io.camunda.cherry.runner.StorageRunner;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
 import io.camunda.cherry.runtime.OperationFactory;
@@ -72,7 +72,8 @@ public class RunnerRestController {
     @GetMapping(value = "/api/runner/list", produces = "application/json")
     public List<RunnerInformation> getRunnersList(@RequestParam(name = "logo", required = false) Boolean logo,
                                                   @RequestParam(name = "stats", required = false) Boolean stats,
-                                                  @RequestParam(name = "period", required = false) String period) {
+                                                  @RequestParam(name = "period", required = false) String period,
+                                                  @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
         List<AbstractRunner> listRunners = getListRunners(true);
         HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
@@ -82,13 +83,14 @@ public class RunnerRestController {
                 .map(w -> this.completeRunnerInformation(w, // this
                         logo == null || logo, // logo
                         stats != null && stats, // stats
-                        dateNow, periodStatistic))
+                        dateNow, periodStatistic, timezoneOffset))
                 .toList();
     }
 
     @GetMapping(value = "/api/runner/dashboard", produces = "application/json")
     public Map<String, Object> getDashboard(@RequestParam(name = "period", required = false) String period,
-                                            @RequestParam(name = "orderBy", required = false) String orderByParam) {
+                                            @RequestParam(name = "orderBy", required = false) String orderByParam,
+                                            @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         Map<String, Object> info = new HashMap<>();
 
         DisplayOrderBy orderBy = DisplayOrderBy.NAMEASC;
@@ -112,7 +114,7 @@ public class RunnerRestController {
             HistoryFactory.Statistic statisticRunner = historyFactory.getStatistic(runner.getType(), dateNow,
                     periodStatistic);
             HistoryPerformance.Performance performanceRunner = historyFactory.getPerformance(runner.getType(), dateNow,
-                    periodStatistic);
+                    periodStatistic, timezoneOffset);
 
             infoRunner.put(RestAttribute.NAME, (runner.getName() == null ? "" : runner.getName()));
             infoRunner.put(RestAttribute.TYPE, runner.getType());
@@ -172,7 +174,8 @@ public class RunnerRestController {
     public Optional<RunnerInformation> getWorker(@RequestParam(name = "runnertype") String runnerType,
                                                  @RequestParam(name = "logo", required = false) Boolean logo,
                                                  @RequestParam(name = "stats", required = false) Boolean stats,
-                                                 @RequestParam(name = "period", required = false) String period) {
+                                                 @RequestParam(name = "period", required = false) String period,
+                                                 @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
         HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
@@ -182,7 +185,7 @@ public class RunnerRestController {
                 .filter(worker -> worker.getIdentification().equals(runnerType))
                 .map(RunnerInformation::getRunnerInformation)
                 .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
-                        dateNow, periodStatistic))
+                        dateNow, periodStatistic, timezoneOffset))
                 .findFirst();
     }
 
@@ -290,7 +293,7 @@ public class RunnerRestController {
             logger.info("Stop executed for runnerType[" + runnerType + "]: " + isStopped);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
-            return completeRunnerInformation(runnerInfo, false, false, null, null);
+            return completeRunnerInformation(runnerInfo, false, false, null, null, 0L);
         } catch (OperationException e) {
             if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerType + "] not found");
@@ -317,7 +320,7 @@ public class RunnerRestController {
             logger.info("Start executed for [{}]: {}", runnerType, isStarted);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
-            return completeRunnerInformation(runnerInfo, false, false, null, null);
+            return completeRunnerInformation(runnerInfo, false, false, null, null, 0L);
         } catch (OperationException e) {
             if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "WorkerName [" + runnerType + "] not found");
@@ -447,7 +450,7 @@ public class RunnerRestController {
     }
 
     private AbstractRunner getRunnerByName(String runnerName) {
-        List<AbstractRunner> listFiltered = runnerFactory.getAllRunners(new StorageRunner.Filter().name(runnerName));
+        List<AbstractRunner> listFiltered = runnerFactory.getAllRunners(new StorageService.Filter().name(runnerName));
 
         if (listFiltered.size() != 1)
             return null;
@@ -455,7 +458,7 @@ public class RunnerRestController {
     }
 
     private AbstractRunner getRunnerByType(String runnerType) {
-        List<AbstractRunner> listFiltered = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
+        List<AbstractRunner> listFiltered = runnerFactory.getAllRunners(new StorageService.Filter().type(runnerType));
 
         if (listFiltered.size() != 1)
             return null;
@@ -466,7 +469,8 @@ public class RunnerRestController {
                                                         boolean withLogo,
                                                         boolean withStats,
                                                         LocalDateTime dateNow,
-                                                        HistoryPerformance.PeriodStatistic periodStatistic) {
+                                                        HistoryPerformance.PeriodStatistic periodStatistic,
+                                                        long timezoneOffset) {
         runnerInformation.setActive(cherryJobRunnerFactory.isActiveRunner(runnerInformation.getType()));
         runnerInformation.setDisplayLogo(withLogo);
 
@@ -474,7 +478,7 @@ public class RunnerRestController {
             runnerInformation.setStatistic(
                     historyFactory.getStatistic(runnerInformation.getType(), dateNow, periodStatistic));
             runnerInformation.setPerformance(
-                    historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic));
+                    historyFactory.getPerformance(runnerInformation.getType(), dateNow, periodStatistic, timezoneOffset));
         }
 
         return runnerInformation;
@@ -482,7 +486,7 @@ public class RunnerRestController {
 
     private List<AbstractRunner> getListRunners(boolean withFrameworkRunnersIncluded) {
         // get the list of running, with the framework runner or not.
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter());
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter());
 
         if (!withFrameworkRunnersIncluded) {
             listRunners = listRunners.stream().filter(t -> {
