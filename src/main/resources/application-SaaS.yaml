@@ -1,7 +1,7 @@
 
 cherry:
   runner:
-    refreshTopicsInSeconds: 10
+    refreshTopicsInSeconds: 5
 
   connectorslib:
     uploadpath: ./localstorage/upload

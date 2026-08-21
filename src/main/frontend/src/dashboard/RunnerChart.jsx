@@ -93,6 +93,28 @@ class RunnerChart extends React.Component {
                            }}
                            title="Errors"/>
                 }
+                {this.state.type === "TopicCount" && this.state.runner && this.state.runner.performance &&
+                    <Chart type="HorizontalBar" dataList={this.getTopicCount()} oneColor={true}
+                           options={{
+                               title: this.state.title,
+                               showXLabel: false,
+                               showYLabel: true,
+                               width: 300,
+                               height: 100,
+                               showGrid: false
+                           }}
+                           title="Pending Jobs (Topic Count)"/>
+                }
+                {this.state.type === "TopicCountShort" && this.state.runner && this.state.runner.performance &&
+                    <Chart type="HorizontalBar" dataList={this.getTopicCount()} oneColor={true}
+                           options={{
+                               showXLabel: true,
+                               showYLabel: true,
+                               showGrid: false,
+                               width: 300,
+                               height: 150
+                           }}/>
+                }
             </div>
         )
 
@@ -128,7 +150,7 @@ class RunnerChart extends React.Component {
     getDurationsPic() {
         const result = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
-            let record = {label: element.slot, value: element.picTimeInMs};
+            let record = {label: element.slot, value: element.peakTimeInMs};
             result.push(record);
         });
         return result;
@@ -138,6 +160,15 @@ class RunnerChart extends React.Component {
         const result = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
             let record = {label: element.slot, value: element.executionsBpmnErrors + element.executionsFailed};
+            result.push(record);
+        });
+        return result;
+    }
+
+    getTopicCount() {
+        const result = [];
+        this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+            let record = {label: element.slot, value: element.topicCount};
             result.push(record);
         });
         return result;
