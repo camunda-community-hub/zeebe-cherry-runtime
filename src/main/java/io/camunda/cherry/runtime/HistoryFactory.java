@@ -126,6 +126,14 @@ public class HistoryFactory {
                 PageRequest.of(pageNumberInt, rowsPerPageInt));
     }
 
+    public List<TopicCountEntity> getTopicCounts(String runnerType,
+                                                 LocalDateTime dateThreshold,
+                                                 int pageNumberInt,
+                                                 int rowsPerPageInt) {
+        return topicCountRepository.selectRunnerRecords(runnerType, dateThreshold,
+                PageRequest.of(pageNumberInt, rowsPerPageInt));
+    }
+
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Save                                          */
