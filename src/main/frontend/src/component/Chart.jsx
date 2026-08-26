@@ -6,13 +6,27 @@
 //
 // -----------------------------------------------------------
 import React from 'react';
-import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip} from 'chart.js'
+import {
+    BarController,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend,
+    LinearScale,
+    LineController,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip
+} from 'chart.js'
 import {Bar, Doughnut} from 'react-chartjs-2';
 
 ChartJS.register(
     CategoryScale,
     LinearScale,
-    BarElement, Title, Tooltip, Legend
+    BarController, BarElement,
+    LineController, LineElement, PointElement,
+    Title, Tooltip, Legend
 )
 const backgroundColor = [
     'rgba(255, 99, 132, 0.2)',
@@ -52,6 +66,9 @@ class Chart extends React.Component {
             data: props.data,
             dataMap: props.dataMap,
             dataList: props.dataList,
+            dataList2: props.dataList2,
+            label: props.label,
+            label2: props.label2,
             oneColor: props.oneColor,
             options: props.options
         };
@@ -76,6 +93,11 @@ class Chart extends React.Component {
         if (prevProps.dataList !== this.props.dataList) {
             this.setState({
                 dataList: this.props.dataList
+            });
+        }
+        if (prevProps.dataList2 !== this.props.dataList2) {
+            this.setState({
+                dataList2: this.props.dataList2
             });
         }
         if (prevProps.data !== this.props.data) {
@@ -137,7 +159,7 @@ class Chart extends React.Component {
             'responsive': false,
             'plugins': {
                 'legend': {
-                    'display': false
+                    'display': this.state.options.showLegend === true
                 },
             },
         };
@@ -160,6 +182,19 @@ class Chart extends React.Component {
                         display: false,
                     }
                 },
+            };
+        }
+        if (this.state.dataList2 && chartOptions.scales) {
+            // secondary axis, on the right, for the line dataset - it may not share the same scale as the bars
+            chartOptions.scales.y1 = {
+                position: 'right',
+                beginAtZero: true,
+                ticks: {
+                    display: this.state.options.showYLabel !== false
+                },
+                grid: {
+                    display: false,
+                }
             };
         }
         if (this.state.type === 'VerticalBar') {
@@ -203,10 +238,8 @@ class Chart extends React.Component {
         const dataChart = {};
 
         dataChart.datasets = [];
-        dataChart.datasets.label = this.state.title;
 
-
-        let dataset = {};
+        let dataset = {type: 'bar', label: this.state.label || this.state.title};
         dataChart.datasets.push(dataset);
         if (this.state.oneColor) {
             dataset.backgroundColor = oneBackgroundColor;
@@ -221,6 +254,23 @@ class Chart extends React.Component {
             const resultTransformed = this.getLabelsDataFromList(this.state.dataList);
             dataChart.labels = resultTransformed.labels;
             dataset.data = resultTransformed.data;
+        }
+
+        if (this.state.dataList2) {
+            const resultTransformed2 = this.getLabelsDataFromList(this.state.dataList2);
+            if (!dataChart.labels)
+                dataChart.labels = resultTransformed2.labels;
+            dataChart.datasets.push({
+                type: 'line',
+                label: this.state.label2,
+                data: resultTransformed2.data,
+                borderColor: borderColor[1],
+                backgroundColor: borderColor[1],
+                fill: false,
+                borderWidth: 1,
+                pointRadius: 1,
+                yAxisID: 'y1',
+            });
         }
         return dataChart;
     }

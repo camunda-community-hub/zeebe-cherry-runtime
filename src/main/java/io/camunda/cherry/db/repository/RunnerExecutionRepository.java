@@ -48,4 +48,8 @@ public interface RunnerExecutionRepository extends JpaRepository<RunnerExecution
             + " where runnerexecution.runnerType = :runnerType")
     void deleteFromEntityType(@Param("runnerType") String runnerType);
 
+    @Modifying
+    @Query("delete from RunnerExecutionEntity e where e.executionTime < :cutoff")
+    int deleteByExecutionTimeBefore(@Param("cutoff") LocalDateTime cutoff);
+
 }

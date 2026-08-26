@@ -179,6 +179,54 @@ public class RunnerRestController {
     }
 
     /**
+     * Get topic counts for a runner
+     *
+     * @param runnerType        type of the runner we search topic counts for
+     * @param nbHoursMonitoring from now to now-nbHoursMonitoring. Max is 30*7*24, default is 24
+     * @param pageNumber        page number, starts at 0
+     * @param rowsPerPage       number of rows per page. Maximum is 10000
+     * @param timezoneOffset    time zone offset for the browser
+     * @return topic counts for the runner ordered by execution time (newest first)
+     */
+    @GetMapping(value = "/api/runner/topiccount", produces = "application/json")
+    public Map<String, Object> getTopicCount(@RequestParam(name = "runnertype") String runnerType,
+                                             @RequestParam(name = "nbhoursmonitoring", required = false) Integer nbHoursMonitoring,
+                                             @RequestParam(name = "pagenumber", required = false) Integer pageNumber,
+                                             @RequestParam(name = "rowsperpage", required = false) Integer rowsPerPage,
+                                             @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
+        Map<String, Object> info = new HashMap<>();
+        LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
+        int nbHours;
+        try {
+            nbHours = Math.max(nbHoursMonitoring == null ? 24 : nbHoursMonitoring.intValue(), 1);
+            nbHours = Math.min(30 * 7 * 24, nbHours);
+        } catch (Exception e) {
+            logger.error("RunnerRestController.getTopicCount: value not acceptable [{}]", nbHoursMonitoring);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "value not acceptable [" + nbHoursMonitoring + "]");
+        }
+
+        int pageNumberInt = pageNumber == null ? 0 : pageNumber.intValue();
+        int rowsPerPageInt = rowsPerPage == null ? 20 : rowsPerPage.intValue();
+        if (rowsPerPageInt < 1 || rowsPerPageInt > 10000)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "rowsPerPage must be between [1..10000]");
+
+        LocalDateTime dateThreshold = DateOperation.getLocalDateTimeNow().minusHours(nbHours);
+
+        List<io.camunda.cherry.db.entity.TopicCountEntity> listTopicCounts = historyFactory.getTopicCounts(runnerType, dateThreshold,
+                pageNumberInt, rowsPerPageInt);
+
+        info.put("topicCounts", listTopicCounts.stream().map(tc -> {
+            Map<String, Object> item = new HashMap<>();
+            item.put("runnerType", tc.runnerType);
+            item.put("topicCount", tc.topicCount);
+            item.put("executionTime", DateOperation.dateTimeToHumanString(tc.executionTime, timezoneOffset));
+            return item;
+        }).toList());
+        info.put("timestamp", String.valueOf(System.currentTimeMillis()));
+        return info;
+    }
+
+    /**
      * Get operations for a runner. We get one week of operation
      *
      * @param runnerType        type of the runner we search the operations

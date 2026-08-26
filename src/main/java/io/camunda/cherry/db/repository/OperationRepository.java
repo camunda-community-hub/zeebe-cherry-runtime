@@ -2,6 +2,7 @@ package io.camunda.cherry.db.repository;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,5 +20,9 @@ public interface OperationRepository extends JpaRepository<OperationEntity, Long
     @Query("select operationEntity from OperationEntity operationEntity"
             + " where operationEntity.executionTime >= :dateAfter" + " order by operationEntity.executionTime desc")
     List<OperationEntity> selectAll(@Param("dateAfter") LocalDateTime dateAfter);
+
+    @Modifying
+    @Query("delete from OperationEntity e where e.executionTime < :cutoff")
+    int deleteByExecutionTimeBefore(@Param("cutoff") LocalDateTime cutoff);
 
 }

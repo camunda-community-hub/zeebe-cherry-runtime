@@ -26,8 +26,14 @@ public class CherryMain {
     @Autowired
     JobRunnerFactory jobRunnerFactory;
 
+    @Autowired
+    DatabasePurgeService databasePurgeService;
+
     @PostConstruct
     public void init() {
+        logger.info("----- CherryMain.0 Purge old database records");
+        databasePurgeService.purgeAllRecords();
+
         // first, check all internal runner
         logger.info("----- CherryMain.1 Load all embedded runners");
         runnerFactory.init();

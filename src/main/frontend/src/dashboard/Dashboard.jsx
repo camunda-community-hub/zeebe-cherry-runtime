@@ -164,7 +164,7 @@ class Dashboard extends React.Component {
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
                                 <td style={{verticalAlign: "top"}}>
-                                    <RunnerChart type="ExecutionsShort" runnerDisplay={runner} title={false}
+                                    <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>
                             </tr>

@@ -35,6 +35,8 @@ class RunnerChart extends React.Component {
     }
 
     render() {
+        const executionsTopic = (this.state.type === "ExecutionsTopic" && this.state.runner && this.state.runner.performance)
+            ? this.getExecutionsTopic() : null;
         return (
             <div style={{border: "1px solid", padding: "5px"}}>
                 {this.state.type === "Executions" && this.state.runner && this.state.runner.performance &&
@@ -55,6 +57,19 @@ class RunnerChart extends React.Component {
                                showXLabel: false,
                                showYLabel: false,
                                showGrid: false
+                           }}/>
+                }
+                {this.state.type === "ExecutionsTopic" && this.state.runner && this.state.runner.performance &&
+                    <Chart type="HorizontalBar"
+                           dataList={executionsTopic.executions}
+                           dataList2={executionsTopic.topicCount}
+                           label="Executions" label2="Pending Jobs"
+                           oneColor={true}
+                           options={{
+                               showXLabel: false,
+                               showYLabel: false,
+                               showGrid: false,
+                               showLegend: true
                            }}/>
                 }
                 {this.state.type === "DurationsAvg" && this.state.runner && this.state.runner.performance &&
@@ -93,6 +108,28 @@ class RunnerChart extends React.Component {
                            }}
                            title="Errors"/>
                 }
+                {this.state.type === "TopicCount" && this.state.runner && this.state.runner.performance &&
+                    <Chart type="HorizontalBar" dataList={this.getTopicCount()} oneColor={true}
+                           options={{
+                               title: this.state.title,
+                               showXLabel: false,
+                               showYLabel: true,
+                               width: 300,
+                               height: 100,
+                               showGrid: false
+                           }}
+                           title="Pending Jobs (Topic Count)"/>
+                }
+                {this.state.type === "TopicCountShort" && this.state.runner && this.state.runner.performance &&
+                    <Chart type="HorizontalBar" dataList={this.getTopicCount()} oneColor={true}
+                           options={{
+                               showXLabel: true,
+                               showYLabel: true,
+                               showGrid: false,
+                               width: 300,
+                               height: 150
+                           }}/>
+                }
             </div>
         )
 
@@ -103,7 +140,8 @@ class RunnerChart extends React.Component {
      * Graph expect [{value:123, label="Month"}]
      *
      * runner contains {performance : {listIntervals: [
-     *    {slot: "103D00:15", executions: 0, sumOfExecutionTime: 0, executionsSucceeded: 0, executionsFailed: 0,…}
+     *    {slot: "103D00:15", executions: 0, sumOfExecutionTime: 0, executionsSucceeded: 0, executionsFailed: 0,
+     *     topicCount: 0, …}
      *    }}
      */
     getExecutions() {
@@ -113,7 +151,20 @@ class RunnerChart extends React.Component {
             result.push(record);
         });
         return result;
+    }
 
+    /**
+     * Executions (bar) and topicCount - the pending job count (line) - for the same intervals,
+     * so RunnerChart can plot them together on one graph.
+     */
+    getExecutionsTopic() {
+        const executions = [];
+        const topicCount = [];
+        this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+            executions.push({label: element.slot, value: element.executions});
+            topicCount.push({label: element.slot, value: element.topicCount});
+        });
+        return {executions, topicCount};
     }
 
     getDurationsAvg() {
@@ -128,7 +179,7 @@ class RunnerChart extends React.Component {
     getDurationsPic() {
         const result = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
-            let record = {label: element.slot, value: element.picTimeInMs};
+            let record = {label: element.slot, value: element.peakTimeInMs};
             result.push(record);
         });
         return result;
@@ -138,6 +189,15 @@ class RunnerChart extends React.Component {
         const result = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
             let record = {label: element.slot, value: element.executionsBpmnErrors + element.executionsFailed};
+            result.push(record);
+        });
+        return result;
+    }
+
+    getTopicCount() {
+        const result = [];
+        this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
+            let record = {label: element.slot, value: element.topicCount};
             result.push(record);
         });
         return result;
