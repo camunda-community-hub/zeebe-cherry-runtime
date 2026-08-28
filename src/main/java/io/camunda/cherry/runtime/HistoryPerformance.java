@@ -7,12 +7,10 @@
 package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
-import io.camunda.cherry.db.entity.TopicCountEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
-import io.camunda.cherry.db.repository.TopicCountRepository;
-import io.camunda.cherry.util.DateOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 

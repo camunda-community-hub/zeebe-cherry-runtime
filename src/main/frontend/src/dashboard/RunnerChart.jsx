@@ -179,6 +179,16 @@ class RunnerChart extends React.Component {
             return "";
         const spaceIndex = humanTimeSlot.indexOf(" ");
         return spaceIndex === -1 ? humanTimeSlot : humanTimeSlot.substring(spaceIndex + 1);
+
+
+    /**
+     * humanTimeSlot is formatted as "yyyy-MM-dd HH:mm" - only the "HH:mm" part is useful on the axis.
+     */
+    getHourLabel(humanTimeSlot) {
+        if (!humanTimeSlot)
+            return "";
+        const spaceIndex = humanTimeSlot.indexOf(" ");
+        return spaceIndex === -1 ? humanTimeSlot : humanTimeSlot.substring(spaceIndex + 1);
     }
 
     getDurationsAvg() {

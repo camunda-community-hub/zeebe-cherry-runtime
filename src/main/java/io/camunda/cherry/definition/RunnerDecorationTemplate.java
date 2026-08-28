@@ -195,9 +195,11 @@ public class RunnerDecorationTemplate {
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
         } else if (runner.getAppliesTo().size() == 1) {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, elementType));
         } else {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, elementType));
         }
         // no groups at this moment
@@ -287,6 +289,16 @@ public class RunnerDecorationTemplate {
 
         // check if the runner generates error
         if (!runner.getListBpmnErrors().isEmpty()) {
+            //
+            //            "label": "ControllerPage Expression",
+            //            "description": "Expression to define BPMN Errors to throw",
+            //            "group": "errors",
+            //            "type": "Hidden",
+            //            "value": "bpmnError(error.code, error.message)",
+            //            "binding": {
+            //            "type": "zeebe:taskHeader",
+            //                "key": "errorExpression"
+            //
             Map<String, Object> errorParameters = new LinkedHashMap<>();
             errorParameters.put(ATTR_LABEL, "Error Expression");
             errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw with error context");

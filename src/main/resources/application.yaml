@@ -1,7 +1,4 @@
 cherry:
-  runner:
-    refreshTopicsInSeconds: 10
-
   connectorslib:
     uploadpath: ./localstorage/upload
     classloaderpath: ./localstorage/classloader

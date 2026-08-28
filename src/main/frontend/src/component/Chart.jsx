@@ -165,10 +165,10 @@ class Chart extends React.Component {
     getOptionsBarChart() {
         const chartOptions = {
             'maintainAspectRatio': false,
-            'responsive': this.state.options.width === undefined && this.state.options.height === undefined,
+            'responsive': false,
             'plugins': {
                 'legend': {
-                    'display': this.state.options.showLegend === true
+                    'display': false
                 },
             },
         };
@@ -191,19 +191,6 @@ class Chart extends React.Component {
                         display: false,
                     }
                 },
-            };
-        }
-        if (this.state.dataList2 && chartOptions.scales) {
-            // secondary axis, on the right, for the line dataset - it may not share the same scale as the bars
-            chartOptions.scales.y1 = {
-                position: 'right',
-                beginAtZero: true,
-                ticks: {
-                    display: this.state.options.showYLabel !== false
-                },
-                grid: {
-                    display: false,
-                }
             };
         }
         if (this.state.type === 'VerticalBar') {
@@ -247,8 +234,10 @@ class Chart extends React.Component {
         const dataChart = {};
 
         dataChart.datasets = [];
+        dataChart.datasets.label = this.state.title;
 
-        let dataset = {type: 'bar', label: this.state.label || this.state.title};
+
+        let dataset = {};
         dataChart.datasets.push(dataset);
         if (this.state.oneColor) {
             dataset.backgroundColor = oneBackgroundColor;
@@ -264,26 +253,6 @@ class Chart extends React.Component {
             dataChart.labels = resultTransformed.labels;
             dataset.data = resultTransformed.data;
         }
-
-        if (this.state.dataList2) {
-            const resultTransformed2 = this.getLabelsDataFromList(this.state.dataList2);
-            if (!dataChart.labels)
-                dataChart.labels = resultTransformed2.labels;
-            dataChart.datasets.push({
-                type: 'line',
-                label: this.state.label2,
-                data: resultTransformed2.data,
-                borderColor: borderColor[1],
-                backgroundColor: borderColor[1],
-                fill: false,
-                borderWidth: 1,
-                pointRadius: 1,
-                yAxisID: 'y1',
-            });
-        }
-
-        dataset.label = this.state.title;
-
         return dataChart;
     }
 
