@@ -31,16 +31,15 @@ public class HistoryFactory {
 
 
     private final RunnerExecutionRepository runnerExecutionRepository;
-
-
     private final TopicCountRepository topicCountRepository;
-
-
     private final HistoryPerformance historyPerformance;
+
     public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
-                          HistoryPerformance historyPerformance) {
+                          HistoryPerformance historyPerformance,
+                          TopicCountRepository topicCountRepository) {
         this.runnerExecutionRepository = runnerExecutionRepository;
         this.historyPerformance = historyPerformance;
+        this.topicCountRepository = topicCountRepository;
     }
 
     /**

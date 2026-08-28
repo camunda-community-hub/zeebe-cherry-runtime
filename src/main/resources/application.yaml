@@ -46,7 +46,7 @@ cherry:
 
 
   database:
-    purgeRetentionDays: 5
+    purgeRetentionDays: 30
 
   tenants:
     # Enable the tenants functionality "autoDectection" implie to connect to Operate

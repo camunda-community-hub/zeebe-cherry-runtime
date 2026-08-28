@@ -8,6 +8,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
@@ -66,7 +67,7 @@ public class RunnerMonitor {
     }
 
     private void refreshListTopics() {
-        List<AbstractRunner> runnerList = runnerFactory.getAllRunners(new StorageRunner.Filter());
+        List<AbstractRunner> runnerList = runnerFactory.getAllRunners(new StorageService.Filter());
 
         if (runnerList.isEmpty()) {
             logger.warn("RunnerMonitor - no runners registered yet, skipping topic count");
