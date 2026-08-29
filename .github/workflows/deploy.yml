@@ -1,4 +1,4 @@
-name: Deploy artifacts with Maven
+name: Deploy artifacts on Nexus
 on:
   release:
     types: [published]
