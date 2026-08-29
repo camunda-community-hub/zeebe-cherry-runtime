@@ -3,14 +3,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>io.camunda.community</groupId>
+    <artifactId>zeebe-cherry-runtime</artifactId>
     <!-- 3.2.0 using Zeebe 8.5.x/ SporingBoot 3.3.x -->
     <!-- 3.4.0 Multi tenant access and 8.8 -->
     <!-- 3.4.1 SaaS connection -->
     <!-- 3.4.2 Error in image -->
     <!-- 3.5.0 Add job queue in the dashboard -->
-    <groupId>io.camunda.community</groupId>
-    <artifactId>zeebe-cherry-runtime</artifactId>
-    <version>3.5.0</version>
+    <!-- 3.5.1 Rebuild the deployment-->
+    <version>3.5.1</version>
+
     <name>Zeebe Cherry Runtime</name>
     <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>
     <url>https://github.com/camunda-community-hub/zeebe-cherry-runtime</url>
