@@ -11,6 +11,16 @@
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
     <version>3.5.0</version>
+    <name>Zeebe Cherry Runtime</name>
+    <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>
+    <url>https://github.com/camunda-community-hub/zeebe-cherry-runtime</url>
+
+    <scm>
+        <url>https://github.com/camunda-community-hub/zeebe-cherry-runtime</url>
+        <connection>scm:git:git@github.com:camunda-community-hub/zeebe-cherry-runtime.git</connection>
+        <developerConnection>scm:git:git@github.com:camunda-community-hub/zeebe-cherry-runtime.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <java.version>21</java.version>
