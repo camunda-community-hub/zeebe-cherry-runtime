@@ -11,7 +11,7 @@
     <!-- 3.4.2 Error in image -->
     <!-- 3.5.0 Add job queue in the dashboard -->
     <!-- 3.5.1 Rebuild the deployment-->
-    <version>3.5.1</version>
+    <version>3.5.2</version>
 
     <name>Zeebe Cherry Runtime</name>
     <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>
