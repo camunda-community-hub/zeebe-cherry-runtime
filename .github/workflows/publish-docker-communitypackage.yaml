@@ -38,10 +38,6 @@ jobs:
       - name: Build with Maven
         run:  CI=false mvn --batch-mode --update-snapshots package
 
-      - name: Extract Maven project version
-        id: project
-        run: echo "version=$(mvn --batch-mode -q -DforceStdout help:evaluate -Dexpression=project.version)" >> "$GITHUB_OUTPUT"
-
       - name: OperationLog in to the Container registry
         uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b
         with:
@@ -55,13 +51,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ steps.project.outputs.version }}
+            type=raw,value=${{ github.event.release.tag_name }}
             type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          version: v0.7.0
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
