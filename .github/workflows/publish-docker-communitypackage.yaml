@@ -4,11 +4,9 @@
 # documentation.
 
 
-name: Create and publish a Docker image
+name: Create, Publish Docker image on Community-package
 
 on:
-  push:
-    branches: [main]
   release:
     types: [published]
 
@@ -30,7 +28,7 @@ jobs:
       - name: Set up Java environment
         uses: actions/setup-java@v1
         with:
-          java-version: 17
+          java-version: 21
           gpg-private-key: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
           gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE
 
@@ -39,6 +37,10 @@ jobs:
 
       - name: Build with Maven
         run:  CI=false mvn --batch-mode --update-snapshots package
+
+      - name: Extract Maven project version
+        id: project
+        run: echo "version=$(mvn --batch-mode -q -DforceStdout help:evaluate -Dexpression=project.version)" >> "$GITHUB_OUTPUT"
 
       - name: OperationLog in to the Container registry
         uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b
@@ -52,6 +54,9 @@ jobs:
         uses: docker/metadata-action@69f6fc9d46f2f8bf0d5491e4aabe0bb8c6a4678a
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.project.outputs.version }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc

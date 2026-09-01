@@ -27,8 +27,11 @@ class HeaderMessage extends React.Component {
     }
 
     componentDidMount() {
-        const intervalId = setInterval(this.performAction, 60000);
+        this.intervalId = setInterval(this.performAction, 60000);
+    }
 
+    componentWillUnmount() {
+        clearInterval(this.intervalId);
     }
 
     performAction = () => {
