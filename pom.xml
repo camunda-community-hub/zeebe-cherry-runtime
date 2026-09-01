@@ -25,11 +25,9 @@
         <!--Version 8.3.1-->
 
         <!-- Zeebe 3.4.0: 8.7.8 -->
-        <!-- Zeebe 5.0.0: 8.9.12 - only on Camunda's private Artifactory (artifacts.camunda.com), not Maven Central.
-             Requires <server> credentials in ~/.m2/settings.xml for repository ids "identity" and "connectors". -->
-        <version.connector-runtime>8.9.15</version.connector-runtime>
+        <version.connector-runtime>8.9.8</version.connector-runtime>
         <!--Version 8.3.1-->
-        <version.connector-validation>8.9.12</version.connector-validation>
+        <version.connector-validation>8.9.8</version.connector-validation>
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
         <version.operate-client>8.8.1</version.operate-client>
 
@@ -88,7 +86,7 @@
             <artifactId>spring-boot-starter-camunda-sdk</artifactId>
             <version>8.9.15</version>
         </dependency>
--->
+
 
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java
         <dependency>

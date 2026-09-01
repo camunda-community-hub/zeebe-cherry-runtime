@@ -13,7 +13,6 @@ import io.camunda.cherry.db.repository.TopicCountRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +27,11 @@ import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
 @Service
 public class HistoryFactory {
 
-    private final RunnerExecutionRepository runnerExecutionRepository;
-    private final HistoryPerformance historyPerformance;
     Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
-
     private final RunnerExecutionRepository runnerExecutionRepository;
-    private final TopicCountRepository topicCountRepository;
     private final HistoryPerformance historyPerformance;
+    private final TopicCountRepository topicCountRepository;
 
     public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
                           HistoryPerformance historyPerformance,
@@ -133,6 +129,14 @@ public class HistoryFactory {
                 PageRequest.of(pageNumberInt, rowsPerPageInt));
     }
 
+    public List<TopicCountEntity> getTopicCounts(String runnerType,
+                                                 LocalDateTime dateThreshold,
+                                                 int pageNumberInt,
+                                                 int rowsPerPageInt) {
+        return topicCountRepository.selectRunnerRecords(runnerType, dateThreshold,
+                PageRequest.of(pageNumberInt, rowsPerPageInt));
+    }
+
     /* -------------------------------------------------------- */
     /*                                                          */
     /*  Save                                          */
@@ -174,6 +178,18 @@ public class HistoryFactory {
             runnerExecutionRepository.save(runnerExecutionEntity);
         } catch (Exception e) {
             logger.error("CherryHistoricFactory.saveExcution: failed " + e.getMessage() + " " + e.getCause());
+        }
+    }
+
+    public void saveTopicCount(String runnerType, long topicCount) {
+        try {
+            TopicCountEntity entity = new TopicCountEntity();
+            entity.runnerType = runnerType;
+            entity.executionTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+            entity.topicCount = topicCount;
+            topicCountRepository.save(entity);
+        } catch (Exception e) {
+            logger.error("HistoryFactory.saveTopicCount: failed {} {}", e.getMessage(), e.getCause());
         }
     }
 
