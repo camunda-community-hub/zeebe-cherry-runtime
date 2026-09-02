@@ -9,6 +9,9 @@ name: Create, Publish Docker image on Community-package
 on:
   release:
     types: [published]
+  push:
+    paths:
+      - '.github/workflows/publish-docker-communitypackage.yaml'
 
 env:
   REGISTRY: ghcr.io
@@ -28,7 +31,7 @@ jobs:
       - name: Set up Java environment
         uses: actions/setup-java@v1
         with:
-          java-version: 21
+          java-version: 23
           gpg-private-key: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
           gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE
 
@@ -51,8 +54,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ github.event.release.tag_name }}
-            type=raw,value=latest
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+            type=sha,prefix=workflow-test-,enable=${{ github.event_name == 'push' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
