@@ -35,8 +35,6 @@ import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.connector.runtime.core.document.DocumentFactoryImpl;
 import io.camunda.connector.runtime.core.document.store.CamundaDocumentStore;
 import io.camunda.connector.runtime.core.document.store.CamundaDocumentStoreImpl;
-import io.camunda.connector.runtime.metrics.ConnectorsOutboundMetrics;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,12 +119,8 @@ public class CherryConnectorJobHandler implements JobHandler {
                 throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
             DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
-            SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
-
-            ConnectorsOutboundMetrics outboundMetrics = new ConnectorsOutboundMetrics(meterRegistry);
 
             SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
-                    outboundMetrics,
                     jobWorkerMetrics,
                     cherrySecretProvider,
                     validationProvider,

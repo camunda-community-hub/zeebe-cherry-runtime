@@ -1,7 +1,8 @@
 package io.camunda.cherry.runtime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.camunda.connector.feel.FeelEngineWrapper;
+import io.camunda.connector.feel.FeelExpressionEvaluator;
+import io.camunda.connector.feel.LocalFeelExpressionEvaluator;
 import io.camunda.connector.runtime.annotation.OutboundConnectorObjectMapper;
 import io.camunda.connector.runtime.core.secret.SecretProviderAggregator;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -21,8 +22,8 @@ public class CherryEngineWrapper {
     CherrySecretProvider secretProvider;
 
     @Bean
-    public FeelEngineWrapper cherryFeelEngineWrapper() {
-        return new FeelEngineWrapper();
+    public FeelExpressionEvaluator cherryFeelEngineWrapper() {
+        return new LocalFeelExpressionEvaluator();
     }
 
     @Bean
