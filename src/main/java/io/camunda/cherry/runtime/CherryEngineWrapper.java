@@ -41,6 +41,13 @@ public class CherryEngineWrapper {
     }
 
 
+    /**
+     * Since Camunda 8.10, the inbound connector runtime (InboundConnectorRuntimeConfiguration ->
+     * springInboundConnectorContextFactory) requires its own ObjectMapper, qualified with
+     * @ConnectorsObjectMapper - a separate qualifier from the @OutboundConnectorObjectMapper the
+     * outbound runtime already needed. Both qualifiers are stacked on this single bean so one
+     * consistently-configured ObjectMapper satisfies both, rather than maintaining two.
+     */
     @Bean
     @OutboundConnectorObjectMapper
     @ConnectorsObjectMapper
