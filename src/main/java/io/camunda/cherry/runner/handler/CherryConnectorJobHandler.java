@@ -137,28 +137,22 @@ public class CherryConnectorJobHandler implements JobHandler {
             } else
                 throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
-
             if (connectorFunction != null) {
-                DefaultNoopMetricsRecorder metricsRecorder = new DefaultNoopMetricsRecorder();
+            DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
 
-                SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
-                        metricsRecorder,
-                        cherrySecretProvider,
-                        validationProvider,
-                        commandExceptionHandlingStrategy,
-                        documentFactory,
-                        objectMapper);
-
-                // --------------- call the handle method
-                connectorJobHandler.handle(client, job);
-
-
-                status = new StatusContainer(connectorJobHandler.getExecutionStatus());
-                status.exception = connectorJobHandler.getLogException();
+            SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
+                    jobWorkerMetrics,
+                    cherrySecretProvider,
+                    validationProvider,
+                    commandExceptionHandlingStrategy,
+                    documentFactory,
+                    objectMapper);
+            connectorJobHandler.handle(client, job);
+            status = new StatusContainer(connectorJobHandler.getExecutionStatus());
+            status.exception = connectorJobHandler.getLogException();
             } else {
                 throw new ConnectorException("No connector function or provider available to execute");
             }
-
         } catch (ConnectorException ce) {
             logger.error("ConnectorJobHandler : catch ConnectorException", ce);
             status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.BPMNERROR, ce);

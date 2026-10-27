@@ -20,6 +20,7 @@ import io.camunda.connector.api.secret.SecretProvider;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.connector.runtime.core.error.BpmnError;
 import io.camunda.connector.runtime.core.outbound.ConnectorResult;
+import io.camunda.connector.runtime.core.secret.SecretFilterFactory;
 import io.camunda.connector.runtime.core.secret.SecretProviderAggregator;
 import io.camunda.connector.runtime.outbound.job.SpringConnectorJobHandler;
 import io.camunda.connector.runtime.core.secret.SecretFilterFactory;
