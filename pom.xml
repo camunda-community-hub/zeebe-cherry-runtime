@@ -8,9 +8,21 @@
     <!-- 3.4.1 SaaS connection -->
     <!-- 3.4.2 Error in image -->
     <!-- 3.5.0 Connector download from store + Able to start OutboundConnectorProvider-->
+    <!-- 4.0.0 Download marketplace -->
     <groupId>io.camunda.community</groupId>
     <artifactId>zeebe-cherry-runtime</artifactId>
     <version>4.0.0</version>
+
+    <name>Zeebe Cherry Runtime</name>
+    <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>
+    <url>https://github.com/camunda-community-hub/zeebe-cherry-runtime</url>
+
+    <scm>
+        <url>https://github.com/camunda-community-hub/zeebe-cherry-runtime</url>
+        <connection>scm:git:git@github.com:camunda-community-hub/zeebe-cherry-runtime.git</connection>
+        <developerConnection>scm:git:git@github.com:camunda-community-hub/zeebe-cherry-runtime.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <java.version>23</java.version>
@@ -19,17 +31,17 @@
 
         <!-- version in https://central.sonatype.com/artifact/io.camunda.connector/connector-validation/versions -->
         <!--Version 8.3.0-->
-        <version.zeebe>8.8.7</version.zeebe>
+        <version.zeebe>8.10.0</version.zeebe>
         <!--Version 8.3.3-->
         <!-- <version.zeebe-client>8.5.5</version.zeebe-client> -->
         <!--Version 8.3.1-->
 
         <!-- Zeebe 3.4.0: 8.7.8 -->
-        <version.connector-runtime>8.9.8</version.connector-runtime>
+        <version.connector-runtime>8.10.0</version.connector-runtime>
         <!--Version 8.3.1-->
-        <version.connector-validation>8.9.8</version.connector-validation>
+        <version.connector-validation>8.10.0</version.connector-validation>
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
-        <version.operate-client>8.8.1</version.operate-client>
+        <!-- <version.operate-client>8.10.0</version.operate-client> -->
 
         <version.feel-engine>1.21.0</version.feel-engine>
         <!-- 3.3.4 -->
