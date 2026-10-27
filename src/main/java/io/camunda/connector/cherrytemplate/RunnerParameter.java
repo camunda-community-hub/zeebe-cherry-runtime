@@ -46,6 +46,7 @@ public class RunnerParameter {
     public List<WorkerParameterChoice> choiceList;
     public boolean visibleInTemplate = false;
     public Group group;
+    public Integer priority;
 
     public RunnerParameter() {
 
@@ -201,6 +202,9 @@ public class RunnerParameter {
         if (groupId != null) {
             parameter.group = new Group(groupId, groupLabel);
         }
+        if (inputMap.get(CherryInput.PARAMETER_MAP_PRIORITY) instanceof Integer mapPriority) {
+            parameter.priority = mapPriority;
+        }
 
         return parameter;
     }
@@ -355,6 +359,39 @@ public class RunnerParameter {
         return this;
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Priority                                                */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
+    /**
+     * Set the priority of this parameter, to control where it is placed among the other
+     * parameters of the same list (input or output) in the generated element-template.
+     * <p>
+     * Parameters are ordered by DESCENDING priority: a higher priority is placed earlier
+     * (closer to the top) in the template. Parameters which don't call this method keep the
+     * default priority (0) and are ordered among themselves by their declaration order - the
+     * sort is stable, so ties don't reshuffle parameters that don't care about priority.
+     * Priority only reorders parameters within their own list (input parameters are never
+     * reordered past output parameters, or the reverse); it does not move a parameter to a
+     * different group.
+     *
+     * @param priority priority value; higher is placed first
+     * @return a runnerParameter where the attribute is set
+     */
+    public RunnerParameter setPriority(int priority) {
+        this.priority = priority;
+        return this;
+    }
+
+    /**
+     * @return the priority of this parameter, or 0 if none was explicitly set
+     */
+    public int getPriority() {
+        return priority != null ? priority : 0;
+    }
+
     public Map<String, Object> toMap(String parameterNameForCondition) {
         Map<String, Object> oneParameter = new HashMap<>();
         oneParameter.put(CherryInput.PARAMETER_MAP_NAME, name);
@@ -390,6 +427,9 @@ public class RunnerParameter {
             oneParameter.put(CherryInput.PARAMETER_MAP_BINDINGNAME, bindingName);
 
         oneParameter.put(CherryInput.PARAMETER_MAP_VISIBLE_IN_TEMPLATE, visibleInTemplate);
+
+        if (priority != null)
+            oneParameter.put(CherryInput.PARAMETER_MAP_PRIORITY, priority);
 
         logger.info("getMap:{}", oneParameter);
 

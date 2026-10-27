@@ -38,6 +38,7 @@ public interface CherryInput {
 
     String PARAMETER_MAP_GROUP_ID = "groupId";
     String PARAMETER_MAP_GROUP_LABEL = "groupLabel";
+    String PARAMETER_MAP_PRIORITY = "priority";
 
     String PARAMETER_APPLIES_V_SERVICETASK = "bpmn:ServiceTask";
     String PARAMETER_APPLIES_V_TASK = "bpmn:Task";

@@ -214,8 +214,13 @@ public class RunnerDecorationTemplate {
                 ATTR_VALUE, runner.getType()));
 
         // Do not ask multiple time the listInput
-        List<RunnerParameter> listInputs = runner.getListInput();
-        List<RunnerParameter> listOutputs = runner.getListOutput();
+        // Copy to a mutable list before sorting: runner.getListInput()/getListOutput() may return an
+        // immutable list (e.g. Collections.singletonList), and a parameter's priority must only reorder
+        // it among its own list (inputs are never reordered past outputs, or the reverse).
+        List<RunnerParameter> listInputs = new ArrayList<>(runner.getListInput());
+        List<RunnerParameter> listOutputs = new ArrayList<>(runner.getListOutput());
+        listInputs.sort(Comparator.comparingInt(RunnerParameter::getPriority).reversed());
+        listOutputs.sort(Comparator.comparingInt(RunnerParameter::getPriority).reversed());
 
         boolean useResultVariable = false;
         // AbstractConnector
@@ -246,9 +251,11 @@ public class RunnerDecorationTemplate {
             }
         }
 
-        // Identify all groups
+        // Identify all groups - scan both inputs and outputs, so a custom group declared on an
+        // output parameter is registered here too, instead of referencing an undeclared group id.
         List<RunnerParameter.Group> listGroups = new ArrayList<>();
         listGroups.addAll(listInputs.stream().filter(w -> w.group != null).map(w -> w.group).toList());
+        listGroups.addAll(listOutputs.stream().filter(w -> w.group != null).map(w -> w.group).toList());
 
         // We group all result in a Group Input
         if (!listInputs.isEmpty())
