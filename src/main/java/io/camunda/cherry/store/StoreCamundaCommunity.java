@@ -1,3 +1,21 @@
+/* ******************************************************************** */
+/*                                                                      */
+/*  StoreCamundaCommunity                                               */
+/*                                                                      */
+/* Access the Store Service - download new connectors                   */
+/* Camunda community can store the JAR (and in the priority):           */
+/* - in the maven central                                               */
+/*      https://mvnrepository.com/artifact/org.camunda.connectors       */
+/* - in the jfrog (camunda repository)                                  */
+/*     https://artifacts.camunda.com/ui/packages?name=org.camunda.connector&type=packages*/
+/* - as a Release                                                       */
+/*                                                                      */
+/* the point is the two first repository contains only the minimum jar, */
+/* without any dependencies, so the mechanism should explore the pom.xml*/
+/* and download all the dependency as separate jar                      */
+/*                                                                      */
+/* ******************************************************************** */
+
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
