@@ -96,7 +96,8 @@ class RunnerDashboard extends React.Component {
                                                     {this.state.runner.statistic && this.state.runner.statistic.executionsSucceeded} Successful,
                                                     {this.state.runner.statistic && this.state.runner.statistic.executionsFailed} failed,
                                                     {this.state.runner.statistic && this.state.runner.statistic.executionsBpmnErrors} BPMN
-                                                    Errors<br/>
+                                                    Errors,
+                                                    {this.state.runner.topicCount || 0} Jobs waiting<br/>
 
                                                     <span style={{
                                                         fontStyle: "italic",

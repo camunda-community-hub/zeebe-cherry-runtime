@@ -38,7 +38,7 @@ class RunnerChart extends React.Component {
         const executionsTopic = (this.state.type === "ExecutionsTopic" && this.state.runner && this.state.runner.performance)
             ? this.getExecutionsTopic() : null;
         return (
-            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "150px", boxSizing: "border-box"}}>
+            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "150px", boxSizing: "border-box", overflow: "hidden"}}>
                 {this.state.type === "Executions" && this.state.runner && this.state.runner.performance &&
                     <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
                            options={{
@@ -70,8 +70,8 @@ class RunnerChart extends React.Component {
                            label="Executions" label2="Pending Jobs"
                            oneColor={true}
                            options={{
-                               showXLabel: false,
-                               showYLabel: false,
+                               showXLabel: true,
+                               showYLabel: true,
                                showGrid: false,
                                showLegend: true
                            }}/>
@@ -165,10 +165,26 @@ class RunnerChart extends React.Component {
         const executions = [];
         const topicCount = [];
         this.state.runner.performance.listIntervals.forEach((element, _index, _array) => {
-            executions.push({label: element.slot, value: element.executions});
-            topicCount.push({label: element.slot, value: element.topicCount});
+            const label = this.getLocalHourLabel(element.humanTimeSlotUTC);
+            executions.push({label: label, value: element.executions});
+            topicCount.push({label: label, value: element.topicCount});
         });
         return {executions, topicCount};
+    }
+
+    /**
+     * humanTimeSlotUTC is "yyyy-MM-dd HH:mm" expressed in UTC. Convert it to the browser's
+     * local time zone and keep only the "HH:mm" part.
+     */
+    getLocalHourLabel(humanTimeSlotUTC) {
+        if (!humanTimeSlotUTC)
+            return "";
+        const localDate = new Date(humanTimeSlotUTC.replace(" ", "T") + ":00Z");
+        if (isNaN(localDate.getTime()))
+            return humanTimeSlotUTC;
+        const hh = String(localDate.getHours()).padStart(2, "0");
+        const mm = String(localDate.getMinutes()).padStart(2, "0");
+        return hh + ":" + mm;
     }
 
     /**

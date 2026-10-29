@@ -14,9 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 /**
  * This call is used to connect the Orchestration API
@@ -166,6 +164,35 @@ public class OrchestrationAPI {
             logger.error("getJobCount: failed to parse response for jobType[{}]: {}", jobType, e.getMessage());
             return 0;
         }
+    }
+
+    /**
+     * Returns the number of jobs currently waiting (state=CREATED) for every job type present on the
+     * server, grouped by type. Uses POST /v2/jobs/search without a type filter, then tallies the
+     * "type" field of each returned item - one call instead of one getJobCount() call per runner.
+     */
+    public Map<String, Long> getAllJobCount() {
+        Map<String, Long> result = new LinkedHashMap<>();
+        String body = "{\"filter\":{\"state\":\"CREATED\"},\"page\":{\"limit\":1000}}";
+        try {
+            HttpResponse<String> response = callPostHttp("/v2/jobs/search", body);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode items = root.path("items");
+            if (!items.isArray()) {
+                logger.warn("getAllJobCount: no items array in response");
+                return result;
+            }
+            for (JsonNode item : items) {
+                String type = item.path("type").asText(null);
+                if (type == null)
+                    continue;
+                result.merge(type, 1L, Long::sum);
+            }
+        } catch (JsonProcessingException e) {
+            logger.error("getAllJobCount: failed to parse response: {}", e.getMessage());
+        }
+        return result;
     }
 
     public HttpResponse<String> callGetHttp(String url) {

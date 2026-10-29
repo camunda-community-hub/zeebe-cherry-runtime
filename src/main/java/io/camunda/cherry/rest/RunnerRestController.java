@@ -19,6 +19,7 @@ import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
+import io.camunda.cherry.runner.RunnerMonitor;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
 import io.camunda.cherry.runtime.OperationFactory;
@@ -46,6 +47,7 @@ public class RunnerRestController {
     private final HistoryFactory historyFactory;
     private final HistoryPerformance cherryHistoricPerformance;
     private final RunnerFactory runnerFactory;
+    private final RunnerMonitor runnerMonitor;
     private final OperationFactory operationFactory;
     Logger logger = LoggerFactory.getLogger(RunnerRestController.class.getName());
 
@@ -53,11 +55,13 @@ public class RunnerRestController {
                                 HistoryFactory historyFactory,
                                 HistoryPerformance cherryHistoricPerformance,
                                 RunnerFactory runnerFactory,
+                                RunnerMonitor runnerMonitor,
                                 OperationFactory operationFactory) {
         this.cherryJobRunnerFactory = cherryJobRunnerFactory;
         this.historyFactory = historyFactory;
         this.cherryHistoricPerformance = cherryHistoricPerformance;
         this.runnerFactory = runnerFactory;
+        this.runnerMonitor = runnerMonitor;
         this.operationFactory = operationFactory;
     }
 
@@ -127,6 +131,7 @@ public class RunnerRestController {
             infoRunner.put(RestAttribute.LOGO, runner.getLogo());
             infoRunner.put(RestAttribute.ACTIVE, cherryJobRunnerFactory.isActiveRunner(runner.getType()));
             infoRunner.put(RestAttribute.STATISTIC, statisticRunner);
+            infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
             infoRunner.put(RestAttribute.NB_EXEC, statisticRunner.executions);
             infoRunner.put(RestAttribute.NB_FAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
             infoRunner.put(RestAttribute.NB_OVER_THRESHOLD, 0);
@@ -338,6 +343,7 @@ public class RunnerRestController {
                 // ok, it was already stopped
                 isStopped = true;
             }
+            runnerFactory.setRunnerActive(runnerType, false);
             logger.info("Stop executed for runnerType[" + runnerType + "]: " + isStopped);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
@@ -365,6 +371,7 @@ public class RunnerRestController {
             } catch (OperationAlreadyStartedException e) {
                 isStarted = true;
             }
+            runnerFactory.setRunnerActive(runnerType, true);
             logger.info("Start executed for [{}]: {}", runnerType, isStarted);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);

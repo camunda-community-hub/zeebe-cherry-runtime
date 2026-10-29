@@ -9,7 +9,6 @@ import io.camunda.connector.runtime.annotation.OutboundConnectorObjectMapper;
 import io.camunda.connector.runtime.core.secret.SecretProviderAggregator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,6 +44,7 @@ public class CherryEngineWrapper {
     /**
      * Since Camunda 8.10, the inbound connector runtime (InboundConnectorRuntimeConfiguration ->
      * springInboundConnectorContextFactory) requires its own ObjectMapper, qualified with
+     *
      * @ConnectorsObjectMapper - a separate qualifier from the @OutboundConnectorObjectMapper the
      * outbound runtime already needed. Both qualifiers are stacked on this single bean so one
      * consistently-configured ObjectMapper satisfies both, rather than maintaining two.

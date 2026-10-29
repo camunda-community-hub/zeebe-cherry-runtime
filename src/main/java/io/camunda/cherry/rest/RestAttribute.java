@@ -28,6 +28,7 @@ public class RestAttribute {
     public static final String PERFORMANCE = "performance";
     public static final String NB_OVER_THRESHOLD = "nboverthreshold";
     public static final String NB_EXEC = "nbexec";
+    public static final String TOPIC_COUNT = "topicCount";
     public static final String NB_FAIL = "nbfail";
     public static final String NB_RUNNERS = "nbRunners";
     public static final String DETAILS = "details";

@@ -190,7 +190,7 @@ public class RunnerDecorationTemplate {
         String elementType = runner.getElementType();
         if (elementType == null || elementType.isEmpty())
             elementType = CherryInput.PARAMETER_APPLIES_V_SERVICETASK;
-        if (runner.getAppliesTo() == null || runner.getAppliesTo().isEmpty() ) {
+        if (runner.getAppliesTo() == null || runner.getAppliesTo().isEmpty()) {
             templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_TASK, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
         } else if (runner.getAppliesTo().size() == 1) {

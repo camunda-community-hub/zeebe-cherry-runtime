@@ -6,8 +6,6 @@ import io.camunda.cherry.db.repository.TopicCountRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,14 +15,12 @@ import java.time.LocalDateTime;
 @Service
 public class DatabasePurgeService {
 
-    Logger logger = LoggerFactory.getLogger(DatabasePurgeService.class.getName());
-
-    @Value("${cherry.database.purgeRetentionDays:30}")
-    int purgeRetentionDays;
-
     private final RunnerExecutionRepository runnerExecutionRepository;
     private final OperationRepository operationRepository;
     private final TopicCountRepository topicCountRepository;
+    Logger logger = LoggerFactory.getLogger(DatabasePurgeService.class.getName());
+    @Value("${cherry.database.purgeRetentionDays:30}")
+    int purgeRetentionDays;
 
     public DatabasePurgeService(RunnerExecutionRepository runnerExecutionRepository,
                                 OperationRepository operationRepository,
@@ -33,15 +29,6 @@ public class DatabasePurgeService {
         this.operationRepository = operationRepository;
         this.topicCountRepository = topicCountRepository;
 
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void purgeAllRecords() {
-        logger.info("----- DatabasePurge: wiping all execution history on startup");
-        runnerExecutionRepository.deleteAllInBatch();
-        operationRepository.deleteAllInBatch();
-        topicCountRepository.deleteAllInBatch();
-        logger.info("----- DatabasePurge: execution history cleared");
     }
 
     @Transactional

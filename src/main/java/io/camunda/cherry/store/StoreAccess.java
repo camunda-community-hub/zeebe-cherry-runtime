@@ -116,6 +116,7 @@ public abstract class StoreAccess {
          * the repoName is something like "pierre-yves.monnet/myconnector"
          */
         public String githubRepoName;
+
         /**
          * The repopath is the path INSIDE the repoName. A repo name may contains multiple connector, like we have in the connectorStore
          */
@@ -191,7 +192,9 @@ public abstract class StoreAccess {
         public String jarName;
         public List<RunnerLightDefinition> runners;
         public List<ConnectorDetail> connectorDetails;
+        public List<ByteArrayInputStream> jarDependenciesContent;
         String release;
+
     }
 
     public static class ConnectorDetail {

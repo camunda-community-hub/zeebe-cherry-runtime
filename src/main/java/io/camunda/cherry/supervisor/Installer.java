@@ -106,7 +106,7 @@ public class Installer {
                     connectorDownload.status = StoreAccess.STATUSDOWNLOAD.NOIMPLEMENTATION;
                 return connectorDownload;
             }
-            logger.info("Installer: downloadAndInstall connector[{}] from store[{}] conectorType[{}] hasImplementation[{}] Download from [{}]",
+            logger.info("Installer: downloadAndInstall connector[{}] from store[{}] connectorType[{}] hasImplementation[{}] Download from [{}]",
                     connectorDefinition.name,
                     connectorDefinition.storeAccess.getName(),
                     parentConnector.connectorType,
@@ -115,8 +115,10 @@ public class Installer {
 
             // download and install
             connectorDownload = storeFactory.downloadConnector(connectorDefinition);
+            if (connectorDownload.status != StoreAccess.STATUSDOWNLOAD.OK) {
+                return connectorDownload;
+            }
             connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release);
-
 
             // Synchronize the runnerFactory now, to take into account all new runner loaded
             runnerFactory.synchronize();

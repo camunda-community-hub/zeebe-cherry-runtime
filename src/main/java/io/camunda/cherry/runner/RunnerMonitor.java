@@ -29,31 +29,31 @@ import java.util.Map;
 @Configuration
 public class RunnerMonitor {
 
-    Logger logger = LoggerFactory.getLogger(RunnerMonitor.class.getName());
-
-    @Value("${cherry.runner.refreshTopicsInMinutes:10}")
-    private Integer refreshTopicsInMinutes;
-
-    @Value("${cherry.runner.refreshTopicsInSeconds:0}")
-    private Integer refreshTopicsInSeconds;
-
     private final RunnerFactory runnerFactory;
+    private final JobRunnerFactory jobRunnerFactory;
     private final OrchestrationAPI orchestrationAPI;
     private final HistoryFactory historyFactory;
-    private ThreadPoolTaskScheduler scheduler;
     private final Map<String, Long> previousCounts = new LinkedHashMap<>();
+    Logger logger = LoggerFactory.getLogger(RunnerMonitor.class.getName());
+    @Value("${cherry.runner.refreshTopicsInMinutes:2}")
+    private Integer refreshTopicsInMinutes;
+    @Value("${cherry.runner.refreshCollectAllTopics:true}")
+    private Boolean collectAllTopics;
+    private ThreadPoolTaskScheduler scheduler;
 
     RunnerMonitor(RunnerFactory runnerFactory,
+                  JobRunnerFactory jobRunnerFactory,
                   OrchestrationAPI orchestrationAPI,
                   HistoryFactory historyFactory) {
         this.runnerFactory = runnerFactory;
+        this.jobRunnerFactory = jobRunnerFactory;
         this.orchestrationAPI = orchestrationAPI;
         this.historyFactory = historyFactory;
     }
 
     @PostConstruct
     public void init() {
-        logger.info("RunnerMonitor starting, refresh every {}s", refreshTopicsInSeconds > 0 ? refreshTopicsInSeconds : refreshTopicsInMinutes * 60);
+        logger.info("RunnerMonitor starting, refresh every {} mn", refreshTopicsInMinutes);
         try {
             scheduler = new ThreadPoolTaskScheduler();
             scheduler.setPoolSize(1);
@@ -66,7 +66,26 @@ public class RunnerMonitor {
         }
     }
 
+    public long getJobCount(String runnerType) {
+        return orchestrationAPI.getJobCount(runnerType);
+    }
+
     private void refreshListTopics() {
+        if (collectAllTopics) {
+
+            Map<String, Long> allJobCounts = orchestrationAPI.getAllJobCount();
+            logger.info("Collecting topic counts found {} types", allJobCounts.size());
+            for (Map.Entry<String, Long> entry : allJobCounts.entrySet()) {
+                historyFactory.saveTopicCount(entry.getKey(), entry.getValue());
+            }
+            return;
+        }
+
+        if (!jobRunnerFactory.isStarted()) {
+            logger.info("runnerMonitor : initialization still in progress");
+            return;
+        }
+
         List<AbstractRunner> runnerList = runnerFactory.getAllRunners(new StorageService.Filter());
 
         if (runnerList.isEmpty()) {
@@ -106,6 +125,6 @@ public class RunnerMonitor {
                     refreshListTopics();
                     scheduleNext();
                 },
-                Instant.now().plusSeconds(refreshTopicsInSeconds > 0 ? refreshTopicsInSeconds : (long) refreshTopicsInMinutes * 60));
+                Instant.now().plusSeconds(refreshTopicsInMinutes * 60));
     }
 }

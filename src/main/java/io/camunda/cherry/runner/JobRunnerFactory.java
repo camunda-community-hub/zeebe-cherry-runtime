@@ -269,6 +269,13 @@ public class JobRunnerFactory {
         return mapRunning.containsKey(runnerType);
     }
 
+    /**
+     * @return true once startAll() has completed and runners can be queried/manipulated
+     */
+    public boolean isStarted() {
+        return isStarted;
+    }
+
     public boolean isActiveRunner(String runnerType) {
         if (!mapRunning.containsKey(runnerType))
             return false;

@@ -27,11 +27,10 @@ import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
 @Service
 public class HistoryFactory {
 
-    Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
-
     private final RunnerExecutionRepository runnerExecutionRepository;
     private final HistoryPerformance historyPerformance;
     private final TopicCountRepository topicCountRepository;
+    Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
     public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
                           HistoryPerformance historyPerformance,

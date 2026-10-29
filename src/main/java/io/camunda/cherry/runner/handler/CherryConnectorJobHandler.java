@@ -138,18 +138,18 @@ public class CherryConnectorJobHandler implements JobHandler {
                 throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
             if (connectorFunction != null) {
-            DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
+                DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
 
-            SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
-                    jobWorkerMetrics,
-                    cherrySecretProvider,
-                    validationProvider,
-                    commandExceptionHandlingStrategy,
-                    documentFactory,
-                    objectMapper);
-            connectorJobHandler.handle(client, job);
-            status = new StatusContainer(connectorJobHandler.getExecutionStatus());
-            status.exception = connectorJobHandler.getLogException();
+                SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
+                        jobWorkerMetrics,
+                        cherrySecretProvider,
+                        validationProvider,
+                        commandExceptionHandlingStrategy,
+                        documentFactory,
+                        objectMapper);
+                connectorJobHandler.handle(client, job);
+                status = new StatusContainer(connectorJobHandler.getExecutionStatus());
+                status.exception = connectorJobHandler.getLogException();
             } else {
                 throw new ConnectorException("No connector function or provider available to execute");
             }

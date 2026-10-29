@@ -112,8 +112,7 @@ public class HistoryPerformance {
         // complete interval by the topic count - reques the last 10000 records from DateThreshold to now
         List<TopicCountEntity> listTopicCount = topicCountRepository.selectRunnerRecords(runnerType,
                 dateThreshold, PageRequest.of(0, 10000));
-        for(TopicCountEntity topicEntity: listTopicCount )
-        {
+        for (TopicCountEntity topicEntity : listTopicCount) {
             LocalDateTime slotTime = topicEntity.executionTime;
             String slotString = intervalRule.getSlotFromDate(slotTime);
             Interval interval = mapInterval.get(slotString);

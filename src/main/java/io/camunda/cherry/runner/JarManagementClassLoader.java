@@ -150,6 +150,10 @@ public class JarManagementClassLoader {
     }
 
     public File copyFromJarFile(String jarFileName, InputStream jarFileInputStream) {
+        if (jarFileInputStream == null) {
+            logOperation.log(OperationEntity.Operation.ERROR, "Can't save jarFile[" + jarFileName + "] no jarFileInputStream");
+            return null;
+        }
         String fullPath = classLoaderPath + File.separator + jarFileName;
         logger.info("Copying inputStream to jar[" + jarFileName + "] to path[" + fullPath + "]");
         File saveJarFile = new File(fullPath);

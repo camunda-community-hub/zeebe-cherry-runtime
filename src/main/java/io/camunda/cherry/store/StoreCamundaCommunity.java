@@ -19,8 +19,11 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StoreCamundaCommunity extends StoreGithub {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StoreCamundaCommunity.class);
 
     // - https://github.com/camunda-community-hub/
     public StoreCamundaCommunity(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
@@ -35,5 +38,21 @@ public class StoreCamundaCommunity extends StoreGithub {
     protected String getTypeRepo() {
         return "owner";
     }
+
+    public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
+
+        // The JAR maybe in the release, or in maven central, or in jfrog
+        if (connectorDefinition.urlJarFile != null && !connectorDefinition.urlJarFile.isEmpty()) {
+            LOGGER.info("CamundaCommunity: Downloading connector {} from {}", connectorDefinition.name, connectorDefinition.urlJarFile);
+            return super.downloadConnector(connectorDefinition);
+        } else {
+            ConnectorDownload connectorDownload = new ConnectorDownload();
+            connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
+            connectorDownload.explanation = "No JAR file URL available for connector [" + connectorDefinition.name + "]";
+            return connectorDownload;
+        }
+
+    }
+
 
 }

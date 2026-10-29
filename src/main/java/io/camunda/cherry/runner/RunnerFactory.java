@@ -225,6 +225,17 @@ public class RunnerFactory {
         return true;
     }
 
+    /**
+     * Persist the active/inactive status of a runner, so a runner stopped by the user does not
+     * restart the next time the application boots.
+     *
+     * @param runnerType type of the runner
+     * @param active     true if the runner must be started at the next boot, false otherwise
+     */
+    public void setRunnerActive(String runnerType, boolean active) {
+        storageService.setRunnerActiveStatus(runnerType, active);
+    }
+
 
     @SpringBootConfiguration
     @EnableAutoConfiguration

@@ -13,6 +13,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner.handler;
 
+import com.fasterxml.jackson.databind.node.TextNode;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
@@ -150,7 +151,7 @@ public class CherryWorkerJobHandler implements JobHandler {
         Map<String, Object> resolvedVariables = new HashMap<>();
         job.getVariablesAsMap().forEach((name, value) ->
                 resolvedVariables.put(name, value instanceof String stringValue
-                        ? secretHandler.replaceSecrets(stringValue, secretContext)
+                        ? secretHandler.replaceSecrets(TextNode.valueOf(stringValue), secretContext).asText()
                         : value));
 
         return (ActivatedJob) Proxy.newProxyInstance(

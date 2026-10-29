@@ -366,6 +366,13 @@ public class RunnerParameter {
     /* -------------------------------------------------------- */
 
     /**
+     * @return the priority of this parameter, or 0 if none was explicitly set
+     */
+    public int getPriority() {
+        return priority != null ? priority : 0;
+    }
+
+    /**
      * Set the priority of this parameter, to control where it is placed among the other
      * parameters of the same list (input or output) in the generated element-template.
      * <p>
@@ -383,13 +390,6 @@ public class RunnerParameter {
     public RunnerParameter setPriority(int priority) {
         this.priority = priority;
         return this;
-    }
-
-    /**
-     * @return the priority of this parameter, or 0 if none was explicitly set
-     */
-    public int getPriority() {
-        return priority != null ? priority : 0;
     }
 
     public Map<String, Object> toMap(String parameterNameForCondition) {

@@ -10,8 +10,6 @@
     <!-- 3.4.2 Error in image -->
     <!-- 3.5.0 Connector download from store + Able to start OutboundConnectorProvider-->
     <!-- 4.0.0 Download marketplace -->
-    <groupId>io.camunda.community</groupId>
-    <artifactId>zeebe-cherry-runtime</artifactId>
     <version>4.0.0</version>
 
     <name>Zeebe Cherry Runtime</name>
@@ -32,15 +30,20 @@
 
         <!-- version in https://central.sonatype.com/artifact/io.camunda.connector/connector-validation/versions -->
         <!--Version 8.3.0-->
-        <version.zeebe>8.10.0</version.zeebe>
+        <version.zeebe>8.9.26</version.zeebe>
         <!--Version 8.3.3-->
         <!-- <version.zeebe-client>8.5.5</version.zeebe-client> -->
         <!--Version 8.3.1-->
 
         <!-- Zeebe 3.4.0: 8.7.8 -->
-        <version.connector-runtime>8.10.0</version.connector-runtime>
+        <!-- 8.10.0 is not resolvable: spring-boot-starter-camunda-sdk/camunda-spring-boot-starter only
+             publish 8.10.x on Camunda's private Artifactory (401 without credentials), not Maven Central.
+             Pinned to the latest public 8.9.x release instead; connector-runtime/validation don't need to
+             match the client SDK's patch number, just the same 8.9 minor line (verified against 8.9.15/8.9.7
+             earlier, and 8.9.17 here has every class we use, incl. ConnectorsObjectMapper/-Supplier). -->
+        <version.connector-runtime>8.9.17</version.connector-runtime>
         <!--Version 8.3.1-->
-        <version.connector-validation>8.10.0</version.connector-validation>
+        <version.connector-validation>8.9.17</version.connector-validation>
         <!-- https://github.com/camunda-community-hub/camunda-operate-client-java/tree/main -->
         <!-- <version.operate-client>8.10.0</version.operate-client> -->
 
@@ -107,6 +110,7 @@
             <artifactId>spring-boot-starter-camunda-operate</artifactId>
             <version>${version.operate-client}</version>
         </dependency>
+        -->
 
 
         <!-- Accept Camunda Connector -->

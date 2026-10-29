@@ -24,6 +24,7 @@ class Dashboard extends React.Component {
 
     constructor(_props) {
         super();
+        this.downloadMessageRef = React.createRef();
         this.state = {
             dashboard: {
                 details: [],
@@ -56,7 +57,7 @@ class Dashboard extends React.Component {
     render() {
         // console.log("dashboard.render display="+JSON.stringify(this.state.display));
         return (<div className={"container"}>
-            <DownloadMessage/>
+            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}/>
             <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
                               timestamp={this.state.dashboard.timestamp}/>
             <div className="row">
@@ -136,7 +137,10 @@ class Dashboard extends React.Component {
                 </div>
                 <div className="col-md-1">
                     <Button className="btn btn-success btn-sm"
-                            onClick={() => this.refreshDashboard(this.state.display.period, this.state.display.orderBy)}
+                            onClick={() => {
+                                this.refreshDashboard(this.state.display.period, this.state.display.orderBy);
+                                this.downloadMessageRef.current?.refreshStartupStatus();
+                            }}
                             disabled={this.state.display.loading}>
                         <ArrowRepeat/> Refresh
                     </Button>
@@ -151,13 +155,13 @@ class Dashboard extends React.Component {
 
             <div className="row" style={{width: "100%"}}>
                 <div className="col-md-12">
-                    <table width="100%">
+                    <table width="100%" style={{tableLayout: "fixed"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
                             <tr style={this.getStyleRow(runner)}>
-                                <td style={{verticalAlign: "top"}}>
+                                <td style={{verticalAlign: "top", width: "50%"}}>
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top"}}>
+                                <td style={{verticalAlign: "top", width: "50%"}}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>

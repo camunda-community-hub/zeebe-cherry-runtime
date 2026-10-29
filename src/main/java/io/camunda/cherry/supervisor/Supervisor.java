@@ -234,7 +234,12 @@ public class Supervisor {
             downloadInProgress.total = listConnectors.size();
             downloadInProgress.count = 0;
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
-                if (matchListFilter(connectorDefinition.name, filter)) {
+                String repoShortName = null;
+                if (connectorDefinition.githubRepoName != null && connectorDefinition.githubRepoName.indexOf("/") != -1)
+                    repoShortName = connectorDefinition.githubRepoName.substring(connectorDefinition.githubRepoName.lastIndexOf("/") + 1);
+                if (matchListFilter(connectorDefinition.name, filter)
+                        || matchListFilter(connectorDefinition.githubRepoName, filter)
+                        || (repoShortName != null && matchListFilter(repoShortName, filter))) {
 
                     // We apply here the download policy
                     // the connectorDefinition has a release, and identify a JAR. Search the jar version

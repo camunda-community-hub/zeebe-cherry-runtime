@@ -163,21 +163,25 @@ class Chart extends React.Component {
 
 
     getOptionsBarChart() {
+        const hasFixedSize = this.state.options.width !== undefined || this.state.options.height !== undefined;
         const chartOptions = {
             'maintainAspectRatio': false,
-            'responsive': false,
+            'responsive': !hasFixedSize,
             'plugins': {
                 'legend': {
-                    'display': false
+                    'display': this.state.options.showLegend === true,
+                    'position': 'right'
                 },
             },
         };
         if (this.state.type === 'HorizontalBar') {
             chartOptions.scales = {
                 y: {
+                    beginAtZero: true,
                     ticks: {
                         beginAtZero: true,
-                        display: true
+                        display: true,
+                        maxTicksLimit: 2
                     },
                     grid: {
                         display: false,
@@ -186,12 +190,35 @@ class Chart extends React.Component {
                 x: {
                     ticks: {
                         display: true,
+                        autoSkip: false,
+                        maxRotation: 0,
+                        callback: function (value, index, ticks) {
+                            const lastIndex = ticks.length - 1;
+                            const midIndex = Math.round(lastIndex / 2);
+                            if (index === 0 || index === midIndex || index === lastIndex) {
+                                return this.getLabelForValue(value);
+                            }
+                            return '';
+                        }
                     },
                     grid: {
                         display: false,
                     }
                 },
             };
+            if (this.state.dataList2) {
+                chartOptions.scales.y1 = {
+                    beginAtZero: true,
+                    position: 'right',
+                    ticks: {
+                        display: true,
+                        maxTicksLimit: 2
+                    },
+                    grid: {
+                        display: false,
+                    }
+                };
+            }
         }
         if (this.state.type === 'VerticalBar') {
             chartOptions.indexAxis = 'y';
@@ -237,7 +264,7 @@ class Chart extends React.Component {
         dataChart.datasets.label = this.state.title;
 
 
-        let dataset = {};
+        let dataset = {type: 'bar', label: this.state.label || this.state.title};
         dataChart.datasets.push(dataset);
         if (this.state.oneColor) {
             dataset.backgroundColor = oneBackgroundColor;
@@ -252,6 +279,21 @@ class Chart extends React.Component {
             const resultTransformed = this.getLabelsDataFromList(this.state.dataList);
             dataChart.labels = resultTransformed.labels;
             dataset.data = resultTransformed.data;
+        }
+
+        if (this.state.dataList2) {
+            const resultTransformed2 = this.getLabelsDataFromList(this.state.dataList2);
+            dataChart.datasets.push({
+                type: 'line',
+                label: this.state.label2,
+                data: resultTransformed2.data,
+                borderColor: borderColor[1],
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 1,
+                fill: false,
+                yAxisID: 'y1'
+            });
         }
         return dataChart;
     }

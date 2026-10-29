@@ -371,6 +371,25 @@ public class StorageService {
     }
 
     /**
+     * Persist the active/inactive status of a runner, so a runner stopped by the user does not
+     * restart the next time the application boots.
+     *
+     * @param runnerType type of the runner
+     * @param active     true if the runner must be started at the next boot, false otherwise
+     */
+    public void setRunnerActiveStatus(String runnerType, boolean active) {
+        RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runnerType);
+        if (runnerDefinition == null) {
+            logger.error("StorageService.setRunnerActiveStatus: runner type[{}] not found, can't persist active[{}]",
+                    runnerType, active);
+            return;
+        }
+        runnerDefinition.activeRunner = active;
+        runnerDefinitionRepository.save(runnerDefinition);
+        logger.info("StorageService.setRunnerActiveStatus: runner type[{}] active[{}]", runnerType, active);
+    }
+
+    /**
      * Remove an entity - does not remove the history of execution
      *
      * @param runnerDefinition entity to remove

@@ -320,7 +320,7 @@ public class RunnerUploadFactory {
                 String entryName = entry.getName();
                 nbClass++;
                 if (nbClass % 1000 == 0 && System.currentTimeMillis() - beginOperation > 2000) {
-                    logger.info("JAR [{}] check {}/{} classes in {} ms", jarFile.getName(), nbClass, totalClasses, System.currentTimeMillis() - beginOperation);
+                    logger.debug("JAR [{}] check {}/{} classes in {} ms", jarFile.getName(), nbClass, totalClasses, System.currentTimeMillis() - beginOperation);
                 }
 
                 if (!entryName.endsWith(".class")) {
