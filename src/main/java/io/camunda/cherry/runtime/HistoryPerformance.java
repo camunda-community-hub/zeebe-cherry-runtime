@@ -217,6 +217,7 @@ public class HistoryPerformance {
          */
         public String slot;
 
+        public LocalDateTime executionTime;
         public String humanTimeSlotUTC;
         public String humanTimeSlot;
         public long executions = 0;
@@ -230,6 +231,7 @@ public class HistoryPerformance {
 
         public Interval(String slot, LocalDateTime slotTime, long timezoneOffset) {
             this.slot = slot;
+            this.executionTime = slotTime;
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(HUMAN_DATE_FORMATER);
             this.humanTimeSlotUTC = formatter.format(slotTime);
             this.humanTimeSlot = DateOperation.dateTimeToHumanString(slotTime, timezoneOffset);

@@ -19,10 +19,11 @@ import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
-import io.camunda.cherry.runner.RunnerMonitor;
+import io.camunda.cherry.supervisor.RunnerMonitor;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
 import io.camunda.cherry.runtime.OperationFactory;
+import io.camunda.cherry.supervisor.RunnerThroughput;
 import io.camunda.cherry.util.DateOperation;
 import io.camunda.cherry.util.ZipOperation;
 import org.slf4j.Logger;
@@ -49,6 +50,7 @@ public class RunnerRestController {
     private final RunnerFactory runnerFactory;
     private final RunnerMonitor runnerMonitor;
     private final OperationFactory operationFactory;
+    private final RunnerThroughput runnerThroughput;
     Logger logger = LoggerFactory.getLogger(RunnerRestController.class.getName());
 
     public RunnerRestController(JobRunnerFactory cherryJobRunnerFactory,
@@ -56,13 +58,14 @@ public class RunnerRestController {
                                 HistoryPerformance cherryHistoricPerformance,
                                 RunnerFactory runnerFactory,
                                 RunnerMonitor runnerMonitor,
-                                OperationFactory operationFactory) {
+                                OperationFactory operationFactory, RunnerThroughput runnerThroughput) {
         this.cherryJobRunnerFactory = cherryJobRunnerFactory;
         this.historyFactory = historyFactory;
         this.cherryHistoricPerformance = cherryHistoricPerformance;
         this.runnerFactory = runnerFactory;
         this.runnerMonitor = runnerMonitor;
         this.operationFactory = operationFactory;
+        this.runnerThroughput = runnerThroughput;
     }
 
     /**
@@ -137,6 +140,9 @@ public class RunnerRestController {
             infoRunner.put(RestAttribute.NB_OVER_THRESHOLD, 0);
             infoRunner.put(RestAttribute.PERFORMANCE, performanceRunner);
             listDetails.add(infoRunner);
+
+            // Use the runnerThrougput to get analysis
+            infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance( performanceRunner));
 
             totalSucceeded += statisticRunner.executionsSucceeded;
             totalFailed += statisticRunner.executionsFailed;

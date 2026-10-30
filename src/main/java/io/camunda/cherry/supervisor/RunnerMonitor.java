@@ -6,10 +6,12 @@
 /*  all runners managed by Cherry and saves a snapshot to the DB.       */
 /*                                                                      */
 /* ******************************************************************** */
-package io.camunda.cherry.runner;
+package io.camunda.cherry.supervisor;
 
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.runner.JobRunnerFactory;
+import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import jakarta.annotation.PostConstruct;

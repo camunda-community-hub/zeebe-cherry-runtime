@@ -26,6 +26,7 @@ public class RestAttribute {
     public static final String ACTIVE = "active";
     public static final String STATISTIC = "statistic";
     public static final String PERFORMANCE = "performance";
+    public static final String  ANALYSIS = "analysis";
     public static final String NB_OVER_THRESHOLD = "nboverthreshold";
     public static final String NB_EXEC = "nbexec";
     public static final String TOPIC_COUNT = "topicCount";

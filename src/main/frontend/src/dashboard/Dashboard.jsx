@@ -12,6 +12,7 @@ import {ArrowRepeat, XCircle} from 'react-bootstrap-icons';
 
 import GeneralDashboard from "./GeneralDashboard";
 import RunnerDashboard from "./RunnerDashboard";
+import RunnerAnalysisTags from "./RunnerAnalysisTags";
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
 import DownloadMessage from "../HeaderMessage/DownloadMessage";
@@ -158,8 +159,11 @@ class Dashboard extends React.Component {
                     <table width="100%" style={{tableLayout: "fixed"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
                             <tr style={this.getStyleRow(runner)}>
-                                <td style={{verticalAlign: "top", width: "50%"}}>
+                                <td style={{verticalAlign: "top", width: "30%"}}>
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
+                                </td>
+                                <td style={{verticalAlign: "top", width: "260px"}}>
+                                    <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
                                 <td style={{verticalAlign: "top", width: "50%"}}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}

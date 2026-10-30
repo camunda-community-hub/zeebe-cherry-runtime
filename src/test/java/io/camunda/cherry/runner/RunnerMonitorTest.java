@@ -2,6 +2,7 @@ package io.camunda.cherry.runner;
 
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.supervisor.RunnerMonitor;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
