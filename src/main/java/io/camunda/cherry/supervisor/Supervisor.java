@@ -15,7 +15,7 @@ import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.runtime.LogOperation;
-import io.camunda.cherry.store.GitHubAccess;
+import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.cherry.store.StoreAccess;
 import io.camunda.cherry.store.StoreFactory;
 import io.camunda.cherry.store.StoreUrl;
@@ -107,13 +107,30 @@ public class Supervisor {
                 logger.info("----- Supervisor.1-end: Loaded JarUploadPath [{}]", logInfo);
 
                 // ------------- load all from the database
+                // getAll() also returns dependency jars (parent != null) - those are loaded alongside
+                // their main jar below, not installed/inspected on their own.
                 logger.info("----- Supervisor.2-begin: Loaded from database");
-                List<JarStorageEntity> listJarStorage = storageService.getAll();
+                List<JarStorageEntity> listJarStorage = storageService.getAll().stream()
+                        .filter(j -> j.parent == null)
+                        .toList();
                 String logInfoDb = "";
                 for (JarStorageEntity jarStorageEntity : listJarStorage) {
                     logInfoDb += jarStorageEntity.name + ";";
                     InputStream jarFileInputStream = readJarContent(jarStorageEntity);
-                    installer.installStartJar(jarStorageEntity.name, jarFileInputStream, jarStorageEntity.release);
+                    List<StoreAccess.JarDependency> jarDependencies = storageService.getDependenciesOf(jarStorageEntity.name).stream()
+                            .map(dependencyEntity -> {
+                                try {
+                                    return new StoreAccess.JarDependency(dependencyEntity.name,
+                                            new ByteArrayInputStream(readJarContent(dependencyEntity).readAllBytes()));
+                                } catch (Exception e) {
+                                    logger.error("Can't read dependency jar[{}] of [{}] : {}", dependencyEntity.name, jarStorageEntity.name, e.getMessage());
+                                    return null;
+                                }
+                            })
+                            .filter(java.util.Objects::nonNull)
+                            .toList();
+                    installer.installStartJar(jarStorageEntity.name, jarFileInputStream, jarStorageEntity.release, jarStorageEntity.loadedTime,
+                            "load From database", jarDependencies);
                 }
                 logger.info("----- Supervisor.2-end: Loaded from database [{}]", logInfoDb);
 
@@ -351,7 +368,8 @@ public class Supervisor {
 
             // Now install it
             try {
-                connectorDownload.runners = installer.installStartJar(connectorDownload.jarName, connectorDownload.jarContent, null);
+                connectorDownload.runners = installer.installStartJar(connectorDownload.jarName, connectorDownload.jarContent, null, null, "Store download",
+                        connectorDownload.jarDependenciesContent);
             } catch (TechnicalException e) {
                 connectorDownload.status = StoreAccess.STATUSDOWNLOAD.FAILED;
                 connectorDownload.explanation = e.getMessage();

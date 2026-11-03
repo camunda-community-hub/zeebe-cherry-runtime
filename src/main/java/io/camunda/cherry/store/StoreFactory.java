@@ -2,6 +2,7 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -356,7 +357,7 @@ public class StoreFactory {
                     logger.info("searchConnector: connectorDefinition Filter[{}} found {}", filter.name, connectorDefinition);
                     return connectorDefinition;
                 }
-                if (connectorDefinition.connectorType.equals(filter.type)) {
+                if (connectorDefinition.connectorType!=null && connectorDefinition.connectorType.equals(filter.type)) {
                     logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition);
                     return connectorDefinition;
                 }

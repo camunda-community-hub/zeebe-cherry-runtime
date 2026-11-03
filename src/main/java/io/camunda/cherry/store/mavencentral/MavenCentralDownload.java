@@ -34,40 +34,36 @@ public class MavenCentralDownload {
     // site, not a repository - it has no predictable download URL for a given groupId/artifactId/version.
     // Used the actual Maven Central repository URL instead - the same one StoreCamundaConnector already
     // uses for this same kind of lookup (exploreJarUrl).
-    private static final String MAVEN_CENTRAL_REPOSITORY = "https://repo.maven.apache.org/maven2";
-    private static final String CAMUNDA_ARTIFACTORY_REPOSITORY = "https://artifacts.camunda.com/artifactory/connectors";
     private final RestTemplate restTemplate = new RestTemplate();
     Logger logger = LoggerFactory.getLogger(MavenCentralDownload.class.getName());
 
-    public StoreAccess.ConnectorDownload downloadConnector(StoreAccess.ConnectorDefinition connectorDefinition) {
+    public StoreAccess.ConnectorDownload downloadConnector(StoreAccess.ConnectorDefinition connectorDefinition, String provider) {
         // use connectorDefinition.url to access and read the pom.xml
         PomDescription pomDescription = readPom(connectorDefinition);
         if (pomDescription == null) {
             StoreAccess.ConnectorDownload connectorDownload = new StoreAccess.ConnectorDownload();
             connectorDownload.status = StoreAccess.STATUSDOWNLOAD.UNKNOWCONNECTOR;
-            connectorDownload.explanation = "Can't read/parse the pom.xml for connector [" + connectorDefinition.name + "]";
+            connectorDownload.explanation =  "Store [" + connectorDefinition.storeAccess.getName() + "] Can't read/parse the pom.xml for connector [" + connectorDefinition.name + "]";
             return connectorDownload;
         }
 
         // Now search in Maven Central for this item
-        StoreAccess.ConnectorDownload connectorDownload = downloadFromRepository(MAVEN_CENTRAL_REPOSITORY, pomDescription);
+        StoreAccess.ConnectorDownload connectorDownload = downloadFromRepository(connectorDefinition.storeAccess, provider, pomDescription);
         if (connectorDownload != null) {
-            // Check the content to get all dependencies, and saved them under public List<ByteArrayInputStream> jarDependenciesContent;
-            connectorDownload.jarDependenciesContent = downloadDependencies(MAVEN_CENTRAL_REPOSITORY, pomDescription);
+            // A "-with-dependencies" uber jar already bundles everything it needs - no need to parse the
+            // pom.xml's <dependencies> and download each one separately.
+            if (connectorDownload.jarName != null && connectorDownload.jarName.endsWith("-with-dependencies.jar")) {
+                connectorDownload.jarDependenciesContent = List.of();
+            } else {
+                connectorDownload.jarDependenciesContent = downloadDependencies(provider, pomDescription);
+            }
             return connectorDownload;
         }
 
-        // Now search in https://artifacts.camunda.com/ the same artefact
-        connectorDownload = downloadFromRepository(CAMUNDA_ARTIFACTORY_REPOSITORY, pomDescription);
-        if (connectorDownload != null) {
-            // do the same for dependencies
-            connectorDownload.jarDependenciesContent = downloadDependencies(CAMUNDA_ARTIFACTORY_REPOSITORY, pomDescription);
-            return connectorDownload;
-        }
 
         connectorDownload = new StoreAccess.ConnectorDownload();
         connectorDownload.status = StoreAccess.STATUSDOWNLOAD.UNKNOWNRELEASE;
-        connectorDownload.explanation = "Artifact [" + pomDescription.groupId + ":" + pomDescription.artifactId + ":"
+        connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName() + "] Artifact [" + pomDescription.groupId + ":" + pomDescription.artifactId + ":"
                 + pomDescription.version + "] not found on Maven Central or on Camunda's Artifactory";
         return connectorDownload;
     }
@@ -98,6 +94,21 @@ public class MavenCentralDownload {
             if (pomContent == null)
                 return null;
 
+            PomDescription pomDescription= decodePom(pomContent);
+            return pomDescription;
+        } catch (Exception e) {
+            logger.error("MavenCentralDownload: can't read/parse pom.xml at [{}]: {}", url, e.getMessage());
+            return null;
+        }
+    }
+
+
+    /**
+     * Parse a pom.xml's content into a PomDescription. Returns null (never throws) if the content
+     * can't be parsed, or is missing groupId/artifactId/version even after falling back to &lt;parent&gt;.
+     */
+    public PomDescription decodePom(String pomContent) {
+        try {
             Model model = new MavenXpp3Reader().read(new StringReader(pomContent));
 
             PomDescription pomDescription = new PomDescription();
@@ -113,17 +124,16 @@ public class MavenCentralDownload {
                     pomDescription.version = model.getParent().getVersion();
             }
             if (pomDescription.groupId == null || pomDescription.artifactId == null || pomDescription.version == null) {
-                logger.error("MavenCentralDownload: pom.xml at [{}] is missing groupId/artifactId/version", url);
+                logger.error("MavenCentralDownload: pom.xml is missing groupId/artifactId/version");
                 return null;
             }
             pomDescription.dependencies = model.getDependencies() == null ? List.of() : model.getDependencies();
             return pomDescription;
         } catch (Exception e) {
-            logger.error("MavenCentralDownload: can't read/parse pom.xml at [{}]: {}", url, e.getMessage());
+            logger.error("MavenCentralDownload: can't parse pom.xml: {}", e.getMessage());
             return null;
         }
     }
-
     /**
      * Download the connector's own JAR from the given Maven repository. A cheap HEAD probe (same
      * pattern as StoreCamundaConnector.jarExists) is done first, trying the "-with-dependencies"
@@ -134,13 +144,13 @@ public class MavenCentralDownload {
      * @param pomDescription groupId/artifactId/version to locate
      * @return a ConnectorDownload with the JAR content, or null if this repository doesn't have it
      */
-    private StoreAccess.ConnectorDownload downloadFromRepository(String repositoryUrl, PomDescription pomDescription) {
+    private StoreAccess.ConnectorDownload downloadFromRepository(StoreAccess storeAccess, String repositoryUrl, PomDescription pomDescription) {
         String artifactBase = artifactBaseUrl(repositoryUrl, pomDescription.groupId, pomDescription.artifactId,
                 pomDescription.version);
 
-        String jarUrl = jarExists(artifactBase + "-with-dependencies.jar")
-                ? artifactBase + "-with-dependencies.jar"
-                : artifactBase + ".jar";
+        Long beginDownloadTime= System.currentTimeMillis();
+        boolean withDependencies = jarExists(artifactBase + "-with-dependencies.jar");
+        String jarUrl = withDependencies ? artifactBase + "-with-dependencies.jar" : artifactBase + ".jar";
         if (!jarExists(jarUrl))
             return null;
 
@@ -150,9 +160,12 @@ public class MavenCentralDownload {
 
         StoreAccess.ConnectorDownload connectorDownload = new StoreAccess.ConnectorDownload();
         connectorDownload.status = StoreAccess.STATUSDOWNLOAD.OK;
-        connectorDownload.jarName = pomDescription.artifactId + "-" + pomDescription.version + ".jar";
+        connectorDownload.jarName = pomDescription.artifactId + "-" + pomDescription.version
+                + (withDependencies ? "-with-dependencies.jar" : ".jar");
         connectorDownload.jarContent = new ByteArrayInputStream(jarBytes);
-        connectorDownload.explanation = "Downloaded " + jarBytes.length + " bytes from [" + jarUrl + "]";
+        connectorDownload.explanation = "Store [" + storeAccess.getName() + "] Downloaded ["+jarUrl+"] "
+                + jarBytes.length + " bytes in "
+       +  (System.currentTimeMillis()-beginDownloadTime) + " ms";
         return connectorDownload;
     }
 
@@ -162,26 +175,53 @@ public class MavenCentralDownload {
      * elsewhere - e.g. a BOM - which a raw pom.xml parse can't resolve) is skipped rather than failing
      * the whole download: the connector's own JAR is what matters most.
      */
-    private List<ByteArrayInputStream> downloadDependencies(String repositoryUrl, PomDescription pomDescription) {
-        List<ByteArrayInputStream> jarDependenciesContent = new ArrayList<>();
+    private List<StoreAccess.JarDependency> downloadDependencies(String repositoryUrl, PomDescription pomDescription) {
+        List<StoreAccess.JarDependency> jarDependenciesContent = new ArrayList<>();
         for (Dependency dependency : pomDescription.dependencies) {
             if ("test".equals(dependency.getScope()) || "provided".equals(dependency.getScope()))
                 continue;
             if (dependency.getGroupId() == null || dependency.getVersion() == null)
                 continue;
 
+            String jarName = dependency.getArtifactId() + "-" + dependency.getVersion() + ".jar";
             String jarUrl = artifactBaseUrl(repositoryUrl, dependency.getGroupId(), dependency.getArtifactId(),
                     dependency.getVersion()) + ".jar";
             byte[] jarBytes = downloadBytes(jarUrl);
             if (jarBytes != null)
-                jarDependenciesContent.add(new ByteArrayInputStream(jarBytes));
+                jarDependenciesContent.add(new StoreAccess.JarDependency(jarName, new ByteArrayInputStream(jarBytes)));
         }
         return jarDependenciesContent;
     }
 
     private String artifactBaseUrl(String repositoryUrl, String groupId, String artifactId, String version) {
-        return repositoryUrl + "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
+        String baseUrl = repositoryUrl.endsWith("/") ? repositoryUrl.substring(0, repositoryUrl.length() - 1) : repositoryUrl;
+        return baseUrl + "/" + groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId
                 + "-" + version;
+    }
+
+    /**
+     * Build the URL to probe/download an artifact on a Maven provider, preferring the "-with-dependencies"
+     * uber-jar classifier over the plain jar when both exist - same preference as downloadFromRepository.
+     *
+     * @param provider   base URL of the Maven repository (Maven Central, Camunda's Artifactory, ...)
+     * @param groupId    artifact groupId
+     * @param artifactId artifact artifactId
+     * @param version    artifact version
+     * @return the URL of the "-with-dependencies.jar" if it exists on that provider, else the plain ".jar" URL
+     */
+    public String buildMavenUrl(String provider, String groupId, String artifactId, String version) {
+        String artifactBase = artifactBaseUrl(provider, groupId, artifactId, version);
+        String withDependenciesUrl = artifactBase + "-with-dependencies.jar";
+        if (checkIfExist(withDependenciesUrl))
+            return withDependenciesUrl;
+        return artifactBase + ".jar";
+    }
+
+    /**
+     * Check whether a URL actually exists on the server, via a cheap HEAD probe.
+     */
+    public boolean checkIfExist(String url) {
+        return jarExists(url);
     }
 
     private byte[] downloadBytes(String url) {
@@ -210,7 +250,7 @@ public class MavenCentralDownload {
         }
     }
 
-    private static class PomDescription {
+    public static class PomDescription {
         public String groupId;
         public String artifactId;
         public String version;

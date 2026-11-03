@@ -75,6 +75,9 @@ class DownloadMessage extends React.Component {
     refreshStartupStatusCallback(httpPayload) {
         if (httpPayload.isError()) {
             console.log("DownloadMessage.refreshStartupStatusCallback: error " + httpPayload.getError());
+            if (this.props.onError) {
+                this.props.onError(httpPayload.getError());
+            }
             return;
         }
         const data = httpPayload.getData();
@@ -89,6 +92,9 @@ class DownloadMessage extends React.Component {
                 this.setupAutoRefresh();
             } else {
                 this.clearAutoRefresh();
+            }
+            if (this.props.onStatusChange) {
+                this.props.onStatusChange(this.isInProgress());
             }
         });
     }

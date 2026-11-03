@@ -34,9 +34,14 @@ public abstract class StoreAccess {
     }
 
     /**
-     * Get the lisf of connector. Each connectorDefition is "light", with name.
-     * Then the exploration will continue one by one via the exploreDetails
+     * Get the list of connector. Each connectorDefinition is "light", with name.
+     * At this level, the jar is identified (in releases, or maven), and implementation status is found
+     *
+     * Then the exploration will continue one by one via the exploreDetails. ExploreDFetails load the element-template if exist.
      * status is set to INPROGRESS
+     * Note: this method allow to return as soon as possible something for the UI. The second pass, exploration,
+     * take more time
+     *
      *
      * @return list of connectors discovered
      */
@@ -152,11 +157,22 @@ public abstract class StoreAccess {
          */
         public String connectorType;
         /**
+         * Set only when the implementation was located on a Maven provider (Maven Central, Camunda's
+         * Artifactory, ...) rather than as a direct GitHub release asset - see StoreGithub.searchMavenRepoExistance
+         */
+        public String mavenProvider;
+        /**
          * Set only if the connector come from marketplace, and reference a Hub or Connector source
          */
         public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
         private EXPLORATION status;
 
+        /*
+        * use the getInstance instead
+         */
+        private ConnectorDefinition() {
+
+        }
         public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
             ConnectorDefinition connectorDefinition = new ConnectorDefinition();
             connectorDefinition.storeAccess = storeAccess;
@@ -192,9 +208,27 @@ public abstract class StoreAccess {
         public String jarName;
         public List<RunnerLightDefinition> runners;
         public List<ConnectorDetail> connectorDetails;
-        public List<ByteArrayInputStream> jarDependenciesContent;
+        /**
+         * Populated when the main jar was found as a "plain" jar (not a "-with-dependencies" uber jar)
+         * on a Maven provider - one entry per dependency declared in the pom.xml that was resolvable.
+         */
+        public List<JarDependency> jarDependenciesContent;
         String release;
 
+    }
+
+    /**
+     * One dependency jar downloaded alongside a connector's main jar - its own file name (so it can be
+     * saved as its own JarStorageEntity row and loaded in the Java machine) plus its content.
+     */
+    public static class JarDependency {
+        public String name;
+        public ByteArrayInputStream content;
+
+        public JarDependency(String name, ByteArrayInputStream content) {
+            this.name = name;
+            this.content = content;
+        }
     }
 
     public static class ConnectorDetail {

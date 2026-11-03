@@ -9,6 +9,7 @@ package io.camunda.cherry.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
@@ -130,7 +131,7 @@ public class JobRunnerFactory {
             return;
         }
         // get the list from the storage
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().isActive(true));
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().state(RunnerDefinitionEntity.State.ACTIVE));
 
 
         List<AbstractRunner> listSdkRunners = listRunners.stream()
@@ -170,7 +171,7 @@ public class JobRunnerFactory {
             return;
         }
 
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().state(RunnerDefinitionEntity.State.ACTIVE)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
         for (Running running : mapRunning.values()) {
             if (running.runner != null) {
                 try {

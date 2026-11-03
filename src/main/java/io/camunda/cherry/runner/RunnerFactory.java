@@ -226,14 +226,22 @@ public class RunnerFactory {
     }
 
     /**
-     * Persist the active/inactive status of a runner, so a runner stopped by the user does not
-     * restart the next time the application boots.
+     * Persist the state of a runner, so a runner stopped by the user does not restart the next
+     * time the application boots.
      *
      * @param runnerType type of the runner
-     * @param active     true if the runner must be started at the next boot, false otherwise
+     * @param state      the new state to persist
      */
-    public void setRunnerActive(String runnerType, boolean active) {
-        storageService.setRunnerActiveStatus(runnerType, active);
+    public void setRunnerState(String runnerType, RunnerDefinitionEntity.State state) {
+        storageService.setRunnerState(runnerType, state);
+    }
+
+    /**
+     * @param runnerType type of the runner
+     * @return the persisted state, defaulting to ACTIVE for legacy rows saved before this column existed
+     */
+    public RunnerDefinitionEntity.State getRunnerState(String runnerType) {
+        return storageService.getRunnerState(runnerType);
     }
 
 

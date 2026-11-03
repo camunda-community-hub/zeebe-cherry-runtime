@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -62,7 +63,8 @@ public class Installer {
         StoreAccess.ConnectorDefinition parentConnector = storeFactory.getParentConnectorDefinition(connectorDefinition);
         if (parentConnector == null) {
             connectorDownload.status = StoreAccess.STATUSDOWNLOAD.FAILED;
-            connectorDownload.explanation = "Connector [" + connectorDefinition.name
+            connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName()
+                    + "] Connector [" + connectorDefinition.name
                     + "] name, type[" + connectorDefinition.connectorType
                     + "] has not implementation, no parentConnector for this type is found";
             return connectorDownload;
@@ -88,7 +90,8 @@ public class Installer {
             if (parentConnector == null) {
                 logger.error("Installer: connector[{}] from store[{}] does not have a parentConnector", connectorDefinition.name, connectorDefinition.storeAccess.getName());
                 connectorDownload.status = StoreAccess.STATUSDOWNLOAD.FAILED;
-                connectorDownload.explanation = "Connector [" + connectorDefinition.name
+                connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName()
+                        + "] Connector [" + connectorDefinition.name
                         + "] name, type[" + connectorDefinition.connectorType
                         + "] has not implementation, no parentConnector for this type is found";
                 return connectorDownload;
@@ -118,7 +121,9 @@ public class Installer {
             if (connectorDownload.status != StoreAccess.STATUSDOWNLOAD.OK) {
                 return connectorDownload;
             }
-            connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release);
+
+            connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release, null,
+                    connectorDownload.explanation, connectorDownload.jarDependenciesContent);
 
             // Synchronize the runnerFactory now, to take into account all new runner loaded
             runnerFactory.synchronize();
@@ -141,10 +146,22 @@ public class Installer {
         }
     }
 
-    public List<RunnerLightDefinition> installStartJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease) throws TechnicalException {
+    public List<RunnerLightDefinition> installStartJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+                                                       LocalDateTime jarUTCTime,
+                                                       String sourceJar) throws TechnicalException {
+        return installStartJar(jarFileName, jarFileInputStream, defaultRelease, jarUTCTime, sourceJar, List.of());
+    }
+
+    /**
+     * Same as installStartJar(...), but also loads the given dependency jars alongside the main one.
+     */
+    public List<RunnerLightDefinition> installStartJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+                                                       LocalDateTime jarUTCTime,
+                                                       String sourceJar,
+                                                       List<StoreAccess.JarDependency> jarDependencies) throws TechnicalException {
         try {
 
-            List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.installJar(jarFileName, jarFileInputStream, defaultRelease);
+            List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.installJar(jarFileName, jarFileInputStream, defaultRelease, jarUTCTime, sourceJar, jarDependencies);
             for (RunnerLightDefinition runner : runnerLightDefinitions) {
                 logger.info("Will start runner[{}] from Jar [{}] release[{}]",
                         runner.getName(), jarFileName, defaultRelease);
@@ -162,7 +179,7 @@ public class Installer {
         try {
             byte[] jarBytes = Files.readAllBytes(jarFile.toPath());
             ByteArrayInputStream jarFileInputStream = new ByteArrayInputStream(jarBytes);
-            return installStartJar(jarFile.getName(), jarFileInputStream, defaultRelease);
+            return installStartJar(jarFile.getName(), jarFileInputStream, defaultRelease, null, "Local directory");
         } catch (Exception e) {
             throw new TechnicalException("Failed to install JAR [" + jarFile.getName() + "]: " + e.getMessage(), e);
         }

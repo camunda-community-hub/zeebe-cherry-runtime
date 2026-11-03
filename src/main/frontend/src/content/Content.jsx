@@ -19,12 +19,14 @@ class Content extends React.Component {
     constructor(_props) {
         super();
         this.fileUploaderRef = createRef();
+        this.downloadMessageRef = createRef();
 
         this.state = {
             content: [],
             files: [],
             display: {loading: false},
-            status: ""
+            status: "",
+            operationInProgress: false
         };
     }
 
@@ -36,6 +38,9 @@ class Content extends React.Component {
     render() {
         return (
             <div className={"container"}>
+                <DownloadMessage ref={this.downloadMessageRef}
+                                 onStatusChange={(inProgress) => this.setState({operationInProgress: inProgress})}
+                                 onError={(err) => this.setState({status: err})}/>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
                         <h1 className="title">Content</h1>
@@ -44,7 +49,8 @@ class Content extends React.Component {
                         <Button className="btn btn-success btn-sm"
                                 onClick={() => {
                                     this.refreshStatusOnPage();
-                                    this.refreshListContent()
+                                    this.refreshListContent();
+                                    this.downloadMessageRef.current?.refreshStartupStatus();
                                 }}
                                 disabled={this.state.display.loading}>
                             <ArrowRepeat/> Refresh
@@ -77,6 +83,13 @@ class Content extends React.Component {
                                 <tr style={this.getStyleRow(connector)}>
                                     <td style={{verticalAlign: "top"}}>
                                         {connector.name}
+                                        {connector.sourceJar &&
+                                            <div style={{
+                                                marginLeft: "3ch",
+                                                fontStyle: "italic",
+                                                fontSize: "smaller"
+                                            }}>{connector.sourceJar}</div>
+                                        }
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
                                         {connector.usedby.map((usedby, _indexconnector) =>
@@ -103,7 +116,7 @@ class Content extends React.Component {
                                         <Button className="btn btn-danger btn-sm"
                                                 onClick={() => this.deleteStorageEntityId(connector.storageentityid)}
                                                 style={{marginRight: "10px"}}
-                                                disabled={this.state.display.loading}
+                                                disabled={this.state.display.loading || this.state.operationInProgress}
                                         >
                                             Delete
                                         </Button>
@@ -159,7 +172,6 @@ class Content extends React.Component {
                         </div>
                     </div>
                 </div>
-                <DownloadMessage/>
             </div>
         )
     }
@@ -219,7 +231,7 @@ class Content extends React.Component {
         if (httpResponse.isError()) {
             console.log("deleteStorageEntityId.operationDeleteCallback: error " + httpResponse.getError());
             this.setState({status: httpResponse.getError()});
-        } else {
+            return;
         }
         this.refreshListContent();
     }

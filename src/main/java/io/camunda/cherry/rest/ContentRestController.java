@@ -54,6 +54,7 @@ public class ContentRestController {
             Map<String, Object> recordStorage = new HashMap<>();
             recordStorage.put(RestAttribute.NAME, storageEntity.name);
             recordStorage.put(RestAttribute.STORAGE_ENTITY_ID, storageEntity.id);
+            recordStorage.put(RestAttribute.SOURCE_JAR, storageEntity.sourceJar);
 
             List<Map<String, Object>> listUsedBy = listRunnersDefinition.stream().filter(t -> {
                 return t.jar.id.equals(storageEntity.id);
@@ -86,7 +87,7 @@ public class ContentRestController {
             if (JobRunnerFactory.RUNNER_NOT_FOUND.equals(e.getExceptionCode()))
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "storageEntityId [" + storageEntityId + "] not found");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "storageEntityId [" + storageEntityId + "] error " + e);
+                    "storageEntityId [" + storageEntityId + "] error " + e.getHumanInformation());
         }
         return status;
     }
@@ -172,7 +173,7 @@ public class ContentRestController {
         List<RunnerLightDefinition> runners = new ArrayList<>();
         try {
             ByteArrayInputStream jarFileInputStream = new ByteArrayInputStream(file.getBytes());
-            runners = installer.installStartJar(jarFileName, jarFileInputStream, null);
+            runners = installer.installStartJar(jarFileName, jarFileInputStream, null, null, "Manual upload");
             for (RunnerLightDefinition runner : runners) {
                 try {
                     jobRunnerFactory.stopRunner(runner.getType());

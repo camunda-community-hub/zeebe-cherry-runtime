@@ -1,6 +1,7 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -68,7 +69,7 @@ public class StoreUrl extends StoreAccess {
         ConnectorDownload connectorDownload = new ConnectorDownload();
         if (urlJarFile == null || urlJarFile.isEmpty()) {
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "No JAR file URL available";
+            connectorDownload.explanation = "Store [" + this.getName() + "] No JAR file URL available";
             return connectorDownload;
         }
         try {
@@ -77,12 +78,15 @@ public class StoreUrl extends StoreAccess {
             byte[] jarBytes = restTemplate.getForObject(urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-                connectorDownload.explanation = "Empty response from [" + urlJarFile + "]";
+                connectorDownload.explanation = "Store [" + this.getName() + "] Empty response from [" + urlJarFile + "]";
                 return connectorDownload;
             }
             connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);
             connectorDownload.status = STATUSDOWNLOAD.OK;
-            connectorDownload.explanation = "Downloaded " + jarBytes.length + " bytes from [" + urlJarFile + "]";
+            connectorDownload.explanation = "Store [" + this.getName() + "] Downloaded [" + urlJarFile + "] "
+                    + jarBytes.length + " bytes in "
+                    + (System.currentTimeMillis() - startTime) + " ms";
+
             logger.info("Store[{}] Download connector from url[{}] length {} in ms", getName(), urlJarFile,
                     jarBytes.length,
                     System.currentTimeMillis() - startTime);
@@ -91,7 +95,7 @@ public class StoreUrl extends StoreAccess {
             logger.error("Store[{}] connector error downloading JAR from [{}]: {}",
                     getName(), urlJarFile, e.getMessage());
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "Error downloading JAR: " + e.getMessage();
+            connectorDownload.explanation =  "Store [" + this.getName() + "] Error downloading JAR: " + e.getMessage();
         }
         return connectorDownload;
     }

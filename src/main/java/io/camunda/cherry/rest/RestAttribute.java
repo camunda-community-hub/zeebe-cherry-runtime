@@ -23,7 +23,7 @@ public class RestAttribute {
     public static final String COLLECTION_NAME_RUNNER = "collectionname";
     public static final String FRAMEWORK_RUNNER = "frameworkrunner";
     public static final String LOGO = "logo";
-    public static final String ACTIVE = "active";
+    public static final String RUNNER_STATE = "runnerState";
     public static final String STATISTIC = "statistic";
     public static final String PERFORMANCE = "performance";
     public static final String  ANALYSIS = "analysis";
@@ -72,6 +72,7 @@ public class RestAttribute {
     public static final String IS_SECRET = "issecret";
     // --- Content / Jar ---
     public static final String STORAGE_ENTITY_ID = "storageentityid";
+    public static final String SOURCE_JAR = "sourceJar";
     public static final String ACTIVE_RUNNER = "activeRunner";
     public static final String USED_BY = "usedby";
     public static final String LOADED_TIME = "loadedtime";

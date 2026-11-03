@@ -47,8 +47,9 @@ public class RunnerDefinitionEntity {
     public Integer version;
 
 
-    @Column(name = "activerunner")
-    public boolean activeRunner;
+    @Column(name = "state", length = 50)
+    @Enumerated(EnumType.STRING)
+    public State state;
 
     @Column(name = "status", length = 50)
     @Enumerated(EnumType.STRING)
@@ -69,5 +70,9 @@ public class RunnerDefinitionEntity {
 
     public enum Status {
         PRESENT, DELETED
+    }
+
+    public enum State {
+        ACTIVE, STOPPED, NOIMPLEMENTATION
     }
 }

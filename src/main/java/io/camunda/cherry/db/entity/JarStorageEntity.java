@@ -50,6 +50,15 @@ public class JarStorageEntity {
     @Column(name = "load_log", length = 2000)
     public String loadLog;
 
+    @Column(name = "source_jar", length = 2000)
+    public String sourceJar;
+
+    /**
+     * Name of the jar this one is a dependency of, null by default (a top-level/main jar has no parent).
+     */
+    @Column(name = "parent", length = 1000)
+    public String parent;
+
     /**
      * execution (in UTC) Instant will saved the date.. in the local timezone (example 15:04), that we
      * don't want (and make no sense) We want to save the date in UTC, so let's use a LocalDateTime,

@@ -2,6 +2,7 @@ package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,10 +104,6 @@ public class StoreMarketPlace extends StoreAccess {
                         connectorDefinition.githubRepoName = repoUrl.substring("https://github.com/".length());
                         connectorDefinition = gitHubAccess.fillAllElementTemplates(getName(), connectorDefinition);
                     }
-                    // extract "owner/repo" from the full GitHub URL
-                    // connectorDefinition.githubRepoName = repoUrl.replaceFirst("https://github\\.com/", "");
-                    // Search jar and element-template in the repository
-                    connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
 
                     if (repoUrl.contains("https://github.com/camunda-community-hub")) {
                         connectorDefinition.connectorSource = CONNECTORSOURCE.CAMUNDAHUB;

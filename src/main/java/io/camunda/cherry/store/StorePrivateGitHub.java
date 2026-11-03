@@ -1,6 +1,7 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 
 public class StorePrivateGitHub extends StoreGithub {
 

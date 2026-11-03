@@ -451,7 +451,7 @@ class Store extends React.Component {
                         </table>
                     </div>
                 </div>
-                <DownloadMessage/>
+                <DownloadMessage onError={(err) => this.setState({status: err})}/>
 
             </div>
         );

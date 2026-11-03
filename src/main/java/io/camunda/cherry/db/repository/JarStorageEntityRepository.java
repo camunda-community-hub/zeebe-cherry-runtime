@@ -23,6 +23,9 @@ public interface JarStorageEntityRepository extends JpaRepository<JarStorageEnti
     @Query("select jarDefinition from JarStorageEntity jarDefinition")
     List<JarStorageEntity> getAll();
 
+    @Query("select jarDefinition from JarStorageEntity jarDefinition where jarDefinition.parent = :parent")
+    List<JarStorageEntity> selectByParent(@Param("parent") String parent);
+
     @Transactional
     @Modifying
     @Query("update JarStorageEntity j set j.loadLog = :loadLog where j.id = :id")

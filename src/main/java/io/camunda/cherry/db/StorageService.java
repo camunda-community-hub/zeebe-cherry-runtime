@@ -72,14 +72,16 @@ public class StorageService {
      * @return the jarStorageEntity
      * @throws TechnicalException for any error
      */
-    public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, String jarName, File jarFile, String release)
+    public JarStorageEntity updateJarRunner(JarStorageEntity jarStorageEntity, String jarName, File jarFile, String release, String sourceJar)
             throws TechnicalException {
         try (FileInputStream fis = new FileInputStream(jarFile);
              Session session = sessionFactory.openSession();
              Connection con = dataSource.getConnection()) {
 
-            if (jarStorageEntity == null)
+            if (jarStorageEntity == null) {
                 jarStorageEntity = new JarStorageEntity();
+            }
+            jarStorageEntity.sourceJar = sourceJar;
             jarStorageEntity.name = jarName;
             jarStorageEntity.release = release;
             jarStorageEntity.loadedTime = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
@@ -108,15 +110,18 @@ public class StorageService {
      * @param jarFile jarfile to save
      * @throws IOException error during saving
      */
-    public JarStorageEntity saveJarRunner(String jarName, File jarFile, String release) throws TechnicalException {
+    public JarStorageEntity saveJarRunner(String jarName, File jarFile, String release, String sourceJar) throws TechnicalException {
         String connectorName = jarFile.getName();
-        logger.info("StorageService.saveJarRunner: file[{}] connectorName[{}] release[{}]", jarFile.getPath(), connectorName, release);
+        logger.info("StorageService.saveJarRunner: file[{}] connectorName[{}] release[{}] sourceJar[{}]",
+                jarFile.getPath(), connectorName, release, sourceJar);
 
         JarStorageEntity jarStorageEntity = jarStorageEntityRepository.findByName(connectorName);
         if (jarStorageEntity != null)
             return jarStorageEntity;
 
-        return updateJarRunner(jarStorageEntity, jarName, jarFile, release);
+        jarStorageEntity = updateJarRunner(null, jarName, jarFile, release, sourceJar);
+        jarStorageEntity.sourceJar = sourceJar;
+        return jarStorageEntityRepository.save(jarStorageEntity);
     }
 
     /**
@@ -126,6 +131,31 @@ public class StorageService {
      */
     public void updateJarStorage(JarStorageEntity jarStorageEntity) {
         jarStorageEntityRepository.save(jarStorageEntity);
+    }
+
+    /**
+     * Save a dependency jar (downloaded alongside a connector's main jar) as its own JarStorageEntity
+     * row, linked to its parent by name.
+     *
+     * @param jarName       name of the dependency jar
+     * @param jarFile       file content to save
+     * @param parentJarName name of the main jar this one is a dependency of
+     * @return the saved entity
+     * @throws TechnicalException for any error
+     */
+    public JarStorageEntity saveDependencyJar(String jarName, File jarFile, String parentJarName) throws TechnicalException {
+        JarStorageEntity jarStorageEntity = jarStorageEntityRepository.findByName(jarName);
+        jarStorageEntity = updateJarRunner(jarStorageEntity, jarName, jarFile, null, "Dependency of [" + parentJarName + "]");
+        jarStorageEntity.parent = parentJarName;
+        return jarStorageEntityRepository.save(jarStorageEntity);
+    }
+
+    /**
+     * @param parentJarName name of the main jar
+     * @return the dependency jars saved for that main jar
+     */
+    public List<JarStorageEntity> getDependenciesOf(String parentJarName) {
+        return jarStorageEntityRepository.selectByParent(parentJarName);
     }
 
     public void delete(JarStorageEntity jarStorageEntity) {
@@ -240,10 +270,10 @@ public class StorageService {
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
         runnerDefinition.release = release;
         runnerDefinition.jar = jarDefinition;
-        // start it by default
-        runnerDefinition.activeRunner = true;
-        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
-                runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
+        // (re)upload always brings the runner back to ACTIVE, even if it was STOPPED or NOIMPLEMENTATION
+        runnerDefinition.state = RunnerDefinitionEntity.State.ACTIVE;
+        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] state[{}]",
+                runnerDefinition.name, runnerDefinition.type, runnerDefinition.state);
 
         return runnerDefinitionRepository.save(runnerDefinition);
     }
@@ -274,10 +304,10 @@ public class StorageService {
         runnerDefinition.collectionName = runner.getCollectionName();
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.JARFILE;
         runnerDefinition.release = runner.getRelease() == null || runner.getRelease().trim().isEmpty() ? defaultRelease : runner.getRelease();
-        // start it by default
-        runnerDefinition.activeRunner = true;
-        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] active[{}]",
-                runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
+        // (re)upload always brings the runner back to ACTIVE, even if it was STOPPED or NOIMPLEMENTATION
+        runnerDefinition.state = RunnerDefinitionEntity.State.ACTIVE;
+        logger.info("StorageService.saveUploadRunner: Save Upload runner name[{}] type[{}] state[{}]",
+                runnerDefinition.name, runnerDefinition.type, runnerDefinition.state);
 
         return runnerDefinitionRepository.save(runnerDefinition);
     }
@@ -293,16 +323,16 @@ public class StorageService {
         RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runner.getType());
         if (runnerDefinition == null) {
             runnerDefinition = new RunnerDefinitionEntity();
-            // start it by default
-            runnerDefinition.activeRunner = true;
+            // start it by default; an existing entity keeps its persisted state (ACTIVE/STOPPED) across restarts
+            runnerDefinition.state = RunnerDefinitionEntity.State.ACTIVE;
         }
         runnerDefinition.name = runner.getName();
         runnerDefinition.classname = runner.getClass().getCanonicalName();
         runnerDefinition.type = runner.getType();
         runnerDefinition.collectionName = runner.getCollectionName();
         runnerDefinition.origin = RunnerDefinitionEntity.Origin.EMBEDDED;
-        logger.info("StorageService.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] active[{}]",
-                runnerDefinition.name, runnerDefinition.type, runnerDefinition.activeRunner);
+        logger.info("StorageService.saveEmbeddedRunner: Save Embedded runner name[{}] type[{}] state[{}]",
+                runnerDefinition.name, runnerDefinition.type, runnerDefinition.state);
         return runnerDefinitionRepository.save(runnerDefinition);
     }
 
@@ -332,10 +362,12 @@ public class StorageService {
         List<RunnerDefinitionEntity> listRunnerEntity = runnerDefinitionRepository.findAll();
         return listRunnerEntity.stream() // stream to apply each filter
                 .filter(t -> {
-                    if (filter.activeOnly == null) {
+                    if (filter.filterState == null) {
                         return true;
                     } else {
-                        return t.activeRunner == filter.activeOnly;
+                        // legacy rows saved before the state column existed default to ACTIVE
+                        RunnerDefinitionEntity.State effectiveState = t.state == null ? RunnerDefinitionEntity.State.ACTIVE : t.state;
+                        return effectiveState == filter.filterState;
                     }
                 }).filter(t -> {
                     if (filter.storeOnly == null) {
@@ -371,22 +403,48 @@ public class StorageService {
     }
 
     /**
-     * Persist the active/inactive status of a runner, so a runner stopped by the user does not
-     * restart the next time the application boots.
+     * Persist the state of a runner, so a runner stopped by the user does not restart the next
+     * time the application boots.
      *
      * @param runnerType type of the runner
-     * @param active     true if the runner must be started at the next boot, false otherwise
+     * @param state      the new state to persist
      */
-    public void setRunnerActiveStatus(String runnerType, boolean active) {
+    public void setRunnerState(String runnerType, RunnerDefinitionEntity.State state) {
         RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runnerType);
         if (runnerDefinition == null) {
-            logger.error("StorageService.setRunnerActiveStatus: runner type[{}] not found, can't persist active[{}]",
-                    runnerType, active);
+            logger.error("StorageService.setRunnerState: runner type[{}] not found, can't persist state[{}]",
+                    runnerType, state);
             return;
         }
-        runnerDefinition.activeRunner = active;
+        runnerDefinition.state = state;
         runnerDefinitionRepository.save(runnerDefinition);
-        logger.info("StorageService.setRunnerActiveStatus: runner type[{}] active[{}]", runnerType, active);
+        logger.info("StorageService.setRunnerState: runner type[{}] state[{}]", runnerType, state);
+    }
+
+    /**
+     * @param runnerType type of the runner
+     * @return the persisted state, defaulting to ACTIVE for legacy rows saved before this column existed
+     */
+    public RunnerDefinitionEntity.State getRunnerState(String runnerType) {
+        RunnerDefinitionEntity runnerDefinition = runnerDefinitionRepository.selectByType(runnerType);
+        if (runnerDefinition == null || runnerDefinition.state == null)
+            return RunnerDefinitionEntity.State.ACTIVE;
+        return runnerDefinition.state;
+    }
+
+    /**
+     * Called when the jar backing this runner is deleted: keep the runner definition (and its
+     * execution history) but mark it NOIMPLEMENTATION and detach the jar reference, instead of
+     * hard-deleting the definition.
+     *
+     * @param runnerDefinition entity whose jar was just removed
+     */
+    public void markRunnerNoImplementation(RunnerDefinitionEntity runnerDefinition) {
+        runnerDefinition.state = RunnerDefinitionEntity.State.NOIMPLEMENTATION;
+        runnerDefinition.jar = null;
+        runnerDefinitionRepository.save(runnerDefinition);
+        logger.info("StorageService.markRunnerNoImplementation: runner type[{}] name[{}] marked NOIMPLEMENTATION (jar removed)",
+                runnerDefinition.type, runnerDefinition.name);
     }
 
     /**
@@ -396,8 +454,8 @@ public class StorageService {
      */
 
     public void deleteRunnerDefinition(RunnerDefinitionEntity runnerDefinition) {
-        logger.info("StorageService.removeEntity: Remove runner name[{}] type[{}] active[{}]", runnerDefinition.name,
-                runnerDefinition.type, runnerDefinition.activeRunner);
+        logger.info("StorageService.removeEntity: Remove runner name[{}] type[{}] state[{}]", runnerDefinition.name,
+                runnerDefinition.type, runnerDefinition.state);
         runnerDefinitionRepository.delete(runnerDefinition);
     }
 
@@ -410,9 +468,9 @@ public class StorageService {
 
     public static class Filter {
         /**
-         * Null: all runners, else True or False
+         * Null: all runners, else only runners with this exact state
          */
-        Boolean activeOnly;
+        RunnerDefinitionEntity.State filterState;
 
         String filterName;
         String filterType;
@@ -426,8 +484,8 @@ public class StorageService {
          */
         String jarFileName;
 
-        public Filter isActive(boolean activeOnly) {
-            this.activeOnly = activeOnly;
+        public Filter state(RunnerDefinitionEntity.State state) {
+            this.filterState = state;
             return this;
         }
 

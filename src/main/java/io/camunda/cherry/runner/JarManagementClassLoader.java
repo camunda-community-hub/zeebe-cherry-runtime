@@ -196,6 +196,18 @@ public class JarManagementClassLoader {
      * @param jarFileName jar file to load (must already be in classLoaderPath)
      */
     public void loadJarInJavaMachine(String jarFileName) {
+        loadJarInJavaMachine(jarFileName, List.of());
+    }
+
+    /**
+     * Same as loadJarInJavaMachine(String), but also puts the given dependency jars in the SAME
+     * classloader as the main jar, so classes in the main jar can resolve classes from its dependencies.
+     * The resulting classloader/context is still indexed by the main jar's name only.
+     *
+     * @param jarFileName            main jar file to load (must already be in classLoaderPath)
+     * @param dependencyJarFileNames names of dependency jars to load alongside it (must already be in classLoaderPath)
+     */
+    public void loadJarInJavaMachine(String jarFileName, List<String> dependencyJarFileNames) {
         try {
             String pathFileName = classLoaderPath + File.separator + jarFileName;
             File jarFile = new File(pathFileName);
@@ -205,15 +217,26 @@ public class JarManagementClassLoader {
                 return;
             }
 
-            // Create URLClassLoader for the JAR
+            List<URL> jarUrls = new ArrayList<>();
+            jarUrls.add(jarFile.toURI().toURL());
+            for (String dependencyJarFileName : dependencyJarFileNames) {
+                File dependencyFile = new File(classLoaderPath + File.separator + dependencyJarFileName);
+                if (!dependencyFile.exists()) {
+                    logger.warn("Dependency JAR file not found: {}", dependencyFile.getAbsolutePath());
+                    continue;
+                }
+                jarUrls.add(dependencyFile.toURI().toURL());
+            }
+
+            // Create URLClassLoader for the JAR + its dependencies
             ClassLoader parent = Thread.currentThread().getContextClassLoader();
             if (parent == null) {
                 parent = getClass().getClassLoader();
             }
 
-            URLClassLoader jarClassLoader = new URLClassLoader(new URL[]{jarFile.toURI().toURL()}, parent);
+            URLClassLoader jarClassLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), parent);
 
-            // Store the classloader for later use
+            // Store the classloader for later use, indexed by the main jar's name
             jarClassLoaders.put(jarFileName, jarClassLoader);
 
             // Create and configure Spring context with the JAR's ClassLoader

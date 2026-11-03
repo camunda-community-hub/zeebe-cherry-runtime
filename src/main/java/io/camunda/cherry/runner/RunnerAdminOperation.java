@@ -75,10 +75,10 @@ public class RunnerAdminOperation {
         if (!runnerNotStopped.isEmpty())
             throw new OperationException("CANT_STOP_RUNNER", "Runners[" + runnerNotStopped + "]");
 
-        // remove worker from database
+        // keep the runner definition (and its execution history), just mark it as having no implementation
         for (RunnerDefinitionEntity runnerEntity : listRunners) {
-            logOperation.log(OperationEntity.Operation.REMOVERUNNER, "Remove Runner (remove Jar) [" + runnerEntity.name + "]");
-            storageService.deleteRunnerDefinition(runnerEntity);
+            logOperation.log(OperationEntity.Operation.REMOVERUNNER, "Runner marked NOIMPLEMENTATION (remove Jar) [" + runnerEntity.name + "]");
+            storageService.markRunnerNoImplementation(runnerEntity);
         }
         // remove Jar
         storageService.delete(jarStorageEntity.get());

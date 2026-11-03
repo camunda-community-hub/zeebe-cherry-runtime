@@ -10,6 +10,7 @@ package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.IntFrameworkRunner;
@@ -39,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("cherry")
@@ -132,7 +134,7 @@ public class RunnerRestController {
             infoRunner.put(RestAttribute.FRAMEWORK_RUNNER, runner instanceof IntFrameworkRunner ? "true" : "false");
 
             infoRunner.put(RestAttribute.LOGO, runner.getLogo());
-            infoRunner.put(RestAttribute.ACTIVE, cherryJobRunnerFactory.isActiveRunner(runner.getType()));
+            infoRunner.put(RestAttribute.RUNNER_STATE, runnerFactory.getRunnerState(runner.getType()).toString());
             infoRunner.put(RestAttribute.STATISTIC, statisticRunner);
             infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
             infoRunner.put(RestAttribute.NB_EXEC, statisticRunner.executions);
@@ -148,6 +150,38 @@ public class RunnerRestController {
             totalFailed += statisticRunner.executionsFailed;
             totalBpmnError += statisticRunner.executionsBpmnErrors;
         }
+
+        // Runners whose jar was removed have no loadable class, so they normally don't appear in listRunners
+        // above. The exception is a runner whose class is still cached in memory from before the jar was
+        // removed (RunnerFactory.cacheRunner) - that one DOES appear above already (with the correct
+        // runnerState), so it must not be duplicated here.
+        Set<String> listRunnersTypes = listRunners.stream().map(AbstractRunner::getType).collect(Collectors.toSet());
+        List<RunnerDefinitionEntity> listNoImplementation = runnerFactory.getAllRunnersEntity(
+                new StorageService.Filter().state(RunnerDefinitionEntity.State.NOIMPLEMENTATION)).stream()
+                .filter(t -> !listRunnersTypes.contains(t.type))
+                .toList();
+        for (RunnerDefinitionEntity noImplRunner : listNoImplementation) {
+            Map<String, Object> infoRunner = new HashMap<>();
+            infoRunner.put(RestAttribute.NAME, noImplRunner.name == null ? "" : noImplRunner.name);
+            infoRunner.put(RestAttribute.TYPE, noImplRunner.type);
+            infoRunner.put(RestAttribute.CONNECTOR_TYPE, noImplRunner.type);
+            infoRunner.put(RestAttribute.DESCRIPTION, "No implementation available (jar removed)");
+            infoRunner.put(RestAttribute.CLASS_RUNNER, "");
+            infoRunner.put(RestAttribute.COLLECTION_NAME_RUNNER, noImplRunner.collectionName);
+            infoRunner.put(RestAttribute.FRAMEWORK_RUNNER, "false");
+            infoRunner.put(RestAttribute.LOGO, null);
+            infoRunner.put(RestAttribute.RUNNER_STATE, RunnerDefinitionEntity.State.NOIMPLEMENTATION.toString());
+            infoRunner.put(RestAttribute.STATISTIC, new HistoryFactory.Statistic());
+            infoRunner.put(RestAttribute.TOPIC_COUNT, 0L);
+            infoRunner.put(RestAttribute.NB_EXEC, 0L);
+            infoRunner.put(RestAttribute.NB_FAIL, 0L);
+            infoRunner.put(RestAttribute.NB_OVER_THRESHOLD, 0);
+            HistoryPerformance.Performance emptyPerformance = new HistoryPerformance.Performance();
+            infoRunner.put(RestAttribute.PERFORMANCE, emptyPerformance);
+            infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(emptyPerformance));
+            listDetails.add(infoRunner);
+        }
+
         Comparator<Map<String, Object>> orderComparator;
 
         orderComparator = switch (orderBy) {
@@ -175,9 +209,9 @@ public class RunnerRestController {
         info.put(RestAttribute.TOTAL_EXECUTIONS_FAILED, totalFailed);
         info.put(RestAttribute.TOTAL_EXECUTIONS_BPMN_ERRORS, totalBpmnError);
         info.put(RestAttribute.TOTAL_EXECUTIONS, totalSucceeded + totalFailed + totalBpmnError);
-        info.put(RestAttribute.NB_RUNNERS, listRunners.size());
+        info.put(RestAttribute.NB_RUNNERS, listDetails.size());
         info.put(RestAttribute.TIMESTAMP, String.valueOf(System.currentTimeMillis()));
-        logger.info("RunnerRestController./api/runner/dashboard: runners: {}", listRunners.size());
+        logger.info("RunnerRestController./api/runner/dashboard: runners: {}", listDetails.size());
         return info;
     }
 
@@ -349,7 +383,7 @@ public class RunnerRestController {
                 // ok, it was already stopped
                 isStopped = true;
             }
-            runnerFactory.setRunnerActive(runnerType, false);
+            runnerFactory.setRunnerState(runnerType, RunnerDefinitionEntity.State.STOPPED);
             logger.info("Stop executed for runnerType[" + runnerType + "]: " + isStopped);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);
@@ -377,7 +411,7 @@ public class RunnerRestController {
             } catch (OperationAlreadyStartedException e) {
                 isStarted = true;
             }
-            runnerFactory.setRunnerActive(runnerType, true);
+            runnerFactory.setRunnerState(runnerType, RunnerDefinitionEntity.State.ACTIVE);
             logger.info("Start executed for [{}]: {}", runnerType, isStarted);
             AbstractRunner runner = getRunnerByType(runnerType);
             RunnerInformation runnerInfo = RunnerInformation.getRunnerInformation(runner);

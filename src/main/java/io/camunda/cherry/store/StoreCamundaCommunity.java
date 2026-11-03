@@ -19,11 +19,16 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StoreCamundaCommunity extends StoreGithub {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreCamundaCommunity.class);
+    private static final String CAMUNDA_ARTIFACTORY_REPOSITORY = "https://artifacts.camunda.com/artifactory/connectors";
 
     // - https://github.com/camunda-community-hub/
     public StoreCamundaCommunity(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
@@ -48,11 +53,24 @@ public class StoreCamundaCommunity extends StoreGithub {
         } else {
             ConnectorDownload connectorDownload = new ConnectorDownload();
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "No JAR file URL available for connector [" + connectorDefinition.name + "]";
+            connectorDownload.explanation = "Store [CamundaCommunity] No JAR file URL available for connector [" + connectorDefinition.name + "]";
             return connectorDownload;
         }
 
     }
 
+    public List<ConnectorDefinition> exploreListConnectors() {
+        return super.exploreListConnectors();
+    }
 
+
+    /**
+     * Return the list of provider where the JAR can be stored
+     * @return
+     */
+    public List<String> getMavenProviders() {
+        List<String> listMaven = new ArrayList(super.getMavenProviders());
+        listMaven.add(CAMUNDA_ARTIFACTORY_REPOSITORY);
+        return listMaven;
+    }
 }

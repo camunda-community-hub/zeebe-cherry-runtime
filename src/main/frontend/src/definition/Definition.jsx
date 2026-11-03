@@ -48,7 +48,7 @@ class Definition extends React.Component {
                                 <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
                             </div>
                         </div>
-                        <DownloadMessage/>
+                        <DownloadMessage onError={(err) => this.setState({status: err})}/>
                         <div className="block">
                             <table id="runnersTable" className="table is-hoverable is-fullwidth">
                                 <thead>

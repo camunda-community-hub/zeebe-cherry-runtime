@@ -20,6 +20,7 @@ import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.LogOperation;
+import io.camunda.cherry.store.StoreAccess;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -188,12 +189,15 @@ public class RunnerUploadFactory {
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
      * @param defaultRelease     the default release know from where the jar was uploaded
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
+     * @param sourceJar explanation where the jar come
      * @return list of runnerLight Definition
      */
     private JarStorageEntity saveJarFileToStorage(File jarFile,
                                                   String originalFileName,
                                                   String defaultRelease,
-                                                  boolean forceReloadThisJar) {
+                                                  boolean forceReloadThisJar,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar) {
         List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
         JarStorageEntity jarStorageEntity = null;
         String analysis = "";
@@ -203,7 +207,7 @@ public class RunnerUploadFactory {
             boolean reload = false;
             if (forceReloadThisJar) {
                 reload = true;
-                analysis += "ForceRefresh,";
+                analysis += "ForceReload,";
             }
             if (jarStorageEntity == null) {
                 reload = true;
@@ -216,11 +220,12 @@ public class RunnerUploadFactory {
                         ZoneId.systemDefault());
 
                 // transform this local dateTime in UTC, because all comparaison on date in made n UTC
-                ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
-                ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-                LocalDateTime utcLocalDateTime = utcDateTime.toLocalDateTime();
-
-                if (jarStorageEntity.loadedTime.isBefore(utcLocalDateTime)) {
+                if (jarUTCTime==null) {
+                    ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
+                    ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
+                    jarUTCTime = utcDateTime.toLocalDateTime();
+                }
+                if (jarStorageEntity.loadedTime.isBefore(jarUTCTime)) {
                     reload = true;
                     analysis += "NewVersion,";
                 }
@@ -241,9 +246,9 @@ public class RunnerUploadFactory {
             logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
             if (jarStorageEntity == null) {
                 // save it
-                jarStorageEntity = storageService.saveJarRunner(jarName, jarFile, defaultRelease);
+                jarStorageEntity = storageService.saveJarRunner(jarName, jarFile, defaultRelease, sourceJar);
             } else {
-                jarStorageEntity = storageService.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease);
+                jarStorageEntity = storageService.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease, sourceJar);
             }
 
         } catch (Exception e) {
@@ -262,20 +267,49 @@ public class RunnerUploadFactory {
      * @param jarFileName        jar file name
      * @param jarFileInputStream InputStream
      * @param defaultRelease     it may come from the definition, else it somewhere on the runner.
+     * @param sourceJar where the jar come from
      * @return list of runners detected in the JAR
      */
-    public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease) throws TechnicalException {
+    public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar) throws TechnicalException {
+        return installJar(jarFileName, jarFileInputStream, defaultRelease, jarUTCTime, sourceJar, List.of());
+    }
+
+    /**
+     * Same as installJar(...), but also saves and loads every dependency jar alongside the main one -
+     * one JarStorageEntity row per dependency, its "parent" column pointing back at jarFileName, and all
+     * of them (main jar + dependencies) put in the SAME classloader so classes resolve across jars.
+     *
+     * @param jarDependencies dependency jars downloaded alongside the main one (possibly empty)
+     */
+    public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar,
+                                                  List<StoreAccess.JarDependency> jarDependencies) throws TechnicalException {
         try {
 
             File jarFile = jarManagementClassLoader.copyFromJarFile(jarFileName, jarFileInputStream);
-            JarStorageEntity jarStorageEntity = saveJarFileToStorage(jarFile, jarFileName, defaultRelease, true);
+            JarStorageEntity jarStorageEntity = saveJarFileToStorage(jarFile, jarFileName, defaultRelease, true, jarUTCTime, sourceJar);
 
-            jarManagementClassLoader.loadJarInJavaMachine(jarFileName);
+            List<String> dependencyJarFileNames = new ArrayList<>();
+            if (jarDependencies != null) {
+                for (StoreAccess.JarDependency jarDependency : jarDependencies) {
+                    File dependencyFile = jarManagementClassLoader.copyFromJarFile(jarDependency.name, jarDependency.content);
+                    if (dependencyFile == null)
+                        continue;
+                    storageService.saveDependencyJar(jarDependency.name, dependencyFile, jarFileName);
+                    dependencyJarFileNames.add(jarDependency.name);
+                }
+            }
+
+            jarManagementClassLoader.loadJarInJavaMachine(jarFileName, dependencyJarFileNames);
             List<RunnerLightDefinition> runners = inspectJar(jarFile, jarStorageEntity, defaultRelease);
 
             listLightRunners.addAll(runners);
-            logger.info("RunnerUploadFactory jar[{}] installed, found {} runners", jarFileName, runners.size());
-            logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + jarFileName + "]");
+            logger.info("RunnerUploadFactory jar[{}] installed with {} dependencies, found {} runners",
+                    jarFileName, dependencyJarFileNames.size(), runners.size());
+            logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + jarFileName + "] dependencies[" + dependencyJarFileNames.size() + "]");
             return runners;
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR, "Can't UploadJar[" + jarFileName + "] : " + e.getMessage());

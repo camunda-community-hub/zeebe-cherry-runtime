@@ -49,11 +49,13 @@ class RestCallService {
                 fctToCallback.call(objToCall, httpResponse);
             })
             .catch(error => {
-                console.log("RestcallService.getJson() error " + error);
+                console.error("RestCallService.getJson: catch error:" + error);
                 if (error.response && error.response.status === 401) {
+                    let homeCherry = window.location.href;
+                    console.log("Redirect : to[" + homeCherry + "]");
+                    window.location = homeCherry;
                     return;
                 }
-                console.error("RestCallService.getJson: catch error:" + error);
                 let httpResponse = new HttpResponse({}, error);
                 fctToCallback.call(objToCall, httpResponse);
 

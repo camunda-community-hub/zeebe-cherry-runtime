@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,8 +119,8 @@ public class StoreCamundaConnector extends StoreAccess {
 
         // Check if element-templates subfolder exists — if so, this dir is a connector
         String apiUrl = "https://api.github.com/repos/" + REPO + "/contents/" + repoPath + "/" + name;
-        GitHubAccess.GithubConnectorStatus githubConnectorStatus = gitHubAccess.isGithubConnector(apiUrl, release, true, false);
-        if (githubConnectorStatus.elementTemplates && githubConnectorStatus.pomXml) {
+        GitHubAccess.GithubConnectorStatus githubConnectorStatus = gitHubAccess.qualifyRepository(apiUrl, release, true, false);
+        if (githubConnectorStatus.elementTemplates && githubConnectorStatus.existPomXml) {
             logger.info("Store[{}] Detect connector[{}] in url[{}]", getName(), name, htmlUrl);
             ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, name, htmlUrl, release);
             connectorDefinition.githubRepoName = REPO;
@@ -313,7 +314,7 @@ public class StoreCamundaConnector extends StoreAccess {
             byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-                connectorDownload.explanation = "Empty response from [" + connectorDefinition.urlJarFile + "]";
+                connectorDownload.explanation = "Store [CamundaConnector] Empty response from [" + connectorDefinition.urlJarFile + "]";
                 return connectorDownload;
             }
             connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);

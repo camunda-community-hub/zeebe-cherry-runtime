@@ -36,6 +36,7 @@ class Dashboard extends React.Component {
                 period: "ONEDAY",
                 showActive: true,
                 showInactive: false,
+                showNoImplementation: false,
                 showWorker: true,
                 showConnector: true,
                 showOnlyError: false,
@@ -58,7 +59,8 @@ class Dashboard extends React.Component {
     render() {
         // console.log("dashboard.render display="+JSON.stringify(this.state.display));
         return (<div className={"container"}>
-            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}/>
+            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
+                             onError={(err) => this.setState({status: err})}/>
             <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
                               timestamp={this.state.dashboard.timestamp}/>
             <div className="row">
@@ -85,6 +87,12 @@ class Dashboard extends React.Component {
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showInactive")}>
                             Inactive
+                        </button>
+                        <button className={this.getButtonClass(this.state.display.showNoImplementation)}
+                                style={{fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setToggleFilter("showNoImplementation")}>
+                            No implementation
                         </button>
 
                         <button className={this.getButtonClass(this.state.display.showWorker)}
@@ -150,12 +158,6 @@ class Dashboard extends React.Component {
 
             <div className="row" style={{width: "100%"}}>
                 <div className="col-md-12">
-                    <ControllerPage errorMessage={this.state.error} loading={this.state.display.loading}/>
-                </div>
-            </div>
-
-            <div className="row" style={{width: "100%"}}>
-                <div className="col-md-12">
                     <table width="100%" style={{tableLayout: "fixed"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
                             <tr style={this.getStyleRow(runner)}>
@@ -179,9 +181,11 @@ class Dashboard extends React.Component {
     }
 
     getStyleRow(runner) {
-        if (!this.state.display.showActive && runner.active)
+        if (!this.state.display.showActive && runner.runnerState === "ACTIVE")
             return {display: "none"};
-        if (!this.state.display.showInactive && !runner.active)
+        if (!this.state.display.showInactive && runner.runnerState === "STOPPED")
+            return {display: "none"};
+        if (!this.state.display.showNoImplementation && runner.runnerState === "NOIMPLEMENTATION")
             return {display: "none"};
         if (!this.state.display.showWorker && runner.classrunner === "worker")
             return {display: "none"};

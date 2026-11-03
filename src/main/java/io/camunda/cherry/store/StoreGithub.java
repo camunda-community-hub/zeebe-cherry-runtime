@@ -3,6 +3,8 @@ package io.camunda.cherry.store;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.git.GitHubAccess;
+import io.camunda.cherry.store.mavencentral.MavenCentralDownload;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +24,15 @@ public abstract class StoreGithub extends StoreAccess {
     private final String filterProjectName;
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
+    private final MavenCentralDownload mavenCentralDownload = new MavenCentralDownload();
     private final String REPOS_PER_PAGE = "50";
     Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
 
     public StoreGithub(String name, String url, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
         this(name, url, null, gitHubAccess, startup);
     }
+
+    public static final String MAVEN_CENTRAL_REPOSITORY = "https://repo.maven.apache.org/maven2";
 
     /**
      * @param name              store name
@@ -85,36 +90,54 @@ public abstract class StoreGithub extends StoreAccess {
             for (String fullName : listRepositories) {
                 // fullName is "owner/repo", shortName is just "repo"
                 String shortName = fullName.substring(fullName.lastIndexOf('/') + 1);
-                String apiContentsUrl = "https://api.github.com/repos/" + fullName + "/contents";
+                String repoPath = "https://api.github.com/repos/" + fullName + "/contents";
                 String htmlUrl = "https://github.com/" + fullName;
 
-                GitHubAccess.GithubConnectorStatus status = gitHubAccess.isGithubConnector(apiContentsUrl, null, true, true);
-                if (status.elementTemplates) {
-                    ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
-                    connectorDefinition.githubRepoName = fullName;
-                    connectorDefinition.githubRepoPath = "";
-                    connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
-                    logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl, connectorDefinition.hasImplementation);
+                GitHubAccess.GithubConnectorStatus gitHubConnectorStatus = gitHubAccess.qualifyRepository(repoPath, null, true, true);
 
-                    result.add(connectorDefinition);
-                } else {
-                    status = gitHubAccess.isGithubWorker(apiContentsUrl, null, true, true);
-                    if (status.pomXml) {
-                        // this is a PomXml worker
-                        ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
-                        connectorDefinition.githubRepoName = fullName;
-                        connectorDefinition.githubRepoPath = "";
-                        connectorDefinition.hasImplementation = status.pomXml && status.gitReleases;
-                        connectorDefinition.release = status.release;
-                        logger.info("Store[{}] Detect worker[{}] in url[{}] Implementation[{}]", getName(), shortName, htmlUrl, connectorDefinition.hasImplementation);
+                // To be qualify, the repository must have an elementTemplate OR gitRelease OR pom.xml
+                if (!(gitHubConnectorStatus.elementTemplates || gitHubConnectorStatus.existGitReleases || gitHubConnectorStatus.existPomXml)) {
+                    continue;
+                }
+                ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
+                connectorDefinition.githubRepoName = fullName;
+                connectorDefinition.githubRepoPath = "";
+                connectorDefinition.release = gitHubConnectorStatus.gitLastRelease;
 
-                        result.add(connectorDefinition);
+
+                //--------------- identify the Jar file
+                // First, priority to a release directly attached to the Git repository
+                if (connectorDefinition.release != null && !connectorDefinition.release.isEmpty()) {
+                    try {
+                        connectorDefinition.urlJarFile = gitHubAccess.getGitHubRelease(repoPath).getJarFromRelease(connectorDefinition.release);// identify the Jar in the release
+                    } catch (Exception e) {
+                        logger.error("Store[{}] error while getting release for repo[{}]", getName(), fullName, e);
+                        connectorDefinition.urlJarFile = null;
                     }
                 }
 
+                if (connectorDefinition.urlJarFile == null) {
+                    // If no release are detected, or no jar in the release, we need to go to a second pass.
+                    // search a pom.xml
+                    // Open it and get groupId, artefactId, groupId
+                    // then search in maven central and/or JFrog is an implementation exist
+                    // if yes, then point the jar file to that URL
+                    if (gitHubConnectorStatus.existPomXml)
+                        connectorDefinition = searchMavenRepoExistence(gitHubConnectorStatus, connectorDefinition);
+                }
+                connectorDefinition.hasImplementation = connectorDefinition.urlJarFile != null;
+                logger.info("Store[{}] Detect connector[{}] in url[{}] Implementation[{}] jarFile[{}]",
+                        getName(),
+                        shortName,
+                        htmlUrl,
+                        connectorDefinition.hasImplementation,
+                        connectorDefinition.urlJarFile);
 
+                result.add(connectorDefinition);
             }
+
             logger.info("Store[{}] found {} connectors in {} ms", getName(), result.size(), System.currentTimeMillis() - startTime);
+
             return result;
         } catch (Exception e) {
             logger.error("Store[{}] error {}", getName(), e);
@@ -177,9 +200,6 @@ public abstract class StoreGithub extends StoreAccess {
 
     @Override
     public boolean exploreDetails(ConnectorDefinition connectorDefinition) throws TechnicalException {
-        if (connectorDefinition.hasImplementation) {
-            connectorDefinition = gitHubAccess.fillJarDownload(getName(), connectorDefinition);
-        }
         connectorDefinition = gitHubAccess.fillAllElementTemplates(getName(), connectorDefinition);
         return true;
     }
@@ -193,11 +213,15 @@ public abstract class StoreGithub extends StoreAccess {
 
     @Override
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
+        if (connectorDefinition.mavenProvider != null) {
+            logger.info("Store[{}] Start downloading connector[{}] from Maven provider[{}]...", getName(), connectorDefinition.name, connectorDefinition.mavenProvider);
+            return mavenCentralDownload.downloadConnector(connectorDefinition, connectorDefinition.mavenProvider);
+        }
         logger.info("Store[{}] Start downloading connector[{}] from url[{}]...", getName(), connectorDefinition.name, connectorDefinition.urlJarFile);
         ConnectorDownload connectorDownload = new ConnectorDownload();
         if (connectorDefinition.urlJarFile == null || connectorDefinition.urlJarFile.isEmpty()) {
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "No JAR file URL available for connector [" + connectorDefinition.name + "]";
+            connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName() + "] No JAR file URL available for connector [" + connectorDefinition.name + "]";
             return connectorDownload;
         }
         try {
@@ -206,13 +230,15 @@ public abstract class StoreGithub extends StoreAccess {
             byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-                connectorDownload.explanation = "Empty response from [" + connectorDefinition.urlJarFile + "]";
+                connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName() + "] Empty response from [" + connectorDefinition.urlJarFile + "]";
                 return connectorDownload;
             }
             connectorDownload.jarContent = new java.io.ByteArrayInputStream(jarBytes);
             connectorDownload.status = STATUSDOWNLOAD.OK;
             connectorDownload.release = connectorDefinition.release;
-            connectorDownload.explanation = "Downloaded " + jarBytes.length + " bytes from [" + connectorDefinition.urlJarFile + "]";
+            connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName() + "] Downloaded [" + connectorDefinition.urlJarFile + "] "
+                    + jarBytes.length + " bytes in "
+                    + (System.currentTimeMillis() - startTime) + " ms";
             logger.info("Store[{}] Download connector[{}] from url[{}] length {} in ms", getName(), connectorDefinition.name, connectorDefinition.urlJarFile,
                     jarBytes.length,
                     System.currentTimeMillis() - startTime);
@@ -221,7 +247,7 @@ public abstract class StoreGithub extends StoreAccess {
             logger.error("Store[{}] connector[{}] error downloading JAR from [{}]: {}",
                     getName(), connectorDefinition.name, connectorDefinition.urlJarFile, e.getMessage());
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation = "Error downloading JAR: " + e.getMessage();
+            connectorDownload.explanation = "Store [" + connectorDefinition.storeAccess.getName() + "] Error downloading JAR: " + e.getMessage();
         }
         return connectorDownload;
     }
@@ -268,4 +294,41 @@ public abstract class StoreGithub extends StoreAccess {
     }
 
     protected abstract String getTypeRepo();
+
+
+    private ConnectorDefinition searchMavenRepoExistence(GitHubAccess.GithubConnectorStatus gitHubStatus, ConnectorDefinition connectorDefinition) {
+        if (gitHubStatus.pomContent == null) {
+            logger.error("Store[{}] Connector [{}], pom is null", getName(), connectorDefinition.name);
+            return connectorDefinition;
+        }
+        MavenCentralDownload.PomDescription pomDescription = mavenCentralDownload.decodePom(gitHubStatus.pomContent);
+        if (pomDescription == null) {
+            logger.error("Store[{}] can't parse pom.xml for connector [{}], can't search a Maven provider", getName(), connectorDefinition.name);
+            return connectorDefinition;
+        }
+        // Search in all providers if the object exist
+        for (String provider : getMavenProviders()) {
+            String url = mavenCentralDownload.buildMavenUrl(provider, pomDescription.groupId, pomDescription.artifactId, pomDescription.version);
+            logger.info("Store[{}] search in Maven provider [{}] for connector [{}] with URL [{}]", getName(), provider, connectorDefinition.name, url);
+            try {
+                if (mavenCentralDownload.checkIfExist(url)) {
+                    logger.info("Store[{}] connector [{}] found in Maven provider [{}] with URL [{}]", getName(), connectorDefinition.name, provider, url);
+                    connectorDefinition.urlJarFile = url;
+                    connectorDefinition.mavenProvider = provider;
+                    connectorDefinition.hasImplementation = true;
+                    return connectorDefinition;
+                } else {
+                    connectorDefinition.description+="Url["+url+"] return nothing;";
+                }
+            } catch (Exception e) {
+                logger.error("Store[{}] error searching in Maven provider [{}] for connector [{}] with URL [{}]: {}", getName(), provider, connectorDefinition.name, url, e.getMessage());
+            }
+        }
+        return connectorDefinition;
+    }
+
+
+    public List<String> getMavenProviders() {
+        return List.of("https://repo1.maven.org/maven2/");
+    }
 }
