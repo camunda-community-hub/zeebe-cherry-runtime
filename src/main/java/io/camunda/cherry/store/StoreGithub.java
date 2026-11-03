@@ -5,6 +5,7 @@ import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.cherry.store.mavencentral.MavenCentralDownload;
+import io.camunda.cherry.store.mavencentral.MavenCredential;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,6 @@ public abstract class StoreGithub extends StoreAccess {
         this(name, url, null, gitHubAccess, startup);
     }
 
-    public static final String MAVEN_CENTRAL_REPOSITORY = "https://repo.maven.apache.org/maven2";
 
     /**
      * @param name              store name
@@ -307,14 +307,14 @@ public abstract class StoreGithub extends StoreAccess {
             return connectorDefinition;
         }
         // Search in all providers if the object exist
-        for (String provider : getMavenProviders()) {
+        for (MavenCredential provider : getMavenProviders()) {
             String url = mavenCentralDownload.buildMavenUrl(provider, pomDescription.groupId, pomDescription.artifactId, pomDescription.version);
             logger.info("Store[{}] search in Maven provider [{}] for connector [{}] with URL [{}]", getName(), provider, connectorDefinition.name, url);
             try {
                 if (mavenCentralDownload.checkIfExist(url)) {
                     logger.info("Store[{}] connector [{}] found in Maven provider [{}] with URL [{}]", getName(), connectorDefinition.name, provider, url);
                     connectorDefinition.urlJarFile = url;
-                    connectorDefinition.mavenProvider = provider;
+                    connectorDefinition.mavenProvider = provider.name;
                     connectorDefinition.hasImplementation = true;
                     return connectorDefinition;
                 } else {
@@ -328,7 +328,7 @@ public abstract class StoreGithub extends StoreAccess {
     }
 
 
-    public List<String> getMavenProviders() {
-        return List.of("https://repo1.maven.org/maven2/");
+    public List<MavenCredential> getMavenProviders() {
+        return List.of(MavenCredential.getInstance("maven", "https://repo1.maven.org/maven2/"));
     }
 }

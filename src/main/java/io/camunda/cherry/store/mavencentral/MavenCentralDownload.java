@@ -209,8 +209,8 @@ public class MavenCentralDownload {
      * @param version    artifact version
      * @return the URL of the "-with-dependencies.jar" if it exists on that provider, else the plain ".jar" URL
      */
-    public String buildMavenUrl(String provider, String groupId, String artifactId, String version) {
-        String artifactBase = artifactBaseUrl(provider, groupId, artifactId, version);
+    public String buildMavenUrl(MavenCredential provider, String groupId, String artifactId, String version) {
+        String artifactBase = artifactBaseUrl(provider.name, groupId, artifactId, version);
         String withDependenciesUrl = artifactBase + "-with-dependencies.jar";
         if (checkIfExist(withDependenciesUrl))
             return withDependenciesUrl;

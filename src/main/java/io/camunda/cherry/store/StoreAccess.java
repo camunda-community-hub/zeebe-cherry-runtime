@@ -2,6 +2,7 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.runner.RunnerLightDefinition;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.store.mavencentral.MavenCredential;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;

@@ -20,6 +20,7 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.store.git.GitHubAccess;
+import io.camunda.cherry.store.mavencentral.MavenCredential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +67,11 @@ public class StoreCamundaCommunity extends StoreGithub {
 
     /**
      * Return the list of provider where the JAR can be stored
-     * @return
+     * @return list of provider with its credential
      */
-    public List<String> getMavenProviders() {
-        List<String> listMaven = new ArrayList(super.getMavenProviders());
-        listMaven.add(CAMUNDA_ARTIFACTORY_REPOSITORY);
+    public List<MavenCredential> getMavenProviders() {
+        List<MavenCredential> listMaven = new ArrayList(super.getMavenProviders());
+        listMaven.add( MavenCredential.getInstance("jfrog", CAMUNDA_ARTIFACTORY_REPOSITORY));
         return listMaven;
     }
 }
