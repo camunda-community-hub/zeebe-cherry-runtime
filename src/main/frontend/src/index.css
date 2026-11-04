@@ -11,3 +11,9 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Bootstrap's .container caps width per breakpoint and centers it, leaving large
+   side margins on a wide screen - this app wants to use the full window width instead. */
+.container {
+    max-width: 100% !important;
+}

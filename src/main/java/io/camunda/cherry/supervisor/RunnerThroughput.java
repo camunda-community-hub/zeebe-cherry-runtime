@@ -128,8 +128,8 @@ public class RunnerThroughput {
      * V3=interval(n).topicCount, V2=interval(n-1).topicCount, V1=interval(n-2).topicCount
      */
     private ORIENTATION calculateOrientationBacklog(HistoryPerformance.Interval intervalN,
-                                                     HistoryPerformance.Interval intervalN1,
-                                                     HistoryPerformance.Interval intervalN2) {
+                                                    HistoryPerformance.Interval intervalN1,
+                                                    HistoryPerformance.Interval intervalN2) {
         if (intervalN1 == null || intervalN2 == null) {
             return ORIENTATION.STABLE;
         }
@@ -157,7 +157,7 @@ public class RunnerThroughput {
      * percentage change of V1 (e.g. HIGHINCREASE when V2 rose by at least 20% over V1).
      */
     private ORIENTATION calculateOrientationExecution(HistoryPerformance.Interval intervalN,
-                                                       HistoryPerformance.Interval intervalN1) {
+                                                      HistoryPerformance.Interval intervalN1) {
         if (intervalN1 == null) {
             return ORIENTATION.STABLE;
         }
@@ -192,9 +192,16 @@ public class RunnerThroughput {
         return THROUGHPUT.HIGH;
     }
 
+    public enum THROUGHPUT {
+        LOW, MEDIUM, HIGH
+    }
+
+    public enum ORIENTATION {
+        HIGHDECREASE, DECREASE, STABLE, INCREASE, HIGHINCREASE
+    }
+
     public static class Analysis {
         /**
-         *
          * Look the last interval(n), and check the field execution. Calculate the number of execution per seconds.
          * To understand the interval duration,
          * If executions < 100: LOW
@@ -203,13 +210,14 @@ public class RunnerThroughput {
          */
         public THROUGHPUT throughput;
 
-        /** Compare interval(n).topicCount : V3 and interval(n-1).topicCount=V2, and interval(n-2).topicCount=V1
+        /**
+         * Compare interval(n).topicCount : V3 and interval(n-1).topicCount=V2, and interval(n-2).topicCount=V1
          * if v3 > V1 + 1000: HIGHINCREASE
          * if (v3 < v1-1000 : HIGHDECREASE
-         *
+         * <p>
          * If V3 > V2 > V1 and V3 > V1 +50 INCREASE.
          * if v3 < v2 < V1 and v3 < v1-50 : DECREASE
-         *
+         * <p>
          * else STABLE
          */
         public ORIENTATION backlog;
@@ -221,7 +229,6 @@ public class RunnerThroughput {
          * if V2< V1 * 20% : HIGHDECREASE
          * if V2< V1 * 10% : DECREASE
          * else STABLE
-         *
          */
         public ORIENTATION execution;
 
@@ -247,19 +254,11 @@ public class RunnerThroughput {
          * Get the executionsSucceeded. ATTENTION: check the last 5 last interval (interval(n), interval(n-1) and get the max(executionsSucceeded)
          * In one interval of 10 mn, we can process 4800 => rate is 4800/10/60= 8 per s
          * To process the backlog, we need topicCount/rate = 2300/8=1537 s
-         * 
          */
         public long backLogInSeconds;
         /**
-         *  Return a human value: example, 7653 s = 2 h 7 mn 33 s
+         * Return a human value: example, 7653 s = 2 h 7 mn 33 s
          */
         public String backLogHuman;
-    }
-
-    public enum THROUGHPUT {
-        LOW, MEDIUM, HIGH
-    }
-    public enum ORIENTATION {
-        HIGHDECREASE, DECREASE, STABLE, INCREASE, HIGHINCREASE
     }
 }

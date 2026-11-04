@@ -61,8 +61,6 @@ class Dashboard extends React.Component {
         return (<div className={"container"}>
             <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
                              onError={(err) => this.setState({status: err})}/>
-            <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
-                              timestamp={this.state.dashboard.timestamp}/>
             <div className="row">
                 <div className="col-md-1">
                     <h1 className="title">Details</h1>
@@ -72,7 +70,10 @@ class Dashboard extends React.Component {
                         <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
                     </div>
                 </div>
-
+                <div className="row" style={{width: "100%"}}>
+                    <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
+                                  timestamp={this.state.dashboard.timestamp}/>
+                </div>
                 <div className="col-md-6">
                     <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
 

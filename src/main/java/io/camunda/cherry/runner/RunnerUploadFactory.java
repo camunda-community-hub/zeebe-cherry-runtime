@@ -189,7 +189,7 @@ public class RunnerUploadFactory {
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
      * @param defaultRelease     the default release know from where the jar was uploaded
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
-     * @param sourceJar explanation where the jar come
+     * @param sourceJar          explanation where the jar come
      * @return list of runnerLight Definition
      */
     private JarStorageEntity saveJarFileToStorage(File jarFile,
@@ -220,7 +220,7 @@ public class RunnerUploadFactory {
                         ZoneId.systemDefault());
 
                 // transform this local dateTime in UTC, because all comparaison on date in made n UTC
-                if (jarUTCTime==null) {
+                if (jarUTCTime == null) {
                     ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
                     ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
                     jarUTCTime = utcDateTime.toLocalDateTime();
@@ -243,7 +243,7 @@ public class RunnerUploadFactory {
 
 
             analysis += jarStorageEntity == null ? "SaveEntity" : "UpdateEntity";
-            logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
+
             if (jarStorageEntity == null) {
                 // save it
                 jarStorageEntity = storageService.saveJarRunner(jarName, jarFile, defaultRelease, sourceJar);
@@ -267,13 +267,13 @@ public class RunnerUploadFactory {
      * @param jarFileName        jar file name
      * @param jarFileInputStream InputStream
      * @param defaultRelease     it may come from the definition, else it somewhere on the runner.
-     * @param sourceJar where the jar come from
+     * @param sourceJar          where the jar come from
      * @return list of runners detected in the JAR
      */
     public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
                                                   LocalDateTime jarUTCTime,
                                                   String sourceJar) throws TechnicalException {
-        return installJar(jarFileName, jarFileInputStream, defaultRelease, jarUTCTime, sourceJar, List.of());
+        return installJar(jarFileName, jarFileInputStream, List.of(), defaultRelease, jarUTCTime, sourceJar);
     }
 
     /**
@@ -283,10 +283,11 @@ public class RunnerUploadFactory {
      *
      * @param jarDependencies dependency jars downloaded alongside the main one (possibly empty)
      */
-    public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+    public List<RunnerLightDefinition> installJar(String jarFileName,
+                                                  InputStream jarFileInputStream,
+                                                  List<StoreAccess.JarDependency> jarDependencies, String defaultRelease,
                                                   LocalDateTime jarUTCTime,
-                                                  String sourceJar,
-                                                  List<StoreAccess.JarDependency> jarDependencies) throws TechnicalException {
+                                                  String sourceJar) throws TechnicalException {
         try {
 
             File jarFile = jarManagementClassLoader.copyFromJarFile(jarFileName, jarFileInputStream);

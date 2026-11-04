@@ -18,6 +18,7 @@ import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.LogOperation;
+import jakarta.annotation.PostConstruct;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -29,6 +30,7 @@ import javax.sql.DataSource;
 import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -55,6 +57,26 @@ public class StorageService {
         this.sessionFactory = sessionFactory;
         this.dataSource = dataSource;
         this.logOperation = logOperation;
+    }
+
+    /**
+     * Hibernate (ddl-auto: update) generates a Postgres CHECK constraint on ch_operation.operationname
+     * from OperationEntity.Operation's values the first time the table is created, but never widens
+     * it when the enum later gains a new value - so a database created before e.g. DETECTRUNNER was
+     * added rejects any row using it. Drop the stale constraint at startup so an existing database
+     * ends up accepting the same values a freshly-created one would; a no-op once it's already gone.
+     */
+    @PostConstruct
+    public void dropStaleOperationNameCheckConstraint() {
+        try (Connection con = dataSource.getConnection()) {
+            if (!"PostgreSQL".equals(con.getMetaData().getDatabaseProductName()))
+                return;
+            try (Statement statement = con.createStatement()) {
+                statement.execute("ALTER TABLE ch_operation DROP CONSTRAINT IF EXISTS ch_operation_operationname_check");
+            }
+        } catch (SQLException e) {
+            logger.error("StorageService.dropStaleOperationNameCheckConstraint: {}", e.getMessage());
+        }
     }
 
     /* ******************************************************************** */

@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.store.StoreAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+
 public class GitHubAccess {
 
     /**
@@ -23,29 +21,33 @@ public class GitHubAccess {
      * package-private: GitHubRelease (same package) accesses it directly. Cross-package callers
      * (StoreGithub, StoreCamundaConnector) go through getJsonNode()/extractTaskDefinitionType() below.
      */
-    final GitHubToolbox gitHubToolbox;
     Logger logger = LoggerFactory.getLogger(GitHubAccess.class.getName());
-    private final String githubToken;
 
-    public GitHubAccess(@Value("${cherry.github.token:}") String githubToken) {
-        // Built here, not via @Value field injection: field injection runs AFTER the constructor,
-        // so the token would still be null if GitHubToolbox were created from a field value.
-        this.githubToken = githubToken;
-        this.gitHubToolbox = new GitHubToolbox(githubToken);
+    private final String gitHubToken;
+    private final GitHubToolbox gitHubToolbox;
+
+    /**
+     * The shared Spring-managed instance (autowired wherever GitHubAccess is a constructor param)
+     * always gets no token - cherry.github.token no longer exists as a global property. A store that
+     * needs its own authenticated access (e.g. communityConnector, which lists many repositories)
+     * builds its own instance instead via "new GitHubAccess(token)" with its own store-level token.
+     */
+    public GitHubAccess(String gitHubToken) {
+        this.gitHubToken = gitHubToken;
+        this.gitHubToolbox = new GitHubToolbox(this);
     }
 
-    public String getGithubToken() {
-        return githubToken;
+    public boolean hasGithubToken() {
+        return gitHubToken != null && ! gitHubToken.isEmpty();
     }
 
-    public boolean isToken() {
-        return githubToken != null && !githubToken.isBlank();
+    public String getGitHubToken() {
+        return gitHubToken;
     }
 
-
-
-
-
+    public GitHubToolbox getGitHubToolbox() {
+        return gitHubToolbox;
+    }
 
 
     /**
@@ -64,12 +66,12 @@ public class GitHubAccess {
         try {
             // check element template
             JsonNode items = getJsonNode(repoPath + "/element-templates?ref=" + ref);
-            githubConnectorStatus.elementTemplates=items.isArray() && items.size() > 0;
+            githubConnectorStatus.elementTemplates = items.isArray() && ! items.isEmpty();
 
             // check pom.xml — most repos simply don't have one; that's an expected, silent "no" answer
             if (checkPomXml) {
                 try {
-                    JsonNode itemsPom =  getJsonNode(repoPath + "/pom.xml?ref=" + ref);
+                    JsonNode itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
                     String type = itemsPom.path("type").asText();
                     githubConnectorStatus.existPomXml = type.equals("file");
                     githubConnectorStatus.pomContent = gitHubToolbox.decodeGithubFileContent(itemsPom);
@@ -78,11 +80,11 @@ public class GitHubAccess {
                 }
             }
             if (checkGitRelease) {
-                GitHubRelease gitHubRelease = new GitHubRelease(repoPath, this);
+                GitHubRelease gitHubRelease = getGitHubRelease(repoPath);
                 // Extract repo path (owner/repo) from the API URL
                 // repoPath is like https://api.github.com/repos/owner/repo/contents/...
                 try {
-                    githubConnectorStatus.gitLastRelease = gitHubRelease.getLatestRelease() ;
+                    githubConnectorStatus.gitLastRelease = gitHubRelease.getLatestRelease();
                     githubConnectorStatus.existGitReleases = githubConnectorStatus.gitLastRelease != null;
 
                 } catch (Exception ex) {
@@ -119,7 +121,7 @@ public class GitHubAccess {
                 apiUrl += "?ref=" + ref;
             }
             try {
-                JsonNode items =  getJsonNode(apiUrl);
+                JsonNode items = getJsonNode(apiUrl);
                 if (!items.isArray()) continue;
                 for (JsonNode item : items) {
                     String fileName = item.path("name").asText("");
@@ -179,9 +181,9 @@ public class GitHubAccess {
         }
         connectorDefinition.release = release;
         try {
-        connectorDefinition.urlJarFile = gitHubRelease.getJarFromRelease(release);
+            connectorDefinition.urlJarFile = gitHubRelease.getJarFromRelease(release);
 
-        connectorDefinition.hasImplementation = connectorDefinition.urlJarFile!=null;
+            connectorDefinition.hasImplementation = connectorDefinition.urlJarFile != null;
         } catch (Exception e) {
             logger.error("Store[{}] connector[{}] error fetching release assets: {}",
                     storeName, connectorDefinition.name, e.getMessage());
@@ -218,7 +220,7 @@ public class GitHubAccess {
     public StoreAccess.ConnectorDefinition fillOneElementTemplate(String urlTemplate, StoreAccess.ConnectorDefinition connectorDefinition) throws Exception {
         StoreAccess.ElementTemplateDescription elementTemplateDescription = new StoreAccess.ElementTemplateDescription(urlTemplate);
         connectorDefinition.listEltTemplate.add(elementTemplateDescription);
-        JsonNode jsonNode =  getJsonNode(urlTemplate);
+        JsonNode jsonNode = getJsonNode(urlTemplate);
         elementTemplateDescription.name = jsonNode.path("name").asText(connectorDefinition.name);
         elementTemplateDescription.description = jsonNode.path("description").asText(connectorDefinition.name);
         elementTemplateDescription.connectorType = extractTaskDefinitionType(jsonNode);

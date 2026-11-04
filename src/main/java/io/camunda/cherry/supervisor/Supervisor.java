@@ -15,10 +15,8 @@ import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.runtime.LogOperation;
-import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.cherry.store.StoreAccess;
 import io.camunda.cherry.store.StoreFactory;
-import io.camunda.cherry.store.StoreUrl;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +43,6 @@ public class Supervisor {
     private final static int BASE_ADVANCE_PHASE3 = 20;
     private static final String STARTUP_INITIAL_KEY = "INITIAL";
     private final CherryProperties cherryProperties;
-    private final GitHubAccess gitHubAccess;
     private final StoreFactory storeFactory;
     private final RunnerFactory runnerFactory;
     private final JobRunnerFactory jobRunnerFactory;
@@ -55,7 +52,6 @@ public class Supervisor {
     private final RunnerUploadFactory runnerUploadFactory;
     private final StorageService storageService;
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
-    private final String MARKER_NAME_IS_A_DIRECT_URL = "http";
     private final StoreFactory.EXPLORATIONCONNECTOR exploration = StoreFactory.EXPLORATIONCONNECTOR.NONE;
     private final int percentageExploration = 0;
     private final Map<String, DownloadInProgress> downloadStatus = new HashMap<>();
@@ -67,15 +63,13 @@ public class Supervisor {
     /*                                                                      */
     /* ******************************************************************** */
 
-    Supervisor(GitHubAccess gitHubAccess,
-               CherryProperties cherryProperties,
+    Supervisor(CherryProperties cherryProperties,
                StoreFactory storeFactory,
                RunnerFactory runnerFactory,
                JobRunnerFactory jobRunnerFactory,
                Installer installer,
                LogOperation logOperation, JarManagementClassLoader jarManagementClassLoader, RunnerUploadFactory runnerUploadFactory,
                StorageService storageService) {
-        this.gitHubAccess = gitHubAccess;
         this.cherryProperties = cherryProperties;
         this.storeFactory = storeFactory;
         this.runnerFactory = runnerFactory;
@@ -214,25 +208,23 @@ public class Supervisor {
         if (!cherryProperties.getStore().getDownloadStartup().isEmpty()) {
             DownloadInProgress downloadInProgress = downloadStatus.get(STARTUP_INITIAL_KEY);
             downloadInProgress.total = cherryProperties.getStore().getDownloadStartup().size();
-            StoreUrl storeUrl = new StoreUrl(storeFactory, gitHubAccess);
-            for (String item : cherryProperties.getStore().getDownloadStartup()) {
-                if (item == null)
+
+            for (CherryProperties.Store.DownloadStartupEntry item : cherryProperties.getStore().getDownloadStartup()) {
+                if (item == null || item.getUrl() == null)
                     continue;
-                StoreAccess.ConnectorDownload connectorDownload = null;
-                downloadInProgress.currentDownloadName = item;
-                if (item.startsWith(MARKER_NAME_IS_A_DIRECT_URL)) {
-                    logger.info("Download And start Downloading URL [{}]", item);
-                    // Not possible to call the storeFactory. Call directly the storeUrl to get the connector
-                    connectorDownload = storeUrl.downloadConnectorFromUrl(item);
-                } else {
-                    // search the connector in the list based on name or type, no matter the implementation
-                    StoreAccess.ConnectorDefinition connectorDefinition = storeFactory.searchConnector(new StoreFactory.Filter().name(item).type(item));
-                    if (connectorDefinition != null) {
-                        connectorDownload = installer.downloadInstallStart(connectorDefinition);
-                    } else {
-                        logger.info("Search connector name[{}]: NOT FOUND", item);
-                    }
+                StoreAccess.ConnectorDownload connectorDownload;
+                downloadInProgress.currentDownloadName = item.getUrl();
+
+                StoreAccess storeAccess = storeFactory.getStoreByName(item.getStore());
+                if (storeAccess == null) {
+                    logger.info("downloadStartup: store[{}] not found, can't download url[{}]", item.getStore(), item.getUrl());
+                    downloadInProgress.count++;
+                    continue;
                 }
+                logger.info("DownloadAndStart Downloading URL [{}] from store[{}]", item.getUrl(), item.getStore());
+                StoreAccess.ConnectorDefinition connectorDefinition = StoreAccess.ConnectorDefinition.getInstance(storeAccess, item.getUrl(), item.getUrl(), null);
+                connectorDefinition.urlJarFile = item.getUrl();
+                connectorDownload = installer.downloadInstallStart(connectorDefinition);
                 downloadInProgress.count++;
             }
         }
@@ -263,7 +255,8 @@ public class Supervisor {
                     boolean doTheInstallation = checkDownloadPolicy(connectorDefinition, storeAccess.getStartup().getDownloadPolicy());
                     if (doTheInstallation) {
                         downloadInProgress.currentDownloadName = connectorDefinition.name;
-                        installer.downloadInstallStart(connectorDefinition);
+                        StoreAccess.ConnectorDownload connectorDownload = installer.downloadInstallStart(connectorDefinition);
+                        connectorDefinition.addLogDownload(connectorDownload.explanation);
                     }
                 } else {
                     logger.info("Supervisor: ignore connector [{}] due to filter [{}] on download", connectorDefinition.name, filter.stream().collect(Collectors.joining(",")));

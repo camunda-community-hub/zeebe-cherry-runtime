@@ -31,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -290,7 +290,7 @@ public class StoreRestController {
     }
 
     private byte[] fetchUrl(String urlString) throws IOException {
-        try (InputStream in = new URL(urlString).openStream()) {
+        try (InputStream in = URI.create(urlString).toURL().openStream()) {
             return in.readAllBytes();
         }
     }
@@ -349,7 +349,7 @@ public class StoreRestController {
      * @param storeName     store where the connector is
      * @param connectorName connector name
      * @param release       release
-     * @return
+     * @return status of download
      */
     @GetMapping(value = "/api/store/connectors/install", produces = "application/json")
     public StoreAccess.ConnectorDownload install(@RequestParam(name = "store", required = false) String storeName,

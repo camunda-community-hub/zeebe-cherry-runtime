@@ -1,11 +1,13 @@
 package io.camunda.cherry.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.store.git.GitHubAccess;
 import io.camunda.cherry.store.mavencentral.MavenCentralDownload;
-import io.camunda.cherry.store.mavencentral.MavenCredential;
+import io.camunda.cherry.store.mavencentral.MavenProvider;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,12 +29,16 @@ public abstract class StoreGithub extends StoreAccess {
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
     private final MavenCentralDownload mavenCentralDownload = new MavenCentralDownload();
+    private final String mavenToken;
+    private final String mavenApikey;
+    private final String tokenHeaderName;
+    private final String tokenPrefix;
+    private final String apikeyHeaderName;
     private final String REPOS_PER_PAGE = "50";
+
+    private final LogOperation logOperation;
     Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
 
-    public StoreGithub(String name, String url, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
-        this(name, url, null, gitHubAccess, startup);
-    }
 
 
     /**
@@ -40,17 +47,46 @@ public abstract class StoreGithub extends StoreAccess {
      * @param filterProjectName optional filter applied to repository names when listing (e.g. "camunda-8-connector")
      * @param gitHubAccess      GitHub access
      * @param startup           startup-download configuration for this store
+     * @param mavenToken        optional credential for this store's default "maven" provider (Maven Central)
+     * @param mavenApikey       optional credential for this store's default "maven" provider (Maven Central)
      */
-    public StoreGithub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+    public StoreGithub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess, CherryProperties.Startup startup,
+                       String mavenToken, String mavenApikey,
+                       LogOperation logOperation) {
+        this(name, url, filterProjectName, gitHubAccess, startup, mavenToken, mavenApikey, null, null, null, logOperation);
+    }
+
+    /**
+     * @param name              store name
+     * @param url               GitHub profile/org URL
+     * @param filterProjectName optional filter applied to repository names when listing (e.g. "camunda-8-connector")
+     * @param gitHubAccess      GitHub access
+     * @param startup           startup-download configuration for this store
+     * @param mavenToken        optional credential for this store's default "maven" provider (Maven Central)
+     * @param mavenApikey       optional credential for this store's default "maven" provider (Maven Central)
+     * @param tokenHeaderName   optional override of MavenProvider's default token header name, blank to keep the default
+     * @param tokenPrefix       optional override of MavenProvider's default token prefix, blank to keep the default
+     * @param apikeyHeaderName  optional override of MavenProvider's default apikey header name, blank to keep the default
+     */
+    public StoreGithub(String name, String url, String filterProjectName, GitHubAccess gitHubAccess, CherryProperties.Startup startup,
+                       String mavenToken, String mavenApikey, String tokenHeaderName, String tokenPrefix, String apikeyHeaderName,
+                       LogOperation logOperation) {
         super(startup);
         this.name = name;
         this.url = url;
         this.filterProjectName = filterProjectName;
         this.gitHubAccess = gitHubAccess;
+        this.mavenToken = mavenToken;
+        this.mavenApikey = mavenApikey;
+        this.tokenHeaderName = tokenHeaderName;
+        this.tokenPrefix = tokenPrefix;
+        this.apikeyHeaderName = apikeyHeaderName;
+        this.logOperation = logOperation;
+
         restTemplate = new RestTemplate();
-        if (gitHubAccess.isToken()) {
+        if (gitHubAccess.hasGithubToken()) {
             ClientHttpRequestInterceptor authInterceptor = (request, body, execution) -> {
-                request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + gitHubAccess.getGithubToken());
+                request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + gitHubAccess.getGitHubToken());
                 return execution.execute(request, body);
             };
             restTemplate.setInterceptors(List.of(authInterceptor));
@@ -110,10 +146,13 @@ public abstract class StoreGithub extends StoreAccess {
                 if (connectorDefinition.release != null && !connectorDefinition.release.isEmpty()) {
                     try {
                         connectorDefinition.urlJarFile = gitHubAccess.getGitHubRelease(repoPath).getJarFromRelease(connectorDefinition.release);// identify the Jar in the release
+
                     } catch (Exception e) {
                         logger.error("Store[{}] error while getting release for repo[{}]", getName(), fullName, e);
                         connectorDefinition.urlJarFile = null;
                     }
+                    connectorDefinition.addLogDownload("GitHubRelease[" + repoPath + "] - " + connectorDefinition.release + " "
+                            + (connectorDefinition.urlJarFile == null ? "NotFound" : "Found with url[" + connectorDefinition.urlJarFile + "]"));
                 }
 
                 if (connectorDefinition.urlJarFile == null) {
@@ -132,7 +171,8 @@ public abstract class StoreGithub extends StoreAccess {
                         htmlUrl,
                         connectorDefinition.hasImplementation,
                         connectorDefinition.urlJarFile);
-
+                // log the connector result
+                logOperation.log(OperationEntity.Operation.DETECTRUNNER, connectorDefinition.getLogDownload());
                 result.add(connectorDefinition);
             }
 
@@ -167,7 +207,7 @@ public abstract class StoreGithub extends StoreAccess {
                 break;
             }
 
-            if (!repos.isArray() || repos.size() == 0) {
+            if (!repos.isArray() || repos.isEmpty()) {
                 break;
             }
 
@@ -214,8 +254,12 @@ public abstract class StoreGithub extends StoreAccess {
     @Override
     public ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition) {
         if (connectorDefinition.mavenProvider != null) {
+            MavenProvider provider = getMavenProviders().stream()
+                    .filter(p -> p.name.equals(connectorDefinition.mavenProvider))
+                    .findFirst()
+                    .orElse(null);
             logger.info("Store[{}] Start downloading connector[{}] from Maven provider[{}]...", getName(), connectorDefinition.name, connectorDefinition.mavenProvider);
-            return mavenCentralDownload.downloadConnector(connectorDefinition, connectorDefinition.mavenProvider);
+            return mavenCentralDownload.downloadConnector(connectorDefinition, provider);
         }
         logger.info("Store[{}] Start downloading connector[{}] from url[{}]...", getName(), connectorDefinition.name, connectorDefinition.urlJarFile);
         ConnectorDownload connectorDownload = new ConnectorDownload();
@@ -242,6 +286,7 @@ public abstract class StoreGithub extends StoreAccess {
             logger.info("Store[{}] Download connector[{}] from url[{}] length {} in ms", getName(), connectorDefinition.name, connectorDefinition.urlJarFile,
                     jarBytes.length,
                     System.currentTimeMillis() - startTime);
+            logOperation.log(OperationEntity.Operation.DOWNLOADJAR, connectorDefinition.getLogDownload());
 
         } catch (Exception e) {
             logger.error("Store[{}] connector[{}] error downloading JAR from [{}]: {}",
@@ -299,36 +344,55 @@ public abstract class StoreGithub extends StoreAccess {
     private ConnectorDefinition searchMavenRepoExistence(GitHubAccess.GithubConnectorStatus gitHubStatus, ConnectorDefinition connectorDefinition) {
         if (gitHubStatus.pomContent == null) {
             logger.error("Store[{}] Connector [{}], pom is null", getName(), connectorDefinition.name);
+            connectorDefinition.addLogDownload("No pom.xml");
             return connectorDefinition;
         }
         MavenCentralDownload.PomDescription pomDescription = mavenCentralDownload.decodePom(gitHubStatus.pomContent);
         if (pomDescription == null) {
             logger.error("Store[{}] can't parse pom.xml for connector [{}], can't search a Maven provider", getName(), connectorDefinition.name);
+            connectorDefinition.addLogDownload("Can't parse pom.xml");
             return connectorDefinition;
         }
         // Search in all providers if the object exist
-        for (MavenCredential provider : getMavenProviders()) {
+        for (MavenProvider provider : getMavenProviders()) {
             String url = mavenCentralDownload.buildMavenUrl(provider, pomDescription.groupId, pomDescription.artifactId, pomDescription.version);
-            logger.info("Store[{}] search in Maven provider [{}] for connector [{}] with URL [{}]", getName(), provider, connectorDefinition.name, url);
+            logger.info("Store[{}] Connector[{}] Search in Maven provider [{}] with URL [{}]", getName(), connectorDefinition.name, provider, url);
             try {
-                if (mavenCentralDownload.checkIfExist(url)) {
+                int urlCode = mavenCentralDownload.checkIfExist(url, provider);
+                if (urlCode == HttpURLConnection.HTTP_OK) {
                     logger.info("Store[{}] connector [{}] found in Maven provider [{}] with URL [{}]", getName(), connectorDefinition.name, provider, url);
                     connectorDefinition.urlJarFile = url;
                     connectorDefinition.mavenProvider = provider.name;
                     connectorDefinition.hasImplementation = true;
+                    connectorDefinition.addLogDownload("MavenProvider [" + provider.name + "] FOUND with URL [" + url + "]");
                     return connectorDefinition;
                 } else {
-                    connectorDefinition.description+="Url["+url+"] return nothing;";
+                    connectorDefinition.addLogDownload("MavenProvider[" + provider.name + "] Url[" + url + "] return code[" + urlCode + "]");
                 }
             } catch (Exception e) {
-                logger.error("Store[{}] error searching in Maven provider [{}] for connector [{}] with URL [{}]: {}", getName(), provider, connectorDefinition.name, url, e.getMessage());
+                logger.error("Store[{}] Connector[{}] error searching in Maven provider [{}] with URL [{}]: {}", getName(), connectorDefinition.name, provider, url, e.getMessage());
             }
         }
         return connectorDefinition;
     }
 
 
-    public List<MavenCredential> getMavenProviders() {
-        return List.of(MavenCredential.getInstance("maven", "https://repo1.maven.org/maven2/"));
+    public List<MavenProvider> getMavenProviders() {
+        MavenProvider provider = MavenProvider.getInstance("maven", "https://repo1.maven.org/maven2/", mavenToken, mavenApikey);
+        applyProviderOverrides(provider);
+        return List.of(provider);
+    }
+
+    /**
+     * Applies this store's optional header-name/prefix overrides onto a freshly-built MavenProvider -
+     * a blank override leaves MavenProvider's own default in place (see CherryProperties.PrivateStoreEntry).
+     */
+    protected void applyProviderOverrides(MavenProvider provider) {
+        if (tokenHeaderName != null && !tokenHeaderName.isBlank())
+            provider.tokenHeaderName = tokenHeaderName;
+        if (tokenPrefix != null && !tokenPrefix.isBlank())
+            provider.tokenPrefix = tokenPrefix;
+        if (apikeyHeaderName != null && !apikeyHeaderName.isBlank())
+            provider.apikeyHeaderName = apikeyHeaderName;
     }
 }

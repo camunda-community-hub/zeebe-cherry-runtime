@@ -24,9 +24,9 @@ public class StoreUrl extends StoreAccess {
         this.storeFactory = storeFactory;
         this.gitHubAccess = gitHubAccess;
         restTemplate = new RestTemplate();
-        if (gitHubAccess.isToken()) {
+        if (gitHubAccess.hasGithubToken()) {
             ClientHttpRequestInterceptor authInterceptor = (request, body, execution) -> {
-                request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + gitHubAccess.getGithubToken());
+                request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + gitHubAccess.getGitHubToken());
                 return execution.execute(request, body);
             };
             restTemplate.setInterceptors(List.of(authInterceptor));
@@ -95,7 +95,7 @@ public class StoreUrl extends StoreAccess {
             logger.error("Store[{}] connector error downloading JAR from [{}]: {}",
                     getName(), urlJarFile, e.getMessage());
             connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
-            connectorDownload.explanation =  "Store [" + this.getName() + "] Error downloading JAR: " + e.getMessage();
+            connectorDownload.explanation = "Store [" + this.getName() + "] Error downloading JAR: " + e.getMessage();
         }
         return connectorDownload;
     }

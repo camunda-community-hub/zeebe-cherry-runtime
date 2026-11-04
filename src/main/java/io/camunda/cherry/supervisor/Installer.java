@@ -78,8 +78,8 @@ public class Installer {
      * Download and install the jar.
      * Note: the connector is maybe already started: so we will stop all relative runners
      *
-     * @param connectorDefinition
-     * @return
+     * @param connectorDefinition connector to download
+     * @return status of installation
      * @throws TechnicalException
      */
     public StoreAccess.ConnectorDownload downloadInstallStart(StoreAccess.ConnectorDefinition connectorDefinition) throws TechnicalException {
@@ -122,8 +122,9 @@ public class Installer {
                 return connectorDownload;
             }
 
-            connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDefinition.release, null,
-                    connectorDownload.explanation, connectorDownload.jarDependenciesContent);
+            connectorDefinition.addLogDownload(connectorDownload.explanation);
+            connectorDownload.runners = runnerUploadFactory.installJar(connectorDownload.jarName, connectorDownload.jarContent, connectorDownload.jarDependenciesContent, connectorDefinition.release, null,
+                    connectorDefinition.getLogDownload());
 
             // Synchronize the runnerFactory now, to take into account all new runner loaded
             runnerFactory.synchronize();
@@ -161,7 +162,7 @@ public class Installer {
                                                        List<StoreAccess.JarDependency> jarDependencies) throws TechnicalException {
         try {
 
-            List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.installJar(jarFileName, jarFileInputStream, defaultRelease, jarUTCTime, sourceJar, jarDependencies);
+            List<RunnerLightDefinition> runnerLightDefinitions = runnerUploadFactory.installJar(jarFileName, jarFileInputStream, jarDependencies, defaultRelease, jarUTCTime, sourceJar);
             for (RunnerLightDefinition runner : runnerLightDefinitions) {
                 logger.info("Will start runner[{}] from Jar [{}] release[{}]",
                         runner.getName(), jarFileName, defaultRelease);

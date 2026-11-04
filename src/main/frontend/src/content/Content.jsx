@@ -10,6 +10,7 @@ import React, {createRef} from 'react';
 import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
+import RunnerCartouche from "../component/RunnerCartouche";
 import RestCallService from "../services/RestCallService";
 import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
@@ -93,15 +94,13 @@ class Content extends React.Component {
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
                                         {connector.usedby.map((usedby, _indexconnector) =>
-                                            <div>{usedby.name} {usedby.collectionName} <br/>
-                                                {usedby.activeRunner &&
-                                                    <button
-                                                        className="start-runner button is-selected is-primary">Started</button>
-                                                }
-                                                {!usedby.activeRunner &&
-                                                    <button
-                                                        className="stop-runner button is-selected is-danger">Stopped</button>
-                                                }
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                marginBottom: "10px"
+                                            }}>
+                                                <RunnerCartouche runner={usedby}/>
+                                                <span style={{marginLeft: "10px"}}>{usedby.name}</span>
                                             </div>
                                         )
                                         }
@@ -110,7 +109,7 @@ class Content extends React.Component {
                                         {connector.loadedtime}
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
-                                        {connector.loadlog}
+                                        {this.renderLog(connector.loadlog)}
                                     </td>
                                     <td>
                                         <Button className="btn btn-danger btn-sm"
@@ -179,6 +178,22 @@ class Content extends React.Component {
 
     getStyleRow(_content) {
         return {};
+    }
+
+    /**
+     * The log/description is a sequence of ";"-terminated sentences built from multiple operations -
+     * break it onto its own line after each ";" instead of running them all together.
+     */
+    renderLog(log) {
+        if (!log)
+            return log;
+        const parts = log.split(";").filter(part => part !== "");
+        return parts.map((part, index) =>
+            <React.Fragment key={index}>
+                {part};
+                {index < parts.length - 1 && <br/>}
+            </React.Fragment>
+        );
     }
 
     refreshListContent() {

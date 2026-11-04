@@ -2,7 +2,6 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.runner.RunnerLightDefinition;
 import io.camunda.cherry.runtime.CherryProperties;
-import io.camunda.cherry.store.mavencentral.MavenCredential;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -37,12 +36,11 @@ public abstract class StoreAccess {
     /**
      * Get the list of connector. Each connectorDefinition is "light", with name.
      * At this level, the jar is identified (in releases, or maven), and implementation status is found
-     *
+     * <p>
      * Then the exploration will continue one by one via the exploreDetails. ExploreDFetails load the element-template if exist.
      * status is set to INPROGRESS
      * Note: this method allow to return as soon as possible something for the UI. The second pass, exploration,
      * take more time
-     *
      *
      * @return list of connectors discovered
      */
@@ -168,12 +166,18 @@ public abstract class StoreAccess {
         public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
         private EXPLORATION status;
 
+        /**
+         * Keep trace of the download
+         */
+        private final StringBuffer logDownload = new StringBuffer();
+
         /*
-        * use the getInstance instead
+         * use the getInstance instead
          */
         private ConnectorDefinition() {
 
         }
+
         public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
             ConnectorDefinition connectorDefinition = new ConnectorDefinition();
             connectorDefinition.storeAccess = storeAccess;
@@ -199,6 +203,14 @@ public abstract class StoreAccess {
             if (urlJarFile == null)
                 return null;
             return urlJarFile.substring(urlJarFile.lastIndexOf('/') + 1);
+        }
+
+        public void addLogDownload(String log) {
+            logDownload.append(log).append(";");
+        }
+
+        public String getLogDownload() {
+            return logDownload.toString();
         }
     }
 

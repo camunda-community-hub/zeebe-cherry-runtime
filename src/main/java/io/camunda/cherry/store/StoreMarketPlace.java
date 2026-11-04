@@ -3,6 +3,7 @@ package io.camunda.cherry.store;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.store.git.GitHubAccess;
+import io.camunda.cherry.store.mavencentral.MavenProvider;
 import io.camunda.cherry.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -32,11 +33,15 @@ public class StoreMarketPlace extends StoreAccess {
             "<a\\s[^>]*href=\"(https://github\\.com/[^\"]+)\"[^>]*id=\"[^\"]*(?:github-repo|template-only-for-sm)[^\"]*\"");
     private final RestTemplate restTemplate = new RestTemplate();
     private final GitHubAccess gitHubAccess;
+    // Not consumed yet: downloadConnector() below isn't implemented, so there is no Maven lookup
+    // to authenticate here - wired through now for when that lands.
+    private final MavenProvider mavenProvider;
     Logger logger = LoggerFactory.getLogger(StoreMarketPlace.class.getName());
 
-    public StoreMarketPlace(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+    public StoreMarketPlace(GitHubAccess gitHubAccess, CherryProperties.Startup startup, String mavenToken, String mavenApikey) {
         super(startup);
         this.gitHubAccess = gitHubAccess;
+        this.mavenProvider = MavenProvider.getInstance("maven", "https://repo1.maven.org/maven2/", mavenToken, mavenApikey);
     }
 
     @Override
@@ -155,7 +160,7 @@ public class StoreMarketPlace extends StoreAccess {
 
     private String fetchIconAsDataUri(String iconUrl) {
         if (iconUrl == null || iconUrl.isEmpty()) return "";
-        try (InputStream in = new URL(iconUrl).openStream()) {
+        try (InputStream in = URI.create(iconUrl).toURL().openStream()) {
             byte[] bytes = in.readAllBytes();
             String mimeType = iconUrl.endsWith(".svg") ? "image/svg+xml" : "image/png";
             return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(bytes);

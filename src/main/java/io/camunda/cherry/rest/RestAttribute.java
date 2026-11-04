@@ -26,7 +26,7 @@ public class RestAttribute {
     public static final String RUNNER_STATE = "runnerState";
     public static final String STATISTIC = "statistic";
     public static final String PERFORMANCE = "performance";
-    public static final String  ANALYSIS = "analysis";
+    public static final String ANALYSIS = "analysis";
     public static final String NB_OVER_THRESHOLD = "nboverthreshold";
     public static final String NB_EXEC = "nbexec";
     public static final String TOPIC_COUNT = "topicCount";
@@ -76,6 +76,7 @@ public class RestAttribute {
     public static final String ACTIVE_RUNNER = "activeRunner";
     public static final String USED_BY = "usedby";
     public static final String LOADED_TIME = "loadedtime";
+    public static final String LOAD_LOG = "loadlog";
     public static final String RESULT_LOAD = "resultLoad";
     // --- Monitoring / Zeebe ---
     public static final String ZEEBE_KIND_CONNECTION = "zeebekindconnection";

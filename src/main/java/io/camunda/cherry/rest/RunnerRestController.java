@@ -20,10 +20,10 @@ import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
-import io.camunda.cherry.supervisor.RunnerMonitor;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
 import io.camunda.cherry.runtime.OperationFactory;
+import io.camunda.cherry.supervisor.RunnerMonitor;
 import io.camunda.cherry.supervisor.RunnerThroughput;
 import io.camunda.cherry.util.DateOperation;
 import io.camunda.cherry.util.ZipOperation;
@@ -144,7 +144,7 @@ public class RunnerRestController {
             listDetails.add(infoRunner);
 
             // Use the runnerThrougput to get analysis
-            infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance( performanceRunner));
+            infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(performanceRunner));
 
             totalSucceeded += statisticRunner.executionsSucceeded;
             totalFailed += statisticRunner.executionsFailed;
@@ -157,7 +157,7 @@ public class RunnerRestController {
         // runnerState), so it must not be duplicated here.
         Set<String> listRunnersTypes = listRunners.stream().map(AbstractRunner::getType).collect(Collectors.toSet());
         List<RunnerDefinitionEntity> listNoImplementation = runnerFactory.getAllRunnersEntity(
-                new StorageService.Filter().state(RunnerDefinitionEntity.State.NOIMPLEMENTATION)).stream()
+                        new StorageService.Filter().state(RunnerDefinitionEntity.State.NOIMPLEMENTATION)).stream()
                 .filter(t -> !listRunnersTypes.contains(t.type))
                 .toList();
         for (RunnerDefinitionEntity noImplRunner : listNoImplementation) {
@@ -227,7 +227,7 @@ public class RunnerRestController {
         List<AbstractRunner> listRunners = getListRunners(true);
 
         return listRunners.stream()
-                .filter(worker -> worker.getIdentification().equals(runnerType))
+                .filter(worker -> worker.getType().equals(runnerType))
                 .map(RunnerInformation::getRunnerInformation)
                 .map(w -> this.completeRunnerInformation(w, logo == null || logo, stats != null && stats,
                         dateNow, periodStatistic, timezoneOffset))
@@ -557,7 +557,7 @@ public class RunnerRestController {
 
         if (listFiltered.size() != 1)
             return null;
-        return listFiltered.get(0);
+        return listFiltered.getFirst();
     }
 
     private RunnerInformation completeRunnerInformation(RunnerInformation runnerInformation,

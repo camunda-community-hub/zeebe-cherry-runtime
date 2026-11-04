@@ -19,8 +19,9 @@
 package io.camunda.cherry.store;
 
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.store.git.GitHubAccess;
-import io.camunda.cherry.store.mavencentral.MavenCredential;
+import io.camunda.cherry.store.mavencentral.MavenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +30,30 @@ import java.util.List;
 
 public class StoreCamundaCommunity extends StoreGithub {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreCamundaCommunity.class);
-    private static final String CAMUNDA_ARTIFACTORY_REPOSITORY = "https://artifacts.camunda.com/artifactory/connectors";
+    // "connectors" only holds io.camunda.connector.* artifacts (connector, connector-http-json, ...).
+    // Community connectors under org.camunda.connector (e.g. connector-pdf) are published to this repo
+    // instead - confirmed against connector-pdf's own pom.xml <distributionManagement>/<repository>.
+    private static final String CAMUNDA_ARTIFACTORY_REPOSITORY = "https://artifacts.camunda.com/artifactory/camunda-bpm-community-extensions";
+    private final String jfrogToken;
+    private final String jfrogApikey;
+    private final boolean accessMaven;
+    private final boolean accessJFrog;
 
     // - https://github.com/camunda-community-hub/
-    public StoreCamundaCommunity(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
-        super("Camunda Community Hub", "https://github.com/orgs/camunda-community-hub", "camunda-8-connector", gitHubAccess, startup);
+    public StoreCamundaCommunity(GitHubAccess gitHubAccess, CherryProperties.Startup startup,
+                                 boolean accessMaven,
+                                 String mavenToken,
+                                 String mavenApikey,
+                                 boolean accessJFrog,
+                                 String jfrogToken,
+                                 String jfrogApikey,
+                                 LogOperation logOperation) {
+        super("Camunda Community Hub", "https://github.com/orgs/camunda-community-hub", "camunda-8-connector",
+                gitHubAccess, startup, mavenToken, mavenApikey, logOperation);
+        this.accessMaven = accessMaven;
+        this.accessJFrog = accessJFrog;
+        this.jfrogToken = jfrogToken;
+        this.jfrogApikey = jfrogApikey;
     }
 
     public String getType() {
@@ -67,11 +87,15 @@ public class StoreCamundaCommunity extends StoreGithub {
 
     /**
      * Return the list of provider where the JAR can be stored
+     *
      * @return list of provider with its credential
      */
-    public List<MavenCredential> getMavenProviders() {
-        List<MavenCredential> listMaven = new ArrayList(super.getMavenProviders());
-        listMaven.add( MavenCredential.getInstance("jfrog", CAMUNDA_ARTIFACTORY_REPOSITORY));
+    public List<MavenProvider> getMavenProviders() {
+        List<MavenProvider> listMaven = new ArrayList();
+        if (accessMaven)
+            listMaven.addAll(super.getMavenProviders());
+        if (accessJFrog)
+            listMaven.add(MavenProvider.getInstance("jfrog", CAMUNDA_ARTIFACTORY_REPOSITORY, jfrogToken, jfrogApikey));
         return listMaven;
     }
 }

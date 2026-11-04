@@ -3,6 +3,7 @@ package io.camunda.cherry.rest;
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
+import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.runner.*;
 import io.camunda.cherry.supervisor.Installer;
@@ -49,6 +50,8 @@ public class ContentRestController {
         List<Map<String, Object>> listContent = new ArrayList<>();
         List<JarStorageEntity> listJarStorageEntity = storageService.getAll();
         List<RunnerDefinitionEntity> listRunnersDefinition = storageService.selectAllRunnerDefinitionByJarNotNull();
+        Map<String, AbstractRunner> runnersByType = runnerFactory.getAllRunners(new StorageService.Filter()).stream()
+                .collect(Collectors.toMap(AbstractRunner::getType, r -> r, (first, _second) -> first));
 
         for (JarStorageEntity storageEntity : listJarStorageEntity) {
             Map<String, Object> recordStorage = new HashMap<>();
@@ -63,10 +66,17 @@ public class ContentRestController {
                 recordRunner.put(RestAttribute.NAME, t.name);
                 recordRunner.put(RestAttribute.COLLECTION_NAME, t.collectionName);
                 recordRunner.put(RestAttribute.ACTIVE_RUNNER, jobRunnerFactory.isActiveRunner(t.type));
+                // Needed by RunnerCartouche (component/RunnerCartouche.jsx) to show the badge and,
+                // on click, load the full runner detail (cherry/api/runner/detail?runnertype=...)
+                recordRunner.put(RestAttribute.TYPE, t.type);
+                AbstractRunner runner = runnersByType.get(t.type);
+                recordRunner.put(RestAttribute.LOGO, runner != null ? runner.getLogo() : null);
+                recordRunner.put(RestAttribute.RUNNER_STATE, runnerFactory.getRunnerState(t.type).toString());
                 return recordRunner;
             }).toList();
             recordStorage.put(RestAttribute.USED_BY, listUsedBy);
             recordStorage.put(RestAttribute.LOADED_TIME, DateOperation.dateTimeToHumanString(storageEntity.loadedTime, timezoneOffset));
+            recordStorage.put(RestAttribute.LOAD_LOG, storageEntity.loadLog);
             listContent.add(recordStorage);
         }
         List<Map<String, Object>> sortedList = listContent.stream()

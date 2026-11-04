@@ -13,9 +13,12 @@ import com.google.common.collect.Lists;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
 import io.camunda.cherry.store.git.GitHubAccess;
+import io.camunda.cherry.store.mavencentral.MavenProvider;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -31,6 +34,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -46,13 +50,16 @@ public class StoreCamundaConnector extends StoreAccess {
     private final List<ConnectorDefinition> connectors = new ArrayList<>();
     private final RestTemplate restTemplate;
     private final GitHubAccess gitHubAccess;
+    private final MavenProvider mavenProvider;
     Logger logger = LoggerFactory.getLogger(StoreCamundaConnector.class.getName());
 
-    public StoreCamundaConnector(GitHubAccess gitHubAccess, CherryProperties.Startup startup) {
+    public StoreCamundaConnector(GitHubAccess gitHubAccess, CherryProperties.Startup startup, String mavenToken, String mavenApikey) {
         super(startup);
-        // No auth token — camunda/connectors is a public repo and SAML enforcement
-        // causes 401 when a token is sent without org SSO authorization.
+        // gitHubAccess's token (if any) is only used here to raise GitHub's API rate limit
+        // (60 req/h unauthenticated -> 5000 req/h authenticated) - a plain personal access
+        // token from any GitHub account works, since this only reads a public repository.
         this.gitHubAccess = gitHubAccess;
+        this.mavenProvider = MavenProvider.getInstance("maven", "https://repo.maven.apache.org/maven2", mavenToken, mavenApikey);
         restTemplate = new RestTemplate();
     }
 
@@ -98,10 +105,10 @@ public class StoreCamundaConnector extends StoreAccess {
             for (JsonNode item : items) {
                 result.addAll(exploreConnectorsInGithub("connectors", release, item));
             }
-            logger.info("Store[{}] found {} connectors with release in {} ms", getName(), result.size(), release, System.currentTimeMillis() - startTime);
+            logger.info("Store[{}] found {} connectors with release [{}] in {} ms", getName(), result.size(), release, System.currentTimeMillis() - startTime);
             return result;
         } catch (Exception e) {
-            logger.error("Store[{}] error {}", getName(), e);
+            logger.error("Store[{}] error ", getName(), e);
             return result;
         }
     }
@@ -292,9 +299,9 @@ public class StoreCamundaConnector extends StoreAccess {
         String jarMavenBase = connectorDefinition.urlMaven + "/" + artifactId + "-" + version;
         String jarUrlWithDeps = jarMavenBase + "-with-dependencies.jar";
         String jarUrlPlain = jarMavenBase + ".jar";
-        if (jarExists(jarUrlWithDeps))
+        if (jarExists(jarUrlWithDeps, mavenProvider))
             connectorDefinition.urlJarFile = jarUrlWithDeps;
-        else if (jarExists(jarUrlPlain))
+        else if (jarExists(jarUrlPlain, mavenProvider))
             connectorDefinition.urlJarFile = jarUrlPlain;
         else return false;
         return true;
@@ -311,7 +318,8 @@ public class StoreCamundaConnector extends StoreAccess {
             ConnectorDownload connectorDownload = new ConnectorDownload();
             connectorDownload.jarName = connectorDefinition.getJarName();
 
-            byte[] jarBytes = restTemplate.getForObject(connectorDefinition.urlJarFile, byte[].class);
+            HttpEntity<Void> entity = new HttpEntity<>(mavenProvider.authHeaders());
+            byte[] jarBytes = restTemplate.exchange(connectorDefinition.urlJarFile, HttpMethod.GET, entity, byte[].class).getBody();
             if (jarBytes == null) {
                 connectorDownload.status = STATUSDOWNLOAD.UNKNOWNRELEASE;
                 connectorDownload.explanation = "Store [CamundaConnector] Empty response from [" + connectorDefinition.urlJarFile + "]";
@@ -334,17 +342,20 @@ public class StoreCamundaConnector extends StoreAccess {
     /* ******************************************************************** */
 
 
-    private boolean jarExists(String url) {
+    private boolean jarExists(String url, MavenProvider provider) {
+        java.net.HttpURLConnection connection = null;
         try {
-            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new URL(url).openConnection();
+            connection = (java.net.HttpURLConnection) URI.create(url).toURL().openConnection();
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(5000);
-            int code = connection.getResponseCode();
-            connection.disconnect();
-            return code == 200;
+            provider.applyAuth(connection);
+            return connection.getResponseCode() == 200;
         } catch (IOException e) {
             return false;
+        } finally {
+            if (connection != null)
+                connection.disconnect();
         }
     }
 

@@ -23,10 +23,10 @@ class GitHubToolbox {
 
     private static final Duration GITHUB_TIMEOUT = Duration.ofSeconds(15);
     private final RestTemplate restTemplate = buildRestTemplate();
-    private final String githubToken;
+    private final GitHubAccess gitHubAccess;
 
-    GitHubToolbox(String githubToken) {
-        this.githubToken = githubToken;
+    GitHubToolbox(GitHubAccess gitHubAccess) {
+        this.gitHubAccess = gitHubAccess;
     }
 
     /**
@@ -55,8 +55,8 @@ class GitHubToolbox {
 
     private HttpHeaders authHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        if (githubToken != null && !githubToken.isBlank()) {
-            headers.set("Authorization", "Bearer " + githubToken);
+        if (gitHubAccess.hasGithubToken()) {
+            headers.set("Authorization", "Bearer " + gitHubAccess.getGitHubToken());
         }
         return headers;
     }

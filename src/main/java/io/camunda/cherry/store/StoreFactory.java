@@ -2,6 +2,7 @@ package io.camunda.cherry.store;
 
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runtime.CherryProperties;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.store.git.GitHubAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 public class StoreFactory {
 
     private final CherryProperties cherryProperties;
-    private final GitHubAccess gitHubAccess;
     private final Map<StoreAccess, List<StoreAccess.ConnectorDefinition>> mapConnectors = new HashMap<>();
     private final int BASE_ADVANCE_PHASE1 = 40;
     private final int BASE_ADVANCE_PHASE2 = 40;
@@ -24,27 +24,48 @@ public class StoreFactory {
     private EXPLORATIONCONNECTOR exploration = EXPLORATIONCONNECTOR.NONE;
     private int percentageExploration = 0;
 
-    StoreFactory(GitHubAccess gitHubAccess, CherryProperties cherryProperties) {
+    StoreFactory(CherryProperties cherryProperties, LogOperation logOperation) {
 
-        if (cherryProperties.getStore().getCamundaConnector().isAccess())
-            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup()));
+        if (cherryProperties.getStore().getCamundaConnector().isAccess()) {
+            GitHubAccess gitHubAccess = new GitHubAccess(cherryProperties.getStore().getCamundaConnector().getGithub().getToken());
+            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup(),
+                    cherryProperties.getStore().getCamundaConnector().getMaven().getToken(),
+                    cherryProperties.getStore().getCamundaConnector().getMaven().getApikey()));
+        }
+        if (cherryProperties.getStore().getCommunityConnector().isAccess()) {
+            // Its own GitHubAccess instance (not the shared, now token-less one) - this store lists many
+            // repositories and needs its own authenticated rate limit.
+            GitHubAccess communityGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCommunityConnector().getGithub().getToken());
+            listStoreAccess.add(new StoreCamundaCommunity(communityGitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup(),
+                    cherryProperties.getStore().getCommunityConnector().getMaven().isAccess(),
+                    cherryProperties.getStore().getCommunityConnector().getMaven().getToken(),
+                    cherryProperties.getStore().getCommunityConnector().getMaven().getApikey(),
+                    cherryProperties.getStore().getCommunityConnector().getJfrog().isAccess(),
+                    cherryProperties.getStore().getCommunityConnector().getJfrog().getToken(),
+                    cherryProperties.getStore().getCommunityConnector().getJfrog().getApikey(),
+                    logOperation));
+        }
 
-        if (cherryProperties.getStore().getCommunityConnector().isAccess())
-            listStoreAccess.add(new StoreCamundaCommunity(gitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup()));
+        if (cherryProperties.getStore().getMarketplaceConnector().isAccess()) {
+            GitHubAccess gitHubAccess = new GitHubAccess(cherryProperties.getStore().getMarketplaceConnector().getGithub().getToken());
 
-        if (cherryProperties.getStore().getMarketplaceConnector().isAccess())
-            listStoreAccess.add(new StoreMarketPlace(gitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup()));
-
+            listStoreAccess.add(new StoreMarketPlace(gitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup(),
+                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getToken(),
+                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getApikey()));
+        }
         if (cherryProperties.getStore().getPrivateStore().isAccess()) {
             for (CherryProperties.Store.PrivateStore.PrivateStoreEntry privateStore : cherryProperties.getStore().getPrivateStore().getListStores()) {
+                GitHubAccess gitHubAccess = new GitHubAccess(privateStore.getToken());
+
                 String name = privateStore.getName() != null && !privateStore.getName().isEmpty()
                         ? privateStore.getName()
                         : extractName(privateStore.getUrl());
-                listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), gitHubAccess, privateStore.getStartup()));
+                listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), null, gitHubAccess, privateStore.getStartup(),
+                        privateStore.getToken(), privateStore.getApikey(),
+                        privateStore.getTokenHeaderName(), privateStore.getTokenPrefix(), privateStore.getApikeyHeaderName(), logOperation));
             }
         }
         this.cherryProperties = cherryProperties;
-        this.gitHubAccess = gitHubAccess;
     }
 
     public StoreCamundaConnector getStoreCamundaConnector() {
@@ -73,6 +94,7 @@ public class StoreFactory {
         }
         return null;
     }
+
 
     public List<String> getStoreNames() {
         return listStoreAccess.stream().map(StoreAccess::getName).toList();
@@ -357,7 +379,7 @@ public class StoreFactory {
                     logger.info("searchConnector: connectorDefinition Filter[{}} found {}", filter.name, connectorDefinition);
                     return connectorDefinition;
                 }
-                if (connectorDefinition.connectorType!=null && connectorDefinition.connectorType.equals(filter.type)) {
+                if (connectorDefinition.connectorType != null && connectorDefinition.connectorType.equals(filter.type)) {
                     logger.info("searchConnector: connectorDefinitionType[{}} found {}", filter.type, connectorDefinition);
                     return connectorDefinition;
                 }
