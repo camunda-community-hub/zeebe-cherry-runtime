@@ -55,13 +55,13 @@ public class StoreFactory {
         }
         if (cherryProperties.getStore().getPrivateStore().isAccess()) {
             for (CherryProperties.Store.PrivateStore.PrivateStoreEntry privateStore : cherryProperties.getStore().getPrivateStore().getListStores()) {
-                GitHubAccess gitHubAccess = new GitHubAccess(privateStore.getToken());
+                GitHubAccess gitHubAccess = new GitHubAccess(privateStore.getGithub().getToken());
 
                 String name = privateStore.getName() != null && !privateStore.getName().isEmpty()
                         ? privateStore.getName()
                         : extractName(privateStore.getUrl());
                 listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), null, gitHubAccess, privateStore.getStartup(),
-                        privateStore.getToken(), privateStore.getApikey(),
+                        privateStore.getGithub().getToken(), privateStore.getGithub().getApikey(),
                         privateStore.getTokenHeaderName(), privateStore.getTokenPrefix(), privateStore.getApikeyHeaderName(), logOperation));
             }
         }

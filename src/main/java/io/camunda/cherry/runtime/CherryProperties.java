@@ -74,6 +74,11 @@ public class CherryProperties {
      */
     public static class GithubCredential {
         private String token = "";
+        /**
+         * Only used by a privateStore entry, where this single GitHub credential also serves as
+         * this store's Maven provider credential - unused (left blank) elsewhere.
+         */
+        private String apikey = "";
 
         public String getToken() {
             return token;
@@ -81,6 +86,14 @@ public class CherryProperties {
 
         public void setToken(String token) {
             this.token = token;
+        }
+
+        public String getApikey() {
+            return apikey;
+        }
+
+        public void setApikey(String apikey) {
+            this.apikey = apikey;
         }
     }
 
@@ -212,8 +225,14 @@ public class CherryProperties {
             public static class PrivateStoreEntry {
                 private String name;
                 private String url;
-                private String token = "";
-                private String apikey = "";
+                /**
+                 * Single credential for this private store - its token/apikey are used both for GitHub
+                 * access (listing repositories, releases, element-templates) and as this store's Maven
+                 * provider credential (searching/downloading a JAR). Nested under "github" to be
+                 * coherent with how every other store (camundaConnector, communityConnector,
+                 * marketplaceConnector) groups its GitHub credential.
+                 */
+                private GithubCredential github = new GithubCredential();
                 private Startup startup = new Startup();
                 /**
                  * Optional overrides of MavenProvider's default header name/prefix for this store's
@@ -240,25 +259,12 @@ public class CherryProperties {
                     this.url = url;
                 }
 
-                /**
-                 * Single token for this private store, used both for its GitHub access (listing
-                 * repositories, releases, element-templates) and as this store's Maven provider
-                 * credential (searching/downloading a JAR) - one value instead of two separate ones.
-                 */
-                public String getToken() {
-                    return token;
+                public GithubCredential getGithub() {
+                    return github;
                 }
 
-                public void setToken(String token) {
-                    this.token = token;
-                }
-
-                public String getApikey() {
-                    return apikey;
-                }
-
-                public void setApikey(String apikey) {
-                    this.apikey = apikey;
+                public void setGithub(GithubCredential github) {
+                    this.github = github;
                 }
 
                 public Startup getStartup() {
