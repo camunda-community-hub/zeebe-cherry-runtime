@@ -9,9 +9,6 @@ name: Create, Publish Docker image on Community-package
 on:
   release:
     types: [published]
-  push:
-    paths:
-      - '.github/workflows/publish-docker-communitypackage.yaml'
 
 env:
   REGISTRY: ghcr.io
