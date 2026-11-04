@@ -493,6 +493,17 @@
                 </configuration>
             </plugin>
 
+            <!-- Override the parent's pinned 0.8.0: that version (and 0.11.0) fails to strip the
+                 maven-metadata-local.xml/_remote.repositories files that Maven 3.10.x's runner writes
+                 at the artifactId level, so Central Portal rejects the bundle with "Bundle has content
+                 that does NOT have a .pom file: io/camunda/community/zeebe-cherry-runtime". Fixed upstream
+                 in 0.12.0. See https://github.com/sonatype-nexus-community/central-publishing-maven-plugin/issues/1 -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.12.0</version>
+            </plugin>
+
             <!-- allow mvn spring-boot:run -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
