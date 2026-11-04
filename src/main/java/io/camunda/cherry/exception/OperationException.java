@@ -5,6 +5,7 @@ public class OperationException extends Exception {
     private final String explanation;
 
     public OperationException(String exceptionCode, String explanation) {
+        super("[" + exceptionCode + "] " + explanation);
         this.exceptionCode = exceptionCode;
         this.explanation = explanation;
     }

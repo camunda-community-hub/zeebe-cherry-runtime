@@ -1,6 +1,5 @@
 package io.camunda.cherry.runtime;
 
-import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.db.entity.TopicCountEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.db.repository.TopicCountRepository;
@@ -55,8 +54,10 @@ public class HistoryPerformanceTopicCountTest {
         when(topicCountRepository.selectRunnerRecords(eq(RUNNER_TYPE), any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(List.of(snapshot));
 
-        HistoryPerformance.Performance performance = historyPerformance.getPerformance(
-                RUNNER_TYPE, now, HistoryPerformance.PeriodStatistic.FOURHOUR);
+        HistoryPerformance.Performance performance = historyPerformance.getPerformance(RUNNER_TYPE,
+                now,
+                HistoryPerformance.PeriodStatistic.FOURHOUR,
+                0);
 
         // find the slot that contains our snapshot time
         HistoryPerformance.IntervalRule rule = historyPerformance.getIntervalRuleByPeriod(HistoryPerformance.PeriodStatistic.FOURHOUR);
@@ -77,8 +78,11 @@ public class HistoryPerformanceTopicCountTest {
         when(topicCountRepository.selectRunnerRecords(eq(RUNNER_TYPE), any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(List.of());
 
-        HistoryPerformance.Performance performance = historyPerformance.getPerformance(
-                RUNNER_TYPE, now, HistoryPerformance.PeriodStatistic.FOURHOUR);
+        HistoryPerformance.Performance performance = historyPerformance.getPerformance(RUNNER_TYPE,
+                now,
+                HistoryPerformance.PeriodStatistic.FOURHOUR,
+                0);
+
 
         performance.listIntervals.forEach(i -> assertEquals(0, i.topicCount));
     }

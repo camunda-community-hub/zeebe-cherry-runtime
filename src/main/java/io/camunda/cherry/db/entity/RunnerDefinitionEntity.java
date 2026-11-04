@@ -29,6 +29,7 @@ public class RunnerDefinitionEntity {
     @Enumerated(EnumType.STRING)
     public Origin origin;
 
+
     /**
      * If the Runner come from a JAR loaded (Upload, GitHub, directory) then the source is referenced here
      */
@@ -42,8 +43,13 @@ public class RunnerDefinitionEntity {
     @Column(name = "release", length = 50)
     public String release;
 
-    @Column(name = "activerunner")
-    public boolean activeRunner;
+    @Column(name = "version")
+    public Integer version;
+
+
+    @Column(name = "state", length = 50)
+    @Enumerated(EnumType.STRING)
+    public State state;
 
     @Column(name = "status", length = 50)
     @Enumerated(EnumType.STRING)
@@ -64,5 +70,9 @@ public class RunnerDefinitionEntity {
 
     public enum Status {
         PRESENT, DELETED
+    }
+
+    public enum State {
+        ACTIVE, STOPPED, NOIMPLEMENTATION
     }
 }

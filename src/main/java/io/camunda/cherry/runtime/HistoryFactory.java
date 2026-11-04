@@ -13,7 +13,6 @@ import io.camunda.cherry.db.repository.TopicCountRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -28,16 +27,18 @@ import static io.camunda.cherry.definition.AbstractRunner.ExecutionStatusEnum;
 @Service
 public class HistoryFactory {
 
+    private final RunnerExecutionRepository runnerExecutionRepository;
+    private final HistoryPerformance historyPerformance;
+    private final TopicCountRepository topicCountRepository;
     Logger logger = LoggerFactory.getLogger(HistoryFactory.class.getName());
 
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
-
-    @Autowired
-    TopicCountRepository topicCountRepository;
-
-    @Autowired
-    HistoryPerformance historyPerformance;
+    public HistoryFactory(RunnerExecutionRepository runnerExecutionRepository,
+                          HistoryPerformance historyPerformance,
+                          TopicCountRepository topicCountRepository) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+        this.historyPerformance = historyPerformance;
+        this.topicCountRepository = topicCountRepository;
+    }
 
     /**
      * get main statistics for the runner type in the last <delayStatInHour> period
@@ -85,8 +86,9 @@ public class HistoryFactory {
 
     public HistoryPerformance.Performance getPerformance(String runnerType,
                                                          LocalDateTime dateNow,
-                                                         HistoryPerformance.PeriodStatistic periodStatistic) {
-        return historyPerformance.getPerformance(runnerType, dateNow, periodStatistic);
+                                                         HistoryPerformance.PeriodStatistic periodStatistic,
+                                                         long timezoneOffset) {
+        return historyPerformance.getPerformance(runnerType, dateNow, periodStatistic, timezoneOffset);
     }
 
     /* -------------------------------------------------------- */

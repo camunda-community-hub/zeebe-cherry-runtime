@@ -9,13 +9,14 @@
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
+import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
-import io.camunda.cherry.db.repository.JarStorageEntityRepository;
 import io.camunda.cherry.db.repository.RunnerDefinitionRepository;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.camunda.cherry.runtime.LogOperation;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,28 +27,38 @@ import java.util.Optional;
 @Service
 public class RunnerAdminOperation {
 
-    @Autowired
-    JarStorageEntityRepository jarStorageEntityRepository;
 
-    @Autowired
-    RunnerDefinitionRepository runnerDefinitionRepository;
+    private final StorageService storageService;
 
-    @Autowired
-    JobRunnerFactory jobRunnerFactory;
+    private final JobRunnerFactory jobRunnerFactory;
+
+    private final JarManagementClassLoader jarManagementClassLoader;
+    private final LogOperation logOperation;
+
+    public RunnerAdminOperation(StorageService storageService,
+                                RunnerDefinitionRepository runnerDefinitionRepository,
+                                JobRunnerFactory jobRunnerFactory,
+                                JarManagementClassLoader jarManagementClassLoader, LogOperation logOperation) {
+        this.storageService = storageService;
+        this.jobRunnerFactory = jobRunnerFactory;
+        this.jarManagementClassLoader = jarManagementClassLoader;
+        this.logOperation = logOperation;
+    }
 
     public boolean deleteJarFile(Long storageEntityId) throws OperationException {
 
         // search the StorageEntity
-        Optional<JarStorageEntity> storageEntity = jarStorageEntityRepository.findById(storageEntityId);
-        if (storageEntity.isEmpty())
+        Optional<JarStorageEntity> jarStorageEntity = storageService.findJarStorageById(storageEntityId);
+        if (jarStorageEntity.isEmpty())
             throw new OperationException("JAR_NOT_FOUND", "Can't find Jar by [" + storageEntityId + "]");
 
         // Need that variable for the stream
         // Identify all worker behind the JarEntity
-        List<RunnerDefinitionEntity> listRunnersDefinition = runnerDefinitionRepository.selectAllByJarNotNull();
+        logOperation.log(OperationEntity.Operation.REMOVEJAR, "Remove Jar [" + jarStorageEntity.get().name + "]");
+        List<RunnerDefinitionEntity> listRunnersDefinition = storageService.selectAllRunnerDefinitionByJarNotNull();
         List<RunnerDefinitionEntity> listRunners = listRunnersDefinition.stream() // Stream
                 .filter(t -> {
-                    return storageEntity.get().id.equals(t.jar.id);
+                    return jarStorageEntity.get().id.equals(t.jar.id);
                 }).toList();
 
         // Stop all workers
@@ -64,13 +75,16 @@ public class RunnerAdminOperation {
         if (!runnerNotStopped.isEmpty())
             throw new OperationException("CANT_STOP_RUNNER", "Runners[" + runnerNotStopped + "]");
 
-        // remove worker from database
+        // keep the runner definition (and its execution history), just mark it as having no implementation
         for (RunnerDefinitionEntity runnerEntity : listRunners) {
-            runnerDefinitionRepository.delete(runnerEntity);
+            logOperation.log(OperationEntity.Operation.REMOVERUNNER, "Runner marked NOIMPLEMENTATION (remove Jar) [" + runnerEntity.name + "]");
+            storageService.markRunnerNoImplementation(runnerEntity);
         }
         // remove Jar
-        jarStorageEntityRepository.delete(storageEntity.get());
+        storageService.delete(jarStorageEntity.get());
 
+        // remove from ClassLoader
+        jarManagementClassLoader.removeJarFile(jarStorageEntity.get().name);
         return true;
 
     }

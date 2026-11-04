@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
@@ -50,6 +51,8 @@ public class RunnerDecorationTemplate {
     public static final String ATTR_DOCUMENTATION_REF = "documentationRef";
     public static final String ATTR_ICON = "icon";
     public static final String ATTR_CATEGORY = "category";
+    public static final String ATTR_VERSION = "version";
+    public static final String ATTR_RELEASE = "release";
     public static final String ATTR_APPLIES_TO = "appliesTo";
     public static final String ATTR_ELEMENT_TYPE = "elementType";
     public static final String ATTR_PROPERTIES = "properties";
@@ -75,9 +78,22 @@ public class RunnerDecorationTemplate {
      * Keep it easy for a CherryConnector
      *
      * @param cherryConnector cherry connector to generate the template from
+     * @param zeebeContainer  zeebe container
      */
+    public RunnerDecorationTemplate(OutboundConnectorFunction cherryConnector, ZeebeContainer zeebeContainer) {
+        this.runner = new SdkRunnerCherryConnector(cherryConnector, zeebeContainer);
+    }
+
+    /**
+     * Keep it easy for a CherryConnector (for backward compatibility with null ZeebeContainer)
+     * This constructor should only be used in contexts where ZeebeContainer is not available
+     *
+     * @param cherryConnector cherry connector to generate the template from
+     * @deprecated Use {@link #RunnerDecorationTemplate(OutboundConnectorFunction, ZeebeContainer)} instead
+     */
+    @Deprecated
     public RunnerDecorationTemplate(OutboundConnectorFunction cherryConnector) {
-        this.runner = new SdkRunnerCherryConnector(cherryConnector);
+        this.runner = new SdkRunnerCherryConnector(cherryConnector, null);
     }
 
     public static String getJsonFromList(List<Map<String, Object>> listTemplates) {
@@ -154,7 +170,9 @@ public class RunnerDecorationTemplate {
 
         templateContent.put("$schema",
                 "https://unpkg.com/@camunda/zeebe-element-templates-json-schema/resources/schema.json");
-        templateContent.put(ATTR_NAME, runner.getDisplayLabel());
+
+        // Super important to use the name in the template
+        templateContent.put(ATTR_NAME, runner.getName());
         templateContent.put(ATTR_ID, runner.getId());
         templateContent.put(ATTR_DESCRIPTION, runner.getDescription());
         templateContent.put(ATTR_DOCUMENTATION_REF,
@@ -163,16 +181,26 @@ public class RunnerDecorationTemplate {
             templateContent.put(ATTR_ICON, Map.of("contents", runner.getLogo()));
         templateContent.put(ATTR_CATEGORY, fixMapOf(ATTR_ID, "connectors", ATTR_NAME, "Connectors"));
 
+        if (runner.getVersion() > 0)
+            templateContent.put(ATTR_VERSION, runner.getVersion());
+        if (runner.getRelease() != null && !runner.getRelease().isEmpty())
+            templateContent.put(ATTR_RELEASE, runner.getRelease());
+
         // Applies to and element type
-        if (runner.getAppliesTo() == null) {
-            templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_TASK));
+        String elementType = runner.getElementType();
+        if (elementType == null || elementType.isEmpty())
+            elementType = CherryInput.PARAMETER_APPLIES_V_SERVICETASK;
+        if (runner.getAppliesTo() == null || runner.getAppliesTo().isEmpty()) {
+            templateContent.put(ATTR_APPLIES_TO, List.of(CherryInput.PARAMETER_APPLIES_V_TASK, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
             templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, CherryInput.PARAMETER_APPLIES_V_SERVICETASK));
         } else if (runner.getAppliesTo().size() == 1) {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
-            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, elementType));
         } else {
             templateContent.put(ATTR_APPLIES_TO, runner.getAppliesTo());
-            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getAppliesTo().get(0)));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, runner.getElementType()));
+            templateContent.put(ATTR_ELEMENT_TYPE, Map.of(ATTR_VALUE, elementType));
         }
         // no groups at this moment
 
@@ -186,8 +214,13 @@ public class RunnerDecorationTemplate {
                 ATTR_VALUE, runner.getType()));
 
         // Do not ask multiple time the listInput
-        List<RunnerParameter> listInputs = runner.getListInput();
-        List<RunnerParameter> listOutputs = runner.getListOutput();
+        // Copy to a mutable list before sorting: runner.getListInput()/getListOutput() may return an
+        // immutable list (e.g. Collections.singletonList), and a parameter's priority must only reorder
+        // it among its own list (inputs are never reordered past outputs, or the reverse).
+        List<RunnerParameter> listInputs = new ArrayList<>(runner.getListInput());
+        List<RunnerParameter> listOutputs = new ArrayList<>(runner.getListOutput());
+        listInputs.sort(Comparator.comparingInt(RunnerParameter::getPriority).reversed());
+        listOutputs.sort(Comparator.comparingInt(RunnerParameter::getPriority).reversed());
 
         boolean useResultVariable = false;
         // AbstractConnector
@@ -218,9 +251,11 @@ public class RunnerDecorationTemplate {
             }
         }
 
-        // Identify all groups
+        // Identify all groups - scan both inputs and outputs, so a custom group declared on an
+        // output parameter is registered here too, instead of referencing an undeclared group id.
         List<RunnerParameter.Group> listGroups = new ArrayList<>();
         listGroups.addAll(listInputs.stream().filter(w -> w.group != null).map(w -> w.group).toList());
+        listGroups.addAll(listOutputs.stream().filter(w -> w.group != null).map(w -> w.group).toList());
 
         // We group all result in a Group Input
         if (!listInputs.isEmpty())
@@ -229,6 +264,10 @@ public class RunnerDecorationTemplate {
         // We group all result in a Group Output
         if (!listOutputs.isEmpty() || pleaseAddOutputGroup)
             listGroups.add(new RunnerParameter.Group(GROUP_OUTPUT, GROUP_OUTPUT_LABEL));
+
+        // Add Error Management group if there are BPMN errors
+        if (!runner.getListBpmnErrors().isEmpty())
+            listGroups.add(new RunnerParameter.Group("errorManagement", "Error Management"));
 
         // ---- Add groups
         if (!listGroups.isEmpty()) {
@@ -268,11 +307,13 @@ public class RunnerDecorationTemplate {
             //                "key": "errorExpression"
             //
             Map<String, Object> errorParameters = new LinkedHashMap<>();
-            errorParameters.put(ATTR_LABEL, "ControllerPage Expression");
-            errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw");
-            errorParameters.put(ATTR_TYPE, ATTR_TYPE_HIDDEN);
-            errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message) else null");
+            errorParameters.put(ATTR_LABEL, "Error Expression");
+            errorParameters.put(ATTR_DESCRIPTION, "Expression to define BPMN Errors to throw with error context");
+            errorParameters.put(ATTR_TYPE, TYPE_FIELD_STRING);
+            errorParameters.put(ATTR_VALUE, "if is defined(error) then bpmnError(error.code, error.message, {connectorError: {error: error.code, message: error.message}}) else null");
+            errorParameters.put(ATTR_FEEL, ATTR_FEEL_OPTIONAL);
             errorParameters.put(ATTR_BINDING, fixMapOf(ATTR_KEY, ATTR_KEY_ERROR_EXPRESSION, ATTR_TYPE, ZEEBE_TASK_HEADER));
+            errorParameters.put(ATTR_GROUP, "errorManagement");
 
             listProperties.add(errorParameters);
         }
@@ -387,7 +428,9 @@ public class RunnerDecorationTemplate {
 
         if (isInput) {
             propertyParameter.put(ATTR_BINDING,
-                    fixMapOf(ATTR_NAME, runnerParameter.name, ATTR_TYPE, "zeebe:input"));
+                    fixMapOf(ATTR_NAME,
+                            (runnerParameter.bindingName != null) ? runnerParameter.bindingName : runnerParameter.name,
+                            ATTR_TYPE, "zeebe:input"));
         } else {
             propertyParameter.put(ATTR_BINDING,
                     fixMapOf("source", "= " + prefixName + runnerParameter.name, ATTR_TYPE, "zeebe:output"));

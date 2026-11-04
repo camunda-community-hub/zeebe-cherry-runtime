@@ -72,6 +72,8 @@ class RunnerMonitoring extends React.Component {
                     <Tab eventKey="overview" title="Overview">
                         <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
 
+                        <div><strong>Connector Type:</strong> {this.state.runner.connectorType}</div>
+                        <div><strong>Description:</strong> {this.state.runner.description}</div>
 
                         <div className="row" style={{paddingTop: "10px"}}>
                             <div>

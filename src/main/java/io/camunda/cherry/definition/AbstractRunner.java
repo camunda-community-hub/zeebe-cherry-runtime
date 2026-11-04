@@ -16,10 +16,10 @@ import com.google.gson.Gson;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.client.api.response.ActivatedJob;
 import io.camunda.connector.api.error.ConnectorException;
+import io.camunda.connector.cherrytemplate.CherryInput;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.time.Duration;
@@ -66,8 +66,7 @@ public abstract class AbstractRunner {
     /* method to get variable value                             */
     /* -------------------------------------------------------- */
     private final Pattern WORD_FINDER = Pattern.compile("(([A-Z]?[a-z]+)|([A-Z]))");
-    @Autowired
-    ZeebeContainer zeebeContainer;
+    private final ZeebeContainer zeebeContainer;
     Logger loggerAbstract = LoggerFactory.getLogger(AbstractRunner.class.getName());
     /**
      * this information is the minimal information, need to catch something on Zebee
@@ -92,6 +91,7 @@ public abstract class AbstractRunner {
      * Give log please
      */
     private boolean isLogWorker = true;
+    private String forceRelease = null;
 
     /**
      * Constructor
@@ -100,24 +100,19 @@ public abstract class AbstractRunner {
      * @param listInput      list of Input parameters for the worker
      * @param listOutput     list of Output parameters for the worker
      * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
+     * @param zeebeContainer zeebe container
      */
     protected AbstractRunner(String type,
                              List<RunnerParameter> listInput,
                              List<RunnerParameter> listOutput,
-                             List<BpmnError> listBpmnErrors) {
+                             List<BpmnError> listBpmnErrors,
+                             ZeebeContainer zeebeContainer) {
 
         this.type = type;
         this.listInput = listInput;
         this.listOutput = listOutput;
         this.listBpmnErrors = listBpmnErrors;
-    }
-
-    static Boolean canParse(Class<?> clazz, Object value) {
-        if (value != null) {
-            return canParsePredicates.get(clazz).test(value.toString());
-        } else {
-            return false;
-        }
+        this.zeebeContainer = zeebeContainer;
     }
 
     /* -------------------------------------------------------- */
@@ -126,6 +121,14 @@ public abstract class AbstractRunner {
     /*                                                          */
     /* Access Input value, set Output value                     */
     /* -------------------------------------------------------- */
+
+    static Boolean canParse(Class<?> clazz, Object value) {
+        if (value != null) {
+            return canParsePredicates.get(clazz).test(value.toString());
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Return a value as Double
@@ -368,6 +371,17 @@ public abstract class AbstractRunner {
         return getInputValue(parameterName, defaultValue, activatedJob);
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Runner parameters                                       */
+    /*                                                          */
+    /* Runner must declare the input/output parameters          */
+    /* -------------------------------------------------------- */
+    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are
+    // ambiguous. For example,
+    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a
+    // Long.
+
     /**
      * Return the defaultValue for a parameter. If the defaultValue is provided by the software, it
      * has the priority. Else the default value is the one given in the parameter.
@@ -386,6 +400,7 @@ public abstract class AbstractRunner {
         // definitively, no default value
         return null;
     }
+
 
     /* -------------------------------------------------------- */
     /*                                                          */
@@ -409,18 +424,6 @@ public abstract class AbstractRunner {
     public void setOutputValue(String parameterName, Object value, AbstractWorker.ContextExecution contextExecution) {
         contextExecution.outVariablesValue.put(parameterName, value);
     }
-
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Runner parameters                                       */
-    /*                                                          */
-    /* Runner must declare the input/output parameters          */
-    /* -------------------------------------------------------- */
-    // If inputs and/or outputs are mapped as literals in the bpmn process diagram, the types are
-    // ambiguous. For example,
-    // the value of `90` will be interpreted as an Integer, but we also need a way to interpret as a
-    // Long.
 
     /**
      * OperationLog an error
@@ -576,6 +579,12 @@ public abstract class AbstractRunner {
                 .containsKey(parameterName));
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Getter/Setter                                           */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
     /**
      * Value is in Variables if the designer map Input and Output manually, or may be in the custom
      * headers if the designer use a template
@@ -589,12 +598,6 @@ public abstract class AbstractRunner {
             return activatedJob.getVariablesAsMap().get(parameterName);
         return activatedJob.getCustomHeaders().get(parameterName);
     }
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Getter/Setter                                           */
-    /*                                                          */
-    /* -------------------------------------------------------- */
 
     /* isLog
      * return if the  worker will log
@@ -638,6 +641,12 @@ public abstract class AbstractRunner {
         return listBpmnErrors;
     }
 
+    /* -------------------------------------------------------- */
+    /*                                                          */
+    /*  Additional optional information                        */
+    /*                                                          */
+    /* -------------------------------------------------------- */
+
     /**
      * Return the list of variable to fetch if this is possible, else null. To calculate the list: -
      * the listInput must not be null (it may be empty) - any input must be a STAR. A star in the
@@ -653,12 +662,6 @@ public abstract class AbstractRunner {
             return null;
         return listInput.stream().map(RunnerParameter::getName).toList();
     }
-
-    /* -------------------------------------------------------- */
-    /*                                                          */
-    /*  Additional optional information                        */
-    /*                                                          */
-    /* -------------------------------------------------------- */
 
     /**
      * This information is a code, used in any REST API. If this information is not provide, the REST
@@ -778,7 +781,28 @@ public abstract class AbstractRunner {
     }
 
     public List<String> getAppliesTo() {
-        return List.of("bpmn:Task");
+        return List.of(CherryInput.PARAMETER_APPLIES_V_TASK);
+    }
+
+    public String getElementType() {
+        return CherryInput.PARAMETER_APPLIES_V_SERVICETASK;
+    }
+
+    public int getVersion() {
+        return -1;
+    }
+
+    /**
+     * This method can be overrided byt the class. By default, we can save the release in this abstract class
+     *
+     * @return the release
+     */
+    public String getRelease() {
+        return forceRelease;
+    }
+
+    public void setRelease(String release) {
+        this.forceRelease = release;
     }
 
     /**

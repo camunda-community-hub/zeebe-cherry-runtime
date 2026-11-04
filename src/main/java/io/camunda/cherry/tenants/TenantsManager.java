@@ -2,12 +2,11 @@ package io.camunda.cherry.tenants;
 
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.runner.JobRunnerFactory;
-import io.camunda.cherry.runner.LogOperation;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -21,23 +20,27 @@ import java.util.stream.Collectors;
 @Component
 @Configuration
 public class TenantsManager {
+    private final String errorMessage = "";
+    private final JobRunnerFactory jobRunnerFactory;
+    private final OrchestrationAPI orchestrationAPI;
+    private final LogOperation logOperation;
+    private final TaskScheduler scheduler;
     Logger logger = LoggerFactory.getLogger(TenantsManager.class.getName());
-
-
-    @Autowired
-    JobRunnerFactory jobRunnerFactory;
-    @Autowired
-    OrchestrationAPI orchestrationAPI;
     @Value("#{'${cherry.tenants.activeIds:}'.split(',')}")
     private Set<String> activeTenantIds;
     @Value("${cherry.tenants.refreshTenantsInMinutes:1}")
     private Integer refreshTenantsInMinutes;
     private List<OrchestrationAPI.TenantInformation> currentTenants = new ArrayList<>();
-    private final String errorMessage = "";
-    @Autowired
-    private LogOperation logOperation;
-    @Autowired
-    private TaskScheduler scheduler;
+
+    public TenantsManager(JobRunnerFactory jobRunnerFactory,
+                          OrchestrationAPI orchestrationAPI,
+                          LogOperation logOperation,
+                          TaskScheduler scheduler) {
+        this.jobRunnerFactory = jobRunnerFactory;
+        this.orchestrationAPI = orchestrationAPI;
+        this.logOperation = logOperation;
+        this.scheduler = scheduler;
+    }
 
     public void refreshListTenants() {
 

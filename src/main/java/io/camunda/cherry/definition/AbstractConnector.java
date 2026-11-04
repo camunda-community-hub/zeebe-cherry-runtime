@@ -10,6 +10,7 @@
 /* ******************************************************************** */
 package io.camunda.cherry.definition;
 
+import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.cherrytemplate.RunnerParameter;
 import org.slf4j.Logger;
@@ -50,14 +51,16 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
      * @param listInput      list of Input parameters for the worker
      * @param listOutput     list of Output parameters for the worker
      * @param listBpmnErrors list of potential BPMN ControllerPage the worker can generate
+     * @param zeebeContainer zeebe container
      */
     public AbstractConnector(String type,
                              List<RunnerParameter> listInput,
                              Class<?> connectorInputClass,
                              List<RunnerParameter> listOutput,
                              Class<?> connectorOutputClass,
-                             List<BpmnError> listBpmnErrors) {
-        super(type, listInput, listOutput, listBpmnErrors);
+                             List<BpmnError> listBpmnErrors,
+                             ZeebeContainer zeebeContainer) {
+        super(type, listInput, listOutput, listBpmnErrors, zeebeContainer);
         this.connectorInputClass = connectorInputClass;
         this.connectorOutputClass = connectorOutputClass;
     }
@@ -70,12 +73,14 @@ public abstract class AbstractConnector extends AbstractRunner implements Outbou
      * @param connectorInputClass  Input class, where InputParameters are defined
      * @param connectorOutputClass Output class, where OutputParameters are defined
      * @param listBpmnErrors       list of BPMN error that the connector can throw
+     * @param zeebeContainer       zeebe container
      */
     protected AbstractConnector(String type,
                                 Class<?> connectorInputClass,
                                 Class<?> connectorOutputClass,
-                                List<BpmnError> listBpmnErrors) {
-        super(type, Collections.emptyList(), Collections.emptyList(), listBpmnErrors);
+                                List<BpmnError> listBpmnErrors,
+                                ZeebeContainer zeebeContainer) {
+        super(type, Collections.emptyList(), Collections.emptyList(), listBpmnErrors, zeebeContainer);
 
         // Create class ConnectorInput/ConnectorOutput to get parameters
         try {

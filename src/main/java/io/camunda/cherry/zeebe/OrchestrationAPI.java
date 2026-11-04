@@ -14,9 +14,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 /**
  * This call is used to connect the Orchestration API
@@ -37,14 +35,14 @@ public class OrchestrationAPI {
         HttpResponse<String> stringHttpResponse = callPostHttp("/v2/tenants/search", "{}");
         if (stringHttpResponse.statusCode() != 200) {
             logger.error("url [{}] status Code[{}]", "/v2/tenants/search", stringHttpResponse.body());
-            throw new RuntimeException("Http Status "+stringHttpResponse.statusCode());
+            throw new RuntimeException("Http Status " + stringHttpResponse.statusCode());
         }
         ObjectMapper mapper = new ObjectMapper();
 
         try {
             JsonNode root = mapper.readTree(stringHttpResponse.body());
             JsonNode itemsNode = root.get("items");
-            if (itemsNode==null) {
+            if (itemsNode == null) {
                 logger.error("in Url [{}] not found [items] in JSON Body [{}]", "/v2/tenants/search", stringHttpResponse.body());
                 throw new RuntimeException("Incorrect content [items] not found in JSON");
 
@@ -107,6 +105,7 @@ public class OrchestrationAPI {
 
     /**
      * Get the accesstoken, according the type of connection.
+     *
      * @return the access token
      * @throws Exception if any error
      */
@@ -114,8 +113,8 @@ public class OrchestrationAPI {
 
         String audience = camundaClientProperties.getAuth().getAudience();
         if (CamundaClientProperties.ClientMode.saas.equals(camundaClientProperties.getMode())
-                && (audience==null || audience.isEmpty())) {
-            audience= "zeebe.camunda.io";
+                && (audience == null || audience.isEmpty())) {
+            audience = "zeebe.camunda.io";
         }
         String body = "grant_type=client_credentials"
                 + "&client_id=" + camundaClientProperties.getAuth().getClientId()
@@ -128,13 +127,13 @@ public class OrchestrationAPI {
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
-        try(HttpClient client = HttpClient.newHttpClient()) {
+        try (HttpClient client = HttpClient.newHttpClient()) {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             String json = response.body();
             if (json.isEmpty())
                 throw new Exception("Can't get access token: body is empty.");
-            if (! json.contains(ACCESS_TOKEN))
+            if (!json.contains(ACCESS_TOKEN))
                 throw new Exception("Can't get access token: " + json);
             // extract access_token (quick & dirty)
             return json.split(ACCESS_TOKEN)[1].split("\"")[0];
@@ -165,6 +164,35 @@ public class OrchestrationAPI {
             logger.error("getJobCount: failed to parse response for jobType[{}]: {}", jobType, e.getMessage());
             return 0;
         }
+    }
+
+    /**
+     * Returns the number of jobs currently waiting (state=CREATED) for every job type present on the
+     * server, grouped by type. Uses POST /v2/jobs/search without a type filter, then tallies the
+     * "type" field of each returned item - one call instead of one getJobCount() call per runner.
+     */
+    public Map<String, Long> getAllJobCount() {
+        Map<String, Long> result = new LinkedHashMap<>();
+        String body = "{\"filter\":{\"state\":\"CREATED\"},\"page\":{\"limit\":1000}}";
+        try {
+            HttpResponse<String> response = callPostHttp("/v2/jobs/search", body);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
+            JsonNode items = root.path("items");
+            if (!items.isArray()) {
+                logger.warn("getAllJobCount: no items array in response");
+                return result;
+            }
+            for (JsonNode item : items) {
+                String type = item.path("type").asText(null);
+                if (type == null)
+                    continue;
+                result.merge(type, 1L, Long::sum);
+            }
+        } catch (JsonProcessingException e) {
+            logger.error("getAllJobCount: failed to parse response: {}", e.getMessage());
+        }
+        return result;
     }
 
     public HttpResponse<String> callGetHttp(String url) {

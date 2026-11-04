@@ -129,6 +129,13 @@ class Chart extends React.Component {
         }
         // ------------------------------------------- Doughnut
 
+        // Explicit width/height means a fixed-size chart (existing behavior, e.g. width={200} height={100}).
+        // Without them, the chart fills whatever space its container gives it.
+        const hasFixedSize = this.state.options.width !== undefined || this.state.options.height !== undefined;
+        if (!hasFixedSize) {
+            mainStyles = {...mainStyles, width: "100%", height: "100%"};
+        }
+
         return (<div style={mainStyles}>
                 {htmlTitle}
                 {this.state.type === 'Doughnut' &&
@@ -136,9 +143,11 @@ class Chart extends React.Component {
                               width={this.state.options.width}
                               height={this.state.options.height}/>}
                 {(this.state.type === 'VerticalBar' || this.state.type === 'HorizontalBar') &&
-                    <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}
-                         width={this.state.options.width}
-                         height={this.state.options.height}/>}
+                    (hasFixedSize
+                        ? <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}
+                               width={this.state.options.width}
+                               height={this.state.options.height}/>
+                        : <Bar data={this.getDataBarChart()} options={this.getOptionsBarChart()}/>)}
             </div>
         )
 
@@ -154,21 +163,25 @@ class Chart extends React.Component {
 
 
     getOptionsBarChart() {
+        const hasFixedSize = this.state.options.width !== undefined || this.state.options.height !== undefined;
         const chartOptions = {
             'maintainAspectRatio': false,
-            'responsive': false,
+            'responsive': !hasFixedSize,
             'plugins': {
                 'legend': {
-                    'display': this.state.options.showLegend === true
+                    'display': this.state.options.showLegend === true,
+                    'position': 'right'
                 },
             },
         };
         if (this.state.type === 'HorizontalBar') {
             chartOptions.scales = {
                 y: {
+                    beginAtZero: true,
                     ticks: {
                         beginAtZero: true,
-                        display: true
+                        display: true,
+                        maxTicksLimit: 2
                     },
                     grid: {
                         display: false,
@@ -177,25 +190,35 @@ class Chart extends React.Component {
                 x: {
                     ticks: {
                         display: true,
+                        autoSkip: false,
+                        maxRotation: 0,
+                        callback: function (value, index, ticks) {
+                            const lastIndex = ticks.length - 1;
+                            const midIndex = Math.round(lastIndex / 2);
+                            if (index === 0 || index === midIndex || index === lastIndex) {
+                                return this.getLabelForValue(value);
+                            }
+                            return '';
+                        }
                     },
                     grid: {
                         display: false,
                     }
                 },
             };
-        }
-        if (this.state.dataList2 && chartOptions.scales) {
-            // secondary axis, on the right, for the line dataset - it may not share the same scale as the bars
-            chartOptions.scales.y1 = {
-                position: 'right',
-                beginAtZero: true,
-                ticks: {
-                    display: this.state.options.showYLabel !== false
-                },
-                grid: {
-                    display: false,
-                }
-            };
+            if (this.state.dataList2) {
+                chartOptions.scales.y1 = {
+                    beginAtZero: true,
+                    position: 'right',
+                    ticks: {
+                        display: true,
+                        maxTicksLimit: 2
+                    },
+                    grid: {
+                        display: false,
+                    }
+                };
+            }
         }
         if (this.state.type === 'VerticalBar') {
             chartOptions.indexAxis = 'y';
@@ -238,6 +261,8 @@ class Chart extends React.Component {
         const dataChart = {};
 
         dataChart.datasets = [];
+        dataChart.datasets.label = this.state.title;
+
 
         let dataset = {type: 'bar', label: this.state.label || this.state.title};
         dataChart.datasets.push(dataset);
@@ -258,18 +283,16 @@ class Chart extends React.Component {
 
         if (this.state.dataList2) {
             const resultTransformed2 = this.getLabelsDataFromList(this.state.dataList2);
-            if (!dataChart.labels)
-                dataChart.labels = resultTransformed2.labels;
             dataChart.datasets.push({
                 type: 'line',
                 label: this.state.label2,
                 data: resultTransformed2.data,
                 borderColor: borderColor[1],
-                backgroundColor: borderColor[1],
-                fill: false,
-                borderWidth: 1,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
                 pointRadius: 1,
-                yAxisID: 'y1',
+                fill: false,
+                yAxisID: 'y1'
             });
         }
         return dataChart;

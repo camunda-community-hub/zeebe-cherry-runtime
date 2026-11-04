@@ -11,9 +11,7 @@
 package io.camunda.cherry.runtime;
 
 import io.camunda.cherry.db.entity.KeyValueEntity;
-import io.camunda.cherry.secretenv.SecretEnvService;
 import io.camunda.connector.api.secret.SecretContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +21,11 @@ import java.util.Optional;
 @Configuration
 public class CherrySecretProvider implements io.camunda.connector.api.secret.SecretProvider {
 
-    @Autowired
-    SecretEnvService secretEnvService;
+    private final SecretEnvService secretEnvService;
+
+    public CherrySecretProvider(SecretEnvService secretEnvService) {
+        this.secretEnvService = secretEnvService;
+    }
 
     @Override
     public String getSecret(String name, SecretContext context) {

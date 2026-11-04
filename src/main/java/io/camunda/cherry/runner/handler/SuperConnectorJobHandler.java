@@ -19,6 +19,7 @@ import io.camunda.connector.api.outbound.OutboundConnectorFunction;
 import io.camunda.connector.api.secret.SecretProvider;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.connector.runtime.core.error.BpmnError;
+import io.camunda.connector.runtime.core.intrinsic.IntrinsicFunctionAllowListFactory;
 import io.camunda.connector.runtime.core.outbound.ConnectorResult;
 import io.camunda.connector.runtime.core.secret.SecretFilterFactory;
 import io.camunda.connector.runtime.core.secret.SecretProviderAggregator;
@@ -51,7 +52,8 @@ public class SuperConnectorJobHandler extends SpringConnectorJobHandler {
                 documentFactory,
                 objectMapper,
                 connectorFunction,
-                SecretFilterFactory.disabled());
+                SecretFilterFactory.disabled(),
+                IntrinsicFunctionAllowListFactory.disabled());
     }
 
     protected void completeJob(JobClient client, ActivatedJob job, ConnectorResult.SuccessResult result, MetricsRecorder.CounterMetricsContext metricsContext) {

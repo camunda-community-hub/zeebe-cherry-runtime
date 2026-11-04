@@ -4,14 +4,23 @@
 /*                                                                      */
 /* This factory are in charge to upload jar in the storage (database)   */
 /* and in the ClassLoader                                               */
+/* Different usages:                                                    */
+/*  - from a path "upload" at startup                                   */
+/*  - from a upload in the UI                                           */
+/*  - from a Marketplace store installation                             */
+/*  - from a list of jar to upload at begining                          */
 /*                                                                      */
 /* ******************************************************************** */
 package io.camunda.cherry.runner;
 
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.exception.TechnicalException;
+import io.camunda.cherry.runtime.LogOperation;
+import io.camunda.cherry.store.StoreAccess;
 import io.camunda.connector.api.annotation.OutboundConnector;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -21,6 +30,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.time.Instant;
@@ -38,12 +48,11 @@ import java.util.zip.ZipFile;
 @Configuration
 public class RunnerUploadFactory {
 
-    private final StorageRunner storageRunner;
+    private final StorageService storageService;
     private final LogOperation logOperation;
     private final SessionFactory sessionFactory;
-    private final RunnerClassLoaderFactory runnerClassLoaderFactory;
+    private final JarManagementClassLoader jarManagementClassLoader;
     private final List<RunnerLightDefinition> listLightRunners = new ArrayList<>();
-
     Logger logger = LoggerFactory.getLogger(RunnerUploadFactory.class.getName());
 
     @Value("${cherry.connectorslib.uploadpath:@null}")
@@ -52,24 +61,29 @@ public class RunnerUploadFactory {
     @Value("${cherry.connectorslib.forcerefresh:false}")
     private Boolean forceRefresh;
 
-    public RunnerUploadFactory(StorageRunner storageRunner,
+    public RunnerUploadFactory(StorageService storageService,
                                LogOperation logOperation,
-                               RunnerClassLoaderFactory runnerClassLoaderFactory,
+                               JarManagementClassLoader jarManagementClassLoader,
                                SessionFactory sessionFactory) {
-        this.storageRunner = storageRunner;
+        this.storageService = storageService;
         this.logOperation = logOperation;
-        this.runnerClassLoaderFactory = runnerClassLoaderFactory;
+        this.jarManagementClassLoader = jarManagementClassLoader;
         this.sessionFactory = sessionFactory;
+
     }
 
     private static RunnerLightDefinition getLightFromRunnerDefinitionEntity(RunnerDefinitionEntity entityRunner) {
-        return new RunnerLightDefinition(entityRunner.name, entityRunner.type, entityRunner.classname,
-                RunnerDefinitionEntity.Origin.JARFILE);
+        return new RunnerLightDefinition(entityRunner.name,
+                entityRunner.type,
+                entityRunner.classname,
+                RunnerDefinitionEntity.Origin.JARFILE,
+                entityRunner.release);
     }
 
-    public void loadConnectorsFromClassLoaderPath() {
+    protected void loadConnectorsFromClassLoaderPath() {
         // No special operation to do
     }
+
 
     /**
      * get the list from the storage (database), and compare what we have in the class loader.
@@ -82,11 +96,11 @@ public class RunnerUploadFactory {
         List<String> listJarLoaded = new ArrayList<>();
 
         if (clearAllBefore) {
-            runnerClassLoaderFactory.clearClassLoaderFolder();
+            jarManagementClassLoader.clearClassLoaderFolder();
         }
         // All JAR file in the database must be load in the JavaMachine
-        for (JarStorageEntity jarStorageEntity : storageRunner.getAll()) {
-            listJarLoaded.add(runnerClassLoaderFactory.copyJarEntity(jarStorageEntity));
+        for (JarStorageEntity jarStorageEntity : storageService.getAll()) {
+            listJarLoaded.add(jarManagementClassLoader.copyFromJarEntity(jarStorageEntity).getName());
         }
         return listJarLoaded;
     }
@@ -97,27 +111,23 @@ public class RunnerUploadFactory {
      * @param jarFileName jar file name to load
      * @return true if the jar can be loaded in the storage path, else false
      */
-    public boolean jarFileStorageToClassLoader(String jarFileName) {
-        JarStorageEntity jarStorageEntity = storageRunner.getJarStorageByName(jarFileName);
+    protected boolean jarFileStorageToClassLoader(String jarFileName) {
+        JarStorageEntity jarStorageEntity = storageService.findJarStorageByName(jarFileName);
         if (jarStorageEntity == null)
             return false;
-        String jarSaved = runnerClassLoaderFactory.copyJarEntity(jarStorageEntity);
+        File jarSaved = jarManagementClassLoader.copyFromJarEntity(jarStorageEntity);
         return jarSaved != null;
 
     }
 
-    /**
-     * Load all files detected in the upload file to the storageRunner. Update database and factories
-     *
-     * @return the list of all Runners detected in the uploadPath
-     */
-    public List<RunnerLightDefinition> loadStorageFromUploadPath() {
 
-        logger.info("Load from directory[{}]", uploadPath);
-        List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
+    public List<File> detectJarFromUploadPath() {
+
+        logger.info("Detect jar in directory[{}]", uploadPath);
+        List<File> listJarFiles = new ArrayList<>();
 
         if (uploadPath == null) {
-            logOperation.log(OperationEntity.Operation.SERVERINFO, "No Uploadpath is provided");
+            logOperation.log(OperationEntity.Operation.SERVERINFO, "No UploadPath is provided");
             return Collections.emptyList();
         }
         File uploadFileDir = new File(uploadPath);
@@ -131,37 +141,73 @@ public class RunnerUploadFactory {
                 continue;
             if (!jarFile.getName().endsWith(".jar"))
                 continue;
-            logger.info("  Check file [{}]...", jarFile.getName());
-            List<RunnerLightDefinition> list = saveJarFileToStorage(jarFile, jarFile.getName(), forceRefresh);
-            listRunnersDetected.addAll(list);
-            listLightRunners.addAll(list);
-
+            listJarFiles.add(jarFile);
         }
-        return listRunnersDetected;
+        return listJarFiles;
     }
+    /** TOREMOVE
+     * Load all files detected in the upload file to the storageRunner. Update database and factories
+     *
+     * @return the list of all Runners detected in the uploadPath
+     *
+    public List<RunnerLightDefinition> loadStorageFromUploadPath() {
+
+    logger.info("Load from directory[{}]", uploadPath);
+    List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
+
+    if (uploadPath == null) {
+    logOperation.log(OperationEntity.Operation.SERVERINFO, "No UploadPath is provided");
+    return Collections.emptyList();
+    }
+    File uploadFileDir = new File(uploadPath);
+    if (!uploadFileDir.exists() || uploadFileDir.listFiles() == null) {
+    String defaultDir = System.getProperty("user.dir");
+    logger.error("Upload file does not exist [{}] (default is [{}])", uploadPath, defaultDir);
+    return Collections.emptyList();
+    }
+    for (File jarFile : uploadFileDir.listFiles()) {
+    if (jarFile.isDirectory())
+    continue;
+    if (!jarFile.getName().endsWith(".jar"))
+    continue;
+    logger.info("  Check file [{}]...", jarFile.getName());
+    JarStorageEntity= saveJarFileToStorage(jarFile, jarFile.getName(), null, forceRefresh);
+
+    listRunnersDetected.addAll(list);
+    listLightRunners.addAll(list);
+
+    }
+    return listRunnersDetected;
+    }
+     */
 
     /**
-     * Load a Jar file in the storage and in the factory
+     * Load a Jar file in the storage and in the factory. All classes are loaded in memory and investigated to find runners.
+     * Runners are not started, just loaded in the ClassLoader, and in the Storage
      *
      * @param jarFile            file to load
      * @param originalFileName   the original file name (jarFile maybe a temporary file). If null, use the fileName
+     * @param defaultRelease     the default release know from where the jar was uploaded
      * @param forceReloadThisJar if true, the storage is uploaded, else depends on the date of the jar in ths storage
+     * @param sourceJar          explanation where the jar come
      * @return list of runnerLight Definition
      */
-    public List<RunnerLightDefinition> saveJarFileToStorage(File jarFile,
-                                                            String originalFileName,
-                                                            boolean forceReloadThisJar) {
+    private JarStorageEntity saveJarFileToStorage(File jarFile,
+                                                  String originalFileName,
+                                                  String defaultRelease,
+                                                  boolean forceReloadThisJar,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar) {
         List<RunnerLightDefinition> listRunnersLoaded = new ArrayList<>();
-        JarStorageEntity jarStorageEntity;
+        JarStorageEntity jarStorageEntity = null;
         String analysis = "";
         String jarName = originalFileName;
         try {
-            jarStorageEntity = storageRunner.getJarStorageByName(
-                    originalFileName == null ? jarFile.getName() : originalFileName);
+            jarStorageEntity = storageService.findJarStorageByName(originalFileName == null ? jarFile.getName() : originalFileName);
             boolean reload = false;
             if (forceReloadThisJar) {
                 reload = true;
-                analysis += "ForceRefresh,";
+                analysis += "ForceReload,";
             }
             if (jarStorageEntity == null) {
                 reload = true;
@@ -174,11 +220,12 @@ public class RunnerUploadFactory {
                         ZoneId.systemDefault());
 
                 // transform this local dateTime in UTC, because all comparaison on date in made n UTC
-                ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
-                ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-                LocalDateTime utcLocalDateTime = utcDateTime.toLocalDateTime();
-
-                if (jarStorageEntity.loadedTime.isBefore(utcLocalDateTime)) {
+                if (jarUTCTime == null) {
+                    ZonedDateTime zonedDateTime = fileLocalDateTime.atZone(ZoneId.systemDefault());
+                    ZonedDateTime utcDateTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
+                    jarUTCTime = utcDateTime.toLocalDateTime();
+                }
+                if (jarStorageEntity.loadedTime.isBefore(jarUTCTime)) {
                     reload = true;
                     analysis += "NewVersion,";
                 }
@@ -186,7 +233,7 @@ public class RunnerUploadFactory {
             List<RunnerDefinitionEntity> runners = null;
             if (!reload) {
                 // we don't reload the JAR file, so we believe what we have in the database
-                runners = storageRunner.getRunnersFromJarName(jarStorageEntity.name);
+                runners = storageService.getRunnersFromJarName(jarStorageEntity.name);
                 // there is something wrong here: why there is no runners behind this JAR?
                 if (runners.isEmpty())
                     reload = true;
@@ -194,67 +241,101 @@ public class RunnerUploadFactory {
             }
             analysis += "reload:" + reload + ",";
 
-            if (!reload && runners != null) {
-                listRunnersLoaded.addAll(
-                        runners.stream().map(RunnerUploadFactory::getLightFromRunnerDefinitionEntity).toList());
-                logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
-                return listRunnersLoaded;
-            }
 
             analysis += jarStorageEntity == null ? "SaveEntity" : "UpdateEntity";
-            logOperation.log(OperationEntity.Operation.LOADJAR, "Jar[" + jarFile.getName() + "] :" + analysis);
+
             if (jarStorageEntity == null) {
                 // save it
-                jarStorageEntity = storageRunner.saveJarRunner(jarName, jarFile);
+                jarStorageEntity = storageService.saveJarRunner(jarName, jarFile, defaultRelease, sourceJar);
             } else {
-                jarStorageEntity = storageRunner.updateJarRunner(jarStorageEntity, jarName, jarFile);
+                jarStorageEntity = storageService.updateJarRunner(jarStorageEntity, jarName, jarFile, defaultRelease, sourceJar);
             }
-            listRunnersLoaded.addAll(saveStorageJarFile(jarFile, jarStorageEntity));
 
         } catch (Exception e) {
             logOperation.log(OperationEntity.Operation.ERROR,
                     "Can't load JAR [" + jarFile.getName() + "] " + analysis + " : " + e.getMessage());
-            return listRunnersLoaded;
+            return jarStorageEntity;
         }
 
-        return listRunnersLoaded;
+        return jarStorageEntity;
     }
 
     /**
-     * get All runners
+     * Install the jar, and return the list of runner detected in the jar.
+     * Attention: runners are not stopped/restarted. The runnerFactory can't access the running runner (managed by jobRunnerFactory)
      *
-     * @return list of all runners knows byt the factory
+     * @param jarFileName        jar file name
+     * @param jarFileInputStream InputStream
+     * @param defaultRelease     it may come from the definition, else it somewhere on the runner.
+     * @param sourceJar          where the jar come from
+     * @return list of runners detected in the JAR
      */
-    public List<RunnerLightDefinition> getAllRunners() {
-        return listLightRunners;
-    }
-
-    private RunnerLightDefinition getLightFromRunner(AbstractRunner runner) {
-        return new RunnerLightDefinition(runner.getName(), runner.getType(), runner.getClass().getName(),
-                RunnerDefinitionEntity.Origin.JARFILE);
-
-    }
-
-    private RunnerLightDefinition getLightFromConnectorAnnotation(OutboundConnector connectorAnnotation) {
-        return new RunnerLightDefinition(connectorAnnotation.name(), connectorAnnotation.type(),
-                connectorAnnotation.getClass().getName(), RunnerDefinitionEntity.Origin.JARFILE);
+    public List<RunnerLightDefinition> installJar(String jarFileName, InputStream jarFileInputStream, String defaultRelease,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar) throws TechnicalException {
+        return installJar(jarFileName, jarFileInputStream, List.of(), defaultRelease, jarUTCTime, sourceJar);
     }
 
     /**
-     * Open the JAR file and load all runners detected inside.
+     * Same as installJar(...), but also saves and loads every dependency jar alongside the main one -
+     * one JarStorageEntity row per dependency, its "parent" column pointing back at jarFileName, and all
+     * of them (main jar + dependencies) put in the SAME classloader so classes resolve across jars.
+     *
+     * @param jarDependencies dependency jars downloaded alongside the main one (possibly empty)
+     */
+    public List<RunnerLightDefinition> installJar(String jarFileName,
+                                                  InputStream jarFileInputStream,
+                                                  List<StoreAccess.JarDependency> jarDependencies, String defaultRelease,
+                                                  LocalDateTime jarUTCTime,
+                                                  String sourceJar) throws TechnicalException {
+        try {
+
+            File jarFile = jarManagementClassLoader.copyFromJarFile(jarFileName, jarFileInputStream);
+            JarStorageEntity jarStorageEntity = saveJarFileToStorage(jarFile, jarFileName, defaultRelease, true, jarUTCTime, sourceJar);
+
+            List<String> dependencyJarFileNames = new ArrayList<>();
+            if (jarDependencies != null) {
+                for (StoreAccess.JarDependency jarDependency : jarDependencies) {
+                    File dependencyFile = jarManagementClassLoader.copyFromJarFile(jarDependency.name, jarDependency.content);
+                    if (dependencyFile == null)
+                        continue;
+                    storageService.saveDependencyJar(jarDependency.name, dependencyFile, jarFileName);
+                    dependencyJarFileNames.add(jarDependency.name);
+                }
+            }
+
+            jarManagementClassLoader.loadJarInJavaMachine(jarFileName, dependencyJarFileNames);
+            List<RunnerLightDefinition> runners = inspectJar(jarFile, jarStorageEntity, defaultRelease);
+
+            listLightRunners.addAll(runners);
+            logger.info("RunnerUploadFactory jar[{}] installed with {} dependencies, found {} runners",
+                    jarFileName, dependencyJarFileNames.size(), runners.size());
+            logOperation.log(OperationEntity.Operation.LOADJAR, "UploadJar[" + jarFileName + "] dependencies[" + dependencyJarFileNames.size() + "]");
+            return runners;
+        } catch (Exception e) {
+            logOperation.log(OperationEntity.Operation.ERROR, "Can't UploadJar[" + jarFileName + "] : " + e.getMessage());
+            throw new TechnicalException("Error install jar [" + jarFileName + "]", e);
+        }
+
+    }
+
+    /**
+     * Open the JAR file and detect all runners
+     * Jar must be ALREADY BE UPLOAD in the Java Machine (see JarManagementClassLoader)
+     * For each runner detected, an object is obtains via the  JarManagementClassLoader
      *
      * @param jarFile          jarFile to open
      * @param jarStorageEntity jarStorageEntity related to the JAR file - all runners will be attached to this one
      * @return the runner detected in the jar
      */
-    private List<RunnerLightDefinition> saveStorageJarFile(File jarFile, JarStorageEntity jarStorageEntity) {
+    private List<RunnerLightDefinition> inspectJar(File jarFile, JarStorageEntity jarStorageEntity, String defaultRelease) {
 
         List<RunnerLightDefinition> listRunnersDetected = new ArrayList<>();
 
         StringBuilder logLoadJar = new StringBuilder();
         StringBuilder errLogLoadJar = new StringBuilder();
         long beginOperation = System.currentTimeMillis();
-        logger.info("---- Start load Jar[{}]", jarFile.getPath());
+        logger.info("---- Start Inspect Jar[{}]", jarFile.getPath());
 
 
         // Explore the JAR file and detect any connector inside
@@ -274,16 +355,20 @@ public class RunnerUploadFactory {
                 String entryName = entry.getName();
                 nbClass++;
                 if (nbClass % 1000 == 0 && System.currentTimeMillis() - beginOperation > 2000) {
-                    logger.info("JAR [{}] check {}/{} classes in {} ms", jarFile.getName(), nbClass, totalClasses, System.currentTimeMillis() - beginOperation);
+                    logger.debug("JAR [{}] check {}/{} classes in {} ms", jarFile.getName(), nbClass, totalClasses, System.currentTimeMillis() - beginOperation);
                 }
 
                 if (!entryName.endsWith(".class")) {
                     continue;
                 }
                 String className = entryName.replace(".class", "").replace('/', '.');
+                if (className.startsWith("BOOT-INF.classes."))
+                    className = className.replaceFirst("BOOT-INF.classes.", "");
+                logger.debug("Jar[{}] ClassName[{}]", jarFile.getName(), className);
                 // save time
                 if (className.startsWith("org.apache")
                         || className.startsWith("com.google")
+                        || className.startsWith("org.spring")
                         || className.startsWith("scala")
                         || className.startsWith("com.fasterxml"))
                     continue;
@@ -291,41 +376,31 @@ public class RunnerUploadFactory {
                 if (className.startsWith("io.camunda.connector.runtime") || className.startsWith("io.camunda.zeebe"))
                     continue;
                 try {
-                    Class<?> clazz = loader.loadClass(className);
-                    OutboundConnector connectorAnnotation = clazz.getAnnotation(OutboundConnector.class);
-                    if (AbstractRunner.class.isAssignableFrom(clazz)) {
-                        Object instanceClass = clazz.getDeclaredConstructor().newInstance();
-                        // this is a AbstractConnector
-                        AbstractRunner runner = (AbstractRunner) instanceClass;
-                        storageRunner.saveUploadRunner(runner, jarStorageEntity);
-                        listRunnersDetected.add(getLightFromRunner(runner));
+                    if (!jarManagementClassLoader.detectRunnersInClass(className, jarFile.getName()))
+                        continue;
+                    logger.info("Runners detected in class [{}]", className);
+                    // We need to instance it to get all runners: it may be multiples
+                    Object instanceClass = jarManagementClassLoader.getInstance(className, jarFile.getName());
 
-                        logLoadJar.append("RunnerDetection[");
-                        logLoadJar.append(runner.getName());
-                        logLoadJar.append("], type[");
-                        logLoadJar.append(runner.getType());
-                        logLoadJar.append("]; ");
-                        logOperation.log(OperationEntity.Operation.SERVERINFO,
-                                "Load Jar[" + jarFile.getName() + "] Runner[" + runner.getName() + "] type[" + runner.getType()
-                                        + "]");
-                        nbRunners++;
-                    } else if (connectorAnnotation != null) {
-                        // this is a Outbound connector
-                        storageRunner.saveUploadRunner(connectorAnnotation.name(), connectorAnnotation.type(), clazz,
-                                jarStorageEntity);
-
-                        listRunnersDetected.add(getLightFromConnectorAnnotation(connectorAnnotation));
-
-                        logLoadJar.append("ConnectorDetection[");
-                        logLoadJar.append(connectorAnnotation.name());
-                        logLoadJar.append("], type[");
-                        logLoadJar.append(connectorAnnotation.type());
-                        logLoadJar.append("]; ");
-                        logOperation.log(OperationEntity.Operation.SERVERINFO,
-                                "Load Connector[" + connectorAnnotation.name() + "] type[" + connectorAnnotation.type()
-                                        + "] from Jar[" + jarFile.getName() + "]");
-                        nbConnectors++;
+                    if (instanceClass == null) {
+                        logger.error("Can't load class [{}] for connector [{}]", className, jarFile.getName());
+                        continue;
                     }
+                    List<AbstractRunner> listRunners = jarManagementClassLoader.detectRunnersInObject(instanceClass);
+
+                    for (AbstractRunner runner : listRunners) {
+                        // update the release
+                        if (runner.getRelease() == null)
+                            runner.setRelease(defaultRelease);
+                        storageService.saveUploadRunner(runner, jarStorageEntity, defaultRelease);
+                        listRunnersDetected.add(new RunnerLightDefinition(runner.getName(),
+                                runner.getType(),
+                                runner.getClass().getName(),
+                                RunnerDefinitionEntity.Origin.JARFILE,
+                                runner.getRelease() != null ? runner.getRelease() : defaultRelease));
+                        nbRunners++;
+                    }
+
 
                 } catch (Error er) {
                     if (className.startsWith("io.camunda")) {
@@ -333,7 +408,7 @@ public class RunnerUploadFactory {
                         errLogLoadJar.append("ERROR, Class[");
                         errLogLoadJar.append(className);
                         errLogLoadJar.append("]:");
-                        errLogLoadJar.append(er.getMessage());
+                        errLogLoadJar.append(er.getCause());
                         errLogLoadJar.append("; ");
                     }
                 } catch (Exception e) {
@@ -359,7 +434,7 @@ public class RunnerUploadFactory {
             if (logLoadJarSt.length() > 1999)
                 logLoadJarSt = logLoadJarSt.substring(0, 1999);
 
-            storageRunner.uploadLoadLog(jarStorageEntity, logLoadJarSt);
+            storageService.uploadLoadLog(jarStorageEntity, logLoadJarSt);
             logOperation.log(OperationEntity.Operation.SERVERINFO,
                     "Load [" + jarFile.getName() + "] connectors: " + nbConnectors + " runners: " + nbRunners + " in " + (
                             endOperation - beginOperation) + " ms ");
@@ -370,5 +445,34 @@ public class RunnerUploadFactory {
         } // end manage Zip file
         return listRunnersDetected;
     }
+
+    /**
+     * get All runners
+     *
+     * @return list of all runners knows byt the factory
+     */
+    protected List<RunnerLightDefinition> getAllRunners() {
+        return listLightRunners;
+    }
+
+    /* ready to remove
+    private RunnerLightDefinition getLightFromRunner(AbstractRunner runner) {
+        return new RunnerLightDefinition(runner.getName(),
+                runner.getType(),
+                runner.getClass().getName(),
+                RunnerDefinitionEntity.Origin.JARFILE,
+                runner.getRelease());
+
+    }
+*/
+
+    private RunnerLightDefinition getLightFromConnectorAnnotation(OutboundConnector connectorAnnotation, Class clazz, String release) {
+        return new RunnerLightDefinition(connectorAnnotation.name(),
+                connectorAnnotation.type(),
+                clazz.getClass().getName(),
+                RunnerDefinitionEntity.Origin.JARFILE,
+                release);
+    }
+
 
 }

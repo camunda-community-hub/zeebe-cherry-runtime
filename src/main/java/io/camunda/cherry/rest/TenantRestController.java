@@ -1,0 +1,37 @@
+package io.camunda.cherry.rest;
+
+import io.camunda.cherry.tenants.TenantsManager;
+import io.camunda.cherry.zeebe.OrchestrationAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RequestMapping("cherry")
+@RestController
+public class TenantRestController {
+    private final TenantsManager tenantsManager;
+    Logger logger = LoggerFactory.getLogger(TenantRestController.class.getName());
+
+    public TenantRestController(TenantsManager tenantsManager) {
+        this.tenantsManager = tenantsManager;
+    }
+
+    @GetMapping(value = "/api/tenants/list", produces = "application/json")
+    public Map<String, Object> getOperation() {
+
+        List<OrchestrationAPI.TenantInformation> listTenants = tenantsManager.getListTenants();
+
+        logger.info("Tenants {}", listTenants.toString());
+        Map<String, Object> operation = new HashMap<>();
+        operation.put(RestAttribute.TENANTS, listTenants);
+        operation.put(RestAttribute.STATUS, tenantsManager.getErrorMessage());
+        operation.put(RestAttribute.DELAY_REFRESH, tenantsManager.getDelayRefreshInMinutes());
+        return operation;
+    }
+}

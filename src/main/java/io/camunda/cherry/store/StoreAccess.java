@@ -1,0 +1,255 @@
+package io.camunda.cherry.store;
+
+import io.camunda.cherry.runner.RunnerLightDefinition;
+import io.camunda.cherry.runtime.CherryProperties;
+
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class StoreAccess {
+
+    private CherryProperties.Startup startup;
+
+    protected StoreAccess(CherryProperties.Startup startup) {
+        this.startup = startup;
+    }
+
+    public CherryProperties.Startup getStartup() {
+        return startup;
+    }
+
+    public void setStartup(CherryProperties.Startup startup) {
+        this.startup = startup;
+    }
+
+    public abstract String getName();
+
+    public abstract String getUrl();
+
+    public abstract String getType();
+
+    public String getSignature() {
+        return getType() + "-" + getName();
+    }
+
+    /**
+     * Get the list of connector. Each connectorDefinition is "light", with name.
+     * At this level, the jar is identified (in releases, or maven), and implementation status is found
+     * <p>
+     * Then the exploration will continue one by one via the exploreDetails. ExploreDFetails load the element-template if exist.
+     * status is set to INPROGRESS
+     * Note: this method allow to return as soon as possible something for the UI. The second pass, exploration,
+     * take more time
+     *
+     * @return list of connectors discovered
+     */
+    public abstract List<ConnectorDefinition> exploreListConnectors();
+
+    /**
+     * Explore details. At the end, the connectorDefinition is complete
+     * - name
+     * - release
+     * - url to get the element template
+     * - url to get the JAR file
+     * - logo ir downloaded
+     * status is moved to READY or FAILED
+     *
+     * @param connectorDefinition connector definition to explore
+     * @return true if the connector is valid, false if not and must be deleted
+     */
+    public abstract boolean exploreDetails(ConnectorDefinition connectorDefinition);
+
+
+    public abstract ConnectorDownload downloadConnector(ConnectorDefinition connectorDefinition);
+
+
+    /**
+     * READY: fully operational
+     * INPROGRESS: still exploring
+     * INCOMPLETE: the connector / worker is incomplete, can't execute
+     * NOELTTEMPLATE : the connector does not have a template - maybe a worker? Need to explore JAR
+     */
+    public enum EXPLORATION {READY, INPROGRESS, INCOMPLETE, NOELTTEMPLATE}
+
+    public enum STATUSDOWNLOAD {UNKNOWCONNECTOR, UNKNOWNSTORE, UNKNOWNRELEASE, OK, FAILED, NOURLJARFILE, NOIMPLEMENTATION}
+
+    public enum CONNECTORSOURCE {NONE, CAMUNDAHUB, CAMUNDACONNECTOR}
+
+    public static class ElementTemplateDescription {
+        public String name;
+        public String description;
+        public String url;
+        public String version;
+        public String connectorType;
+
+        public ElementTemplateDescription(String url) {
+            this.url = url;
+        }
+    }
+
+    public static class AnnotationDescription {
+        public String name;
+        public String type;
+
+        public AnnotationDescription(String name, String type) {
+            this.name = name;
+            this.type = type;
+        }
+    }
+
+    public static class ConnectorDefinition {
+        /**
+         * Name of the connector. can be the folder name
+         * There are multiple name in a connector:
+         * - "name" the folder name, first identification. It saved under "name"
+         * - "codename": there is name in the code. In a JAR, multiple class/methods with different name, types. In the annotation. This is the real name of the code, @OutboundConnect( name="xxxx"). The codeName is find only when the code is read
+         * - "listAnnotations" in the elementTemplate, a different name may be declared. Worst: it's possible to have multiple element-template...
+         * <p>
+         * To add on the complexity: in a JAR, it may have multiple connectors... with multiple names...
+         */
+        public String name;
+
+        /**
+         * In case the JAR contains multiple
+         */
+        public List<AnnotationDescription> listAnnotations = new ArrayList<>();
+
+        /**
+         * If the connector is store in GitHub, save the Github repository something like
+         * the repoName is something like "pierre-yves.monnet/myconnector"
+         */
+        public String githubRepoName;
+
+        /**
+         * The repopath is the path INSIDE the repoName. A repo name may contains multiple connector, like we have in the connectorStore
+         */
+        public String githubRepoPath = "";
+        public int version;
+        public String release;
+        public String icon;
+        /**
+         * The connector may not have a direct implementation, and use a other comp
+         */
+        public boolean hasImplementation = true;
+        public boolean isInstallable = true;
+        public StoreAccess storeAccess;
+
+        /**
+         * name come the URL templates. Multiple element templates can be detected, each with a different name
+         */
+        public List<ElementTemplateDescription> listEltTemplate = new ArrayList<>();
+        public String url;
+        public String description;
+        public String creator;
+        public String documentationRef;
+        /**
+         * Url to download the Jarfile - attentioon, this file maybe a Zip, and may be need to be explored
+         */
+        public String urlJarFile;
+        /**
+         * The jar file may be stored in a Maven repository
+         */
+        public String urlMaven;
+        /**
+         * the connector type
+         */
+        public String connectorType;
+        /**
+         * Set only when the implementation was located on a Maven provider (Maven Central, Camunda's
+         * Artifactory, ...) rather than as a direct GitHub release asset - see StoreGithub.searchMavenRepoExistance
+         */
+        public String mavenProvider;
+        /**
+         * Set only if the connector come from marketplace, and reference a Hub or Connector source
+         */
+        public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
+        private EXPLORATION status;
+
+        /**
+         * Keep trace of the download
+         */
+        private final StringBuffer logDownload = new StringBuffer();
+
+        /*
+         * use the getInstance instead
+         */
+        private ConnectorDefinition() {
+
+        }
+
+        public static ConnectorDefinition getInstance(StoreAccess storeAccess, String name, String url, String release) {
+            ConnectorDefinition connectorDefinition = new ConnectorDefinition();
+            connectorDefinition.storeAccess = storeAccess;
+            connectorDefinition.name = name;
+            connectorDefinition.url = url;
+            connectorDefinition.release = release;
+            return connectorDefinition;
+        }
+
+        public EXPLORATION getStatus() {
+            return status;
+        }
+
+        public void setStatus(EXPLORATION status) {
+            this.status = status;
+        }
+
+        public String toString() {
+            return "ConnectorDefinition[" + name + "] release:[" + release + "] Store[" + storeAccess.getName() + "] Implemen.[" + hasImplementation + "]";
+        }
+
+        public String getJarName() {
+            if (urlJarFile == null)
+                return null;
+            return urlJarFile.substring(urlJarFile.lastIndexOf('/') + 1);
+        }
+
+        public void addLogDownload(String log) {
+            logDownload.append(log).append(";");
+        }
+
+        public String getLogDownload() {
+            return logDownload.toString();
+        }
+    }
+
+    public static class ConnectorDownload {
+        public STATUSDOWNLOAD status;
+        public String explanation;
+        public ByteArrayInputStream jarContent;
+        public String jarName;
+        public List<RunnerLightDefinition> runners;
+        public List<ConnectorDetail> connectorDetails;
+        /**
+         * Populated when the main jar was found as a "plain" jar (not a "-with-dependencies" uber jar)
+         * on a Maven provider - one entry per dependency declared in the pom.xml that was resolvable.
+         */
+        public List<JarDependency> jarDependenciesContent;
+        String release;
+
+    }
+
+    /**
+     * One dependency jar downloaded alongside a connector's main jar - its own file name (so it can be
+     * saved as its own JarStorageEntity row and loaded in the Java machine) plus its content.
+     */
+    public static class JarDependency {
+        public String name;
+        public ByteArrayInputStream content;
+
+        public JarDependency(String name, ByteArrayInputStream content) {
+            this.name = name;
+            this.content = content;
+        }
+    }
+
+    public static class ConnectorDetail {
+        public String className;
+        public List<String> fetchVariables;
+        public String name;
+        public String type;
+    }
+
+
+}

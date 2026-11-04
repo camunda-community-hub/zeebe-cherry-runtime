@@ -45,7 +45,7 @@ public class DatabasePurgeServiceTest {
         saveTopicCount("runner-A", now.minusDays(6));
         saveTopicCount("runner-A", now.minusDays(1));
 
-        databasePurgeService.purgeAllRecords();
+        databasePurgeService.purgeOldRecords();
 
         assertEquals(0, runnerExecutionRepository.count());
         assertEquals(0, operationRepository.count());
@@ -54,7 +54,7 @@ public class DatabasePurgeServiceTest {
 
     @Test
     public void startupWipeIsNopOnEmptyDatabase() {
-        databasePurgeService.purgeAllRecords();
+        databasePurgeService.purgeOldRecords();
 
         assertEquals(0, runnerExecutionRepository.count());
         assertEquals(0, operationRepository.count());

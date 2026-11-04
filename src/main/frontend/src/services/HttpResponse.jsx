@@ -18,17 +18,25 @@ class HttpResponse {
         if (this.err)
             return true;
         // console.log("HttpResponse.isError httpStatus: "+this.axiosHttpPayload.status);
+        if (!this.axiosHttpPayload || !this.axiosHttpPayload.status) {
+            return false; // Assume success if status is missing
+        }
         if (this.axiosHttpPayload.status < 200 || this.axiosHttpPayload.status > 204)
             return true;
         return false;
     }
 
     getError() {
+        if (!this.err)
+            return "Unknown error";
         if (this.err.response && this.err.response.data && this.err.response.data.message)
             return this.err.response.data.message;
-        if (this.err.message)
-            return this.err.message;
-        return this.err.code;
+        // No response received — server unreachable or proxy refused connection
+        if (!this.err.response)
+            return "Cannot connect to the server";
+        // Server responded but without a usable message body — axios's generic
+        // "Request failed with status code X" is not helpful to the user
+        return "Server is not accessible (error " + this.err.response.status + ")";
     }
 
     getData() {

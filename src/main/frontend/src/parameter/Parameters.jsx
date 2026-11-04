@@ -58,7 +58,7 @@ class Parameters extends React.Component {
                     <div className="col-md-6">
 
                         <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >Zeebe connection
+                            <div className="card-header cherry-header">Zeebe connection
                             </div>
                             <div className="card-body">
                                 <div className="row">
@@ -94,7 +94,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="grpc Address"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.grpcAddress}
                                                        onChange={(event) => this.setParameterProperty("grpcAddress", event.target.value)}/>
                                         </div>
@@ -103,7 +103,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="rest Address"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.restAddress}
                                                        onChange={(event) => this.setParameterProperty("restAddress", event.target.value)}/>
                                         </div>
@@ -112,7 +112,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="clientId"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.clientId}
                                                        onChange={(event) => this.setParameterProperty("clientId", event.target.value)}/>
                                         </div>
@@ -121,7 +121,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="clientSecret"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.clientSecret}
                                                        onChange={(event) => this.setParameterProperty("clientSecret", event.target.value)}/>
 
@@ -131,7 +131,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="Autorization Server Url"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.AutorizationServerUrl}
                                                        onChange={(event) => this.setParameterProperty("AutorizationServerUrl", event.target.value)}/>
 
@@ -141,7 +141,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-12">
                                             <TextInput labelText="client Audience"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.clientAudience}
                                                        onChange={(event) => this.setParameterProperty("clientAudience", event.target.value)}/>
                                         </div>
@@ -150,7 +150,7 @@ class Parameters extends React.Component {
                                         <div className="col-md-4">
                                             <TextInput labelText="ActiveTenantsIds"
                                                        readonly="true"
-                                                       style={{ width: "100%" }}
+                                                       style={{width: "100%"}}
                                                        value={this.state.parameters.tenantIds}
                                                        onChange={(event) => this.setParameterProperty("tenantIds", event.target.value)}/>
 
@@ -206,32 +206,15 @@ class Parameters extends React.Component {
 
                     <div className="col-md-6">
                         <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >Database</div>
+                            <div className="card-header cherry-header">About</div>
                             <div className="card-body">
                                 <div className="row">
-                                    <div className="col-md-6">
-                                        <TextInput labelText="Product"
+                                    <div className="col-md-12">
+                                        <TextInput labelText="Version"
                                                    readonly="true"
-                                                   value={this.state.parameters.datasourceProductName}
-                                                   style={{ width: "100%" }}/>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <TextInput labelText="Datasource"
-                                                   readonly="true"
-                                                   value={this.state.parameters.datasourceUrl}
-                                                   style={{ width: "100%" }}
-                                                   onChange={(event) => this.setParameterProperty("datasourceUrl", event.target.value)}/>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col-md-6">
-                                        <TextInput labelText="User Name"
-                                                   readonly="true"
-                                                   value={this.state.parameters.datasourceUserName}
-                                                   style={{ width: "100%" }}
-                                                   onChange={(event) => this.setParameterProperty("datasourceUserName", event.target.value)}/>
+                                                   value={this.state.parameters.version}
+                                                   style={{width: "100%"}}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -243,7 +226,41 @@ class Parameters extends React.Component {
                 <div className="row" style={{marginTop: "10px"}}>
                     <div className="col-md-6">
                         <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >Worker</div>
+                            <div className="card-header cherry-header">Database</div>
+                            <div className="card-body">
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <TextInput labelText="Product"
+                                                   readonly="true"
+                                                   value={this.state.parameters.datasourceProductName}
+                                                   style={{width: "100%"}}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <TextInput labelText="Datasource"
+                                                   readonly="true"
+                                                   value={this.state.parameters.datasourceUrl}
+                                                   style={{width: "100%"}}
+                                                   onChange={(event) => this.setParameterProperty("datasourceUrl", event.target.value)}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <TextInput labelText="User Name"
+                                                   readonly="true"
+                                                   value={this.state.parameters.datasourceUserName}
+                                                   style={{width: "100%"}}
+                                                   onChange={(event) => this.setParameterProperty("datasourceUserName", event.target.value)}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="col-md-6">
+                        <div className="card" style={{width: "25rem;"}}>
+                            <div className="card-header cherry-header">Worker</div>
                             <div className="card-body">
                                 <div className="row">
                                     <div className="col-md-12">
@@ -252,7 +269,7 @@ class Parameters extends React.Component {
                                                      min="1"
                                                      size="md"
                                                      value={this.state.parameters.maxJobsActive}
-                                                     style={{ width: "100%" }}
+                                                     style={{width: "100%"}}
                                                      onChange={(event) => this.setParameterProperty("maxJobsActive", event.target.value)}/>
                                     </div>
                                 </div>
@@ -263,7 +280,7 @@ class Parameters extends React.Component {
                                                      min="1"
                                                      size="md"
                                                      value={this.state.parameters.nbThreads}
-                                                     style={{ width: "100%" }}
+                                                     style={{width: "100%"}}
                                                      onChange={(event) => this.setParameterProperty("nbThreads", event.target.value)}/>
                                     </div>
                                 </div>
@@ -272,21 +289,29 @@ class Parameters extends React.Component {
                     </div>
                 </div>
 
-
                 <div className="row" style={{marginTop: "10px"}}>
-                    <div className="col-md-6">
-                        <div className="card" style={{width: "25rem;"}}>
-                            <div className="card-header cherry-header" >About</div>
+                    <div className="col-md-12">
+                        <div className="card">
+                            <div className="card-header cherry-header">Stores</div>
                             <div className="card-body">
-                                <div className="row">
-                                    <div className="col-md-12">
-                                        <TextInput labelText="Version"
-                                                   readonly="true"
-                                                   value={this.state.parameters.version}
-                                                   style={{ width: "100%" }}
-                                        />
-                                    </div>
-                                </div>
+                                <table className="table is-hoverable is-fullwidth">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>URL</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {(this.state.parameters.stores || []).map((store, _index) =>
+                                        <tr key={store.name}>
+                                            <td>{store.name}</td>
+                                            <td>{store.type}</td>
+                                            <td>{store.url}</td>
+                                        </tr>
+                                    )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -360,12 +385,13 @@ class Parameters extends React.Component {
     refreshListParametersCallback(httpPayload) {
         this.setDisplayProperty("loading", false);
         if (httpPayload.isError()) {
-            console.log("parameters.refreshListContentCallback: error " + httpPayload.getError());
+            console.log("parameters.refreshListParametersCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
             this.setState({parameters: httpPayload.getData()});
         }
     }
+
 }
 
 export default Parameters;

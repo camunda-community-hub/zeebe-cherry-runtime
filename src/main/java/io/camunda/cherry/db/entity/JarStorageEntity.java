@@ -27,6 +27,9 @@ public class JarStorageEntity {
     @Column(name = "name", length = 1000, unique = true)
     public String name;
 
+    @Column(name = "release", length = 100)
+    public String release;
+
     /**
      * Database H2, save the JAR
      * in H2, the byte[] have an issue, and large file can't be saved by this way.
@@ -46,6 +49,15 @@ public class JarStorageEntity {
 
     @Column(name = "load_log", length = 2000)
     public String loadLog;
+
+    @Column(name = "source_jar", length = 2000)
+    public String sourceJar;
+
+    /**
+     * Name of the jar this one is a dependency of, null by default (a top-level/main jar has no parent).
+     */
+    @Column(name = "parent", length = 1000)
+    public String parent;
 
     /**
      * execution (in UTC) Instant will saved the date.. in the local timezone (example 15:04), that we

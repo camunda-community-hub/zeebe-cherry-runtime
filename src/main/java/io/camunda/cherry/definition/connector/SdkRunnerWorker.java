@@ -1,6 +1,7 @@
 package io.camunda.cherry.definition.connector;
 
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.zeebe.ZeebeContainer;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -13,12 +14,14 @@ public class SdkRunnerWorker extends AbstractRunner {
 
     public SdkRunnerWorker(Object worker,
                            io.camunda.client.annotation.JobWorker annotation,
-                           Method handleMethod) {
+                           Method handleMethod,
+                           ZeebeContainer zeebeContainer) {
 
         super("", // String type
                 Collections.emptyList(), //  listInput
                 Collections.emptyList(), //  listOutput
-                Collections.emptyList()); // listBpmnErrors
+                Collections.emptyList(), // listBpmnErrors
+                zeebeContainer);
         this.worker = worker;
         this.annotation = annotation;
         this.handleMethod = handleMethod;

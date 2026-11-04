@@ -12,8 +12,10 @@ import {ArrowRepeat, XCircle} from 'react-bootstrap-icons';
 
 import GeneralDashboard from "./GeneralDashboard";
 import RunnerDashboard from "./RunnerDashboard";
+import RunnerAnalysisTags from "./RunnerAnalysisTags";
 import RestCallService from "../services/RestCallService";
 import ControllerPage from "../component/ControllerPage";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 import RunnerChart from "./RunnerChart";
 
@@ -23,6 +25,7 @@ class Dashboard extends React.Component {
 
     constructor(_props) {
         super();
+        this.downloadMessageRef = React.createRef();
         this.state = {
             dashboard: {
                 details: [],
@@ -33,11 +36,11 @@ class Dashboard extends React.Component {
                 period: "ONEDAY",
                 showActive: true,
                 showInactive: false,
+                showNoImplementation: false,
                 showWorker: true,
                 showConnector: true,
                 showOnlyError: false,
                 showOnlyOverThreshold: false,
-                showFrameworkRunner: true,
                 filterSearch: ""
 
             },
@@ -56,8 +59,8 @@ class Dashboard extends React.Component {
     render() {
         // console.log("dashboard.render display="+JSON.stringify(this.state.display));
         return (<div className={"container"}>
-            <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
-                              timestamp={this.state.dashboard.timestamp}/>
+            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
+                             onError={(err) => this.setState({status: err})}/>
             <div className="row">
                 <div className="col-md-1">
                     <h1 className="title">Details</h1>
@@ -67,54 +70,56 @@ class Dashboard extends React.Component {
                         <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
                     </div>
                 </div>
-
+                <div className="row" style={{width: "100%"}}>
+                    <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
+                                  timestamp={this.state.dashboard.timestamp}/>
+                </div>
                 <div className="col-md-6">
                     <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
 
                         <button className={this.getButtonClass(this.state.display.showActive)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showActive")}>
                             Active
                         </button>
                         <button className={this.getButtonClass(this.state.display.showInactive)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showInactive")}>
                             Inactive
                         </button>
+                        <button className={this.getButtonClass(this.state.display.showNoImplementation)}
+                                style={{fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setToggleFilter("showNoImplementation")}>
+                            No implementation
+                        </button>
 
                         <button className={this.getButtonClass(this.state.display.showWorker)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showWorker")}>
                             Worker
                         </button>
                         <button className={this.getButtonClass(this.state.display.showConnector)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showConnector")}>
                             Connector
                         </button>
 
                         <button className={this.getButtonClass(this.state.display.showOnlyError)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showOnlyError")}>
                             <XCircle style={{color: "red"}}/> Only Errors
                         </button>
                         <button className={this.getButtonClass(this.state.display.showOnlyOverThreshold)}
-                                style={{fontSize: "10px"}}
+                                style={{fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setToggleFilter("showOnlyOverThreshold")}>
                             Over Threshold
-                        </button>
-
-                        <button className={this.getButtonClass(this.state.display.showFrameworkRunner)}
-                                style={{marginLeft: "10px", fontSize: "10px"}}
-                                disabled={this.state.display.loading}
-                                onClick={() => this.setToggleFilter("showFrameworkRunner")}>
-                            <img src="/img/cherries.png" width="20" height="20" alt="cherry"/>Framework Runner
                         </button>
 
                     </div>
@@ -142,7 +147,10 @@ class Dashboard extends React.Component {
                 </div>
                 <div className="col-md-1">
                     <Button className="btn btn-success btn-sm"
-                            onClick={() => this.refreshDashboard(this.state.display.period, this.state.display.orderBy)}
+                            onClick={() => {
+                                this.refreshDashboard(this.state.display.period, this.state.display.orderBy);
+                                this.downloadMessageRef.current?.refreshStartupStatus();
+                            }}
                             disabled={this.state.display.loading}>
                         <ArrowRepeat/> Refresh
                     </Button>
@@ -151,19 +159,16 @@ class Dashboard extends React.Component {
 
             <div className="row" style={{width: "100%"}}>
                 <div className="col-md-12">
-                    <ControllerPage errorMessage={this.state.error} loading={this.state.display.loading}/>
-                </div>
-            </div>
-
-            <div className="row" style={{width: "100%"}}>
-                <div className="col-md-12">
-                    <table width="100%">
+                    <table width="100%" style={{tableLayout: "fixed"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
                             <tr style={this.getStyleRow(runner)}>
-                                <td style={{verticalAlign: "top"}}>
+                                <td style={{verticalAlign: "top", width: "30%"}}>
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top"}}>
+                                <td style={{verticalAlign: "top", width: "260px"}}>
+                                    <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
+                                </td>
+                                <td style={{verticalAlign: "top", width: "50%"}}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>
@@ -177,9 +182,11 @@ class Dashboard extends React.Component {
     }
 
     getStyleRow(runner) {
-        if (!this.state.display.showActive && runner.active)
+        if (!this.state.display.showActive && runner.runnerState === "ACTIVE")
             return {display: "none"};
-        if (!this.state.display.showInactive && !runner.active)
+        if (!this.state.display.showInactive && runner.runnerState === "STOPPED")
+            return {display: "none"};
+        if (!this.state.display.showNoImplementation && runner.runnerState === "NOIMPLEMENTATION")
             return {display: "none"};
         if (!this.state.display.showWorker && runner.classrunner === "worker")
             return {display: "none"};
@@ -188,8 +195,6 @@ class Dashboard extends React.Component {
         if (this.state.display.showOnlyError && runner.nbfail === 0)
             return {display: "none"};
         if (this.state.display.showOnlyOverThreshold && runner.nboverthreshold === 0)
-            return {display: "none"};
-        if (!this.state.display.showFrameworkRunner && runner.frameworkrunner === "true")
             return {display: "none"};
 
         if (this.state.display.filterSearch
@@ -245,10 +250,14 @@ class Dashboard extends React.Component {
             console.log("Dashboard.refreshDashboardCallback: error " + httpPayload.getError());
             this.setState({status: httpPayload.getError()});
         } else {
-            let firstRunner = httpPayload.getData().details[0];
-            console.log("dashboard: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");
-            this.setState({dashboard: httpPayload.getData()});
-
+            const data = httpPayload.getData();
+            if (data && data.details && data.details.length > 0) {
+                let firstRunner = data.details[0];
+                console.log("dashboard: RESTCALLBACK first is [" + JSON.stringify(firstRunner.name) + "]");
+            } else {
+                console.log("dashboard: No runners loaded (count: 0)");
+            }
+            this.setState({dashboard: data});
         }
     }
 

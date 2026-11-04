@@ -17,3 +17,4 @@ buildNumber.properties
 /docker/diskmonitor/
 /docker/connectorruntime/
 /localstorage/upload/
+/src/main/resources/my-application.yaml

@@ -31,10 +31,13 @@ import io.camunda.client.metrics.DefaultNoopMetricsRecorder;
 import io.camunda.connector.api.document.DocumentFactory;
 import io.camunda.connector.api.error.ConnectorException;
 import io.camunda.connector.api.outbound.OutboundConnectorFunction;
+import io.camunda.connector.api.outbound.OutboundConnectorProvider;
 import io.camunda.connector.api.validation.ValidationProvider;
 import io.camunda.connector.runtime.core.document.DocumentFactoryImpl;
 import io.camunda.connector.runtime.core.document.store.CamundaDocumentStore;
 import io.camunda.connector.runtime.core.document.store.CamundaDocumentStoreImpl;
+import io.camunda.connector.runtime.core.outbound.operation.ConnectorOperations;
+import io.camunda.connector.runtime.core.outbound.operation.OutboundConnectorOperationFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,15 +100,19 @@ public class CherryConnectorJobHandler implements JobHandler {
     }
 
     @Override
-    public void handle(JobClient client, ActivatedJob job) {
+    public void handle(JobClient client, ActivatedJob job) throws Exception {
         Instant executionInstant = Instant.now();
         // abstractConnector or sdkRunnerConnector is not null
         String type = abstractConnector != null ? abstractConnector.getType() : sdkRunnerConnector.getType();
-        logger.info("ConnectorJobHandler: Handle JobId[{}] TenantId[{}] of type[{}]", job.getKey(), job.getTenantId(),
+        logger.info("ConnectorJobHandler: Handle JobId[{}] ProcessInstanceKey[{}] TenantId[{}] of type[{}]",
+                job.getKey(),
+                job.getProcessInstanceKey(),
+                job.getTenantId(),
                 type);
         long beginExecution = System.currentTimeMillis();
         StatusContainer status;
         ConnectorException connectorException = null;
+        Exception exception = null;
 
         try {
             // JobHandlerContext context = new JobHandlerContext(job, secretProvider, validationProvider, objectMapper);
@@ -114,28 +121,46 @@ public class CherryConnectorJobHandler implements JobHandler {
             if (abstractConnector != null)
                 connectorFunction = abstractConnector;
             else if (sdkRunnerConnector != null) {
-                connectorFunction = sdkRunnerConnector.getTransportedConnector();
+                connectorFunction = sdkRunnerConnector.getTransportedConnectorFunction();
+                OutboundConnectorProvider connectorProvider = sdkRunnerConnector.getTransportedConnectorProvider();
+                if (connectorFunction == null && connectorProvider != null) {
+                    // Adapt the OutboundConnectorProvider into a proper OutboundConnectorFunction, exactly the
+                    // way connector-runtime-core does it for Spring-managed connectors (see
+                    // OutboundConnectorOperationFunction). This gives @Operation methods a real
+                    // OutboundConnectorContext (instead of null) and routes execution through the same
+                    // SuperConnectorJobHandler below, which completes/fails the job itself - a connector is
+                    // never supposed to call newCompleteCommand() directly, ConnectorCore owns that.
+                    ConnectorOperations connectorOperations =
+                            ConnectorOperations.from(connectorProvider, objectMapper, validationProvider);
+                    connectorFunction = new OutboundConnectorOperationFunction(connectorOperations);
+                }
             } else
                 throw new ConnectorException("Can't execute Connector : abstractConnector and sdkRunnerConnector are null");
 
-            DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
+            if (connectorFunction != null) {
+                DefaultNoopMetricsRecorder jobWorkerMetrics = new DefaultNoopMetricsRecorder();
 
-            SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
-                    jobWorkerMetrics,
-                    cherrySecretProvider,
-                    validationProvider,
-                    commandExceptionHandlingStrategy,
-                    documentFactory,
-                    objectMapper);
-            connectorJobHandler.handle(client, job);
-            status = new StatusContainer(connectorJobHandler.getExecutionStatus());
-            status.exception = connectorJobHandler.getLogException();
-
+                SuperConnectorJobHandler connectorJobHandler = new SuperConnectorJobHandler(connectorFunction,
+                        jobWorkerMetrics,
+                        cherrySecretProvider,
+                        validationProvider,
+                        commandExceptionHandlingStrategy,
+                        documentFactory,
+                        objectMapper);
+                connectorJobHandler.handle(client, job);
+                status = new StatusContainer(connectorJobHandler.getExecutionStatus());
+                status.exception = connectorJobHandler.getLogException();
+            } else {
+                throw new ConnectorException("No connector function or provider available to execute");
+            }
         } catch (ConnectorException ce) {
+            logger.error("ConnectorJobHandler : catch ConnectorException", ce);
             status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.BPMNERROR, ce);
             connectorException = ce;
         } catch (Exception e) {
+            logger.error("ConnectorJobHandler : catch Exception", e);
             status = new StatusContainer(AbstractRunner.ExecutionStatusEnum.FAIL, e);
+            exception = e;
         }
         long endExecution = System.currentTimeMillis();
 
@@ -157,9 +182,16 @@ public class CherryConnectorJobHandler implements JobHandler {
                 status.status, // status of execution
                 errorCode, errorMessage, // error
                 endExecution - beginExecution);
+        // ------------ if an exception is catch, time to throw it
+        if (connectorException != null) {
+            throw connectorException;
+        }
+        if (exception != null) {
+            throw exception;
+        }
     }
 
-    private class StatusContainer {
+    private static class StatusContainer {
         AbstractRunner.ExecutionStatusEnum status;
         BpmnError bpmnError;
         Exception exception;

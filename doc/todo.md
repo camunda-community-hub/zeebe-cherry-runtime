@@ -8,40 +8,6 @@ Cherry handle Inbound connector
 
 # Initial Upload
 
-via an environment variable, upload JAR file directly at startup. It helps to deploy quickly any worker/connector.
-it's possible to give an HTTP link to access the component, a GitHub project or a connector in the marketplace. 
-With a GitHub project, Cherry explore the release attached.
-
-
-```yaml
-cherry:
-  initialisation:
-    runners:
-      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
-      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
-      - https://github.com/camunda-community-hub/connector-8-CMIS
-      - https://marketplace.camunda.com/en-US/apps/782060/telegram-connector
-````
-
-# GitHub repository
-
-Initialise private GitHub
-Cherry explore all projects in this GitHub to search for worker/connector, and propose the list in the Store tab
-
-```yaml
-cherry:
-  repository:
-    - https://github.com/camunda-community-hub/
-```
-
-# PVC - Google Drive - S3
-Explore PVC, Google Drive, S3 bucket for connectors
-
-To be defined
-
-# MarketPlace 
-jar can be uploaded directly from the marketplace
-
 
 # Job active tracker
 With the new 8.8 API, it's possible to know the number of active job for a specific topic.

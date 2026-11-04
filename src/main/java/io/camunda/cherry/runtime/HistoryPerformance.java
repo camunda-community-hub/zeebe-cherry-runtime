@@ -10,9 +10,9 @@ import io.camunda.cherry.db.entity.RunnerExecutionEntity;
 import io.camunda.cherry.db.entity.TopicCountEntity;
 import io.camunda.cherry.db.repository.RunnerExecutionRepository;
 import io.camunda.cherry.db.repository.TopicCountRepository;
+import io.camunda.cherry.util.DateOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -28,13 +28,19 @@ public class HistoryPerformance {
 
     public static final String SLOT_FORMATTER = "%03dD%02d:%02d";
     public static final String HUMAN_DATE_FORMATER = "yyyy-MM-dd HH:mm";
-    @Autowired
-    RunnerExecutionRepository runnerExecutionRepository;
 
-    @Autowired
-    TopicCountRepository topicCountRepository;
+    private final RunnerExecutionRepository runnerExecutionRepository;
+
+    private final TopicCountRepository topicCountRepository;
 
     Logger logger = LoggerFactory.getLogger(HistoryPerformance.class.getName());
+
+    public HistoryPerformance(RunnerExecutionRepository runnerExecutionRepository,
+                              TopicCountRepository topicCountRepository) {
+        this.runnerExecutionRepository = runnerExecutionRepository;
+        this.topicCountRepository = topicCountRepository;
+
+    }
 
     public LocalDateTime getInstantThresholdFromPeriod(LocalDateTime dateNow,
                                                        HistoryPerformance.PeriodStatistic periodStatistic) {
@@ -49,9 +55,12 @@ public class HistoryPerformance {
      * @param runnerType      type of runner
      * @param dateNow         Reference time
      * @param periodStatistic period of statistics, to calculate the thresold and interval
+     * @param timezoneOffset  browser timezone offset (minutes, JS Date.getTimezoneOffset() convention),
+     *                        used to populate each interval's humanTimeSlot in the caller's local time
      * @return performance object
      */
-    public Performance getPerformance(String runnerType, LocalDateTime dateNow, PeriodStatistic periodStatistic) {
+    public Performance getPerformance(String runnerType, LocalDateTime dateNow, PeriodStatistic periodStatistic,
+                                      long timezoneOffset) {
         Performance performance = new Performance();
         Map<String, Interval> mapInterval = new LinkedHashMap<>();
 
@@ -70,9 +79,10 @@ public class HistoryPerformance {
         // - the rule to round a time, to find the intervalle
 
         // We want to keep at the end 24*4 interval
+
         for (int index = 0; index <= intervalRule.numberOfIntervals; index++) {
             String slotString = intervalRule.getSlotFromDate(indexTime);
-            mapInterval.put(slotString, new Interval(slotString, indexTime));
+            mapInterval.put(slotString, new Interval(slotString, indexTime, timezoneOffset));
             indexTime = indexTime.plusMinutes(intervalRule.intervalInMinutes);
         }
 
@@ -102,8 +112,7 @@ public class HistoryPerformance {
         // complete interval by the topic count - reques the last 10000 records from DateThreshold to now
         List<TopicCountEntity> listTopicCount = topicCountRepository.selectRunnerRecords(runnerType,
                 dateThreshold, PageRequest.of(0, 10000));
-        for(TopicCountEntity topicEntity: listTopicCount )
-        {
+        for (TopicCountEntity topicEntity : listTopicCount) {
             LocalDateTime slotTime = topicEntity.executionTime;
             String slotString = intervalRule.getSlotFromDate(slotTime);
             Interval interval = mapInterval.get(slotString);
@@ -208,6 +217,8 @@ public class HistoryPerformance {
          */
         public String slot;
 
+        public LocalDateTime executionTime;
+        public String humanTimeSlotUTC;
         public String humanTimeSlot;
         public long executions = 0;
         public long sumOfExecutionTime = 0;
@@ -218,10 +229,12 @@ public class HistoryPerformance {
         public long averageTimeInMs = 0;
         public long topicCount = 0;
 
-        public Interval(String slot, LocalDateTime slotTime) {
+        public Interval(String slot, LocalDateTime slotTime, long timezoneOffset) {
             this.slot = slot;
+            this.executionTime = slotTime;
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(HUMAN_DATE_FORMATER);
-            this.humanTimeSlot = formatter.format(slotTime);
+            this.humanTimeSlotUTC = formatter.format(slotTime);
+            this.humanTimeSlot = DateOperation.dateTimeToHumanString(slotTime, timezoneOffset);
         }
     }
 

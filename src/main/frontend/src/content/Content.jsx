@@ -10,7 +10,9 @@ import React, {createRef} from 'react';
 import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
+import RunnerCartouche from "../component/RunnerCartouche";
 import RestCallService from "../services/RestCallService";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 
 class Content extends React.Component {
 
@@ -18,12 +20,14 @@ class Content extends React.Component {
     constructor(_props) {
         super();
         this.fileUploaderRef = createRef();
+        this.downloadMessageRef = createRef();
 
         this.state = {
             content: [],
             files: [],
             display: {loading: false},
-            status: ""
+            status: "",
+            operationInProgress: false
         };
     }
 
@@ -35,6 +39,9 @@ class Content extends React.Component {
     render() {
         return (
             <div className={"container"}>
+                <DownloadMessage ref={this.downloadMessageRef}
+                                 onStatusChange={(inProgress) => this.setState({operationInProgress: inProgress})}
+                                 onError={(err) => this.setState({status: err})}/>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
                         <h1 className="title">Content</h1>
@@ -43,7 +50,8 @@ class Content extends React.Component {
                         <Button className="btn btn-success btn-sm"
                                 onClick={() => {
                                     this.refreshStatusOnPage();
-                                    this.refreshListContent()
+                                    this.refreshListContent();
+                                    this.downloadMessageRef.current?.refreshStartupStatus();
                                 }}
                                 disabled={this.state.display.loading}>
                             <ArrowRepeat/> Refresh
@@ -72,37 +80,42 @@ class Content extends React.Component {
                             </tr>
                             </thead>
                             <tbody>
-                            {this.state.content ? this.state.content.map((content, _index) =>
-                                <tr style={this.getStyleRow(content)}>
+                            {this.state.content ? this.state.content.map((connector, _index) =>
+                                <tr style={this.getStyleRow(connector)}>
                                     <td style={{verticalAlign: "top"}}>
-                                        {content.name}
+                                        {connector.name}
+                                        {connector.sourceJar &&
+                                            <div style={{
+                                                marginLeft: "3ch",
+                                                fontStyle: "italic",
+                                                fontSize: "smaller"
+                                            }}>{connector.sourceJar}</div>
+                                        }
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
-                                        {content.usedby.map((usedby, _indexcontent) =>
-                                            <div>{usedby.name} {usedby.collectionName} <br/>
-                                                {usedby.activeRunner &&
-                                                    <button
-                                                        className="start-runner button is-selected is-primary">Started</button>
-                                                }
-                                                {!usedby.activeRunner &&
-                                                    <button
-                                                        className="stop-runner button is-selected is-danger">Stopped</button>
-                                                }
+                                        {connector.usedby.map((usedby, _indexconnector) =>
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                marginBottom: "10px"
+                                            }}>
+                                                <RunnerCartouche runner={usedby}/>
+                                                <span style={{marginLeft: "10px"}}>{usedby.name}</span>
                                             </div>
                                         )
                                         }
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
-                                        {content.loadedtime}
+                                        {connector.loadedtime}
                                     </td>
                                     <td style={{verticalAlign: "top"}}>
-                                        {content.loadlog}
+                                        {this.renderLog(connector.loadlog)}
                                     </td>
                                     <td>
                                         <Button className="btn btn-danger btn-sm"
-                                                onClick={() => this.deleteStorageEntityId(content.storageentityid)}
+                                                onClick={() => this.deleteStorageEntityId(connector.storageentityid)}
                                                 style={{marginRight: "10px"}}
-                                                disabled={this.state.display.loading}
+                                                disabled={this.state.display.loading || this.state.operationInProgress}
                                         >
                                             Delete
                                         </Button>
@@ -114,6 +127,7 @@ class Content extends React.Component {
 
                     </div>
                 </div>
+
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
 
@@ -166,6 +180,22 @@ class Content extends React.Component {
         return {};
     }
 
+    /**
+     * The log/description is a sequence of ";"-terminated sentences built from multiple operations -
+     * break it onto its own line after each ";" instead of running them all together.
+     */
+    renderLog(log) {
+        if (!log)
+            return log;
+        const parts = log.split(";").filter(part => part !== "");
+        return parts.map((part, index) =>
+            <React.Fragment key={index}>
+                {part};
+                {index < parts.length - 1 && <br/>}
+            </React.Fragment>
+        );
+    }
+
     refreshListContent() {
         let uri = 'cherry/api/content/list?';
         console.log("Content.refreshListContent http[" + uri + "]");
@@ -216,7 +246,7 @@ class Content extends React.Component {
         if (httpResponse.isError()) {
             console.log("deleteStorageEntityId.operationDeleteCallback: error " + httpResponse.getError());
             this.setState({status: httpResponse.getError()});
-        } else {
+            return;
         }
         this.refreshListContent();
     }

@@ -4,29 +4,24 @@
 /*                                                                      */
 /*  Detect and start workers                                            */
 /* ******************************************************************** */
-/* ******************************************************************** */
-/*                                                                      */
-/*  JobRunnerFactory                                                 */
-/*                                                                      */
-/*  Detect and start workers                                            */
-/* ******************************************************************** */
 package io.camunda.cherry.runner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.definition.AbstractConnector;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.definition.AbstractWorker;
-import io.camunda.cherry.definition.IntFrameworkRunner;
 import io.camunda.cherry.definition.connector.SdkRunnerCherryConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerConnector;
 import io.camunda.cherry.definition.connector.SdkRunnerWorker;
-import io.camunda.cherry.embeddedrunner.ping.PingIntRunner;
 import io.camunda.cherry.exception.*;
 import io.camunda.cherry.runner.handler.CherryConnectorJobHandler;
 import io.camunda.cherry.runner.handler.CherryWorkerJobHandler;
 import io.camunda.cherry.runtime.CherrySecretProvider;
 import io.camunda.cherry.runtime.HistoryFactory;
+import io.camunda.cherry.runtime.LogOperation;
 import io.camunda.cherry.zeebe.OrchestrationAPI;
 import io.camunda.cherry.zeebe.ZeebeContainer;
 import io.camunda.client.CamundaClient;
@@ -35,10 +30,9 @@ import io.camunda.client.api.worker.JobWorker;
 import io.camunda.client.api.worker.JobWorkerBuilderStep1;
 import io.camunda.client.jobhandling.CommandExceptionHandlingStrategy;
 import io.camunda.connector.api.validation.ValidationProvider;
+import io.camunda.connector.jackson.ConnectorsObjectMapperSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -55,21 +49,19 @@ public class JobRunnerFactory {
     public static final String UNKNOWN_RUNNER_CLASS = "UnknownRunnerClass";
     public static final String RUNNER_INVALID_DEFINITION = "RUNNER_INVALID_DEFINITION";
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    // Same ObjectMapper any connector gets under the real Connector Runtime (Jdk8Module + JavaTimeModule,
+    // lenient unknown-property/enum handling, etc.) - see ConnectorsObjectMapperSupplier in connector-object-mapper.
+    // This is the mapper SuperConnectorJobHandler uses to serialize a connector's output into job variables;
+    // a bare `new ObjectMapper()` here fails on any java.time.* output value.
+    private static final ObjectMapper objectMapper = ConnectorsObjectMapperSupplier.getCopy();
     private final ValidationProvider validationProvider;
+    private final HistoryFactory historyFactory;
+    private final RunnerFactory runnerFactory;
+    private final ZeebeContainer zeebeContainer;
+    private final LogOperation logOperation;
+    private final CherrySecretProvider cherrySecretProvider;
+    private final CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
     Logger logger = LoggerFactory.getLogger(JobRunnerFactory.class.getName());
-    @Autowired
-    HistoryFactory historyFactory;
-    @Autowired
-    RunnerFactory runnerFactory;
-    @Autowired
-    ZeebeContainer zeebeContainer;
-    @Autowired
-    LogOperation logOperation;
-    @Autowired
-    CherrySecretProvider cherrySecretProvider;
-    @Autowired
-    CommandExceptionHandlingStrategy commandExceptionHandlingStrategy;
 
     CamundaClient camundaClient;
     /**
@@ -77,14 +69,22 @@ public class JobRunnerFactory {
      */
     Map<String, Running> mapRunning = new HashMap<>();
     List<OrchestrationAPI.TenantInformation> listTenants = null;
-    @Value("${cherry.runners.embeddedrunner:true}")
-    private Boolean executeEmbeddedRunner = Boolean.TRUE;
-    @Value("${cherry.runners.pingrunner:true}")
-    private Boolean executePingRunner = Boolean.FALSE;
     private boolean isStarted = false;
 
-    public JobRunnerFactory(ValidationProvider validationProvider) {
+    public JobRunnerFactory(ValidationProvider validationProvider,
+                            HistoryFactory historyFactory,
+                            RunnerFactory runnerFactory,
+                            ZeebeContainer zeebeContainer,
+                            LogOperation logOperation,
+                            CherrySecretProvider cherrySecretProvider,
+                            CommandExceptionHandlingStrategy commandExceptionHandlingStrategy) {
         this.validationProvider = validationProvider;
+        this.historyFactory = historyFactory;
+        this.runnerFactory = runnerFactory;
+        this.zeebeContainer = zeebeContainer;
+        this.logOperation = logOperation;
+        this.cherrySecretProvider = cherrySecretProvider;
+        this.commandExceptionHandlingStrategy = commandExceptionHandlingStrategy;
     }
 
     public void startAll() {
@@ -131,23 +131,8 @@ public class JobRunnerFactory {
             return;
         }
         // get the list from the storage
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true));
-        logger.info("Start executeEmbeddedRunner:{} executePingRunner:{}", executeEmbeddedRunner, executePingRunner);
-        if (Boolean.FALSE.equals(executeEmbeddedRunner)) {
-            logger.info("Don't start the EmbeddedWorker");
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().state(RunnerDefinitionEntity.State.ACTIVE));
 
-            // remove from the list the embeddedRunner
-            listRunners = listRunners.stream()
-                    .filter(java.util.function.Predicate.not(this::isEmbeddedWorker))
-                    .toList();
-        }
-        if (Boolean.FALSE.equals(executePingRunner)) {
-            logger.info("Don't start the PingWorker");
-            // remove from the list the embeddedRunner
-            listRunners = listRunners.stream()
-                    .filter(java.util.function.Predicate.not(this::isPingWorker))
-                    .toList();
-        }
 
         List<AbstractRunner> listSdkRunners = listRunners.stream()
                 .filter(t -> t instanceof SdkRunnerConnector)
@@ -186,7 +171,7 @@ public class JobRunnerFactory {
             return;
         }
 
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().isActive(true)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().state(RunnerDefinitionEntity.State.ACTIVE)).stream().filter(t -> mapRunning.containsKey(t.getType())).toList();
         for (Running running : mapRunning.values()) {
             if (running.runner != null) {
                 try {
@@ -260,7 +245,7 @@ public class JobRunnerFactory {
         if (mapRunning.containsKey(runnerType)) {
             throw new OperationAlreadyStartedException();
         }
-        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageRunner.Filter().type(runnerType));
+        List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter().type(runnerType));
         // we expect only one runner
         if (listRunners.isEmpty()) {
             throw new OperationException(RUNNER_NOT_FOUND, "Runner not found");
@@ -283,6 +268,13 @@ public class JobRunnerFactory {
 
     public boolean isRunnerExist(String runnerType) {
         return mapRunning.containsKey(runnerType);
+    }
+
+    /**
+     * @return true once startAll() has completed and runners can be queried/manipulated
+     */
+    public boolean isStarted() {
+        return isStarted;
     }
 
     public boolean isActiveRunner(String runnerType) {
@@ -391,7 +383,11 @@ public class JobRunnerFactory {
                     zeebeContainer.getDocumentFactory(),
                     objectMapper);
         } else if (runner instanceof SdkRunnerWorker sdkRunnerWorker) {
-            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker, historyFactory, cherrySecretProvider);
+            jobHandler = new CherryWorkerJobHandler(sdkRunnerWorker,
+                    historyFactory,
+                    cherrySecretProvider,
+                    commandExceptionHandlingStrategy,
+                    zeebeContainer);
         } else {
             throw new OperationException(UNKNOWN_RUNNER_CLASS, "Unknown AbstractRunner class");
         }
@@ -422,15 +418,6 @@ public class JobRunnerFactory {
 
     }
 
-    private boolean isEmbeddedWorker(AbstractRunner runner) {
-        return runner instanceof IntFrameworkRunner && !(runner instanceof PingIntRunner);
-    }
-
-    private boolean isPingWorker(AbstractRunner runner) {
-        if (runner instanceof SdkRunnerWorker skdRunner)
-            return skdRunner.getWorker() instanceof PingIntRunner;
-        return runner instanceof PingIntRunner;
-    }
 
     /**
      * Start a list of runners

@@ -1,30 +1,93 @@
 cherry:
   runner:
-    refreshTopicsInSeconds: 10
+    refreshTopicsInMinutes: 5
 
   connectorslib:
     uploadpath: ./localstorage/upload
     classloaderpath: ./localstorage/classloader
     forcerefresh: true
 
-  initialisation:
-    runners:
-      - https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.1/pdf-function-3.1.1.jar
-      - https://github.com/camunda-community-hub/camunda-8-connector-zip/releases/download/1.0.0/ZIP-1.0.0.jar
+  store:
+    # Startup downloads for connectors: each entry is a direct JAR URL, downloaded using the
+    # named store's own credentials (store must be a name known to StoreFactory, e.g. a
+    # privateStore entry's "name").
+    downloadStartup:
 
-  repository:
-    - https://github.com/camunda-community-hub/
+    privateStore:
+      access: false
+      listStores:
+        - name: ""
+          url: ""
+          github:
+            token: ""
+            apikey: ""
+          tokenHeaderName: "Authorization"
+          tokenPrefix: "Bearer "
+          apikeyHeaderName: ""
+          startup:
+            # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+            downloadPolicy: NEVER
+            filter:
 
-  runners:
-    # the runtime load all embedded runners
-    embeddedrunner: true
+    # Is that possible to access this store?
+    camundaConnector:
+      access: true
+      # Camunda connector are available https://github.com/camunda/connectors/tree/main/connectors
+      # To be able to download, the store must be accessible (store.camundaConnector.access = true)
+      # The JAR itself always comes from Maven Central (public, no token needed) - this GitHub
+      # token is optional and only raises the API rate limit (60 req/h unauthenticated -> 5000
+      # req/h authenticated). A plain personal access token from any GitHub account works.
+      github:
+        token: ""
+      maven:
+        token: ""
+        apikey: ""
+      startup:
+        # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+        downloadPolicy: NEVER
+        filter:
 
-    # the runtime load ping runners
-    pingrunner: false
+    # Is that possible to access this store?
+    communityConnector:
+      access: false
+      filterProject:
+      # -- Access to Github to discover project, access release and download from release
+      # Optional GitHub token to avoid API rate limiting (60 req/h unauthenticated -> 5000 req/h
+      # authenticated) - this store lists every repository under the org, so it benefits the most.
+      # Generate at https://github.com/settings/tokens (no scopes needed for public repos)
+      github:
+        token: ""
 
+      # -- Access to Maven Central to download artifacts
+      maven:
+        access: false
+        token: ""
+        apikey: ""
+      # -- Access to JFrog Artifactory to download artifacts
+      # Credentials for Camunda's JFrog Artifactory (artifacts.camunda.com) - see the "connectors" repo,
+      # gated behind Camunda SSO. Generate either one from your JFrog user profile (top-right avatar ->
+      # Edit Profile): an Identity Token (sent as "Authorization: Bearer <token>") or an API Key
+      # (sent as "X-JFrog-Art-Api: <apikey>"). Only one is needed.
+      jfrog:
+        access: false
+        token: ""
+        apikey: ""
+      startup:
+        # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+        downloadPolicy: NEVER
+        filter:
+
+    # Is that possible to access this store?
+    marketplaceConnector:
+      access: false
+      github:
+        token: ""
+      maven:
+        token: ""
+        apikey: ""
 
   database:
-    purgeRetentionDays: 5
+    purgeRetentionDays: 30
 
   tenants:
     # Enable the tenants functionality "autoDectection" implie to connect to Operate
@@ -36,27 +99,27 @@ cherry:
 # Visit https://github.com/camunda-community-hub/spring-zeebe/?tab=readme-ov-file#connect-to-zeebe
 
 # -------------------- Self Manage
-#camunda:
-#  client:
-#    mode: self-managed
-#    auth:
-#      method: basic
-#      username: "demo"
-#      password: "demo"
-#
-#    worker:
-#      defaults:
-#        max-jobs-active: 50
-#    grpc-address: http://localhost:26500
-#    rest-address: http://localhost:8080
-#    execution-thread: 50
-#
-#  tasklist:
-#    enabled: false
-#
-#  connector:
-#    inbound:
-#      enabled: false
+camunda:
+  client:
+    mode: self-managed
+    auth:
+      method: basic
+      username: "demo"
+      password: "demo"
+
+    worker:
+      defaults:
+        max-jobs-active: 50
+    grpc-address: http://localhost:26500
+    rest-address: http://localhost:8080
+    execution-thread: 50
+
+  tasklist:
+    enabled: false
+
+  connector:
+    inbound:
+      enabled: false
 
 operate:
   client:
@@ -91,18 +154,19 @@ operateOidc:
     client-secret: FK05vxEU8D
 
 # -------------------- SAAS
-camunda:
+camundaSaas:
   client:
     mode: saas
     auth:
-      client-id: 2AJSqmrUHsnA4oBUQB1AO_sZXzTJoqre
-      client-secret: 7SPYZDd6tPUSYh9FQeXWUVQRjIePz1nFaqo5_N1VsD.zaAN.hijdsCyJ_2zbN1Ca
-    cloud:
-      cluster-id: 3a20587e-9917-4be0-9fe6-87f90224c9ea
-      region: lhr-1
+      clientId: Lu.lVob..
+      clientSecret: aoO.....
+    clusterId: b16d70..
+    region: jfk-1
+
 
 server:
   port: 9081
+
 
 spring:
   servlet:
@@ -112,12 +176,15 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+
 logging:
   level:
     root: INFO
-    io:
-      camunda:
-        cherry: INFO
+    org:
+      springframework:
+        boot:
+          context:
+            properties=TRACE:
 
 
 # return message with BAD_REQUEST to the client
