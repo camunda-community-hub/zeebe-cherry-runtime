@@ -69,7 +69,7 @@ class CherryApp extends React.Component {
                                 active={this.state.frameContent === FRAME_NAME.JOBCOUNT}
                                 onClick={() => {
                                     this.clickMenu(FRAME_NAME.JOBCOUNT)
-                                }}>Job count</Nav.Link>
+                                }}>Jobs</Nav.Link>
 
                             <Nav.Link
                                 active={this.state.frameContent === FRAME_NAME.DEFINITION}

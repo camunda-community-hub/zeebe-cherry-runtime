@@ -159,16 +159,16 @@ class Dashboard extends React.Component {
 
             <div className="row" style={{width: "100%"}}>
                 <div className="col-md-12">
-                    <table width="100%" style={{tableLayout: "fixed"}}>
+                    <table width="100%" style={{tableLayout: "fixed", borderCollapse: "collapse"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
-                            <tr style={this.getStyleRow(runner)}>
-                                <td style={{verticalAlign: "top", width: "30%"}}>
+                            <tr style={{borderBottom: "1px solid #dee2e6", ...this.getStyleRow(runner)}}>
+                                <td style={{verticalAlign: "top", width: "30%", paddingTop: "10px", paddingBottom: "10px"}}>
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "260px"}}>
+                                <td style={{verticalAlign: "top", width: "190px", paddingTop: "10px", paddingBottom: "10px"}}>
                                     <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "50%"}}>
+                                <td style={{verticalAlign: "top", width: "50%", paddingTop: "10px", paddingBottom: "10px", paddingLeft: "10px"}}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>
@@ -197,9 +197,13 @@ class Dashboard extends React.Component {
         if (this.state.display.showOnlyOverThreshold && runner.nboverthreshold === 0)
             return {display: "none"};
 
-        if (this.state.display.filterSearch
-            && !runner.name.toLowerCase().includes(this.state.display.filterSearch.toLowerCase())) {
-            return {display: "none"};
+        if (this.state.display.filterSearch) {
+            const search = this.state.display.filterSearch.toLowerCase();
+            const matchesName = runner.name && runner.name.toLowerCase().includes(search);
+            const matchesType = runner.type && runner.type.toLowerCase().includes(search);
+            if (!matchesName && !matchesType) {
+                return {display: "none"};
+            }
         }
 
 

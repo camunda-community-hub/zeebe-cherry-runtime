@@ -8,6 +8,7 @@ package io.camunda.cherry.rest;
 
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
+import io.camunda.cherry.db.repository.TopicCountRepository;
 import io.camunda.cherry.definition.AbstractRunner;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,16 +40,19 @@ public class JobCountRestController {
     private final HistoryFactory historyFactory;
     private final RunnerMonitor runnerMonitor;
     private final RunnerThroughput runnerThroughput;
+    private final TopicCountRepository topicCountRepository;
     Logger logger = LoggerFactory.getLogger(JobCountRestController.class.getName());
 
     public JobCountRestController(RunnerFactory runnerFactory,
                                   HistoryFactory historyFactory,
                                   RunnerMonitor runnerMonitor,
-                                  RunnerThroughput runnerThroughput) {
+                                  RunnerThroughput runnerThroughput,
+                                  TopicCountRepository topicCountRepository) {
         this.runnerFactory = runnerFactory;
         this.historyFactory = historyFactory;
         this.runnerMonitor = runnerMonitor;
         this.runnerThroughput = runnerThroughput;
+        this.topicCountRepository = topicCountRepository;
     }
 
     /**
@@ -95,8 +100,9 @@ public class JobCountRestController {
 
         if (filter == Filter.ALL) {
             Set<String> listRunnersTypes = listRunners.stream().map(AbstractRunner::getType).collect(Collectors.toSet());
-            List<RunnerDefinitionEntity> listNoImplementation = runnerFactory.getAllRunnersEntity(
-                    new StorageService.Filter().state(RunnerDefinitionEntity.State.NOIMPLEMENTATION)).stream()
+            List<RunnerDefinitionEntity> listAllRunnersEntity = runnerFactory.getAllRunnersEntity(new StorageService.Filter());
+            List<RunnerDefinitionEntity> listNoImplementation = listAllRunnersEntity.stream()
+                    .filter(t -> t.state == RunnerDefinitionEntity.State.NOIMPLEMENTATION)
                     .filter(t -> !listRunnersTypes.contains(t.type))
                     .toList();
             for (RunnerDefinitionEntity noImplRunner : listNoImplementation) {
@@ -108,11 +114,36 @@ public class JobCountRestController {
                 infoRunner.put(RestAttribute.CONNECTOR_TYPE, noImplRunner.type);
                 infoRunner.put(RestAttribute.DESCRIPTION, "No implementation available (jar removed)");
                 infoRunner.put(RestAttribute.CLASS_RUNNER, "");
-                infoRunner.put(RestAttribute.LOGO, null);
+                infoRunner.put(RestAttribute.LOGO, "/img/Camunda.png");
                 infoRunner.put(RestAttribute.RUNNER_STATE, RunnerDefinitionEntity.State.NOIMPLEMENTATION.toString());
                 infoRunner.put(RestAttribute.PERFORMANCE, emptyPerformance);
                 infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(emptyPerformance));
                 infoRunner.put(RestAttribute.TOPIC_COUNT, 0L);
+                listDetails.add(infoRunner);
+            }
+
+            // Job types the engine actually has pending jobs for (collected by RunnerMonitor into
+            // ch_topiccount) but that Cherry never onboarded at all - no RunnerDefinitionEntity in any
+            // state. These are invisible to runnerFactory, so they'd otherwise never be shown anywhere.
+            Set<String> knownTypes = new HashSet<>(listRunnersTypes);
+            listAllRunnersEntity.forEach(t -> knownTypes.add(t.type));
+            List<String> listUnregisteredTypes = topicCountRepository.findDistinctRunnerType().stream()
+                    .filter(type -> type != null && !knownTypes.contains(type))
+                    .toList();
+            for (String unregisteredType : listUnregisteredTypes) {
+                HistoryPerformance.Performance performanceRunner = historyFactory.getPerformance(unregisteredType, dateNow, periodStatistic, timezoneOffset);
+
+                Map<String, Object> infoRunner = new HashMap<>();
+                infoRunner.put(RestAttribute.NAME, unregisteredType);
+                infoRunner.put(RestAttribute.TYPE, unregisteredType);
+                infoRunner.put(RestAttribute.CONNECTOR_TYPE, unregisteredType);
+                infoRunner.put(RestAttribute.DESCRIPTION, "Job type seen in the engine but not registered in Cherry (no connector or worker deployed for it)");
+                infoRunner.put(RestAttribute.CLASS_RUNNER, "");
+                infoRunner.put(RestAttribute.LOGO, "/img/Camunda.png");
+                infoRunner.put(RestAttribute.RUNNER_STATE, "UNREGISTERED");
+                infoRunner.put(RestAttribute.PERFORMANCE, performanceRunner);
+                infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(performanceRunner));
+                infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(unregisteredType));
                 listDetails.add(infoRunner);
             }
         }

@@ -2,7 +2,7 @@
 //
 // JobCount
 //
-// Job count page: same look and feel as the Dashboard, focused on the
+// Jobs page: same look and feel as the Dashboard, focused on the
 // number of pending jobs per runner.
 //
 // -----------------------------------------------------------
@@ -15,12 +15,14 @@ import RunnerCartouche from "../component/RunnerCartouche";
 import RunnerAnalysisTags from "../dashboard/RunnerAnalysisTags";
 import RunnerChart from "../dashboard/RunnerChart";
 import ControllerPage from "../component/ControllerPage";
+import DownloadMessage from "../HeaderMessage/DownloadMessage";
 import RestCallService from "../services/RestCallService";
 
 class JobCount extends React.Component {
 
     constructor(_props) {
         super();
+        this.downloadMessageRef = React.createRef();
         this.state = {
             dashboard: {
                 details: [],
@@ -29,7 +31,10 @@ class JobCount extends React.Component {
                 loading: true,
                 filterValue: "all",
                 orderBy: "nameAsc",
-                filterSearch: ""
+                filterSearch: "",
+                showWorker: true,
+                showConnector: true,
+                showUndefined: true
             },
             status: ""
         };
@@ -41,9 +46,11 @@ class JobCount extends React.Component {
 
     render() {
         return (<div className={"container"}>
+            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
+                             onError={(err) => this.setState({status: err})}/>
             <div className="row">
                 <div className="col-md-1">
-                    <h1 className="title">Job count</h1>
+                    <h1 className="title">Jobs</h1>
                 </div>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
@@ -57,7 +64,32 @@ class JobCount extends React.Component {
                                 style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
                                 disabled={this.state.display.loading}
                                 onClick={() => this.setFilterValue("all")}>
-                            All jobs
+                            All
+                        </button>
+                        <button className={this.getButtonClass(this.state.display.filterValue === "onboard")}
+                                style={{fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setFilterValue("onboard")}>
+                            Onboard
+                        </button>
+
+                        <button className={this.getButtonClass(this.state.display.showWorker)}
+                                style={{marginLeft: "10px", fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setToggleFilter("showWorker")}>
+                            Worker
+                        </button>
+                        <button className={this.getButtonClass(this.state.display.showConnector)}
+                                style={{fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setToggleFilter("showConnector")}>
+                            Connector
+                        </button>
+                        <button className={this.getButtonClass(this.state.display.showUndefined)}
+                                style={{fontSize: "10px", height: "40px"}}
+                                disabled={this.state.display.loading}
+                                onClick={() => this.setToggleFilter("showUndefined")}>
+                            Undefined
                         </button>
                     </div>
                 </div>
@@ -82,7 +114,10 @@ class JobCount extends React.Component {
                 </div>
                 <div className="col-md-1">
                     <Button className="btn btn-success btn-sm"
-                            onClick={() => this.refreshJobCount()}
+                            onClick={() => {
+                                this.refreshJobCount();
+                                this.downloadMessageRef.current?.refreshStartupStatus();
+                            }}
                             disabled={this.state.display.loading}>
                         <ArrowRepeat/> Refresh
                     </Button>
@@ -91,23 +126,23 @@ class JobCount extends React.Component {
 
             <div className="row" style={{width: "100%"}}>
                 <div className="col-md-12">
-                    <table width="100%" style={{tableLayout: "fixed"}}>
+                    <table width="100%" style={{tableLayout: "fixed", borderCollapse: "collapse"}}>
                         <tbody>
                         {this.getSortedFilteredDetails().map((runner, _index) =>
-                            <tr key={runner.type}>
-                                <td style={{verticalAlign: "top", width: "120px"}}>
+                            <tr key={runner.type} style={{borderBottom: "1px solid #dee2e6"}}>
+                                <td style={{verticalAlign: "top", width: "120px", paddingTop: "10px", paddingBottom: "10px"}}>
                                     <RunnerCartouche runner={runner}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "15%"}}>
-                                    {runner.name}
+                                <td style={{verticalAlign: "top", width: "20%", paddingTop: "10px", paddingBottom: "10px"}}>
+                                    <h1 className="title is-5">{runner.name}</h1>
+                                    <div style={{fontStyle: "italic", fontSize: "small"}}>
+                                        connector type: {runner.connectorType}
+                                    </div>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "15%"}}>
-                                    {runner.type}
-                                </td>
-                                <td style={{verticalAlign: "top", width: "260px"}}>
+                                <td style={{verticalAlign: "top", width: "190px", paddingTop: "10px", paddingBottom: "10px"}}>
                                     <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top"}}>
+                                <td style={{verticalAlign: "top", paddingTop: "10px", paddingBottom: "10px", paddingLeft: "10px"}}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>
@@ -133,6 +168,11 @@ class JobCount extends React.Component {
         this.refreshJobCount();
     }
 
+    setToggleFilter(propertyName) {
+        let value = this.state.display[propertyName];
+        this.setDisplayProperty(propertyName, !value);
+    }
+
     setSearchFilter(value) {
         this.setDisplayProperty("filterSearch", value);
     }
@@ -142,14 +182,22 @@ class JobCount extends React.Component {
     }
 
     /**
-     * Sorting/searching is done client side: the backend returns the full "details" list for the
-     * selected filter, already enriched with everything needed to display and sort it.
+     * Sorting/searching/class filtering is done client side: the backend returns the full "details"
+     * list for the selected onboard/all filter, already enriched with everything needed to display,
+     * filter and sort it.
      */
     getSortedFilteredDetails() {
         let listDetails = this.state.dashboard.details || [];
+        listDetails = listDetails.filter(runner => {
+            if (runner.classrunner === "worker") return this.state.display.showWorker;
+            if (runner.classrunner === "connector") return this.state.display.showConnector;
+            return this.state.display.showUndefined;
+        });
         if (this.state.display.filterSearch) {
             const search = this.state.display.filterSearch.toLowerCase();
-            listDetails = listDetails.filter(runner => runner.name && runner.name.toLowerCase().includes(search));
+            listDetails = listDetails.filter(runner =>
+                (runner.name && runner.name.toLowerCase().includes(search))
+                || (runner.type && runner.type.toLowerCase().includes(search)));
         }
         const comparators = {
             nameAsc: (a, b) => (a.name || "").localeCompare(b.name || ""),

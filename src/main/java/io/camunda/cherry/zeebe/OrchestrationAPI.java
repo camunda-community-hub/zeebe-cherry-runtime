@@ -170,27 +170,56 @@ public class OrchestrationAPI {
      * Returns the number of jobs currently waiting (state=CREATED) for every job type present on the
      * server, grouped by type. Uses POST /v2/jobs/search without a type filter, then tallies the
      * "type" field of each returned item - one call instead of one getJobCount() call per runner.
+     * <p>
+     * Paginates through every page (cursor-based, sorted by the unique "jobKey") instead of reading
+     * only the first page: a single unpaginated page cap previously let a low-volume job type's jobs
+     * be silently excluded from the tally whenever other types' jobs filled up the page first.
      */
     public Map<String, Long> getAllJobCount() {
         Map<String, Long> result = new LinkedHashMap<>();
-        String body = "{\"filter\":{\"state\":\"CREATED\"},\"page\":{\"limit\":1000}}";
+        ObjectMapper mapper = new ObjectMapper();
+        final int pageSize = 1000;
+        // Safety net against an unexpected non-advancing cursor: caps collection at 1,000 pages
+        // (up to 1,000,000 jobs) instead of looping forever.
+        final int maxPages = 1000;
+
+        String afterCursor = null;
         try {
-            HttpResponse<String> response = callPostHttp("/v2/jobs/search", body);
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.body());
-            JsonNode items = root.path("items");
-            if (!items.isArray()) {
-                logger.warn("getAllJobCount: no items array in response");
-                return result;
+            for (int page = 0; page < maxPages; page++) {
+                StringBuilder body = new StringBuilder();
+                body.append("{\"filter\":{\"state\":\"CREATED\"},")
+                        .append("\"sort\":[{\"field\":\"jobKey\",\"order\":\"ASC\"}],")
+                        .append("\"page\":{\"limit\":").append(pageSize);
+                if (afterCursor != null) {
+                    body.append(",\"after\":\"").append(afterCursor).append("\"");
+                }
+                body.append("}}");
+
+                HttpResponse<String> response = callPostHttp("/v2/jobs/search", body.toString());
+                JsonNode root = mapper.readTree(response.body());
+                JsonNode items = root.path("items");
+                if (!items.isArray()) {
+                    logger.warn("getAllJobCount: no items array in response");
+                    break;
+                }
+                for (JsonNode item : items) {
+                    String type = item.path("type").asText(null);
+                    if (type == null)
+                        continue;
+                    result.merge(type, 1L, Long::sum);
+                }
+
+                JsonNode pageNode = root.path("page");
+                boolean hasMore = pageNode.path("hasMoreTotalItems").asBoolean(false);
+                String endCursor = pageNode.path("endCursor").asText(null);
+                if (!hasMore || endCursor == null || items.isEmpty()) {
+                    break;
+                }
+                afterCursor = endCursor;
             }
-            for (JsonNode item : items) {
-                String type = item.path("type").asText(null);
-                if (type == null)
-                    continue;
-                result.merge(type, 1L, Long::sum);
-            }
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             logger.error("getAllJobCount: failed to parse response: {}", e.getMessage());
+            return null;
         }
         return result;
     }
