@@ -1,5 +1,5 @@
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:23-jre-alpine
 
 EXPOSE 9081
 COPY target/zeebe-cherry-runtime-*-jar-with-dependencies.jar /zeebe-cherry-runtime.jar
