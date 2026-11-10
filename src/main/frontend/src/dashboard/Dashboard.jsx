@@ -71,7 +71,7 @@ class Dashboard extends React.Component {
                     </div>
                 </div>
                 <div className="row" style={{width: "100%"}}>
-                    <GeneralDashboard dashboard={this.state.dashboard} dashboardComponent={this}
+                    <GeneralDashboard dashboard={this.state.dashboard}
                                   timestamp={this.state.dashboard.timestamp}/>
                 </div>
                 <div className="col-md-6">
@@ -124,18 +124,19 @@ class Dashboard extends React.Component {
 
                     </div>
                 </div>
-                <div className="col-md-1">
+                <div className="col-md-auto">
                     <TextInput labelText="Filter"
                                disabled={this.state.display.loading}
                                value={this.state.display.filterSearch}
-                               style={{width: "80px"}}
+                               style={{width: "160px"}}
                                onChange={(event) => this.setSearchFilter(event.target.value)}/>
                 </div>
-                <div className="col-md-2">
+                <div className="col-md-auto">
                     <Select
                         value={this.state.display.orderBy}
                         labelText="order by"
                         disabled={this.state.display.loading}
+                        style={{width: "150px"}}
                         onChange={(event) => this.setOrderBy(event.target.value)}>
                         <option value="nameAsc">Name (asc)</option>
                         <option value="nameDes">Name (desc)</option>
@@ -145,7 +146,20 @@ class Dashboard extends React.Component {
                         <option value="failDes">Failure (desc)</option>
                     </Select>
                 </div>
-                <div className="col-md-1">
+                <div className="col-md-auto">
+                    <Select
+                        value={this.state.display.period}
+                        labelText="Period"
+                        disabled={this.state.display.loading}
+                        style={{width: "150px"}}
+                        onChange={(event) => this.setPeriod(event.target.value)}>
+                        <option value="FOURHOUR">Last 4 Hours</option>
+                        <option value="ONEDAY">last 24 Hours</option>
+                        <option value="ONEWEEK">Last week</option>
+                        <option value="ONEMONTH">Last Month</option>
+                    </Select>
+                </div>
+                <div className="col-md-auto">
                     <Button className="btn btn-success btn-sm"
                             onClick={() => {
                                 this.refreshDashboard(this.state.display.period, this.state.display.orderBy);

@@ -64,6 +64,7 @@ public class JobCountRestController {
 
     @GetMapping(value = "/api/jobcount/dashboard", produces = "application/json")
     public Map<String, Object> getJobCountDashboard(@RequestParam(name = "filter", required = false, defaultValue = "all") String filterParam,
+                                                     @RequestParam(name = "period", required = false) String period,
                                                      @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         Filter filter;
         try {
@@ -74,7 +75,7 @@ public class JobCountRestController {
         }
 
         LocalDateTime dateNow = DateOperation.getLocalDateTimeNow();
-        HistoryPerformance.PeriodStatistic periodStatistic = HistoryPerformance.PeriodStatistic.FOURHOUR;
+        HistoryPerformance.PeriodStatistic periodStatistic = getPeriodStatisticFromPeriod(period);
 
         List<Map<String, Object>> listDetails = new ArrayList<>();
         List<AbstractRunner> listRunners = runnerFactory.getAllRunners(new StorageService.Filter());
@@ -154,5 +155,16 @@ public class JobCountRestController {
         info.put(RestAttribute.TIMESTAMP, String.valueOf(System.currentTimeMillis()));
         logger.info("JobCountRestController./api/jobcount/dashboard: filter[{}] runners: {}", filter, listDetails.size());
         return info;
+    }
+
+    private HistoryPerformance.PeriodStatistic getPeriodStatisticFromPeriod(String period) {
+        try {
+            if (period == null)
+                return HistoryPerformance.PeriodStatistic.FOURHOUR;
+            return HistoryPerformance.PeriodStatistic.valueOf(period);
+        } catch (Exception e) {
+            logger.error("Unknow PeriodStatistic[{}]", period);
+            return HistoryPerformance.PeriodStatistic.FOURHOUR;
+        }
     }
 }

@@ -31,6 +31,7 @@ class JobCount extends React.Component {
                 loading: true,
                 filterValue: "all",
                 orderBy: "nameAsc",
+                period: "ONEDAY",
                 filterSearch: "",
                 showWorker: true,
                 showConnector: true,
@@ -112,6 +113,19 @@ class JobCount extends React.Component {
                         <option value="jobsDes">Jobs (desc)</option>
                     </Select>
                 </div>
+                <div className="col-md-auto">
+                    <Select
+                        value={this.state.display.period}
+                        labelText="Period"
+                        disabled={this.state.display.loading}
+                        style={{width: "150px"}}
+                        onChange={(event) => this.setPeriod(event.target.value)}>
+                        <option value="FOURHOUR">Last 4 Hours</option>
+                        <option value="ONEDAY">last 24 Hours</option>
+                        <option value="ONEWEEK">Last week</option>
+                        <option value="ONEMONTH">Last Month</option>
+                    </Select>
+                </div>
                 <div className="col-md-1">
                     <Button className="btn btn-success btn-sm"
                             onClick={() => {
@@ -181,6 +195,11 @@ class JobCount extends React.Component {
         this.setDisplayProperty("orderBy", value);
     }
 
+    setPeriod(value) {
+        this.setDisplayProperty("period", value);
+        this.refreshJobCount();
+    }
+
     /**
      * Sorting/searching/class filtering is done client side: the backend returns the full "details"
      * list for the selected onboard/all filter, already enriched with everything needed to display,
@@ -209,7 +228,8 @@ class JobCount extends React.Component {
     }
 
     refreshJobCount() {
-        let uri = 'cherry/api/jobcount/dashboard?filter=' + this.state.display.filterValue;
+        let uri = 'cherry/api/jobcount/dashboard?filter=' + this.state.display.filterValue
+            + '&period=' + this.state.display.period;
         console.log("JobCount.refreshJobCount http[" + uri + "]");
 
         this.setDisplayProperty("loading", true);
