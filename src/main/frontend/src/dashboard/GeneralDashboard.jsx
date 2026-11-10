@@ -7,7 +7,6 @@
 // -----------------------------------------------------------
 
 import React from 'react';
-import {Select} from 'carbon-components-react';
 
 class GeneralDashboard extends React.Component {
 
@@ -16,11 +15,8 @@ class GeneralDashboard extends React.Component {
         super();
         this.state = {
             dashboard: props.dashboard,
-            timestamp: props.timestamp,
-            period: "ONEDAY"
+            timestamp: props.timestamp
         };
-        this.dashboardComponent = props.dashboardComponent;
-        this.setPeriod = this.setPeriod.bind(this);
     }
 
     componentDidUpdate(prevProps) {
@@ -34,23 +30,11 @@ class GeneralDashboard extends React.Component {
     }
 
     render() {
-        // console.log("GeneralDashboard.render: period="+this.state.period);
         return (
             <div className="box container">
                 <div className="row">
-                    <div className="col-md-8">
+                    <div className="col-md-12">
                         <h1 className="title is-5"> total jobs in last period </h1>
-                    </div>
-                    <div className="col-md-4">
-                        <Select
-                            value={this.state.period}
-                            labelText="Period"
-                            onChange={(event) => this.setPeriod(event.target.value)}>
-                            <option value="FOURHOUR">Last 4 Hours</option>
-                            <option value="ONEDAY">last 24 Hours</option>
-                            <option value="ONEWEEK">Last week</option>
-                            <option value="ONEMONTH">Last Month</option>
-                        </Select>
                     </div>
                 </div>
                 <div className="row">
@@ -72,14 +56,6 @@ class GeneralDashboard extends React.Component {
             </div>
 
         );
-    }
-
-    setPeriod(value) {
-        console.log("SetPeriod set attribut:" + value);
-
-        this.setState({period: value});
-
-        this.dashboardComponent.setPeriod(value);
     }
 
 }

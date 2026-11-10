@@ -60,7 +60,16 @@ class RunnerCartouche extends React.Component {
                                         height: "1.5em",
                                         border: "1px solid"
                                     }}>Started</button>}
-                            {this.state.runner.runnerState !== "ACTIVE" &&
+                            {this.state.runner.runnerState === "UNREGISTERED" &&
+                                <button
+                                    className="button is-selected"
+                                    style={{
+                                        height: "1.5em",
+                                        border: "1px solid",
+                                        backgroundColor: "#999999",
+                                        color: "white"
+                                    }}>Unknown</button>}
+                            {this.state.runner.runnerState !== "ACTIVE" && this.state.runner.runnerState !== "UNREGISTERED" &&
                                 <button
                                     className="stop-runner button is-selected is-danger"
                                     style={{height: "1.5em"}}>Stopped</button>}
@@ -80,9 +89,11 @@ class RunnerCartouche extends React.Component {
                         </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {this.state.runnerDetail
-                            ? <RunnerMonitoring runnerDisplay={this.state.runnerDetail}/>
-                            : <div>Loading...</div>}
+                        {this.state.runner.runnerState === "UNREGISTERED"
+                            ? <div>No monitoring available: this job type is not registered in Cherry.</div>
+                            : (this.state.runnerDetail
+                                ? <RunnerMonitoring runnerDisplay={this.state.runnerDetail}/>
+                                : <div>Loading...</div>)}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={this.closeModal}>
@@ -96,7 +107,9 @@ class RunnerCartouche extends React.Component {
     openModal() {
         console.log("RunnerCartouche.openModal");
         this.setState({isOpen: true});
-        this.loadRunnerDetail();
+        if (this.state.runner.runnerState !== "UNREGISTERED") {
+            this.loadRunnerDetail();
+        }
     }
 
     closeModal() {

@@ -59,6 +59,10 @@ class RunnerDashboard extends React.Component {
                                                     {this.state.runner.nboverthreshold > 0 && <Tag type="purple"
                                                                                                    title="Over threshold"> {this.state.runner.nboverthreshold} Errors </Tag>}
                                                     <br/>
+                                                    <span style={{
+                                                        fontStyle: "italic",
+                                                        fontSize: "small"
+                                                    }}>connector type: {this.state.runner.connectorType}</span>
                                                     <br/>
                                                     {this.state.runner.statistic && this.state.runner.statistic.executionsSucceeded} Successful,
                                                     {this.state.runner.statistic && this.state.runner.statistic.executionsFailed} failed,

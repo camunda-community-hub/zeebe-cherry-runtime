@@ -100,6 +100,10 @@ public abstract class StoreAccess {
 
     public static class ConnectorDefinition {
         /**
+         * Keep trace of the download
+         */
+        private final StringBuffer logDownload = new StringBuffer();
+        /**
          * Name of the connector. can be the folder name
          * There are multiple name in a connector:
          * - "name" the folder name, first identification. It saved under "name"
@@ -109,18 +113,15 @@ public abstract class StoreAccess {
          * To add on the complexity: in a JAR, it may have multiple connectors... with multiple names...
          */
         public String name;
-
         /**
          * In case the JAR contains multiple
          */
         public List<AnnotationDescription> listAnnotations = new ArrayList<>();
-
         /**
          * If the connector is store in GitHub, save the Github repository something like
          * the repoName is something like "pierre-yves.monnet/myconnector"
          */
         public String githubRepoName;
-
         /**
          * The repopath is the path INSIDE the repoName. A repo name may contains multiple connector, like we have in the connectorStore
          */
@@ -134,7 +135,6 @@ public abstract class StoreAccess {
         public boolean hasImplementation = true;
         public boolean isInstallable = true;
         public StoreAccess storeAccess;
-
         /**
          * name come the URL templates. Multiple element templates can be detected, each with a different name
          */
@@ -165,11 +165,6 @@ public abstract class StoreAccess {
          */
         public CONNECTORSOURCE connectorSource = CONNECTORSOURCE.NONE;
         private EXPLORATION status;
-
-        /**
-         * Keep trace of the download
-         */
-        private final StringBuffer logDownload = new StringBuffer();
 
         /*
          * use the getInstance instead

@@ -150,14 +150,20 @@ public class RunnerFactory {
      * @return list of runner
      */
     public List<AbstractRunner> getAllRunners(StorageService.Filter filter) {
-        List<AbstractRunner> listRunners = new ArrayList<>();
+        // Keyed by type to collapse duplicates: two RunnerDefinitionEntity rows sharing the same type
+        // (e.g. a stale/duplicate registration) would otherwise both resolve to the same cached runner
+        // in getRunnersFromEntity() and list it twice. Last one wins, same convention used elsewhere
+        // in this class (see init()'s mapExistingRunners).
+        Map<String, AbstractRunner> mapRunners = new LinkedHashMap<>();
 
         List<RunnerDefinitionEntity> listDefinitionRunners = storageService.getRunners(filter);
 
         for (RunnerDefinitionEntity runnerDefinitionEntity : listDefinitionRunners) {
-            listRunners.addAll(getRunnersFromEntity(runnerDefinitionEntity));
+            for (AbstractRunner runner : getRunnersFromEntity(runnerDefinitionEntity)) {
+                mapRunners.put(runner.getType(), runner);
+            }
         }
-        return listRunners;
+        return new ArrayList<>(mapRunners.values());
     }
 
 

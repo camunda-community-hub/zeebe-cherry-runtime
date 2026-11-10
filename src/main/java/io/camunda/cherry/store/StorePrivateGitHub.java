@@ -7,9 +7,6 @@ import io.camunda.cherry.store.git.GitHubAccess;
 public class StorePrivateGitHub extends StoreGithub {
 
 
-
-
-
     /**
      * @param name              store name
      * @param url               GitHub profile/org URL

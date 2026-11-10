@@ -21,11 +21,11 @@ public class RunnerThroughput {
 
         List<HistoryPerformance.Interval> listIntervals = performance.listIntervals;
         if (listIntervals == null || listIntervals.isEmpty()) {
-            analysis.throughput = THROUGHPUT.LOW;
-            analysis.backlog = ORIENTATION.STABLE;
-            analysis.execution = ORIENTATION.STABLE;
-            analysis.failure = THROUGHPUT.LOW;
-            analysis.errors = THROUGHPUT.LOW;
+            analysis.throughput = THROUGHPUT.NOTHOUGPUT;
+            analysis.backlog = ORIENTATION.NOBACKLOG;
+            analysis.execution = ORIENTATION.NOEXECUTION;
+            analysis.failure = THROUGHPUT.NOFAILURE;
+            analysis.errors = THROUGHPUT.NOERRORS;
             analysis.backLogInSeconds = 0;
             analysis.backLogHuman = formatDurationHuman(0);
             return analysis;
@@ -36,11 +36,30 @@ public class RunnerThroughput {
         HistoryPerformance.Interval intervalN1 = size >= 2 ? listIntervals.get(size - 2) : null;
         HistoryPerformance.Interval intervalN2 = size >= 3 ? listIntervals.get(size - 3) : null;
 
-        analysis.throughput = calculateThroughput(intervalN, intervalN1);
-        analysis.backlog = calculateOrientationBacklog(intervalN, intervalN1, intervalN2);
-        analysis.execution = calculateOrientationExecution(intervalN, intervalN1);
-        analysis.failure = calculateErrorLevel(intervalN.executionsFailed);
-        analysis.errors = calculateErrorLevel(intervalN.executionsBpmnErrors);
+        // Sum executions/failures/BPMN errors over the last 5 intervals (same lookback window as
+        // calculateBacklog's rate), to decide whether there was any activity at all worth tagging.
+        int lookBack = Math.min(5, size);
+        long sumExecutions = 0;
+        long sumFailed = 0;
+        long sumBpmnErrors = 0;
+        for (int i = size - lookBack; i < size; i++) {
+            HistoryPerformance.Interval interval = listIntervals.get(i);
+            sumExecutions += interval.executions;
+            sumFailed += interval.executionsFailed;
+            sumBpmnErrors += interval.executionsBpmnErrors;
+        }
+
+        analysis.throughput = intervalN.executions == 0
+                ? THROUGHPUT.NOTHOUGPUT
+                : calculateThroughput(intervalN, intervalN1);
+        analysis.backlog = intervalN.topicCount == 0
+                ? ORIENTATION.NOBACKLOG
+                : calculateOrientationBacklog(intervalN, intervalN1, intervalN2);
+        analysis.execution = sumExecutions == 0
+                ? ORIENTATION.NOEXECUTION
+                : calculateOrientationExecution(intervalN, intervalN1, intervalN2);
+        analysis.failure = sumFailed == 0 ? THROUGHPUT.NOFAILURE : calculateErrorLevel(sumFailed);
+        analysis.errors = sumBpmnErrors == 0 ? THROUGHPUT.NOERRORS : calculateErrorLevel(sumBpmnErrors);
         calculateBacklog(analysis, listIntervals, intervalN, intervalN1);
 
         return analysis;
@@ -133,47 +152,44 @@ public class RunnerThroughput {
         if (intervalN1 == null || intervalN2 == null) {
             return ORIENTATION.STABLE;
         }
-        long v3 = intervalN.topicCount;
-        long v2 = intervalN1.topicCount;
-        long v1 = intervalN2.topicCount;
+        return calculateOrientation(intervalN2.topicCount, intervalN1.topicCount, intervalN.topicCount);
+    }
 
+    /**
+     * V3=interval(n).executions, V2=interval(n-1).executions, V1=interval(n-2).executions - trend of
+     * the raw execution count (how many jobs ran) over the last 3 intervals, not its average duration.
+     */
+    private ORIENTATION calculateOrientationExecution(HistoryPerformance.Interval intervalN,
+                                                      HistoryPerformance.Interval intervalN1,
+                                                      HistoryPerformance.Interval intervalN2) {
+        if (intervalN1 == null || intervalN2 == null) {
+            return ORIENTATION.STABLE;
+        }
+        return calculateOrientation(intervalN2.executions, intervalN1.executions, intervalN.executions);
+    }
+
+    /**
+     * Shared trend calculation for a value sampled on 3 consecutive intervals (V1 oldest, V3 newest).
+     * +1000 (absolute) catches a big jump outright; for smaller numbers, +20 (absolute) catches
+     * high-volume runners and +50% (relative) catches low-volume ones - e.g. 8 -> 29 -> 49 - where a
+     * flat +20 never triggers. The "delta >= 5" floor keeps single-digit noise (e.g. 2 -> 3 -> 4, a
+     * 100% jump but trivial in absolute terms) from being flagged.
+     */
+    private ORIENTATION calculateOrientation(long v1, long v2, long v3) {
         if (v3 > v1 + 1000) {
             return ORIENTATION.HIGHINCREASE;
         }
         if (v3 < v1 - 1000) {
             return ORIENTATION.HIGHDECREASE;
         }
-        if (v3 > v2 && v2 > v1 && v3 > v1 + 50) {
+
+        long delta = v3 - v1;
+        boolean growthIsSignificant = v3 > v1 + 20 || (v1 > 0 && v3 >= v1 * 1.5 && delta >= 5);
+        boolean dropIsSignificant = v3 < v1 - 20 || (v1 > 0 && v3 <= v1 * 0.67 && -delta >= 5);
+        if (v3 > v2 && v2 > v1 && growthIsSignificant) {
             return ORIENTATION.INCREASE;
         }
-        if (v3 < v2 && v2 < v1 && v3 < v1 - 50) {
-            return ORIENTATION.DECREASE;
-        }
-        return ORIENTATION.STABLE;
-    }
-
-    /**
-     * V2=interval(n).averageTimeInMs, V1=interval(n-1).averageTimeInMs. Thresholds are expressed as a
-     * percentage change of V1 (e.g. HIGHINCREASE when V2 rose by at least 20% over V1).
-     */
-    private ORIENTATION calculateOrientationExecution(HistoryPerformance.Interval intervalN,
-                                                      HistoryPerformance.Interval intervalN1) {
-        if (intervalN1 == null) {
-            return ORIENTATION.STABLE;
-        }
-        long v2 = intervalN.averageTimeInMs;
-        long v1 = intervalN1.averageTimeInMs;
-
-        if (v2 > v1 * 1.20) {
-            return ORIENTATION.HIGHINCREASE;
-        }
-        if (v2 > v1 * 1.05) {
-            return ORIENTATION.INCREASE;
-        }
-        if (v2 < v1 * 0.80) {
-            return ORIENTATION.HIGHDECREASE;
-        }
-        if (v2 < v1 * 0.90) {
+        if (v3 < v2 && v2 < v1 && dropIsSignificant) {
             return ORIENTATION.DECREASE;
         }
         return ORIENTATION.STABLE;
@@ -193,11 +209,32 @@ public class RunnerThroughput {
     }
 
     public enum THROUGHPUT {
-        LOW, MEDIUM, HIGH
+        LOW, MEDIUM, HIGH,
+        /**
+         * intervalN had no executions at all - the frontend hides the throughput tag on this value.
+         */
+        NOTHOUGPUT,
+        /**
+         * No failures over the last 5 intervals - the frontend hides the failure tag on this value.
+         */
+        NOFAILURE,
+        /**
+         * No BPMN errors over the last 5 intervals - the frontend hides the errors tag on this value.
+         */
+        NOERRORS
     }
 
     public enum ORIENTATION {
-        HIGHDECREASE, DECREASE, STABLE, INCREASE, HIGHINCREASE
+        HIGHDECREASE, DECREASE, STABLE, INCREASE, HIGHINCREASE,
+        /**
+         * intervalN.topicCount is 0 - the frontend hides the backlog tag on this value.
+         */
+        NOBACKLOG,
+        /**
+         * No executions at all over the last 5 intervals - the frontend hides the execution tag on
+         * this value.
+         */
+        NOEXECUTION
     }
 
     public static class Analysis {
@@ -215,8 +252,8 @@ public class RunnerThroughput {
          * if v3 > V1 + 1000: HIGHINCREASE
          * if (v3 < v1-1000 : HIGHDECREASE
          * <p>
-         * If V3 > V2 > V1 and V3 > V1 +50 INCREASE.
-         * if v3 < v2 < V1 and v3 < v1-50 : DECREASE
+         * If V3 > V2 > V1 and (V3 > V1 + 20 or V3 >= V1 * 1.5 with a delta of at least 5) : INCREASE.
+         * if v3 < v2 < V1 and (v3 < v1 - 20 or v3 <= v1 * 0.67 with a delta of at least 5) : DECREASE
          * <p>
          * else STABLE
          */

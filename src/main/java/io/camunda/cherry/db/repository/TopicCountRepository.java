@@ -22,6 +22,13 @@ public interface TopicCountRepository extends JpaRepository<TopicCountEntity, Lo
                                                @Param("dateToSearch") LocalDateTime dateToSearch,
                                                Pageable pageable);
 
+    /**
+     * Every runnerType the monitor has ever collected a topic count for - including types Cherry has
+     * never registered a RunnerDefinitionEntity for (seen in the engine but not onboarded in Cherry).
+     */
+    @Query("select distinct tc.runnerType from TopicCountEntity tc")
+    List<String> findDistinctRunnerType();
+
     @Modifying
     @Query("delete from TopicCountEntity tc where tc.runnerType = :runnerType")
     void deleteFromRunnerType(@Param("runnerType") String runnerType);

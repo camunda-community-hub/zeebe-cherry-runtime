@@ -20,9 +20,9 @@ import java.util.regex.Pattern;
 
 public class GitHubRelease {
     private static final Pattern OFFICIAL_RELEASE = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
-    Logger logger = LoggerFactory.getLogger(GitHubRelease.class.getName());
     private final String repoPath;
     private final GitHubAccess gitHubAccess;
+    Logger logger = LoggerFactory.getLogger(GitHubRelease.class.getName());
 
     protected GitHubRelease(String repoPath, GitHubAccess gitHubAccess) {
         this.repoPath = normalizeRepo(repoPath);

@@ -10,7 +10,8 @@
     <!-- 3.4.2 Error in image -->
     <!-- 3.5.0 Connector download from store + Able to start OutboundConnectorProvider-->
     <!-- 4.0.0 Download marketplace -->
-    <version>4.0.4-SNAPSHOT</version>
+    <!-- 4.1.0 Job count page -->
+    <version>4.1.0</version>
 
     <name>Zeebe Cherry Runtime</name>
     <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>

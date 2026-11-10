@@ -13,6 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import {Container, Nav, Navbar} from 'react-bootstrap';
 import Dashboard from "./dashboard/Dashboard";
+import JobCount from "./jobcount/JobCount";
 import Definition from "./definition/Definition";
 import Parameters from "./parameter/Parameters"
 import Secrets from "./secrets/Secrets"
@@ -24,6 +25,7 @@ import HeaderMessage from "./HeaderMessage/HeaderMessage";
 
 const FRAME_NAME = {
     DASHBOARD: "Dashboard",
+    JOBCOUNT: "JobCount",
     DEFINITION: "Definition",
     SECRET: "Secret",
     ENVIRONMENT: "Environment",
@@ -62,6 +64,12 @@ class CherryApp extends React.Component {
                                 onClick={() => {
                                     this.clickMenu(FRAME_NAME.DASHBOARD)
                                 }}>Dashboard</Nav.Link>
+
+                            <Nav.Link
+                                active={this.state.frameContent === FRAME_NAME.JOBCOUNT}
+                                onClick={() => {
+                                    this.clickMenu(FRAME_NAME.JOBCOUNT)
+                                }}>Jobs</Nav.Link>
 
                             <Nav.Link
                                 active={this.state.frameContent === FRAME_NAME.DEFINITION}
@@ -109,6 +117,7 @@ class CherryApp extends React.Component {
                 </Navbar>
                 <HeaderMessage/>
                 {this.state.frameContent === FRAME_NAME.DASHBOARD && <Dashboard/>}
+                {this.state.frameContent === FRAME_NAME.JOBCOUNT && <JobCount/>}
                 {this.state.frameContent === FRAME_NAME.DEFINITION && <Definition/>}
                 {this.state.frameContent === FRAME_NAME.SECRET && <Secrets/>}
                 {this.state.frameContent === FRAME_NAME.CONTENT && <Content/>}

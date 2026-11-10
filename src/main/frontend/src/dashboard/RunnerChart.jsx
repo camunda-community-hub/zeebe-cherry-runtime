@@ -38,7 +38,14 @@ class RunnerChart extends React.Component {
         const executionsTopic = (this.state.type === "ExecutionsTopic" && this.state.runner && this.state.runner.performance)
             ? this.getExecutionsTopic() : null;
         return (
-            <div style={{border: "1px solid", padding: "5px", width: "100%", height: "150px", boxSizing: "border-box", overflow: "hidden"}}>
+            <div style={{
+                border: "1px solid",
+                padding: "5px",
+                width: "100%",
+                height: "150px",
+                boxSizing: "border-box",
+                overflow: "hidden"
+            }}>
                 {this.state.type === "Executions" && this.state.runner && this.state.runner.performance &&
                     <Chart type="HorizontalBar" dataList={this.getExecutions()} oneColor={true}
                            options={{
