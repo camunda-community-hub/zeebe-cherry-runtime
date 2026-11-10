@@ -21,7 +21,7 @@ The deployment must be run in the same cluster as Zeebe. If it is a different cl
 # Operation
 
 ```shell
-kubectl create -f cherry-runtime.yaml
+kubectl create -f cherry-runtime-postgres.yaml
 ```
 
 Forward the Cherry runtime access 
@@ -33,7 +33,7 @@ kubectl port-forward svc/cherry-runtime-service 9081:9081 -n camunda
 # Remove Cherry
 
 ```shell
-kubectl delete -f cherry-runtime.yaml
+kubectl delete -f cherry-runtime-postgres.yaml
 ```
 
 Postgres create a PVC, and it must be removed manually via

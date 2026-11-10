@@ -8,8 +8,8 @@ services:
     ports:
       - "9081:9081"
     environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
-      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      - CAMUNDA_CLIENT_GRPC-ADDRESS=http://zeebe:26500
+      - CAMUNDA_CLIENT_REST-ADDRESS=http://zeebe:8080
       #      - ZEEBE_CLIENT_CLOUD_REGION=
       #      - ZEEBE_CLIENT_CLOUD_CLUSTERID=
       #      - ZEEBE_CLIENT_CLOUD_CLIENTID=
