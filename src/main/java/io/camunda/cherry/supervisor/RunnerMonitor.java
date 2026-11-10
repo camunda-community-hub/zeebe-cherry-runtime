@@ -76,7 +76,7 @@ public class RunnerMonitor {
         if (collectAllTopics) {
 
             Map<String, Long> allJobCounts = orchestrationAPI.getAllJobCount();
-            if (allJobCounts!=null) {
+            if (allJobCounts != null) {
                 logger.info("Collecting topic counts found {} types", allJobCounts.size());
                 for (Map.Entry<String, Long> entry : allJobCounts.entrySet()) {
                     historyFactory.saveTopicCount(entry.getKey(), entry.getValue());

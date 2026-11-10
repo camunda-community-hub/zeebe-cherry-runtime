@@ -30,7 +30,13 @@ class RunnerAnalysisTags extends React.Component {
 
     render() {
         return (
-            <div style={{display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-start", width: "190px"}}>
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                alignItems: "flex-start",
+                width: "190px"
+            }}>
                 {this.getAnalysisTags().map((tag, index) =>
                     <Tag key={index} type={tag.type} size="sm">{tag.label}</Tag>
                 )}

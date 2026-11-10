@@ -40,7 +40,6 @@ public abstract class StoreGithub extends StoreAccess {
     Logger logger = LoggerFactory.getLogger(StoreGithub.class.getName());
 
 
-
     /**
      * @param name              store name
      * @param url               GitHub profile/org URL

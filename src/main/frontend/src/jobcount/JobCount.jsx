@@ -144,19 +144,40 @@ class JobCount extends React.Component {
                         <tbody>
                         {this.getSortedFilteredDetails().map((runner, _index) =>
                             <tr key={runner.type} style={{borderBottom: "1px solid #dee2e6"}}>
-                                <td style={{verticalAlign: "top", width: "120px", paddingTop: "10px", paddingBottom: "10px"}}>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "120px",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px"
+                                }}>
                                     <RunnerCartouche runner={runner}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "20%", paddingTop: "10px", paddingBottom: "10px"}}>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "20%",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px"
+                                }}>
                                     <h1 className="title is-5">{runner.name}</h1>
                                     <div style={{fontStyle: "italic", fontSize: "small"}}>
                                         connector type: {runner.connectorType}
                                     </div>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "190px", paddingTop: "10px", paddingBottom: "10px"}}>
-                                    <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "190px",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px"
+                                }}>
+                                    <RunnerAnalysisTags runnerDisplay={runner}
+                                                        timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top", paddingTop: "10px", paddingBottom: "10px", paddingLeft: "10px"}}>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px",
+                                    paddingLeft: "10px"
+                                }}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>

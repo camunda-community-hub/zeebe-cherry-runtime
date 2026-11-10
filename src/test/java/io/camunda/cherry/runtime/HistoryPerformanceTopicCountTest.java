@@ -22,16 +22,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class HistoryPerformanceTopicCountTest {
 
+    private static final String RUNNER_TYPE = "my-worker";
     @Mock
     RunnerExecutionRepository runnerExecutionRepository;
-
     @Mock
     TopicCountRepository topicCountRepository;
-
     @InjectMocks
     HistoryPerformance historyPerformance;
-
-    private static final String RUNNER_TYPE = "my-worker";
 
     @BeforeEach
     void setUp() {

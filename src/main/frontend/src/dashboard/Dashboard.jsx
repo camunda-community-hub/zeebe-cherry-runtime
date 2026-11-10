@@ -72,7 +72,7 @@ class Dashboard extends React.Component {
                 </div>
                 <div className="row" style={{width: "100%"}}>
                     <GeneralDashboard dashboard={this.state.dashboard}
-                                  timestamp={this.state.dashboard.timestamp}/>
+                                      timestamp={this.state.dashboard.timestamp}/>
                 </div>
                 <div className="col-md-6">
                     <div className="btn-group" role="group" style={{padding: "10px 10px 10px 10px"}}>
@@ -176,13 +176,30 @@ class Dashboard extends React.Component {
                     <table width="100%" style={{tableLayout: "fixed", borderCollapse: "collapse"}}>
                         {this.state.dashboard ? this.state.dashboard.details.map((runner, _index) =>
                             <tr style={{borderBottom: "1px solid #dee2e6", ...this.getStyleRow(runner)}}>
-                                <td style={{verticalAlign: "top", width: "30%", paddingTop: "10px", paddingBottom: "10px"}}>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "30%",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px"
+                                }}>
                                     <RunnerDashboard runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "190px", paddingTop: "10px", paddingBottom: "10px"}}>
-                                    <RunnerAnalysisTags runnerDisplay={runner} timestamp={this.state.dashboard.timestamp}/>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "190px",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px"
+                                }}>
+                                    <RunnerAnalysisTags runnerDisplay={runner}
+                                                        timestamp={this.state.dashboard.timestamp}/>
                                 </td>
-                                <td style={{verticalAlign: "top", width: "50%", paddingTop: "10px", paddingBottom: "10px", paddingLeft: "10px"}}>
+                                <td style={{
+                                    verticalAlign: "top",
+                                    width: "50%",
+                                    paddingTop: "10px",
+                                    paddingBottom: "10px",
+                                    paddingLeft: "10px"
+                                }}>
                                     <RunnerChart type="ExecutionsTopic" runnerDisplay={runner} title={false}
                                                  timestamp={this.state.dashboard.timestamp}/>
                                 </td>

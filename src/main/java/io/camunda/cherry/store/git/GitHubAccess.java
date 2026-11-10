@@ -17,14 +17,13 @@ public class GitHubAccess {
      */
     private static final List<String> ELEMENT_TEMPLATE_DIRS = List.of(
             "element-templates", "connector-template", "connector-templates");
+    private final String gitHubToken;
+    private final GitHubToolbox gitHubToolbox;
     /**
      * package-private: GitHubRelease (same package) accesses it directly. Cross-package callers
      * (StoreGithub, StoreCamundaConnector) go through getJsonNode()/extractTaskDefinitionType() below.
      */
     Logger logger = LoggerFactory.getLogger(GitHubAccess.class.getName());
-
-    private final String gitHubToken;
-    private final GitHubToolbox gitHubToolbox;
 
     /**
      * The shared Spring-managed instance (autowired wherever GitHubAccess is a constructor param)
@@ -38,7 +37,7 @@ public class GitHubAccess {
     }
 
     public boolean hasGithubToken() {
-        return gitHubToken != null && ! gitHubToken.isEmpty();
+        return gitHubToken != null && !gitHubToken.isEmpty();
     }
 
     public String getGitHubToken() {
@@ -66,7 +65,7 @@ public class GitHubAccess {
         try {
             // check element template
             JsonNode items = getJsonNode(repoPath + "/element-templates?ref=" + ref);
-            githubConnectorStatus.elementTemplates = items.isArray() && ! items.isEmpty();
+            githubConnectorStatus.elementTemplates = items.isArray() && !items.isEmpty();
 
             // check pom.xml — most repos simply don't have one; that's an expected, silent "no" answer
             if (checkPomXml) {

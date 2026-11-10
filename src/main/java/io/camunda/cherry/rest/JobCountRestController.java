@@ -24,12 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -55,17 +50,10 @@ public class JobCountRestController {
         this.topicCountRepository = topicCountRepository;
     }
 
-    /**
-     * ALL: every runner Cherry has a record of, including one whose jar was removed and has no
-     * implementation any more (RunnerDefinitionEntity.State.NOIMPLEMENTATION).
-     * ONBOARD: only runners the RunnerFactory can actually instantiate right now.
-     */
-    public enum Filter {ALL, ONBOARD}
-
     @GetMapping(value = "/api/jobcount/dashboard", produces = "application/json")
     public Map<String, Object> getJobCountDashboard(@RequestParam(name = "filter", required = false, defaultValue = "all") String filterParam,
-                                                     @RequestParam(name = "period", required = false) String period,
-                                                     @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
+                                                    @RequestParam(name = "period", required = false) String period,
+                                                    @RequestParam(name = "timezoneoffset") Long timezoneOffset) {
         Filter filter;
         try {
             filter = Filter.valueOf(filterParam.toUpperCase());
@@ -167,4 +155,11 @@ public class JobCountRestController {
             return HistoryPerformance.PeriodStatistic.FOURHOUR;
         }
     }
+
+    /**
+     * ALL: every runner Cherry has a record of, including one whose jar was removed and has no
+     * implementation any more (RunnerDefinitionEntity.State.NOIMPLEMENTATION).
+     * ONBOARD: only runners the RunnerFactory can actually instantiate right now.
+     */
+    public enum Filter {ALL, ONBOARD}
 }
