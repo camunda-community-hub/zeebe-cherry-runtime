@@ -24,13 +24,13 @@ cherry:
 camunda:
   client:
     mode: selfmanaged
-    zeebe:
-      enabled: true
-      gatewayUrl: http://localhost:26500
-      preferRestOverGrpc: false
-      executionThreads: 200
+    grpc-address: http://localhost:26500
+    rest-address: http://localhost:8080
+    prefer-rest-over-grpc: false
+    execution-threads: 200
+    worker:
       defaults:
-        maxJobsActive: 58
+        max-jobs-active: 58
 
 server.port: 9081
 logging.level.root: INFO
