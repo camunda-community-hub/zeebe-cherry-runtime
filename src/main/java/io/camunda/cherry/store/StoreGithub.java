@@ -132,6 +132,9 @@ public abstract class StoreGithub extends StoreAccess {
 
                 // To be qualify, the repository must have an elementTemplate OR gitRelease OR pom.xml
                 if (!(gitHubConnectorStatus.elementTemplates || gitHubConnectorStatus.existGitReleases || gitHubConnectorStatus.existPomXml)) {
+                    logger.info("Store[{}] repo[{}] not kept: elementTemplates={} existGitReleases={} existPomXml={}",
+                            getName(), fullName, gitHubConnectorStatus.elementTemplates,
+                            gitHubConnectorStatus.existGitReleases, gitHubConnectorStatus.existPomXml);
                     continue;
                 }
                 ConnectorDefinition connectorDefinition = ConnectorDefinition.getInstance(this, shortName, htmlUrl, null);
@@ -218,7 +221,9 @@ public abstract class StoreGithub extends StoreAccess {
                         && !repoName.contains(filterProjectName)) {
                     continue;
                 }
-                listRepositories.add(repo.path("full_name").asText());
+                String fullName = repo.path("full_name").asText();
+                logger.info("Store[{}] candidate repository[{}]", getName(), fullName);
+                listRepositories.add(fullName);
             }
 
             page++;

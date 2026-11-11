@@ -39,9 +39,6 @@ class Content extends React.Component {
     render() {
         return (
             <div className={"container"}>
-                <DownloadMessage ref={this.downloadMessageRef}
-                                 onStatusChange={(inProgress) => this.setState({operationInProgress: inProgress})}
-                                 onError={(err) => this.setState({status: err})}/>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
                         <h1 className="title">Content</h1>
@@ -58,6 +55,9 @@ class Content extends React.Component {
                         </Button>
                     </div>
                 </div>
+                <DownloadMessage ref={this.downloadMessageRef}
+                                 onStatusChange={(inProgress) => this.setState({operationInProgress: inProgress})}
+                                 onError={(err) => this.setState({status: err})}/>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
                         <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>

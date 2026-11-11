@@ -37,7 +37,7 @@ logging.level.root: INFO
 
 
 # return message with BAD_REQUEST to the client
-server.error.include-message: always
+spring.web.error.include-message: always
 
 # Spring Boot Configuration
 spring.application.name: CherryRuntime

@@ -59,12 +59,12 @@ class Dashboard extends React.Component {
     render() {
         // console.log("dashboard.render display="+JSON.stringify(this.state.display));
         return (<div className={"container"}>
-            <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
-                             onError={(err) => this.setState({status: err})}/>
             <div className="row">
                 <div className="col-md-1">
                     <h1 className="title">Details</h1>
                 </div>
+                <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
+                                 onError={(err) => this.setState({status: err})}/>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
                         <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>

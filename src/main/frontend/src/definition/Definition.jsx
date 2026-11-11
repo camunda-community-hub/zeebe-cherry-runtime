@@ -42,13 +42,13 @@ class Definition extends React.Component {
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
                         <h1 className="title">Zeebe Connectors</h1>
+                        <DownloadMessage onError={(err) => this.setState({status: err})}/>
 
                         <div className="row" style={{width: "100%"}}>
                             <div className="col-md-12">
                                 <ControllerPage errorMessage={this.state.status} loading={this.state.display.loading}/>
                             </div>
                         </div>
-                        <DownloadMessage onError={(err) => this.setState({status: err})}/>
                         <div className="block">
                             <table id="runnersTable" className="table is-hoverable is-fullwidth">
                                 <thead>

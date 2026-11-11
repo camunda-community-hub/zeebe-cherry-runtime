@@ -73,6 +73,6 @@ public class RunnerDefinitionEntity {
     }
 
     public enum State {
-        ACTIVE, STOPPED, NOIMPLEMENTATION
+        ACTIVE, STOPPED, NOIMPLEMENTATION, FAILED
     }
 }

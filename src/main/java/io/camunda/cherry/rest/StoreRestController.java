@@ -175,6 +175,10 @@ public class StoreRestController {
                         mapConnector.put(RestAttribute.STATUS, "NO_IMPLEMENTATION");
                     } else if (runnerEntity == null) {
                         mapConnector.put(RestAttribute.STATUS, connectorDefinition.hasImplementation ? "NOT-INSTALLED" : "PARENT-NOT-INSTALLED");
+                    } else if (runnerEntity.state == RunnerDefinitionEntity.State.FAILED) {
+                        // Installed, but the runner never actually started (see Supervisor.startConnector) -
+                        // show it as failed rather than "up to date", and let the Install button retry it.
+                        mapConnector.put(RestAttribute.STATUS, "FAILED");
                     } else if (connectorDefinition.release == null) {
                         mapConnector.put(RestAttribute.STATUS, "NO-RELEASE");
                     } else if (runnerEntity.release == null) {

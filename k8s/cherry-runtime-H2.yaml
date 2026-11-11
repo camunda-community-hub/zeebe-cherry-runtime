@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cherry-runtime-h2-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cherry-runtime-h2
+  template:
+    metadata:
+      labels:
+        app: cherry-runtime-h2
+    spec:
+      containers:
+        - name: cherry-runtime-container
+          image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
+          ports:
+            - containerPort: 9081
+          env:
+            - name: CHERRY_CONNECTORSLIB_UPLOADPATH
+              value: /usr/local/cherry/upload
+            - name: CHERRY_CONNECTORSLIB_CLASSLOADERPATH
+              value: /usr/localstorage/classloader
+            - name: CAMUNDA_CLIENT_GRPC-ADDRESS
+              value: http://camunda-zeebe-gateway:26500
+            - name: CAMUNDA_CLIENT_REST-ADDRESS
+              value: http://camunda-zeebe-gateway:8080
+            # REST API requires HTTP Basic auth on this cluster - replace with real credentials
+            # (or better: wire via a Secret's secretKeyRef instead of plaintext here)
+            - name: CAMUNDA_CLIENT_AUTH_METHOD
+              value: basic
+            - name: CAMUNDA_CLIENT_AUTH_USERNAME
+              value: "demo"
+            - name: CAMUNDA_CLIENT_AUTH_PASSWORD
+              value: "demo"
+            # --------------------- H2, single file database stored on the PVC below
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:h2:file:/usr/local/cherry/data/cherry.db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "sa"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "password"
+            - name: SPRING_DATASOURCE_DRIVER-CLASS-NAME
+              value: "org.h2.Driver"
+            - name: "JPA_DATABASE-PLATFORM"
+              value: "org.hibernate.dialect.H2Dialect"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+              value: org.hibernate.dialect.H2Dialect
+          volumeMounts:
+            - name: cherry-h2-storage
+              mountPath: /usr/local/cherry/data
+      volumes:
+        - name: cherry-h2-storage
+          persistentVolumeClaim:
+            claimName: cherry-h2-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cherry-h2-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cherry-runtime-service
+spec:
+  selector:
+    app: cherry-runtime-h2
+  ports:
+    - protocol: TCP
+      port: 9081
+      targetPort: 9081
+  type: ClusterIP

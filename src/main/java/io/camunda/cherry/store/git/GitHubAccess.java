@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.store.StoreAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,39 +63,54 @@ public class GitHubAccess {
     public GithubConnectorStatus qualifyRepository(String repoPath, String release, boolean checkPomXml, boolean checkGitRelease) {
         GithubConnectorStatus githubConnectorStatus = new GithubConnectorStatus();
         String ref = (release != null && !release.isBlank()) ? release : "HEAD";
+
+        // Each check runs independently: a failure (e.g. rate limit) on one must not skip the
+        // other two - previously a single outer try/catch meant an error on the element-template
+        // check alone silently aborted the pom.xml and release checks too.
         try {
-            // check element template
             JsonNode items = getJsonNode(repoPath + "/element-templates?ref=" + ref);
             githubConnectorStatus.elementTemplates = items.isArray() && !items.isEmpty();
-
-            // check pom.xml — most repos simply don't have one; that's an expected, silent "no" answer
-            if (checkPomXml) {
-                try {
-                    JsonNode itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
-                    String type = itemsPom.path("type").asText();
-                    githubConnectorStatus.existPomXml = type.equals("file");
-                    githubConnectorStatus.pomContent = gitHubToolbox.decodeGithubFileContent(itemsPom);
-                } catch (Exception ex) {
-                    githubConnectorStatus.existPomXml = false;
-                }
-            }
-            if (checkGitRelease) {
-                GitHubRelease gitHubRelease = getGitHubRelease(repoPath);
-                // Extract repo path (owner/repo) from the API URL
-                // repoPath is like https://api.github.com/repos/owner/repo/contents/...
-                try {
-                    githubConnectorStatus.gitLastRelease = gitHubRelease.getLatestRelease();
-                    githubConnectorStatus.existGitReleases = githubConnectorStatus.gitLastRelease != null;
-
-                } catch (Exception ex) {
-                    githubConnectorStatus.existGitReleases = false;
-                }
-            }
-
-            return githubConnectorStatus;
-        } catch (Exception e) {
-            return githubConnectorStatus;
+        } catch (Exception ex) {
+            githubConnectorStatus.elementTemplates = false;
+            logQualifyError(repoPath, "element-templates", ex);
         }
+
+        // check pom.xml — most repos simply don't have one; that's an expected, silent "no" answer
+        if (checkPomXml) {
+            try {
+                JsonNode itemsPom = getJsonNode(repoPath + "/pom.xml?ref=" + ref);
+                String type = itemsPom.path("type").asText();
+                githubConnectorStatus.existPomXml = type.equals("file");
+                githubConnectorStatus.pomContent = gitHubToolbox.decodeGithubFileContent(itemsPom);
+            } catch (Exception ex) {
+                githubConnectorStatus.existPomXml = false;
+                logQualifyError(repoPath, "pom.xml", ex);
+            }
+        }
+        if (checkGitRelease) {
+            try {
+                GitHubRelease gitHubRelease = getGitHubRelease(repoPath);
+                githubConnectorStatus.gitLastRelease = gitHubRelease.getLatestRelease();
+                githubConnectorStatus.existGitReleases = githubConnectorStatus.gitLastRelease != null;
+            } catch (Exception ex) {
+                githubConnectorStatus.existGitReleases = false;
+                logQualifyError(repoPath, "release", ex);
+            }
+        }
+
+        return githubConnectorStatus;
+    }
+
+    /**
+     * A 404 just means "this repo doesn't have that file/release" - expected, and not worth
+     * logging. Anything else (rate limit, auth failure, network error, timeout...) is a real
+     * problem that was previously swallowed completely silently.
+     */
+    private void logQualifyError(String repoPath, String check, Exception ex) {
+        if (ex instanceof HttpClientErrorException httpError && httpError.getStatusCode().value() == 404) {
+            return;
+        }
+        logger.warn("qualifyRepository[{}] check[{}] failed: {}", repoPath, check, ex.getMessage());
     }
 
     public GitHubRelease getGitHubRelease(String repoPath) {

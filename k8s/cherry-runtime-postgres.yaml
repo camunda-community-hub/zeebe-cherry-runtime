@@ -26,6 +26,14 @@ spec:
               value: http://camunda-zeebe-gateway:26500
             - name: CAMUNDA_CLIENT_REST-ADDRESS
               value: http://camunda-zeebe-gateway:8080
+            # REST API requires HTTP Basic auth on this cluster - replace with real credentials
+            # (or better: wire via a Secret's secretKeyRef instead of plaintext here)
+            - name: CAMUNDA_CLIENT_AUTH_METHOD
+              value: basic
+            - name: CAMUNDA_CLIENT_AUTH_USERNAME
+              value: "demo"
+            - name: CAMUNDA_CLIENT_AUTH_PASSWORD
+              value: "demo"
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://cherry-postgres/cherrydb"
             - name: SPRING_DATASOURCE_USERNAME
@@ -38,7 +46,6 @@ spec:
               value: "org.hibernate.dialect.PostgreSQLDialect"
             - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
               value: org.hibernate.dialect.PostgreSQLDialect
-
 ---
 apiVersion: v1
 kind: Service

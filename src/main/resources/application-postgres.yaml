@@ -1,15 +1,99 @@
 cherry:
+  runner:
+    refreshTopicsInMinutes: 5
+
   connectorslib:
     uploadpath: ./localstorage/upload
     classloaderpath: ./localstorage/classloader
-    forcerefresh: false
-  runners:
-    # the runtime load all embedded runners
-    embeddedrunner: true
+    forcerefresh: true
 
-    # the runtime load ping runners - attention, pingConnector and pingObjectConnector are embedded
-    pingrunner: false
+  store:
+    # Startup downloads for connectors: each entry is a direct JAR URL, downloaded using the
+    # named store's own credentials (store must be a name known to StoreFactory, e.g. a
+    # privateStore entry's "name").
+    downloadStartup:
 
+    privateStore:
+      access: false
+      listStores:
+        - name: ""
+          url: ""
+          github:
+            token: ""
+            apikey: ""
+          tokenHeaderName: "Authorization"
+          tokenPrefix: "Bearer "
+          apikeyHeaderName: ""
+          startup:
+            # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+            downloadPolicy: NEVER
+            filter:
+
+    # Is that possible to access this store?
+    camundaConnector:
+      access: true
+      # Camunda connector are available https://github.com/camunda/connectors/tree/main/connectors
+      # To be able to download, the store must be accessible (store.camundaConnector.access = true)
+      # The JAR itself always comes from Maven Central (public, no token needed) - this GitHub
+      # token is optional and only raises the API rate limit (60 req/h unauthenticated -> 5000
+      # req/h authenticated). A plain personal access token from any GitHub account works.
+      github:
+        token: ""
+      maven:
+        token: ""
+        apikey: ""
+      startup:
+        # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+        downloadPolicy: NEVER
+        filter:
+
+    # Is that possible to access this store?
+    communityConnector:
+      access: true
+      filterProject:
+      # -- Access to Github to discover project, access release and download from release
+      # Optional GitHub token to avoid API rate limiting (60 req/h unauthenticated -> 5000 req/h
+      # authenticated) - this store lists every repository under the org, so it benefits the most.
+      # Generate at https://github.com/settings/tokens (no scopes needed for public repos)
+      github:
+        token: ""
+
+      # -- Access to Maven Central to download artifacts
+      maven:
+        access: false
+        token: ""
+        apikey: ""
+      # -- Access to JFrog Artifactory to download artifacts
+      # Credentials for Camunda's JFrog Artifactory (artifacts.camunda.com) - see the "connectors" repo,
+      # gated behind Camunda SSO. Generate either one from your JFrog user profile (top-right avatar ->
+      # Edit Profile): an Identity Token (sent as "Authorization: Bearer <token>") or an API Key
+      # (sent as "X-JFrog-Art-Api: <apikey>"). Only one is needed.
+      jfrog:
+        access: false
+        token: ""
+        apikey: ""
+      startup:
+        # NEVER, ALWAYS, UPDATE,FIXEDVERSION
+        downloadPolicy: NEVER
+        filter:
+
+    # Is that possible to access this store?
+    marketplaceConnector:
+      access: true
+      github:
+        token: ""
+      maven:
+        token: ""
+        apikey: ""
+
+  database:
+    purgeRetentionDays: 30
+
+  tenants:
+    # Enable the tenants functionality "autoDectection" implie to connect to Operate
+    automaticDetection: true
+    refreshTenantsInMinutes: 1
+    tenants-ids:
 
 
 
@@ -22,7 +106,7 @@ server.port: 9081
 logging.level.root: INFO
 
 # return message with BAD_REQUEST to the client
-server.error.include-message: always
+spring.web.error.include-message: always
 
 
 # Spring Boot Configuration

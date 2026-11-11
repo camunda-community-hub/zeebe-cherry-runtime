@@ -10,6 +10,7 @@ package io.camunda.cherry.supervisor;
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.JarStorageEntity;
 import io.camunda.cherry.db.entity.OperationEntity;
+import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.exception.OperationException;
 import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.*;
@@ -389,6 +390,10 @@ public class Supervisor {
                     logOperation.log(OperationEntity.Operation.ERROR,
                             "Can't start connector[" + runner.getName() + "] from DownloadConnector[" + connectorDownload.jarName + "] : " + e.
                                     getMessage());
+                    // Mark it persistently so the Store page shows "Failed" (and offers a retry)
+                    // instead of silently keeping whatever optimistic state installStartJar() saved
+                    // before this runner turned out not to actually start.
+                    runnerFactory.setRunnerState(runner.getType(), RunnerDefinitionEntity.State.FAILED);
                 }
             }
             // do not return the JAR file

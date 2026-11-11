@@ -249,7 +249,7 @@ public class StoreFactory {
                 try {
                     boolean isValid = storeAccess.exploreDetails(connectorDefinition);
                     if (!isValid) {
-                        logger.info("StoreFactory: connector[{}] Store [{}] is not valid", connectorDefinition.name, connectorDefinition.storeAccess.getName());
+                        logger.debug("StoreFactory: Store [{}] Connector[{}] is not valid (see previous log for explanation)", connectorDefinition.storeAccess.getName(), connectorDefinition.name);
                         connectorsToRemove.add(connectorDefinition);
                         continue;
                     }
@@ -317,6 +317,7 @@ public class StoreFactory {
         }
         logger.info("~~~~~ END Pass 3. isInstallable : connectorImplementation {} connectorInstallable {} on {}", allConnectorTypes.size(), isInstallable, totalConnectors);
         logger.info("---- End exploration of all stores/connectors in {} ms", System.currentTimeMillis() - beginTime);
+        percentageExploration = BASE_ADVANCE_PHASE1 + BASE_ADVANCE_PHASE2 + BASE_ADVANCE_PHASE3;
         exploration = EXPLORATIONCONNECTOR.COMPLETED;
 
     }

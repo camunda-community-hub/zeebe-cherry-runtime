@@ -2,10 +2,13 @@ package io.camunda.cherry.store.git;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.camunda.cherry.util.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
@@ -22,8 +25,15 @@ import java.time.Duration;
 class GitHubToolbox {
 
     private static final Duration GITHUB_TIMEOUT = Duration.ofSeconds(15);
+    // GitHub's secondary/abuse-detection rate limit (HTTP 429) is a short burst limiter, separate
+    // from the hourly 60/5000 quota - typically clears within well under a minute. Worth a couple
+    // of retries instead of failing the whole page/qualify-check outright.
+    private static final int MAX_RETRIES_ON_RATE_LIMIT = 2;
+    private static final long DEFAULT_RETRY_AFTER_SECONDS = 5;
+    private static final long MAX_RETRY_AFTER_SECONDS = 60;
     private final RestTemplate restTemplate = buildRestTemplate();
     private final GitHubAccess gitHubAccess;
+    private final Logger logger = LoggerFactory.getLogger(GitHubToolbox.class.getName());
 
     GitHubToolbox(GitHubAccess gitHubAccess) {
         this.gitHubAccess = gitHubAccess;
@@ -42,15 +52,56 @@ class GitHubToolbox {
     }
 
     protected JsonNode getJsonNode(String url) throws Exception {
-        HttpEntity<Void> entity = new HttpEntity<>(authHeaders());
-        byte[] body = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class).getBody();
+        byte[] body = exchangeWithRetry(url, byte[].class);
         if (body == null) return JsonUtils.toJsonNode("null");
         return JsonUtils.toJsonNode(new ByteArrayInputStream(body));
     }
 
     String get(String url) throws IOException {
+        return exchangeWithRetry(url, String.class);
+    }
+
+    /**
+     * Retries once/twice on an HTTP 429 (GitHub's secondary/abuse-detection rate limit), honouring
+     * the "Retry-After" header when present. Any other status/exception is rethrown immediately.
+     */
+    private <T> T exchangeWithRetry(String url, Class<T> responseType) {
         HttpEntity<Void> entity = new HttpEntity<>(authHeaders());
-        return restTemplate.exchange(url, HttpMethod.GET, entity, String.class).getBody();
+        int attempt = 0;
+        while (true) {
+            try {
+                return restTemplate.exchange(url, HttpMethod.GET, entity, responseType).getBody();
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode().value() != 429 || attempt >= MAX_RETRIES_ON_RATE_LIMIT) {
+                    throw e;
+                }
+                long waitSeconds = retryAfterSeconds(e);
+                attempt++;
+                logger.warn("GitHub secondary rate limit (429) on [{}] (authenticated={}), retrying in {}s (attempt {}/{})",
+                        url, gitHubAccess.hasGithubToken(), waitSeconds, attempt, MAX_RETRIES_ON_RATE_LIMIT);
+                sleep(waitSeconds);
+            }
+        }
+    }
+
+    private long retryAfterSeconds(HttpClientErrorException e) {
+        String retryAfter = e.getResponseHeaders() != null ? e.getResponseHeaders().getFirst("Retry-After") : null;
+        if (retryAfter != null) {
+            try {
+                return Math.min(Long.parseLong(retryAfter.trim()), MAX_RETRY_AFTER_SECONDS);
+            } catch (NumberFormatException ignored) {
+                // fall through to the default below
+            }
+        }
+        return DEFAULT_RETRY_AFTER_SECONDS;
+    }
+
+    private void sleep(long seconds) {
+        try {
+            Thread.sleep(seconds * 1000L);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private HttpHeaders authHeaders() {

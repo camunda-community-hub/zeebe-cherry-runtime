@@ -256,8 +256,13 @@ public class StorageService {
      * @param inputStream      the inputStream where the content is
      * @param length           the length of the data
      */
-    public void writeJarBlob(Session session, JarStorageEntity jarStorageEntity, InputStream inputStream, long length) {
-        jarStorageEntity.jarfileBlob = Hibernate.getLobHelper().createBlob(inputStream, length);
+    public void writeJarBlob(Session session, JarStorageEntity jarStorageEntity, InputStream inputStream, long length) throws IOException {
+        // createBlob(InputStream, length) streams directly from the given stream - but a plain
+        // FileInputStream does not support mark()/reset(), and Hibernate/the H2 driver needs to
+        // reset it (e.g. on a retry), failing with "Underlying stream does not allow reset". Reading
+        // the bytes up front avoids that entirely - createBlob(byte[]) never needs to reset anything.
+        byte[] bytes = inputStream.readAllBytes();
+        jarStorageEntity.jarfileBlob = Hibernate.getLobHelper().createBlob(bytes);
     }
 
     /* ******************************************************************** */

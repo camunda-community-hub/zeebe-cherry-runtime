@@ -53,6 +53,7 @@ class DownloadMessage extends React.Component {
 
     scheduleNextRefresh() {
         const timeout = setTimeout(() => {
+            this.setState({refreshInterval: null});
             this.refreshStartupStatus();
         }, 30000);
         this.setState({refreshInterval: timeout});

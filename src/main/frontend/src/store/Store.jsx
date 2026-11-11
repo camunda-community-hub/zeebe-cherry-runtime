@@ -26,6 +26,7 @@ class Store extends React.Component {
 
     constructor(_props) {
         super();
+        this.downloadMessageRef = React.createRef();
         const savedDisplay = (() => {
             try {
                 return JSON.parse(localStorage.getItem("store_display") || "{}");
@@ -87,6 +88,7 @@ class Store extends React.Component {
                         </Button>
                     </div>
                 </div>
+                <DownloadMessage ref={this.downloadMessageRef} onError={(err) => this.setState({status: err})}/>
 
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
@@ -251,12 +253,14 @@ class Store extends React.Component {
                                                     version {connectorDefinition.storerelease}</Tag>}
                                             {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "NO-RELEASE" &&
                                                 <Tag type="blue" title="No release">No release</Tag>}
+                                            {connectorDefinition.explorationStatus !== "FAILED" && connectorDefinition.status === "FAILED" &&
+                                                <Tag type="red" title="Install failed">Install failed</Tag>}
                                             {connectorDefinition.status === "IN-PROGRESS" &&
                                                 <Tag type="cyan" title="In progress">In progress</Tag>}
                                         </td>
                                         <td>
                                             {connectorDefinition.explorationStatus !== "FAILED" &&
-                                                (connectorDefinition.status === "NOT-INSTALLED" || connectorDefinition.status === "OLD" || connectorDefinition.status === "NO-RELEASE") &&
+                                                (connectorDefinition.status === "NOT-INSTALLED" || connectorDefinition.status === "OLD" || connectorDefinition.status === "NO-RELEASE" || connectorDefinition.status === "FAILED") &&
                                                 <Button className="btn btn-primary btn-sm"
                                                         onClick={() => this.installConnector(connectorDefinition)}>
                                                     <CloudDownloadFill/> Install
@@ -451,7 +455,6 @@ class Store extends React.Component {
                         </table>
                     </div>
                 </div>
-                <DownloadMessage onError={(err) => this.setState({status: err})}/>
 
             </div>
         );
