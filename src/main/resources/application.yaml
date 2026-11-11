@@ -49,7 +49,7 @@ cherry:
 
     # Is that possible to access this store?
     communityConnector:
-      access: false
+      access: true
       filterProject:
       # -- Access to Github to discover project, access release and download from release
       # Optional GitHub token to avoid API rate limiting (60 req/h unauthenticated -> 5000 req/h
@@ -79,7 +79,7 @@ cherry:
 
     # Is that possible to access this store?
     marketplaceConnector:
-      access: false
+      access: true
       github:
         token: ""
       maven:
