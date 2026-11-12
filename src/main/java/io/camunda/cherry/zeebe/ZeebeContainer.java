@@ -11,7 +11,6 @@ import io.camunda.client.CamundaClient;
 import io.camunda.client.CamundaClientConfiguration;
 import io.camunda.client.api.CamundaFuture;
 import io.camunda.client.api.response.Topology;
-import io.camunda.client.jobhandling.CamundaClientExecutorService;
 import io.camunda.client.spring.properties.CamundaClientProperties;
 import io.camunda.connector.api.document.DocumentFactory;
 import io.camunda.connector.runtime.core.document.DocumentFactoryImpl;
@@ -125,21 +124,6 @@ public class ZeebeContainer {
 */
     public boolean isOk() {
         return camundaClient != null;
-    }
-
-    /**
-     * get the number of jobs in the
-     *
-     * @return the number of threads used when the ZeebeClient is started
-     */
-    public int getNumberOfThreads() {
-
-        return camundaClient.getConfiguration().getNumJobWorkerExecutionThreads();
-    }
-
-    public void setNumberOfThreads(int numberOfThreads) {
-        CamundaClientExecutorService.createDefault(numberOfThreads);
-        // throw new TechnicalException("Can't upgrade the number of threads");
     }
 
     /**

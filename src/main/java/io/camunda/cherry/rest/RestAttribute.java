@@ -8,6 +8,7 @@ public class RestAttribute {
     public static final String STATUS = "status";
     public static final String ID = "id";
     public static final String URL = "url";
+    public static final String ACCESS = "access";
     public static final String DESCRIPTION = "description";
     public static final String ICON = "icon";
     public static final String TIMESTAMP = "timestamp";
@@ -92,7 +93,6 @@ public class RestAttribute {
     public static final String CLIENT_AUDIENCE = "clientAudience";
     public static final String TENANT_IDS = "tenantIds";
     public static final String MAX_JOBS_ACTIVE = "maxJobsActive";
-    public static final String NB_THREADS = "nbThreads";
     public static final String DATASOURCE_PRODUCT_NAME = "datasourceProductName";
     public static final String DATASOURCE_URL = "datasourceUrl";
     public static final String DATASOURCE_USER_NAME = "datasourceUserName";

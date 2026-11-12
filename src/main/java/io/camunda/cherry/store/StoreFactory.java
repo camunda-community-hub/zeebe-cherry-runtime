@@ -26,41 +26,49 @@ public class StoreFactory {
 
     StoreFactory(CherryProperties cherryProperties, LogOperation logOperation) {
 
-        if (cherryProperties.getStore().getCamundaConnector().isAccess()) {
-            GitHubAccess gitHubAccess = new GitHubAccess(cherryProperties.getStore().getCamundaConnector().getGithub().getToken());
-            listStoreAccess.add(new StoreCamundaConnector(gitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup(),
+        // The three built-in stores always exist - even when disabled - so they can be listed (e.g. by
+        // /api/runtime/parameters) with their access status. Every operational method below (explore(),
+        // getListConnectorsMergeSource(), getStoreByName()...) checks isAccess() instead, to skip a
+        // disabled store while still being able to report on it.
+
+            GitHubAccess connectorGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCamundaConnector().getGithub().getToken());
+            StoreCamundaConnector connectorStore = new StoreCamundaConnector(connectorGitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup(),
                     cherryProperties.getStore().getCamundaConnector().getMaven().getToken(),
-                    cherryProperties.getStore().getCamundaConnector().getMaven().getApikey()));
-        }
-        if (cherryProperties.getStore().getCommunityConnector().isAccess()) {
+                    cherryProperties.getStore().getCamundaConnector().getMaven().getApikey());
+            connectorStore.setAccess(cherryProperties.getStore().getCamundaConnector().isAccess());
+            listStoreAccess.add(connectorStore);
+
+
             // Its own GitHubAccess instance (not the shared, now token-less one) - this store lists many
             // repositories and needs its own authenticated rate limit.
-            GitHubAccess communityGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCommunityConnector().getGithub().getToken());
-            listStoreAccess.add(new StoreCamundaCommunity(communityGitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup(),
+            GitHubAccess CommunityGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCommunityConnector().getGithub().getToken());
+            StoreCamundaCommunity communityStore = new StoreCamundaCommunity(CommunityGitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup(),
                     cherryProperties.getStore().getCommunityConnector().getMaven().isAccess(),
                     cherryProperties.getStore().getCommunityConnector().getMaven().getToken(),
                     cherryProperties.getStore().getCommunityConnector().getMaven().getApikey(),
                     cherryProperties.getStore().getCommunityConnector().getJfrog().isAccess(),
                     cherryProperties.getStore().getCommunityConnector().getJfrog().getToken(),
                     cherryProperties.getStore().getCommunityConnector().getJfrog().getApikey(),
-                    logOperation));
-        }
+                    logOperation);
+            communityStore.setAccess(cherryProperties.getStore().getCommunityConnector().isAccess());
+            listStoreAccess.add(communityStore);
 
-        if (cherryProperties.getStore().getMarketplaceConnector().isAccess()) {
-            GitHubAccess gitHubAccess = new GitHubAccess(cherryProperties.getStore().getMarketplaceConnector().getGithub().getToken());
 
-            listStoreAccess.add(new StoreMarketPlace(gitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup(),
+            GitHubAccess marketPlaceGitHubAccess = new GitHubAccess(cherryProperties.getStore().getMarketplaceConnector().getGithub().getToken());
+            StoreMarketPlace marketPlaceStore = new StoreMarketPlace(marketPlaceGitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup(),
                     cherryProperties.getStore().getMarketplaceConnector().getMaven().getToken(),
-                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getApikey()));
-        }
+                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getApikey());
+            marketPlaceStore.setAccess(cherryProperties.getStore().getMarketplaceConnector().isAccess());
+            listStoreAccess.add(marketPlaceStore);
+
         if (cherryProperties.getStore().getPrivateStore().isAccess()) {
             for (CherryProperties.Store.PrivateStore.PrivateStoreEntry privateStore : cherryProperties.getStore().getPrivateStore().getListStores()) {
-                GitHubAccess gitHubAccess = new GitHubAccess(privateStore.getGithub().getToken());
+                GitHubAccess privateGitHubAccess = new GitHubAccess(privateStore.getGithub().getToken());
 
                 String name = privateStore.getName() != null && !privateStore.getName().isEmpty()
                         ? privateStore.getName()
                         : extractName(privateStore.getUrl());
-                listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), null, gitHubAccess, privateStore.getStartup(),
+                listStoreAccess.add(new StorePrivateGitHub(name, privateStore.getUrl(), null, privateGitHubAccess, privateStore.getStartup(),
                         privateStore.getGithub().getToken(), privateStore.getGithub().getApikey(),
                         privateStore.getTokenHeaderName(), privateStore.getTokenPrefix(), privateStore.getApikeyHeaderName(), logOperation));
             }
@@ -114,6 +122,7 @@ public class StoreFactory {
 
     public StoreAccess getStoreByName(String name) {
         return listStoreAccess.stream()
+                .filter(StoreAccess::isAccess)
                 .filter(s -> s.getName().equals(name))
                 .findFirst()
                 .orElse(null);
@@ -214,6 +223,11 @@ public class StoreFactory {
             percentageExploration = (int) ((((double) countStore) / listStoreAccess.size()) * BASE_ADVANCE_PHASE1);
             countStore++;
             // first 40% on pass 1
+            if (!storeAccess.isAccess()) {
+                logger.info("~~~~~ Pass 1.({}/{}) Store[{}] is disabled, skipping", countStore, listStoreAccess.size(), storeAccess.getName());
+                mapConnectors.put(storeAccess, new ArrayList<>());
+                continue;
+            }
             logger.info("~~~~~ Pass 1.({}/{}) Explore store[{}]", countStore, listStoreAccess.size(), storeAccess.getName());
             List<StoreAccess.ConnectorDefinition> listConnectors = storeAccess.exploreListConnectors();
             for (StoreAccess.ConnectorDefinition connectorDefinition : listConnectors) {
@@ -358,7 +372,11 @@ public class StoreFactory {
     }
 
     public StoreAccess getFromName(String storeName) {
-        return listStoreAccess.stream().filter(s -> s.getName().equals(storeName)).findFirst().orElse(null);
+        return listStoreAccess.stream()
+                .filter(StoreAccess::isAccess)
+                .filter(s -> s.getName().equals(storeName))
+                .findFirst()
+                .orElse(null);
     }
 
     /**

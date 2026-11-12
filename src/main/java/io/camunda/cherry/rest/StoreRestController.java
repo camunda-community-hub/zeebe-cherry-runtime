@@ -71,7 +71,10 @@ public class StoreRestController {
 
     @GetMapping(value = "/api/store/list", produces = "application/json")
     public List<Map<String, String>> getStores() {
+        // Only active stores: a disabled store isn't a usable filter/option on this page, even though
+        // StoreFactory keeps the object around (e.g. for /api/runtime/parameters to report on it).
         List<Map<String, String>> listStores = storeFactory.getListStores().stream()
+                .filter(StoreAccess::isAccess)
                 .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
                 .toList();
         logger.info("list stores: return {} stores: [{}]", listStores.size(), listStores.stream().map(c -> c.get(RestAttribute.NAME)).collect(Collectors.joining(",")));

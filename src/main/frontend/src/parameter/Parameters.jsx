@@ -273,17 +273,6 @@ class Parameters extends React.Component {
                                                      onChange={(event) => this.setParameterProperty("maxJobsActive", event.target.value)}/>
                                     </div>
                                 </div>
-                                <div className="row">
-                                    <div className="col-md-12">
-                                        <NumberInput label="Threads"
-                                                     readonly="true"
-                                                     min="1"
-                                                     size="md"
-                                                     value={this.state.parameters.nbThreads}
-                                                     style={{width: "100%"}}
-                                                     onChange={(event) => this.setParameterProperty("nbThreads", event.target.value)}/>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -300,6 +289,7 @@ class Parameters extends React.Component {
                                         <th>Name</th>
                                         <th>Type</th>
                                         <th>URL</th>
+                                        <th>Status</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -308,6 +298,11 @@ class Parameters extends React.Component {
                                             <td>{store.name}</td>
                                             <td>{store.type}</td>
                                             <td>{store.url}</td>
+                                            <td>
+                                                {store.access
+                                                    ? <Tag type="green">Active</Tag>
+                                                    : <Tag type="gray">Disabled</Tag>}
+                                            </td>
                                         </tr>
                                     )}
                                     </tbody>

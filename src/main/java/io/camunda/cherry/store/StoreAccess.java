@@ -11,6 +11,14 @@ public abstract class StoreAccess {
 
     private CherryProperties.Startup startup;
 
+    /**
+     * Whether this store is enabled (cherry.store.&lt;name&gt;.access). The store object itself always
+     * exists - StoreFactory builds every built-in store regardless of this flag, so it can be listed
+     * (e.g. in /api/runtime/parameters) even when disabled - but every operational method (explore,
+     * lookup by name, merge into the connector list) must check isAccess() and skip a disabled store.
+     */
+    private boolean access = true;
+
     protected StoreAccess(CherryProperties.Startup startup) {
         this.startup = startup;
     }
@@ -21,6 +29,14 @@ public abstract class StoreAccess {
 
     public void setStartup(CherryProperties.Startup startup) {
         this.startup = startup;
+    }
+
+    public boolean isAccess() {
+        return access;
+    }
+
+    public void setAccess(boolean access) {
+        this.access = access;
     }
 
     public abstract String getName();

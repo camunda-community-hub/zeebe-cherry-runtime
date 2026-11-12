@@ -91,7 +91,6 @@ public class RuntimeRestController {
         }
 
         parameters.put(RestAttribute.MAX_JOBS_ACTIVE, jobRunnerFactory.getMaxJobActive());
-        parameters.put(RestAttribute.NB_THREADS, jobRunnerFactory.getNumberOfThreads());
 
         try (Connection con = dataSource.getConnection()) {
             parameters.put(RestAttribute.DATASOURCE_PRODUCT_NAME, con.getMetaData().getDatabaseProductName());
@@ -105,20 +104,11 @@ public class RuntimeRestController {
 
         parameters.put(RestAttribute.STORES,
                 storeFactory.getListStores().stream()
-                        .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(), RestAttribute.TYPE, s.getType()))
+                        .map(s -> Map.of(RestAttribute.NAME, s.getName(), RestAttribute.URL, s.getUrl(),
+                                RestAttribute.TYPE, s.getType(), RestAttribute.ACCESS, s.isAccess()))
                         .toList());
 
         return parameters;
-    }
-
-    @GetMapping(value = "/api/runtime/threads", produces = "application/json")
-    public Integer getNumberOfThreads() {
-        return jobRunnerFactory.getNumberOfThreads();
-    }
-
-    @PutMapping(value = "/api/runtime/setthreads", produces = "application/json")
-    public void setNumberOfThread(@RequestParam(name = "threads") Integer numberOfThreads) {
-        jobRunnerFactory.setNumberOfThreads(numberOfThreads);
     }
 
     private String getVersion() {

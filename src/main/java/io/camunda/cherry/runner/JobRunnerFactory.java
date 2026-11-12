@@ -293,31 +293,6 @@ public class JobRunnerFactory {
         return zeebeContainer.getMaxJobsActive();
     }
 
-    public int getNumberOfThreads() {
-        return zeebeContainer.getNumberOfThreads();
-    }
-
-    public void setNumberOfThreads(int numberOfThreadsRequired) throws TechnicalException {
-
-        zeebeContainer.setNumberOfThreads(numberOfThreadsRequired);
-
-        zeebeContainer.stopZeebeClient();
-        zeebeContainer.startZeebeClient();
-
-        // stop all running and restart them
-        for (Running running : mapRunning.values()) {
-            JobWorker jobWorker = null;
-            try {
-                closeJobWorker(running.containerJobWorker.getJobWorker());
-
-                jobWorker = createJobWorker(running.runner);
-            } catch (OperationException e) {
-                logger.error("Can't restart [{}] : {} ", running.runner.getName(), e.getMessage());
-            }
-            running.containerJobWorker.setJobWorker(jobWorker);
-        }
-    }
-
     public List<OrchestrationAPI.TenantInformation> getListTenants() {
         return this.listTenants;
     }
