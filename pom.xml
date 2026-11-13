@@ -13,7 +13,8 @@
     <!-- 4.1.0 Job count page -->
     <!-- 4.1.1 Fix bug -->
     <!-- 4.1.5 Display all stores with a status enabled: true/false -->
-    <version>4.1.6-SNAPSHOT</version>
+    <!-- 4.1.6 Change dockerfile structure -->
+    <version>4.1.6</version>
 
     <name>Zeebe Cherry Runtime</name>
     <description>Runtime for executing Camunda 8 Connectors and Workers, with administrative pages to manage and monitor them.</description>
