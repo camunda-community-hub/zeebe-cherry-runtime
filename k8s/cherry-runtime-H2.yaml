@@ -18,10 +18,6 @@ spec:
           ports:
             - containerPort: 9081
           env:
-            - name: CHERRY_CONNECTORSLIB_UPLOADPATH
-              value: /usr/local/cherry/upload
-            - name: CHERRY_CONNECTORSLIB_CLASSLOADERPATH
-              value: /usr/localstorage/classloader
             - name: CAMUNDA_CLIENT_GRPC-ADDRESS
               value: http://camunda-zeebe-gateway:26500
             - name: CAMUNDA_CLIENT_REST-ADDRESS

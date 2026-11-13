@@ -19,27 +19,23 @@ spec:
           args:
               - >
                 set -eux;
-                curl -L -o /usr/local/cherry/upload/office-to-pdf.jar
+                curl -L -o /usr/local/cherry/localstorage/upload/office-to-pdf.jar
                 https://github.com/camunda-community-hub/camunda-8-connector-officetopdf/releases/download/1.1.0/office-to-pdf-1.1.0-with-dependencies.jar
                 &&
-                curl -L -o /usr/local/cherry/upload/pdf-function.jar
+                curl -L -o /usr/local/cherry/localstorage/upload/pdf-function.jar
                 https://github.com/camunda-community-hub/camunda-8-connector-pdf/releases/download/3.1.3/pdf-function-3.1.3.jar
                 &&
-                ls -al /usr/local/cherry/upload
+                ls -al /usr/local/cherry/localstorage/upload
 
           volumeMounts:
             - name: custom-connectors
-              mountPath: /usr/local/cherry/upload
+              mountPath: /usr/local/cherry/localstorage/upload
       containers:
         - name: cherry-runtime-container
           image: ghcr.io/camunda-community-hub/zeebe-cherry-runtime:latest
           ports:
             - containerPort: 8080
           env:
-            - name: CHERRY_CONNECTORSLIB_UPLOADPATH
-              value: /usr/local/cherry/upload
-            - name:  CHERRY_CONNECTORSLIB_CLASSLOADERPATH
-              value: /usr/local/cherry/classloader
             - name: CAMUNDA_CLIENT_GRPC-ADDRESS
               value: http://camunda-zeebe-gateway:26500
             - name: CAMUNDA_CLIENT_REST-ADDRESS
