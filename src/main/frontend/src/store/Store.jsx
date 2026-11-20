@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {Shop} from "react-bootstrap-icons";
 import {Button, Select, Tag, TextInput} from "carbon-components-react";
 import {
     ArrowRepeat,
@@ -78,7 +79,7 @@ class Store extends React.Component {
             <div className={"container"}>
                 <div className="row" style={{width: "100%", alignItems: "center"}}>
                     <div className="col-md-auto">
-                        <h1 className="title">Store</h1>
+                        <h1 className="title"><Shop style={{marginRight: "10px"}}/>Store</h1>
                     </div>
                     <div className="col-md-auto" style={{marginLeft: "auto"}}>
                         <Button className="btn btn-warning btn-sm"

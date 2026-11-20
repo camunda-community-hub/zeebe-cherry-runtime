@@ -10,6 +10,7 @@ import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.db.entity.RunnerDefinitionEntity;
 import io.camunda.cherry.db.repository.TopicCountRepository;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
 import io.camunda.cherry.runtime.HistoryPerformance;
@@ -83,7 +84,11 @@ public class JobCountRestController {
             infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(performanceRunner));
             // Not explicitly listed with the other fields, but needed to sort/display by "jobs"
             // (pending jobs waiting), which is what this page is named after.
-            infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
+            try {
+                infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
+            } catch (TechnicalException e) {
+                infoRunner.put(RestAttribute.ERROR, e.getMessage());
+            }
             listDetails.add(infoRunner);
         }
 
@@ -132,7 +137,11 @@ public class JobCountRestController {
                 infoRunner.put(RestAttribute.RUNNER_STATE, "UNREGISTERED");
                 infoRunner.put(RestAttribute.PERFORMANCE, performanceRunner);
                 infoRunner.put(RestAttribute.ANALYSIS, runnerThroughput.checkPerformance(performanceRunner));
-                infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(unregisteredType));
+                try {
+                    infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(unregisteredType));
+                } catch (TechnicalException e) {
+                    infoRunner.put(RestAttribute.ERROR, e.getMessage());
+                }
                 listDetails.add(infoRunner);
             }
         }

@@ -8,10 +8,12 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {ListTask} from "react-bootstrap-icons";
 import {Button, Select, TextInput} from "carbon-components-react";
 import {ArrowRepeat} from 'react-bootstrap-icons';
 
 import RunnerCartouche from "../component/RunnerCartouche";
+import RunnerErrorAlert from "../component/RunnerErrorAlert";
 import RunnerAnalysisTags from "../dashboard/RunnerAnalysisTags";
 import RunnerChart from "../dashboard/RunnerChart";
 import ControllerPage from "../component/ControllerPage";
@@ -49,7 +51,7 @@ class JobCount extends React.Component {
         return (<div className={"container"}>
             <div className="row">
                 <div className="col-md-1">
-                    <h1 className="title">Jobs</h1>
+                    <h1 className="title"><ListTask style={{marginRight: "10px"}}/>Jobs</h1>
                 </div>
                 <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
                                  onError={(err) => this.setState({status: err})}/>
@@ -146,22 +148,29 @@ class JobCount extends React.Component {
                             <tr key={runner.type} style={{borderBottom: "1px solid #dee2e6"}}>
                                 <td style={{
                                     verticalAlign: "top",
-                                    width: "120px",
+                                    width: "30%",
                                     paddingTop: "10px",
                                     paddingBottom: "10px"
                                 }}>
-                                    <RunnerCartouche runner={runner}/>
-                                </td>
-                                <td style={{
-                                    verticalAlign: "top",
-                                    width: "20%",
-                                    paddingTop: "10px",
-                                    paddingBottom: "10px"
-                                }}>
-                                    <h1 className="title is-5">{runner.name}</h1>
-                                    <div style={{fontStyle: "italic", fontSize: "small"}}>
-                                        connector type: {runner.connectorType}
-                                    </div>
+                                    <table>
+                                        <tbody>
+                                        <tr>
+                                            <td style={{verticalAlign: "top"}}>
+                                                <RunnerCartouche runner={runner}/>
+                                            </td>
+                                            <td style={{verticalAlign: "top", padding: "5px 0px 0px 25px"}}>
+                                                <h1 className="title is-5">{runner.name}</h1>
+                                                <div style={{fontSize: "small"}}>
+                                                    Number of jobs: {runner.topicCount}
+                                                </div>
+                                                <div style={{fontStyle: "italic", fontSize: "small"}}>
+                                                    connector type: {runner.connectorType}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <RunnerErrorAlert runner={runner}/>
                                 </td>
                                 <td style={{
                                     verticalAlign: "top",

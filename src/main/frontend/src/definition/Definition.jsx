@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {PlugFill} from "react-bootstrap-icons";
 import {Button, Modal} from "react-bootstrap";
 
 import RestCallService from "../services/RestCallService";
@@ -41,7 +42,7 @@ class Definition extends React.Component {
             <div className="container">
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-12">
-                        <h1 className="title">Zeebe Connectors</h1>
+                        <h1 className="title"><PlugFill style={{marginRight: "10px"}}/>Zeebe Connectors</h1>
                         <DownloadMessage onError={(err) => this.setState({status: err})}/>
 
                         <div className="row" style={{width: "100%"}}>

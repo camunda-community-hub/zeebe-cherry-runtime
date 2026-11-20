@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {JournalText} from "react-bootstrap-icons";
 import {Button} from "carbon-components-react";
 import {ArrowRepeat, XCircle} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
@@ -36,7 +37,7 @@ class OperationLog extends React.Component {
             <div className={"container"}>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-4">
-                        <h1 className="title">Operations Log</h1>
+                        <h1 className="title"><JournalText style={{marginRight: "10px"}}/>Operations Log</h1>
                     </div>
                     <div className="col-md-6">
                         <button className={this.getButtonClass(this.state.display.showOnlyError)}

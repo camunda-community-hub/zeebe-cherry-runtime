@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {KeyFill} from "react-bootstrap-icons";
 import RestCallService from "../services/RestCallService";
 import {Button, TextInput, Toggle} from "carbon-components-react";
 import {ArrowRepeat, ExclamationTriangle} from "react-bootstrap-icons";
@@ -33,7 +34,7 @@ class Secrets extends React.Component {
             <div className={"container"}>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
-                        <h1 className="title">Secrets</h1>
+                        <h1 className="title"><KeyFill style={{marginRight: "10px"}}/>Secrets</h1>
                     </div>
                     <div className="col-md-2">
                         <Button className="btn btn-success btn-sm"

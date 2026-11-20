@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {Speedometer2} from "react-bootstrap-icons";
 import {Button, Select, TextInput} from "carbon-components-react";
 import {ArrowRepeat, XCircle} from 'react-bootstrap-icons';
 
@@ -61,7 +62,7 @@ class Dashboard extends React.Component {
         return (<div className={"container"}>
             <div className="row">
                 <div className="col-md-1">
-                    <h1 className="title">Details</h1>
+                    <h1 className="title"><Speedometer2 style={{marginRight: "10px"}}/>Details</h1>
                 </div>
                 <DownloadMessage ref={this.downloadMessageRef} timestamp={this.state.dashboard.timestamp}
                                  onError={(err) => this.setState({status: err})}/>

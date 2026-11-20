@@ -18,6 +18,7 @@ import io.camunda.cherry.definition.RunnerDecorationTemplate;
 import io.camunda.cherry.exception.OperationAlreadyStartedException;
 import io.camunda.cherry.exception.OperationAlreadyStoppedException;
 import io.camunda.cherry.exception.OperationException;
+import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
@@ -136,7 +137,11 @@ public class RunnerRestController {
             infoRunner.put(RestAttribute.LOGO, runner.getLogo());
             infoRunner.put(RestAttribute.RUNNER_STATE, runnerFactory.getRunnerState(runner.getType()).toString());
             infoRunner.put(RestAttribute.STATISTIC, statisticRunner);
-            infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
+            try {
+                infoRunner.put(RestAttribute.TOPIC_COUNT, runnerMonitor.getJobCount(runner.getType()));
+            } catch (TechnicalException e) {
+                infoRunner.put(RestAttribute.ERROR, e.getMessage());
+            }
             infoRunner.put(RestAttribute.NB_EXEC, statisticRunner.executions);
             infoRunner.put(RestAttribute.NB_FAIL, statisticRunner.executionsBpmnErrors + statisticRunner.executionsFailed);
             infoRunner.put(RestAttribute.NB_OVER_THRESHOLD, 0);

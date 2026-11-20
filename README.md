@@ -4,7 +4,7 @@
 
 # What is the Cherry Runtime?
 
-The Cherry Runtime is dedicated to executing Camunda 8 Connectors and Workers.
+The Cherry Runtime is dedicated to executing Connectors and Workers.
 
 It provides
 * Administrative pages
@@ -16,19 +16,13 @@ It provides
   * From a shared folder
   * Download it from the marketplace, the CamundaCommunityHub, the CamundaRuntime store, or a private GitHub repository
 
-* Element template can be downloaded
 
-* A farm of runtime, all are managed from one single page
-
-* For developpers, a library is available to generate element-templates for Connectors and Workers
-
-![Cherry Runtime Overview](doc/images/Architecture.png)
-
+![Cherry Runtime overview](doc/architecture/Architecture.png)
 The Cherry runtime accepts any OUTBOUND connector.
 
 
 This documentation gives information:
-* for administrators to start and administrate connector
+* for administrators to start and administrate connector ([Administration guide](doc/AdministrationGuide/README.md)
 * for BPM Designer, to access documentation and download Element-Template in your modeler
 * For developers, which information can be added during the development, to propose more information for administrators and BPM Designer
 

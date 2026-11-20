@@ -10,6 +10,7 @@ package io.camunda.cherry.supervisor;
 
 import io.camunda.cherry.db.StorageService;
 import io.camunda.cherry.definition.AbstractRunner;
+import io.camunda.cherry.exception.TechnicalException;
 import io.camunda.cherry.runner.JobRunnerFactory;
 import io.camunda.cherry.runner.RunnerFactory;
 import io.camunda.cherry.runtime.HistoryFactory;
@@ -68,7 +69,7 @@ public class RunnerMonitor {
         }
     }
 
-    public long getJobCount(String runnerType) {
+    public long getJobCount(String runnerType) throws TechnicalException {
         return orchestrationAPI.getJobCount(runnerType);
     }
 

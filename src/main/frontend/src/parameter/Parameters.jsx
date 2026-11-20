@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {GearFill} from "react-bootstrap-icons";
 import {Button, NumberInput, Select, Tag, TextInput} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
@@ -37,7 +38,7 @@ class Parameters extends React.Component {
             <div className="container">
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
-                        <h1 className="title">Parameters</h1>
+                        <h1 className="title"><GearFill style={{marginRight: "10px"}}/>Parameters</h1>
                     </div>
                     <div className="col-md-2">
                         <Button className="btn btn-success btn-sm"

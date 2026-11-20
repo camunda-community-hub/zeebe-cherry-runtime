@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React, {createRef} from 'react';
+import {FolderFill} from "react-bootstrap-icons";
 import {Button, FileUploader} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 import ControllerPage from "../component/ControllerPage";
@@ -41,7 +42,7 @@ class Content extends React.Component {
             <div className={"container"}>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
-                        <h1 className="title">Content</h1>
+                        <h1 className="title"><FolderFill style={{marginRight: "10px"}}/>Content</h1>
                     </div>
                     <div className="col-md-2">
                         <Button className="btn btn-success btn-sm"

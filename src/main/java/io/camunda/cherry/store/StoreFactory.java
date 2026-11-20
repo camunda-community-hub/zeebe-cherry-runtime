@@ -31,35 +31,35 @@ public class StoreFactory {
         // getListConnectorsMergeSource(), getStoreByName()...) checks isAccess() instead, to skip a
         // disabled store while still being able to report on it.
 
-            GitHubAccess connectorGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCamundaConnector().getGithub().getToken());
-            StoreCamundaConnector connectorStore = new StoreCamundaConnector(connectorGitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup(),
-                    cherryProperties.getStore().getCamundaConnector().getMaven().getToken(),
-                    cherryProperties.getStore().getCamundaConnector().getMaven().getApikey());
-            connectorStore.setAccess(cherryProperties.getStore().getCamundaConnector().isAccess());
-            listStoreAccess.add(connectorStore);
+        GitHubAccess connectorGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCamundaConnector().getGithub().getToken());
+        StoreCamundaConnector connectorStore = new StoreCamundaConnector(connectorGitHubAccess, cherryProperties.getStore().getCamundaConnector().getStartup(),
+                cherryProperties.getStore().getCamundaConnector().getMaven().getToken(),
+                cherryProperties.getStore().getCamundaConnector().getMaven().getApikey());
+        connectorStore.setAccess(cherryProperties.getStore().getCamundaConnector().isAccess());
+        listStoreAccess.add(connectorStore);
 
 
-            // Its own GitHubAccess instance (not the shared, now token-less one) - this store lists many
-            // repositories and needs its own authenticated rate limit.
-            GitHubAccess CommunityGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCommunityConnector().getGithub().getToken());
-            StoreCamundaCommunity communityStore = new StoreCamundaCommunity(CommunityGitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup(),
-                    cherryProperties.getStore().getCommunityConnector().getMaven().isAccess(),
-                    cherryProperties.getStore().getCommunityConnector().getMaven().getToken(),
-                    cherryProperties.getStore().getCommunityConnector().getMaven().getApikey(),
-                    cherryProperties.getStore().getCommunityConnector().getJfrog().isAccess(),
-                    cherryProperties.getStore().getCommunityConnector().getJfrog().getToken(),
-                    cherryProperties.getStore().getCommunityConnector().getJfrog().getApikey(),
-                    logOperation);
-            communityStore.setAccess(cherryProperties.getStore().getCommunityConnector().isAccess());
-            listStoreAccess.add(communityStore);
+        // Its own GitHubAccess instance (not the shared, now token-less one) - this store lists many
+        // repositories and needs its own authenticated rate limit.
+        GitHubAccess CommunityGitHubAccess = new GitHubAccess(cherryProperties.getStore().getCommunityConnector().getGithub().getToken());
+        StoreCamundaCommunity communityStore = new StoreCamundaCommunity(CommunityGitHubAccess, cherryProperties.getStore().getCommunityConnector().getStartup(),
+                cherryProperties.getStore().getCommunityConnector().getMaven().isAccess(),
+                cherryProperties.getStore().getCommunityConnector().getMaven().getToken(),
+                cherryProperties.getStore().getCommunityConnector().getMaven().getApikey(),
+                cherryProperties.getStore().getCommunityConnector().getJfrog().isAccess(),
+                cherryProperties.getStore().getCommunityConnector().getJfrog().getToken(),
+                cherryProperties.getStore().getCommunityConnector().getJfrog().getApikey(),
+                logOperation);
+        communityStore.setAccess(cherryProperties.getStore().getCommunityConnector().isAccess());
+        listStoreAccess.add(communityStore);
 
 
-            GitHubAccess marketPlaceGitHubAccess = new GitHubAccess(cherryProperties.getStore().getMarketplaceConnector().getGithub().getToken());
-            StoreMarketPlace marketPlaceStore = new StoreMarketPlace(marketPlaceGitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup(),
-                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getToken(),
-                    cherryProperties.getStore().getMarketplaceConnector().getMaven().getApikey());
-            marketPlaceStore.setAccess(cherryProperties.getStore().getMarketplaceConnector().isAccess());
-            listStoreAccess.add(marketPlaceStore);
+        GitHubAccess marketPlaceGitHubAccess = new GitHubAccess(cherryProperties.getStore().getMarketplaceConnector().getGithub().getToken());
+        StoreMarketPlace marketPlaceStore = new StoreMarketPlace(marketPlaceGitHubAccess, cherryProperties.getStore().getMarketplaceConnector().getStartup(),
+                cherryProperties.getStore().getMarketplaceConnector().getMaven().getToken(),
+                cherryProperties.getStore().getMarketplaceConnector().getMaven().getApikey());
+        marketPlaceStore.setAccess(cherryProperties.getStore().getMarketplaceConnector().isAccess());
+        listStoreAccess.add(marketPlaceStore);
 
         if (cherryProperties.getStore().getPrivateStore().isAccess()) {
             for (CherryProperties.Store.PrivateStore.PrivateStoreEntry privateStore : cherryProperties.getStore().getPrivateStore().getListStores()) {

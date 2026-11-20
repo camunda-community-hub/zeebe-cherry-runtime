@@ -7,6 +7,7 @@
 // -----------------------------------------------------------
 
 import React from 'react';
+import {Building} from "react-bootstrap-icons";
 import {Button, Tag} from "carbon-components-react";
 import {ArrowRepeat} from "react-bootstrap-icons";
 
@@ -36,7 +37,7 @@ class Tenants extends React.Component {
             <div class={"container"}>
                 <div className="row" style={{width: "100%"}}>
                     <div className="col-md-10">
-                        <h1 className="title">Tenants</h1>
+                        <h1 className="title"><Building style={{marginRight: "10px"}}/>Tenants</h1>
                     </div>
                     <div className="col-md-2">
                         <Button className="btn btn-success btn-sm"

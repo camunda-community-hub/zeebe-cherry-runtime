@@ -8,6 +8,7 @@
 
 import React from 'react';
 import RunnerCartouche from "../component/RunnerCartouche";
+import RunnerErrorAlert from "../component/RunnerErrorAlert";
 import {Tag} from "carbon-components-react";
 
 class RunnerDashboard extends React.Component {
@@ -86,7 +87,9 @@ class RunnerDashboard extends React.Component {
                                     </h1>
                                     <h2 style={{padding: "5px 0px 0px 25px", fontSize: "70%"}}>
                                         <i>Average {this.state.runner.performance.averageTimeInMs} ms
-                                            Peak {this.state.runner.performance.peakTimeInMs} ms </i></h2></div>
+                                            Peak {this.state.runner.performance.peakTimeInMs} ms </i></h2>
+                                    <RunnerErrorAlert runner={this.state.runner}/>
+                                </div>
                             </td>
                         </tr>
                         </tbody>
